@@ -34,6 +34,11 @@ name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
+# Trainiert nur auf (synthetischem) reinem Schlagzeug: auf dem Mix halluziniert der Decoder
+# und läuft bis max_length (>10 min für 36 s). Daher nie ohne Separator.
+[tool.stickler]
+input = "stem"
+
 # GPU-Variante (stickler setup --adapter adt_str --device rocm), siehe docs/adr/0003-rocm-kanal.md
 [tool.stickler.rocm]
 index = "https://repo.amd.com/rocm/whl-multi-arch/"

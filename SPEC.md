@@ -100,6 +100,10 @@ uv run --project adapters/<stufe>/<id> python adapters/<stufe>/<id>/run.py --in 
 - alle → `<dir>/meta.json` (`{"adapter", "version", "device", "seconds", "peak_rss_mb"}`)
 - Optionen: `--device auto|cpu|gpu`
 - Exit-Code ≠ 0 heißt Fehler. Der Harness protokolliert ihn und rechnet weiter.
+- Optional im Adapter-`pyproject.toml`:
+  - `[tool.stickler] input = "stem"`: Der Transkriber verträgt nur getrennte Drum-Stems und wird nicht mit `none` kombiniert (z. B. ADT_STR).
+  - `[tool.stickler.rocm]`: GPU-Variante (ADR 0003).
+- `config/benchmark.yaml` → `timeout`: Zeitlimit je Adapter-Aufruf. Eine Überschreitung zählt als Fehler „Zeitlimit“.
 
 ## Code Style
 ruff mit Standardregeln und Zeilenlänge 100. Durchgehend Type Hints, `dataclass`es statt Dicts für Domänenobjekte, keine globalen Zustände. Kommentare und Docstrings auf Deutsch, Bezeichner auf Englisch.

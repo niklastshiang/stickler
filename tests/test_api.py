@@ -119,3 +119,10 @@ def test_missing_dataset_raises(monkeypatch, tmp_path):
 def test_run_doctor_returns_checks(tmp_path):
     names = [c.name for c in api.run_doctor(adapters_root=tmp_path, data_dir=tmp_path)]
     assert names[0] == "gpu" and "datensatz mdb" in names
+
+
+def test_config_timeout_optional(tmp_path):
+    cfg = _bench(tmp_path)
+    assert api.load_benchmark_config(cfg).timeout is None
+    cfg.write_text(cfg.read_text() + "timeout: 1800\n", encoding="utf-8")
+    assert api.load_benchmark_config(cfg).timeout == 1800.0

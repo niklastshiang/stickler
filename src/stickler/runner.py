@@ -78,7 +78,12 @@ def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path, device: 
 
 
 def _cached_or_run(
-    spec: adapters.AdapterSpec, audio: Path, cache: Path, device: str, execute: bool
+    spec: adapters.AdapterSpec,
+    audio: Path,
+    cache: Path,
+    device: str,
+    execute: bool,
+    timeout: float | None = None,
 ) -> adapters.AdapterResult:
     out_dir = cache_dir_for(cache, spec, audio, device)
     output, meta = out_dir / spec.expected_output, out_dir / "meta.json"
@@ -86,7 +91,7 @@ def _cached_or_run(
         return adapters.AdapterResult(True, output, json.loads(meta.read_text()), None)
     if not execute:
         return adapters.AdapterResult(False, None, None, f"{spec.id}: nicht berechnet")
-    return adapters.run_adapter(spec, audio, out_dir, device=device)
+    return adapters.run_adapter(spec, audio, out_dir, device=device, timeout=timeout)
 
 
 def _separate(
@@ -96,6 +101,7 @@ def _separate(
     cache: Path,
     device: str,
     execute: bool,
+    timeout: float | None,
 ) -> adapters.AdapterResult:
     if separator == "none":
         return adapters.AdapterResult(True, track.mix, None, None)
@@ -103,7 +109,7 @@ def _separate(
         if track.drums is None or not track.drums.exists():
             return adapters.AdapterResult(False, None, None, "oracle: Datensatz hat keinen Stem")
         return adapters.AdapterResult(True, track.drums, None, None)
-    return _cached_or_run(registry[separator], track.mix, cache, device, execute)
+    return _cached_or_run(registry[separator], track.mix, cache, device, execute, timeout)
 
 
 def _check_ids(ids: list[str], stage: str, registry: dict[str, adapters.AdapterSpec]) -> None:
@@ -123,8 +129,12 @@ def run_matrix(
     execute: bool = True,
     progress: Progress | None = None,
     cancel: threading.Event | None = None,
+    timeout: float | None = None,
 ) -> list[Record]:
-    """Rechnet (oder liest aus dem Cache) alle Kombinationen; Fehler landen im Record."""
+    """Rechnet (oder liest aus dem Cache) alle Kombinationen; Fehler landen im Record.
+
+    Transkriber, die nur Drum-Stems vertragen (input="stem"), laufen nicht auf `none`.
+    `timeout` begrenzt jeden einzelnen Adapter-Aufruf (Sekunden)."""
     _check_ids(separators, "separators", registry)
     _check_ids(transcribers, "transcribers", registry)
     jobs = [
@@ -133,14 +143,15 @@ def run_matrix(
         for t in ts
         for sep in separators
         for tr in transcribers
+        if not (sep == "none" and registry[tr].needs_stem)
     ]
     records: list[Record] = []
     for n, (ds, track, sep, tr) in enumerate(jobs, start=1):
         if cancel is not None and cancel.is_set():
             break
-        stem = _separate(track, sep, registry, cache, device, execute)
+        stem = _separate(track, sep, registry, cache, device, execute, timeout)
         if stem.ok:
-            trans = _cached_or_run(registry[tr], stem.output, cache, device, execute)
+            trans = _cached_or_run(registry[tr], stem.output, cache, device, execute, timeout)
             error = trans.error
         else:
             trans, error = None, stem.error

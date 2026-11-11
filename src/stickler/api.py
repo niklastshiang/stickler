@@ -30,6 +30,7 @@ class BenchmarkConfig:
     transcribers: list[str]
     device: str
     schemes: list[str]
+    timeout: float | None = None  # Sekunden je Adapter-Aufruf
 
 
 def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
@@ -43,6 +44,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         transcribers=list(raw["transcribers"]),
         device=raw.get("device", "auto"),
         schemes=[str(s) for s in raw.get("schemes", ["5", "3"])],
+        timeout=float(raw["timeout"]) if raw.get("timeout") else None,
     )
 
 
@@ -106,6 +108,7 @@ def run_benchmark(
         execute=execute,
         progress=progress,
         cancel=cancel,
+        timeout=cfg.timeout,
     )
 
 

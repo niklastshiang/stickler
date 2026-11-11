@@ -17,7 +17,7 @@ def registry():
 
 
 def test_discover_finds_adapters_by_folder(registry):
-    assert set(registry) == {"dummy", "broken", "copysep"}
+    assert set(registry) == {"dummy", "broken", "copysep", "stemonly"}
     assert registry["dummy"].stage == "transcribers"
     assert registry["dummy"].expected_output == "drums.mid"
 
@@ -108,3 +108,8 @@ def test_setup_failure_raises(tmp_path):
     spec = adapters.AdapterSpec(id="kaputt", stage="transcribers", path=tmp_path)
     with pytest.raises(RuntimeError, match="kaputt"):
         adapters.setup_adapter(spec)
+
+
+def test_input_requirement_is_read(registry):
+    assert registry["stemonly"].needs_stem
+    assert not registry["dummy"].needs_stem

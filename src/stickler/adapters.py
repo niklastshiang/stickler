@@ -37,6 +37,15 @@ class AdapterSpec:
     def expected_output(self) -> str:
         return OUTPUTS[self.stage]
 
+    @property
+    def needs_stem(self) -> bool:
+        """True, wenn das Modell nur Drum-Stems verträgt ([tool.stickler] input = "stem")."""
+        pyproject = self.path / "pyproject.toml"
+        if not pyproject.exists():
+            return False
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        return data.get("tool", {}).get("stickler", {}).get("input", "any") == "stem"
+
 
 @dataclass(frozen=True)
 class RocmConfig:
