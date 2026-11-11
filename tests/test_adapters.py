@@ -90,3 +90,21 @@ def test_timeout_is_logged(registry, tmp_path):
     )
     assert not result.ok
     assert "Zeitlimit" in result.error
+
+
+def test_setup_adapter_syncs_and_runs_setup_py(registry):
+    marker = registry["dummy"].path / ".setup-done"
+    marker.unlink(missing_ok=True)
+    adapters.setup_adapter(registry["dummy"])
+    assert marker.read_text() == "ok"
+
+
+def test_setup_without_setup_py_only_syncs(registry):
+    adapters.setup_adapter(registry["broken"])  # darf nicht werfen
+
+
+def test_setup_failure_raises(tmp_path):
+    (tmp_path / "pyproject.toml").write_text("kaputt = [", encoding="utf-8")
+    spec = adapters.AdapterSpec(id="kaputt", stage="transcribers", path=tmp_path)
+    with pytest.raises(RuntimeError, match="kaputt"):
+        adapters.setup_adapter(spec)

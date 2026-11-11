@@ -38,7 +38,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
   - Verify: `uv run pytest tests/test_adapters.py`
   - Dependencies: 1 · Files: `src/stickler/adapters.py`, `adapters/_common/*`, Tests/Fixtures
 
-- [ ] **Task 4: Transkriber-Adapter `adt_str` (CPU)** (M)
+- [x] **Task 4: Transkriber-Adapter `adt_str` (CPU)** (M)
   - Acceptance:
     - `stickler setup --adapter adt_str` baut die Umgebung und lädt `setting-tau-0.8`.
     - `run.py` schreibt `drums.mid` mit GM-Pitches und `meta.json`.

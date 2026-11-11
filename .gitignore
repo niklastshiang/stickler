@@ -14,3 +14,4 @@ __pycache__/
 .coverage
 coverage.xml
 tests/fixtures/**/uv.lock
+tests/fixtures/**/.setup-done

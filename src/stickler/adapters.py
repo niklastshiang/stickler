@@ -96,3 +96,26 @@ def run_adapter(
         return _fail(out_dir, f"{spec.id}: {spec.expected_output} oder meta.json fehlt")
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     return AdapterResult(ok=True, output=output, meta=meta, error=None)
+
+
+def setup_adapter(spec: AdapterSpec) -> None:
+    """Baut die uv-Umgebung des Adapters und führt ggf. dessen setup.py aus (Gewichte laden)."""
+    steps = [["uv", "sync", "--quiet", "--project", str(spec.path)]]
+    if (spec.path / "setup.py").exists():
+        steps.append(
+            [
+                "uv",
+                "run",
+                "--quiet",
+                "--project",
+                str(spec.path),
+                "python",
+                str(spec.path / "setup.py"),
+            ]
+        )
+    for cmd in steps:
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
+            raise RuntimeError(f"Setup von {spec.id} fehlgeschlagen:\n{tail}")
+    log.info("%s: Setup fertig", spec.id)

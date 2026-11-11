@@ -29,3 +29,16 @@ def fetch(name: str, data_dir: DataDir = Path("data")) -> None:
         typer.echo(f"Fehler: {exc}", err=True)
         raise typer.Exit(1) from exc
     typer.echo(f"{name}: {count} Tracks in {data_dir / name}")
+
+
+@app.command()
+def setup(
+    adapter: Annotated[str | None, typer.Option(help="Adapter-ID; ohne Angabe alle")] = None,
+) -> None:
+    """Adapter-Umgebung bauen und Gewichte laden."""
+    try:
+        done = api.setup_adapters(adapter)
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Fehler: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Eingerichtet: {', '.join(done)}")

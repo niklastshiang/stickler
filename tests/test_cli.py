@@ -38,3 +38,12 @@ def test_unknown_dataset_gives_error(tmp_path):
     result = CliRunner().invoke(cli.app, ["fetch", "gibtsnicht", "--data-dir", str(tmp_path)])
     assert result.exit_code != 0
     assert "gibtsnicht" in result.output
+
+
+def test_setup_delegates_to_api(monkeypatch):
+    calls = []
+    monkeypatch.setattr(api, "setup_adapters", lambda adapter: calls.append(adapter) or [adapter])
+    result = CliRunner().invoke(cli.app, ["setup", "--adapter", "adt_str"])
+    assert result.exit_code == 0, result.output
+    assert calls == ["adt_str"]
+    assert "adt_str" in result.output
