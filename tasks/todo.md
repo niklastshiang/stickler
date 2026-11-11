@@ -64,7 +64,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
 
 ## Phase 2: GPU (früh, weil riskant)
 
-- [ ] **Task 6: ROCm-Spike und `stickler doctor`** (M)
+- [x] **Task 6: ROCm-Spike und `stickler doctor`** (M)
   - Acceptance:
     - `setup --device rocm` installiert `torch[device-gfx1152]` in die Umgebung von `adt_str`.
     - `doctor` meldet GPU, Umgebungen, HF-Login und MuseScore.

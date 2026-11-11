@@ -42,10 +42,12 @@ def test_unknown_dataset_gives_error(tmp_path):
 
 def test_setup_delegates_to_api(monkeypatch):
     calls = []
-    monkeypatch.setattr(api, "setup_adapters", lambda adapter: calls.append(adapter) or [adapter])
-    result = CliRunner().invoke(cli.app, ["setup", "--adapter", "adt_str"])
+    monkeypatch.setattr(
+        api, "setup_adapters", lambda adapter, device: calls.append((adapter, device)) or [adapter]
+    )
+    result = CliRunner().invoke(cli.app, ["setup", "--adapter", "adt_str", "--device", "rocm"])
     assert result.exit_code == 0, result.output
-    assert calls == ["adt_str"]
+    assert calls == [("adt_str", "rocm")]
     assert "adt_str" in result.output
 
 
@@ -77,3 +79,14 @@ def test_run_and_eval_delegate_to_api(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["eval"])
     assert result.exit_code == 0, result.output
     assert "adt_str" in result.output and "0.700" in result.output
+
+
+def test_doctor_prints_checks(monkeypatch):
+    from stickler.doctor import Check
+
+    monkeypatch.setattr(
+        api, "run_doctor", lambda: [Check("gpu", True, "AMD"), Check("x", False, "fehlt")]
+    )
+    result = CliRunner().invoke(cli.app, ["doctor"])
+    assert result.exit_code == 0
+    assert "✓ gpu" in result.output and "✗ x" in result.output

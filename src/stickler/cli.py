@@ -34,10 +34,11 @@ def fetch(name: str, data_dir: DataDir = Path("data")) -> None:
 @app.command()
 def setup(
     adapter: Annotated[str | None, typer.Option(help="Adapter-ID; ohne Angabe alle")] = None,
+    device: Annotated[str, typer.Option(help="cpu | rocm (AMD-GPU)")] = "cpu",
 ) -> None:
     """Adapter-Umgebung bauen und Gewichte laden."""
     try:
-        done = api.setup_adapters(adapter)
+        done = api.setup_adapters(adapter, device=device)
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Fehler: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -80,3 +81,10 @@ def eval_cmd() -> None:
             f"{s['micro_f1']:9.3f} {s['macro_f1']:9.3f}  "
             f"({s['tracks']} Tracks, {s['errors']} Fehler)"
         )
+
+
+@app.command("doctor")
+def doctor_cmd() -> None:
+    """Systemprüfung: GPU, Adapter-Umgebungen, Gewichte, HF-Login, MuseScore, Datensätze."""
+    for check in api.run_doctor():
+        typer.echo(f"{'✓' if check.ok else '✗'} {check.name:22} {check.detail}")

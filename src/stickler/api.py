@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from stickler import adapters, runner
+from stickler import adapters, doctor, runner
 from stickler.classes import load_schemes
 from stickler.datasets import mdb
 from stickler.results import summarize, write_csv
@@ -63,14 +63,22 @@ def fetch_dataset(name: str, data_dir: Path) -> int:
     raise ValueError(f"Datensatz {name!r} unbekannt (verfügbar: {', '.join(DATASETS)})")
 
 
-def setup_adapters(adapter: str | None, adapters_root: Path = ADAPTERS_ROOT) -> list[str]:
-    """Richtet einen Adapter (oder mit None alle) ein; gibt die eingerichteten IDs zurück."""
+def setup_adapters(
+    adapter: str | None, device: str = "cpu", adapters_root: Path = ADAPTERS_ROOT
+) -> list[str]:
+    """Richtet einen Adapter (oder mit None alle) für cpu oder rocm ein; gibt die IDs zurück.
+    Bei rocm ohne Adapter-Angabe werden nur Adapter mit ROCm-Deklaration eingerichtet."""
     registry = adapters.discover(adapters_root)
     if adapter is not None and adapter not in registry:
         raise ValueError(f"Adapter {adapter!r} unbekannt (verfügbar: {', '.join(registry)})")
-    ids = [adapter] if adapter else sorted(registry)
+    if adapter:
+        ids = [adapter]
+    elif device == "rocm":
+        ids = sorted(i for i, spec in registry.items() if adapters.rocm_config(spec))
+    else:
+        ids = sorted(registry)
     for adapter_id in ids:
-        adapters.setup_adapter(registry[adapter_id])
+        adapters.setup_adapter(registry[adapter_id], device=device)
     return ids
 
 
@@ -128,3 +136,10 @@ def evaluate_benchmark(
     write_csv(results_dir / "metrics.csv", rows)
     write_csv(results_dir / "summary.csv", summary)
     return summary
+
+
+def run_doctor(
+    adapters_root: Path = ADAPTERS_ROOT, data_dir: Path = DATA_DIR
+) -> list[doctor.Check]:
+    """Prüft GPU, Adapter, Gewichte, Hugging-Face-Login, MuseScore und Datensätze."""
+    return doctor.run_all(adapters_root, data_dir)

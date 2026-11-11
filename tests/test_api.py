@@ -26,10 +26,18 @@ def test_setup_adapters_selects_one_or_all(monkeypatch, tmp_path):
         d.mkdir(parents=True)
         (d / "run.py").write_text("", encoding="utf-8")
     done = []
-    monkeypatch.setattr(adapters, "setup_adapter", lambda spec: done.append(spec.id))
+    monkeypatch.setattr(
+        adapters, "setup_adapter", lambda spec, device="cpu": done.append((spec.id, device))
+    )
     assert api.setup_adapters("a", adapters_root=tmp_path) == ["a"]
     assert api.setup_adapters(None, adapters_root=tmp_path) == ["a", "b"]
-    assert done == ["a", "a", "b"]
+    assert done == [("a", "cpu"), ("a", "cpu"), ("b", "cpu")]
+    # rocm ohne Angabe: nur Adapter mit [tool.stickler.rocm]
+    (tmp_path / "transcribers" / "b" / "pyproject.toml").write_text(
+        '[tool.stickler.rocm]\nindex = "i"\nreplace = []\npackages = []\n', encoding="utf-8"
+    )
+    (tmp_path / "transcribers" / "a" / "pyproject.toml").write_text("", encoding="utf-8")
+    assert api.setup_adapters(None, device="rocm", adapters_root=tmp_path) == ["b"]
     with pytest.raises(ValueError, match="zzz"):
         api.setup_adapters("zzz", adapters_root=tmp_path)
 
@@ -106,3 +114,8 @@ def test_missing_dataset_raises(monkeypatch, tmp_path):
     monkeypatch.setattr(mdb_mod, "tracks", lambda target: [])
     with pytest.raises(ValueError, match="stickler fetch mdb"):
         api.run_benchmark(_bench(tmp_path), data_dir=tmp_path, cache_dir=tmp_path)
+
+
+def test_run_doctor_returns_checks(tmp_path):
+    names = [c.name for c in api.run_doctor(adapters_root=tmp_path, data_dir=tmp_path)]
+    assert names[0] == "gpu" and "datensatz mdb" in names
