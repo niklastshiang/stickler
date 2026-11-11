@@ -107,12 +107,16 @@ ruff mit Standardregeln und Zeilenlänge 100. Durchgehend Type Hints, `dataclass
 @dataclass(frozen=True)
 class Onsets:
     """Onset-Zeiten in Sekunden je Instrumentenklasse."""
+
     by_class: dict[str, np.ndarray]
+
 
 def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
     """Precision/Recall/F1 je Klasse nach mir_eval.onset (Standard: ±50 ms)."""
     return {
-        cls: PRF(*mir_eval.onset.f_measure(ref.by_class[cls], est.by_class.get(cls, EMPTY), window))[::-1]
+        cls: PRF(
+            *mir_eval.onset.f_measure(ref.by_class[cls], est.by_class.get(cls, EMPTY), window)
+        )[::-1]
         for cls in ref.by_class
     }
 ```

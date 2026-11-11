@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Blockiert Commits, solange eine Prüfung aus CONSTRAINTS.md rot ist.
+exec scripts/check.sh task
