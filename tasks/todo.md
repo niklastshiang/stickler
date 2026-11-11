@@ -11,7 +11,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
 
 ## Phase 1: Durchstich (`none` × `adt_str` auf MDB)
 
-- [ ] **Task 1: Klassen-Mapping und Bewertung** (M)
+- [x] **Task 1: Klassen-Mapping und Bewertung** (M)
   - Acceptance:
     - `Onsets`-Datenklasse.
     - `config/classes.yaml` + `classes.py` bilden GM-Pitches auf das 5er-Schema (KD/SD/TT/HH/CY) und das 3er-Schema (KD/SD/HH) ab.

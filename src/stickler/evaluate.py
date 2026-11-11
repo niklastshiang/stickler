@@ -1,0 +1,63 @@
+"""Bewertung nach mir_eval: Precision/Recall/F1 je Klasse, Mikro und Makro."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import mir_eval
+import numpy as np
+
+from stickler.classes import Onsets
+
+# Toleranzfenster ±50 ms, Standard in der ADT-Literatur (MDB, ENST, ADTOF).
+WINDOW = 0.05
+_EMPTY = np.empty(0)
+
+
+@dataclass(frozen=True)
+class PRF:
+    tp: int
+    fp: int
+    fn: int
+
+    @property
+    def precision(self) -> float:
+        return self.tp / (self.tp + self.fp) if self.tp + self.fp else 0.0
+
+    @property
+    def recall(self) -> float:
+        return self.tp / (self.tp + self.fn) if self.tp + self.fn else 0.0
+
+    @property
+    def f1(self) -> float:
+        p, r = self.precision, self.recall
+        return 2 * p * r / (p + r) if p + r else 0.0
+
+
+@dataclass(frozen=True)
+class Scores:
+    per_class: dict[str, PRF]
+    micro: PRF
+    # Mittel der F1-Werte über Klassen mit Referenz-Ereignissen; None, wenn es keine gibt.
+    macro_f1: float | None
+
+
+def _match(ref: np.ndarray, est: np.ndarray, window: float) -> PRF:
+    tp = len(mir_eval.util.match_events(ref, est, window)) if ref.size and est.size else 0
+    return PRF(tp=tp, fp=int(est.size) - tp, fn=int(ref.size) - tp)
+
+
+def score(ref: Onsets, est: Onsets, window: float = WINDOW) -> Scores:
+    """Vergleicht geschätzte mit Referenz-Onsets; jede Schätzung trifft höchstens eine Referenz."""
+    classes = list(ref.by_class) + [c for c in est.by_class if c not in ref.by_class]
+    per_class = {
+        c: _match(ref.by_class.get(c, _EMPTY), est.by_class.get(c, _EMPTY), window) for c in classes
+    }
+    micro = PRF(
+        tp=sum(p.tp for p in per_class.values()),
+        fp=sum(p.fp for p in per_class.values()),
+        fn=sum(p.fn for p in per_class.values()),
+    )
+    present = [per_class[c].f1 for c in classes if ref.by_class.get(c, _EMPTY).size]
+    macro = float(np.mean(present)) if present else None
+    return Scores(per_class=per_class, micro=micro, macro_f1=macro)

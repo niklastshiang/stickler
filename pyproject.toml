@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "Benchmark für automatische Schlagzeug-Transkription mit Open-Source-Modellen"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "mir-eval>=0.8.2",
+    "numpy>=2.5.4",
+    "pyyaml>=6.0.3",
+]
 
 [project.scripts]
 stickler = "stickler.cli:app"

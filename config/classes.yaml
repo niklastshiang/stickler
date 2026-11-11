@@ -1,0 +1,14 @@
+# GM-Drum-Pitches → Instrumentenklassen.
+# Pitches, die in keinem Schema vorkommen (z. B. Cowbell 56, Tambourine 54), werden ignoriert.
+# Ride zählt zu CY, wie bei ADTOF und in der ADT-Literatur üblich.
+schemes:
+  "5":
+    KD: [35, 36]                      # Bass Drum
+    SD: [37, 38, 40]                  # Side Stick, Snare, Electric Snare
+    TT: [41, 43, 45, 47, 48, 50]      # Toms
+    HH: [42, 44, 46]                  # Hi-Hat geschlossen, Pedal, offen
+    CY: [49, 51, 52, 53, 55, 57, 59]  # Crash, Ride, China, Ride Bell, Splash
+  "3":
+    KD: [35, 36]
+    SD: [37, 38, 40]
+    HH: [42, 44, 46]
