@@ -59,3 +59,13 @@ def test_transcriber_produces_midi(adapter_id, drum_clip, tmp_path):
     assert notes, "keine Noten erkannt"
     assert all(35 <= pitch <= 81 for _, pitch in notes), "Pitches außerhalb des GM-Drum-Bereichs"
     assert json.loads((tmp_path / adapter_id / "meta.json").read_text())["device"] == "cpu"
+
+
+@pytest.mark.parametrize("adapter_id", ["demucs"])
+def test_separator_produces_drum_stem(adapter_id, drum_clip, tmp_path):
+    spec = adapters.discover(ROOT / "adapters")[adapter_id]
+    result = adapters.run_adapter(spec, drum_clip, tmp_path / adapter_id, device="cpu")
+    assert result.ok, result.error
+    with wave.open(str(result.output)) as w:
+        seconds = w.getnframes() / w.getframerate()
+    assert seconds == pytest.approx(10.0, abs=0.1)

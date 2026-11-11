@@ -3,7 +3,7 @@
 #              oder ein Adapter aus adapters/separators/
 # Transkriber: Adapter aus adapters/transcribers/
 datasets: [mdb]
-separators: [none, oracle]
+separators: [none, oracle, demucs]
 transcribers: [adt_str]
 device: auto          # auto | cpu | gpu
 schemes: ["5", "3"]   # aus config/classes.yaml

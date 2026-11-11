@@ -75,7 +75,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
 
 ## Phase 3: Kandidaten in die Breite
 
-- [ ] **Task 7: Separator `demucs` (adefossez-Fork, `htdemucs_ft`)** (S)
+- [x] **Task 7: Separator `demucs` (adefossez-Fork, `htdemucs_ft`)** (S)
   - Acceptance: liefert `drums.wav`, cpu und rocm. README mit Quelle, Commit und Lizenz.
   - Verify: `pytest -m adapters -k demucs`, Lauf `demucs` × `adt_str` auf MDB
   - Dependencies: 5 (6 für rocm) · Files: `adapters/separators/demucs/*`, `config/benchmark.yaml`
