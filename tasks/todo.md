@@ -4,7 +4,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
 
 ## Phase 0: Doku
 
-- [ ] **Task 0: ADRs für getroffene Entscheidungen** (XS)
+- [x] **Task 0: ADRs für getroffene Entscheidungen** (XS)
   - Acceptance: `docs/adr/0001-demucs-fork.md` (adefossez/demucs statt archiviertem Repo) und `0002-nc-lizenzen.md` (NC-Gewichte für private Nutzung erlaubt), jeweils mit Kontext, Entscheidung und Konsequenzen.
   - Verify: Dateien vorhanden, in SPEC.md verlinkt.
   - Dependencies: keine · Files: `docs/adr/*`, `SPEC.md`

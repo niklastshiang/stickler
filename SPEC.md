@@ -143,6 +143,10 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 8. `stickler doctor` erkennt die Radeon 840M. Mindestens die Torch-Adapter (Demucs, RoFormer, ADT_STR, MuScriptor) laufen mit `--device gpu`. Die Ergebnisse weichen von CPU-Läufen um höchstens 0,01 F1 ab. Laufzeiten CPU vs. GPU stehen im Report.
 9. Die CLI enthält keine Logik außer Argument-Parsing und Ausgabe. Alles läuft über `stickler.api` (per Test geprüft), damit die GTK-Oberfläche später darauf aufsetzen kann.
 
+## Entscheidungen (ADRs)
+- [0001 Demucs über den Fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
+- [0002 NC-Lizenzen erlaubt](docs/adr/0002-nc-lizenzen.md)
+
 ## Geklärte Fragen
 1. MuScriptor: Der User akzeptiert die Lizenz auf Hugging Face und loggt sich per `uvx hf auth login` ein.
 2. ENST-Drums: Ich formuliere den Antrag vor, der User stellt ihn. Bis die Daten da sind, laufen MDB und die eigenen Songs.
