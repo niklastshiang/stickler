@@ -134,3 +134,21 @@ def test_score_records_rows(setup):
     assert by_class["macro"]["f1"] == pytest.approx(2 / 3)
     broken = [r for r in rows if r["transcriber"] == "broken"]
     assert broken and all(r["error"] for r in broken)
+
+
+def test_rocm_env_changes_cache_key(setup):
+    spec = setup["registry"]["dummy"]
+    audio = setup["tracks"]["fake"][0].mix
+    without_env = runner.cache_dir_for(setup["cache"], spec, audio, "gpu")
+    py = spec.path / adapters.ROCM_ENV / "bin" / "python"
+    py.parent.mkdir(parents=True)
+    try:
+        py.write_text("", encoding="utf-8")
+        assert runner.cache_dir_for(setup["cache"], spec, audio, "gpu") != without_env
+        assert runner.cache_dir_for(setup["cache"], spec, audio, "cpu") == runner.cache_dir_for(
+            setup["cache"], spec, audio, "cpu"
+        )
+    finally:
+        import shutil
+
+        shutil.rmtree(spec.path / adapters.ROCM_ENV)

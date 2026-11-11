@@ -4,12 +4,11 @@ version = "0.1.0"
 description = "Stickler-Adapter für ADT_STR (Melucci, Merialdo, Akama 2026)"
 requires-python = ">=3.12,<3.13"
 # Versionen wie im offiziellen pyproject.toml von pier-maker92/ADT_STR (v1.0.0),
-# reduziert auf die Imports des Inferenz-Pfads.
+# reduziert auf die Imports des Inferenz-Pfads. torchcodec entfällt: Audio lädt soundfile.
 dependencies = [
     "stickler-adapter",
     "torch==2.8.0",
     "torchaudio==2.8.0",
-    "torchcodec>=0.7,<0.8",
     "transformers[torch]",
     "safetensors",
     "omegaconf",
@@ -34,3 +33,14 @@ torchaudio = { index = "pytorch-cpu" }
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
+
+# GPU-Variante (stickler setup --adapter adt_str --device rocm), siehe docs/adr/0003-rocm-kanal.md
+[tool.stickler.rocm]
+index = "https://repo.amd.com/rocm/whl-multi-arch/"
+replace = ["torch", "torchaudio"]
+# Gemessen (MDB Rock/Punk, Drum-Stem): GPU liefert identische Noten, braucht aber 1,5–1,7× länger
+prefer_gpu = false
+packages = [
+    "torch[device-gfx1152]==2.12.0+rocm7.14.1",
+    "torchaudio==2.11.0+rocm7.14.1",
+]

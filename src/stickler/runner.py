@@ -67,9 +67,12 @@ def _adapter_digest(spec: adapters.AdapterSpec) -> str:
 
 
 def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path, device: str) -> Path:
-    """Cache-Ordner: hängt vom Eingabe-Inhalt, vom Adapter-Code und vom Gerät ab."""
+    """Cache-Ordner: hängt vom Eingabe-Inhalt, vom Adapter-Code, vom Gerät und von der
+    Umgebung (cpu/rocm) ab, denn GPU- und CPU-Ergebnisse können minimal abweichen."""
+    variant = adapters.env_variant(spec, device) or "fehlt"
+    env = device if variant == "cpu" else f"{device}|{variant}"  # CPU-Schlüssel wie bisher
     key = hashlib.sha1(
-        f"{_sha1_file(audio)}|{spec.id}|{_adapter_digest(spec)}|{device}".encode()
+        f"{_sha1_file(audio)}|{spec.id}|{_adapter_digest(spec)}|{env}".encode()
     ).hexdigest()[:16]
     return cache / spec.id / key
 
