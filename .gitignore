@@ -1,0 +1,13 @@
+data/
+cache/
+results/
+.venv/
+adapters/**/.venv/
+adapters/**/weights/
+__pycache__/
+*.wav
+*.mp3
+*.flac
+*.ckpt
+*.pth
+*.safetensors
