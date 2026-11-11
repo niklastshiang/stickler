@@ -163,13 +163,18 @@ def check(diff: str) -> list[tuple[str, str, str]]:
     for f in deleted:
         if is_test(f):
             flag("test-deleted", f, "file deleted")
+    # Eine geänderte Assertion (entfernt + neu in derselben Datei) ist kein Abschwächen;
+    # gemeldet wird, wenn eine Testdatei unterm Strich Assertions verliert.
+    assertion = re.compile(r"\bassert\b|pytest\.raises|approx\(")
+    lost: dict[str, list[str]] = {}
     for ln in removed:
-        if (
-            is_test(ln.file)
-            and ln.file not in deleted
-            and re.search(r"\bassert\b|pytest\.raises|approx\(", ln.text)
-        ):
-            flag("assertion-removed", ln.file, ln.text)
+        if is_test(ln.file) and ln.file not in deleted and assertion.search(ln.text):
+            lost.setdefault(ln.file, []).append(ln.text)
+    for path, texts in lost.items():
+        gained = sum(1 for a in added if a.file == path and assertion.search(a.text))
+        if len(texts) > gained:
+            for text in texts:
+                flag("assertion-removed", path, text)
 
     removed_rules = [r for r in removed if is_constraints(r.file) and rule_key(r.text) is not None]
     added_rules = [a for a in added if is_constraints(a.file) and rule_key(a.text) is not None]

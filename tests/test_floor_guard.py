@@ -119,3 +119,15 @@ def test_docs_may_name_patterns():
         )
         == set()
     )
+
+
+def test_changed_assertion_is_not_a_removal():
+    diff = diff_for("tests/test_a.py", ["    assert f() == {1, 2}"], ["    assert f() == {1}"])
+    assert rules(diff) == set()
+
+
+def test_net_loss_of_assertions_is_flagged():
+    diff = diff_for(
+        "tests/test_a.py", ["    assert f() == 1"], ["    assert f() == 1", "    assert g() == 2"]
+    )
+    assert "assertion-removed" in rules(diff)
