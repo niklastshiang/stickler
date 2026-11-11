@@ -2,7 +2,7 @@ data/
 cache/
 results/
 .venv/
-adapters/**/.venv/
+**/.venv/
 adapters/**/weights/
 __pycache__/
 *.wav
@@ -13,3 +13,4 @@ __pycache__/
 *.safetensors
 .coverage
 coverage.xml
+tests/fixtures/**/uv.lock

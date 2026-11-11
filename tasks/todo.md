@@ -30,7 +30,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
     - `uv run stickler fetch mdb` meldet 23 Tracks.
   - Dependencies: 1 · Files: `src/stickler/{api,cli}.py`, `src/stickler/datasets/mdb.py`, Tests
 
-- [ ] **Task 3: Adapter-Vertrag und Dummy-Adapter** (M)
+- [x] **Task 3: Adapter-Vertrag und Dummy-Adapter** (M)
   - Acceptance:
     - `adapters.py` ruft Adapter per `uv run --project` auf, liest `meta.json` und protokolliert Fehler, ohne abzubrechen.
     - `adapters/_common` stellt Geräte-Wahl, Zeitmessung und Peak-RSS bereit.
