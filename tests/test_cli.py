@@ -47,3 +47,33 @@ def test_setup_delegates_to_api(monkeypatch):
     assert result.exit_code == 0, result.output
     assert calls == ["adt_str"]
     assert "adt_str" in result.output
+
+
+def test_run_and_eval_delegate_to_api(monkeypatch, tmp_path):
+    from stickler.runner import Record
+
+    rec = Record("mdb", "t", "none", "adt_str", None, None, None, None, "kaputt")
+    monkeypatch.setattr(
+        api, "run_benchmark", lambda cfg, device=None, progress=None: progress(1, 1, "x") or [rec]
+    )
+    result = CliRunner().invoke(cli.app, ["run", "--device", "cpu"])
+    assert result.exit_code == 0, result.output
+    assert "1 Kombinationen, 1 Fehler" in result.output
+    assert "kaputt" in result.output
+
+    summary = [
+        {
+            "dataset": "mdb",
+            "separator": "none",
+            "transcriber": "adt_str",
+            "scheme": "5",
+            "tracks": 23,
+            "errors": 0,
+            "micro_f1": 0.7,
+            "macro_f1": 0.6,
+        }
+    ]
+    monkeypatch.setattr(api, "evaluate_benchmark", lambda cfg: summary)
+    result = CliRunner().invoke(cli.app, ["eval"])
+    assert result.exit_code == 0, result.output
+    assert "adt_str" in result.output and "0.700" in result.output

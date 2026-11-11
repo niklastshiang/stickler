@@ -42,3 +42,41 @@ def setup(
         typer.echo(f"Fehler: {exc}", err=True)
         raise typer.Exit(1) from exc
     typer.echo(f"Eingerichtet: {', '.join(done)}")
+
+
+Device = Annotated[str | None, typer.Option(help="auto | cpu | gpu (überschreibt die Config)")]
+
+
+@app.command("run")
+def run_cmd(device: Device = None) -> None:
+    """Benchmark-Matrix rechnen (Ergebnisse werden gecacht)."""
+
+    def progress(done: int, total: int, label: str) -> None:
+        typer.echo(f"[{done}/{total}] {label}")
+
+    try:
+        records = api.run_benchmark(api.CONFIG, device=device, progress=progress)
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Fehler: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    failed = [r for r in records if not r.ok]
+    typer.echo(f"{len(records)} Kombinationen, {len(failed)} Fehler")
+    for r in failed:
+        typer.echo(f"  {r.dataset}/{r.track} {r.separator} → {r.transcriber}: {r.error}")
+
+
+@app.command("eval")
+def eval_cmd() -> None:
+    """Gecachte Ergebnisse bewerten → results/metrics.csv und results/summary.csv."""
+    try:
+        summary = api.evaluate_benchmark(api.CONFIG)
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Fehler: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"{'Datensatz':10} {'Separator':10} {'Transkriber':14} Schema  Micro-F1  Macro-F1")
+    for s in sorted(summary, key=lambda s: -s["macro_f1"]):
+        typer.echo(
+            f"{s['dataset']:10} {s['separator']:10} {s['transcriber']:14} {s['scheme']:6} "
+            f"{s['micro_f1']:9.3f} {s['macro_f1']:9.3f}  "
+            f"({s['tracks']} Tracks, {s['errors']} Fehler)"
+        )

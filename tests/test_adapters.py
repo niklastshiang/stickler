@@ -17,7 +17,7 @@ def registry():
 
 
 def test_discover_finds_adapters_by_folder(registry):
-    assert set(registry) == {"dummy", "broken"}
+    assert set(registry) == {"dummy", "broken", "copysep"}
     assert registry["dummy"].stage == "transcribers"
     assert registry["dummy"].expected_output == "drums.mid"
 

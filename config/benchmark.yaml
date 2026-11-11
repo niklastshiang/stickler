@@ -1,0 +1,9 @@
+# Welche Kombinationen `stickler run` / `stickler eval` rechnen.
+# Separatoren: none (Original-Mix), oracle (isolierter Drum-Stem des Datensatzes, Obergrenze)
+#              oder ein Adapter aus adapters/separators/
+# Transkriber: Adapter aus adapters/transcribers/
+datasets: [mdb]
+separators: [none, oracle]
+transcribers: [adt_str]
+device: auto          # auto | cpu | gpu
+schemes: ["5", "3"]   # aus config/classes.yaml
