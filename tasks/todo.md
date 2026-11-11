@@ -20,7 +20,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
   - Verify: `uv run pytest tests/test_evaluate.py tests/test_classes.py`
   - Dependencies: keine · Files: `src/stickler/{classes,evaluate}.py`, `config/classes.yaml`, Tests
 
-- [ ] **Task 2: MDB-Drums-Loader und `stickler fetch mdb`** (M)
+- [x] **Task 2: MDB-Drums-Loader und `stickler fetch mdb`** (M)
   - Acceptance:
     - `api.fetch_dataset("mdb")` lädt MDB Drums nach `data/mdb/`, und zwar idempotent.
     - `datasets/mdb.py` liefert pro Track: Mix-Pfad, Drum-Stem-Pfad und Referenz als `Onsets`.

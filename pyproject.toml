@@ -8,6 +8,7 @@ dependencies = [
     "mir-eval>=0.8.2",
     "numpy>=2.5.4",
     "pyyaml>=6.0.3",
+    "typer>=0.29.1",
 ]
 
 [project.scripts]
