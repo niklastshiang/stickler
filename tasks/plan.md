@@ -1,41 +1,41 @@
 # Implementation Plan: Stickler
 
 ## Overview
-Stickler vergleicht Pipelines aus Drum-Stem-Trennung und Schlagzeug-Transkription auf MDB Drums, später ENST, und auf eigenen Songs. Die beste Pipeline erzeugt MusicXML. Grundlage ist [SPEC.md](../SPEC.md), die Qualitätsgrenzen stehen in [CONSTRAINTS.md](../CONSTRAINTS.md). Die Aufgaben stehen in [todo.md](todo.md).
+Stickler compares pipelines of drum-stem separation and drum transcription on MDB Drums, later ENST, and on your own songs. The best pipeline produces MusicXML. The basis is [SPEC.md](../SPEC.md); the quality limits are in [CONSTRAINTS.md](../CONSTRAINTS.md). The tasks are in [todo.md](todo.md).
 
 ## Architecture Decisions
-- **Adapter als Subprozess mit eigener uv-Umgebung:** Die Modelle haben unverträgliche Abhängigkeiten (Torch-Versionen, ROCm vs. CPU). Der Harness importiert nie Modellcode, er redet nur über Dateien (`drums.wav`, `drums.mid`, `beats.json`, `meta.json`) mit ihnen.
-- **Bibliotheks-API zuerst:** `stickler.api` enthält die gesamte Logik, die CLI ist eine dünne Schicht. So kann die spätere GTK-Oberfläche dieselbe API nutzen.
-- **Einheitliches Zwischenformat `Onsets`:** Onset-Zeiten pro Klasse (5er-/3er-Schema). Alle Referenzen und Modellausgaben werden darauf abgebildet, und nur darauf wird bewertet (`mir_eval.onset`, ±50 ms).
-- **Cache-Schlüssel:** Hash aus Audio-Datei, Adapter-ID, Adapter-Version und Gerät. Ein zweiter Lauf rechnet nichts neu.
-- **Vertikal schneiden:** Zuerst läuft eine Kombination (`none` × `adt_str`) komplett von Daten bis Metrik. Danach kommen Kandidaten in die Breite.
-- **Riskantes früh:** Die ROCm-GPU wird gleich nach dem ersten Durchstich getestet (Task 6), noch vor den übrigen Adaptern.
+- **Adapters as subprocesses with their own uv environment:** The models have incompatible dependencies (Torch versions, ROCm vs. CPU). The harness never imports model code; it only communicates with them via files (`drums.wav`, `drums.mid`, `beats.json`, `meta.json`).
+- **Library API first:** `stickler.api` contains all the logic; the CLI is a thin layer. This way the later GTK interface can use the same API.
+- **Unified intermediate format `Onsets`:** Onset times per class (5-/3-class scheme). All references and model outputs are mapped onto it, and scoring is done only on it (`mir_eval.onset`, ±50 ms).
+- **Cache key:** Hash of audio file, adapter ID, adapter version and device. A second run recomputes nothing.
+- **Vertical slicing:** First, one combination (`none` × `adt_str`) runs end to end, from data to metric. Then candidates are added across the board.
+- **Risky things early:** The ROCm GPU is tested right after the first vertical slice (task 6), before the other adapters.
 
-## Phasen (Index; Details in todo.md)
-| Phase | Tasks | Ergebnis |
+## Phases (index; details in todo.md)
+| Phase | Tasks | Result |
 |---|---|---|
-| 0 Doku | 0 | ADRs für bereits getroffene Entscheidungen |
-| 1 Durchstich | 1–5 | `none` × `adt_str` auf MDB → `metrics.csv` |
-| 2 GPU | 6 | ROCm auf gfx1152 läuft oder ist begründet verworfen (ADR) |
-| 3 Kandidaten | 7–12 | volle Matrix auf MDB |
-| 4 Report & eigene Songs | 13–16 | HTML-Report, Alignment eigener Songs, ENST-Antrag |
-| 5 Noten | 17–18 | `stickler notate` → MusicXML/PDF |
-| 6 Später | – | vorgemerkt: Release-Pipeline (Flatpak, AppImage), alles auf Englisch |
+| 0 Docs | 0 | ADRs for decisions already made |
+| 1 Vertical slice | 1–5 | `none` × `adt_str` on MDB → `metrics.csv` |
+| 2 GPU | 6 | ROCm on gfx1152 works or is justifiably rejected (ADR) |
+| 3 Candidates | 7–12 | full matrix on MDB |
+| 4 Report & own songs | 13–16 | HTML report, alignment of own songs, ENST application |
+| 5 Notes | 17–18 | `stickler notate` → MusicXML/PDF |
+| 6 Later | – | noted for later: release pipeline (Flatpak, AppImage), everything in English |
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| ROCm-Wheels für gfx1152 laufen instabil | Mittel | CPU-Fallback bleibt Pflicht. Kanal 7.14 vs. 10.x im Spike vergleichen, Entscheidung per ADR |
-| YourMT3/ADTOF ohne offiziellen CLI | Mittel | Inferenz aus Space-/Notebook-Code nachbauen, Quelle und Commit pinnen. Scheitert das: Kandidat per ADR streichen |
-| MuScriptor gated | Niedrig | User loggt sich ein (zugesagt). `doctor` prüft den Login |
-| MDB-Daten stecken im Training einzelner Modelle | Mittel | Hinweis im Report. Die eigenen Songs gelten als sauberer Test |
-| Alignment eigener Songs scheitert an Beat-Fehlern | Mittel | Click-Check-WAV zum Abhören, manueller Anker in der YAML-Datei |
-| CPU-Laufzeit der Gesamtmatrix | Niedrig | Caching, Lauf über Nacht, GPU wo möglich |
+| ROCm wheels for gfx1152 run unstably | Medium | CPU fallback remains mandatory. Compare channels 7.14 vs. 10.x in the spike; decision via ADR |
+| YourMT3/ADTOF have no official CLI | Medium | Rebuild inference from the Space/notebook code; pin source and commit. If this fails: remove the candidate via ADR |
+| MuScriptor is gated | Low | User logs in (agreed). `doctor` checks the login |
+| MDB data is part of the training of individual models | Medium | Note in the report. The own songs count as the clean test |
+| Alignment of own songs fails on beat errors | Medium | Click-check WAV for listening, manual anchor in the YAML file |
+| CPU runtime of the full matrix | Low | Caching, overnight runs, GPU where possible |
 
-## Voraussetzungen durch den User
-- Bis Task 10: Lizenz für MuScriptor auf Hugging Face akzeptieren und `uvx hf auth login` ausführen.
-- Bis Task 15: mindestens einen Song aus `Projekte/Schlagzeug` in MuseScore nachbauen und als MIDI exportieren (Wiederholungen ausgeschrieben).
-- Optional: den ENST-Antrag (Entwurf aus Task 16) abschicken.
+## Prerequisites from the user
+- By task 10: accept the MuScriptor license on Hugging Face and run `uvx hf auth login`.
+- By task 15: rebuild at least one song from `Projekte/Schlagzeug` in MuseScore and export it as MIDI (repeats written out).
+- Optional: submit the ENST application (draft from task 16).
 
 ## Open Questions
-- keine. Der ROCm-Kanal wird in Task 6 entschieden.
+- none. The ROCm channel is decided in task 6.

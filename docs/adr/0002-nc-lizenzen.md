@@ -1,19 +1,19 @@
-# ADR 0002: Modellgewichte unter Non-Commercial-Lizenz sind erlaubt
+# ADR 0002: Model weights under non-commercial licenses are allowed
 
-- Status: angenommen
-- Datum: 2026-11-11
+- Status: accepted
+- Date: 2026-11-11
 
-## Kontext
-Einige der stärksten offenen Schlagzeug- und Mehrinstrumenten-Transkriber haben zwar offenen Code, ihre Gewichte stehen aber unter Non-Commercial-Lizenzen:
+## Context
+Some of the strongest open drum and multi-instrument transcribers have open code, but their weights are under non-commercial licenses:
 - ADTOF: CC BY-NC-SA 4.0
-- MuScriptor: Code MIT, Gewichte CC BY-NC 4.0, Download auf Hugging Face erst nach Zustimmung zur Lizenz
+- MuScriptor: code MIT, weights CC BY-NC 4.0, download on Hugging Face only after accepting the license
 
-Stickler wird ausschließlich privat genutzt.
+Stickler is used exclusively privately.
 
-## Entscheidung
-NC-lizenzierte Gewichte dürfen in den Benchmark aufgenommen werden, wenn Code und Gewichte öffentlich zugänglich sind. Closed-Source-Dienste und proprietäre APIs bleiben ausgeschlossen.
+## Decision
+NC-licensed weights may be included in the benchmark if code and weights are publicly accessible. Closed-source services and proprietary APIs remain excluded.
 
-## Konsequenzen
-- Jedes Adapter-README nennt die Lizenz von Code **und** Gewichten.
-- Der Report markiert NC-Modelle, damit bei einer späteren kommerziellen Nutzung (z. B. veröffentlichte GTK-App) klar ist, welche Pipelines dann wegfallen.
-- Gewichte werden nie ins Repository eingecheckt (CONSTRAINTS.md).
+## Consequences
+- Every adapter README names the license of the code **and** of the weights.
+- The report marks NC models, so that if Stickler is later used commercially (e.g. a published GTK app), it is clear which pipelines would drop out.
+- Weights are never checked into the repository (CONSTRAINTS.md).

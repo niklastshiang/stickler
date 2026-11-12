@@ -1,23 +1,23 @@
-# ADR 0004: RoFormer-Separator mit Checkpoint „BS-Roformer-SW“ über python-audio-separator
+# ADR 0004: RoFormer separator with checkpoint "BS-Roformer-SW" via python-audio-separator
 
-- Status: angenommen (Herkunft der Gewichte nur teilweise geklärt, siehe unten)
-- Datum: 2026-11-11
+- Status: accepted (origin of the weights only partially clarified, see below)
+- Date: 2026-11-11
 
-## Kontext
-Band-Split- und Mel-Band-RoFormer gelten in der Community als aktueller Stand der Musik-Quellentrennung. Die Architektur ist offen implementiert ([lucidrains/BS-RoFormer](https://github.com/lucidrains/BS-RoFormer), MIT). Trainierte Gewichte stammen dagegen fast immer aus der Community (ZFTurbo/MSST, MVSEP, UVR) und sind unterschiedlich gut dokumentiert. Stickler braucht einen Checkpoint mit **eigenem Drum-Stem**. Reine Vocal/Instrumental-Modelle helfen nicht.
+## Context
+In the community, Band-Split and Mel-Band RoFormer are considered the current state of the art in music source separation. The architecture is implemented openly ([lucidrains/BS-RoFormer](https://github.com/lucidrains/BS-RoFormer), MIT). Trained weights, however, almost always come from the community (ZFTurbo/MSST, MVSEP, UVR) and are documented to varying degrees. Stickler needs a checkpoint with its **own drum stem**. Pure vocal/instrumental models do not help.
 
-`python-audio-separator` 0.48.0 (MIT, 2026-10-29) listet unter 172 Modellen genau einen RoFormer mit eigenem Drum-Stem: **BS-Roformer-SW** von jarredou (6 Stems: bass, drums, guitar, other, piano, vocals). Die übrigen Treffer sind Demucs (eigener Adapter), MDX-Net 2021 (kuielab) und BS-Roformer-Viperx-1053, das nur „drum-bass“ gemeinsam trennt.
+`python-audio-separator` 0.48.0 (MIT, 2026-10-29) lists exactly one RoFormer with its own drum stem among 172 models: **BS-Roformer-SW** by jarredou (6 stems: bass, drums, guitar, other, piano, vocals). The other hits are Demucs (own adapter), MDX-Net 2021 (kuielab) and BS-Roformer-Viperx-1053, which separates only "drum-bass" jointly.
 
-## Entscheidung
-Adapter `roformer` = `audio-separator[cpu]==0.48.0` + `BS-Roformer-SW.ckpt`, Standardparameter der Bibliothek, nur der Stem „Drums“.
+## Decision
+Adapter `roformer` = `audio-separator[cpu]==0.48.0` + `BS-Roformer-SW.ckpt`, the library's default parameters, only the stem "Drums".
 
-## Herkunft und Lizenz (offen)
-- Autor laut audio-separator und MVSEP: jarredou. Das ursprüngliche Hugging-Face-Konto wurde laut [openmirlab/bs-roformer-infer](https://github.com/openmirlab/bs-roformer-infer) gelöscht (2026-06). Mirror: `enerjazzer/BS-ROFO-SW-Fixed`.
-- Lizenz: Nur eine Sekundärquelle nennt CC BY-NC-SA 4.0 ([Ryan5453/unblend](https://huggingface.co/Ryan5453/unblend)). Ein Originaltext wurde nicht gefunden. Nach ADR 0002 ist NC für private Nutzung zulässig.
-- Trainingsdaten: unbekannt. Eine Überschneidung mit MDB/MedleyDB ist nicht auszuschließen. Der Report kennzeichnet das.
-- Reproduzierbarkeit: audio-separator prüft den Download per SHA-256 (`24e7d35e…916e`).
+## Origin and License (open)
+- Author according to audio-separator and MVSEP: jarredou. According to [openmirlab/bs-roformer-infer](https://github.com/openmirlab/bs-roformer-infer), the original Hugging Face account was deleted (2026-06). Mirror: `enerjazzer/BS-ROFO-SW-Fixed`.
+- License: only one secondary source names CC BY-NC-SA 4.0 ([Ryan5453/unblend](https://huggingface.co/Ryan5453/unblend)). No original text was found. Under ADR 0002, NC is permitted for private use.
+- Training data: unknown. An overlap with MDB/MedleyDB cannot be ruled out. The report flags this.
+- Reproducibility: audio-separator verifies the download via SHA-256 (`24e7d35e…916e`).
 
-## Konsequenzen
-- Für eine spätere Veröffentlichung (z. B. GTK-App) ist dieser Checkpoint **ungeeignet**, solange die Lizenz nicht geklärt ist.
-- `audio-separator` 0.48.0 deklariert die Abhängigkeit `audioread` nicht, importiert sie aber. Der Adapter ergänzt sie.
-- Eigenes Training mit lucidrains/BS-RoFormer oder ZFTurbo/MSST wäre die lizenzsaubere Alternative. Auf der Radeon 840M ist das aber nicht realistisch (siehe ADR 0003).
+## Consequences
+- For a later publication (e.g. a GTK app), this checkpoint is **unsuitable** as long as the license is unclear.
+- `audio-separator` 0.48.0 does not declare the dependency `audioread`, but imports it. The adapter adds it.
+- Training our own model with lucidrains/BS-RoFormer or ZFTurbo/MSST would be the license-clean alternative. On the Radeon 840M, that is not realistic (see ADR 0003).

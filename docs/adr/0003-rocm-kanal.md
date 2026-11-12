@@ -1,26 +1,26 @@
-# ADR 0003: GPU über AMD-ROCm-Wheels (Kanal whl-multi-arch, ROCm 7.14.1, PyTorch 2.12)
+# ADR 0003: GPU via AMD ROCm wheels (channel whl-multi-arch, ROCm 7.14.1, PyTorch 2.12)
 
-- Status: angenommen
-- Datum: 2026-11-11
+- Status: accepted
+- Date: 2026-11-11
 
-## Kontext
-Der Rechner hat eine integrierte Radeon 840M (gfx1152, RDNA 3.5) und keine CUDA-GPU. AMD bietet PyTorch-Wheels mit gebündelter ROCm-Runtime an, die kein System-ROCm brauchen. Auf Bluefin/Silverblue ist das wichtig, weil das System unveränderlich ist. Es gibt zwei Kanäle: `repo.amd.com/rocm/whl-multi-arch/` (ROCm 7.13–7.14) und `stable.repo.amd.com/rocm/whl-next/` (ROCm 10.x).
+## Context
+The machine has an integrated Radeon 840M (gfx1152, RDNA 3.5) and no CUDA GPU. AMD offers PyTorch wheels with a bundled ROCm runtime that do not need a system ROCm. On Bluefin/Silverblue this matters, because the system is immutable. There are two channels: `repo.amd.com/rocm/whl-multi-arch/` (ROCm 7.13–7.14) and `stable.repo.amd.com/rocm/whl-next/` (ROCm 10.x).
 
 ## Spike (2026-11-11)
-- `torch[device-gfx1152]==2.12.0+rocm7.14.1` aus `whl-multi-arch`, Python 3.12, Kernel 7.2: `torch.cuda.is_available()` ist True, erkannt wird „AMD Radeon 840M Graphics (gfx1152)“. Ein Transformer-Layer läuft auf der GPU.
-- Matmul-Durchsatz: fp32 ~120–200 GFLOP/s, gleichauf mit der CPU. fp16 bis 1,4 TFLOP/s, bf16 bis 1,05 TFLOP/s.
-- ADT_STR auf MDB-Drum-Stems (Rock 13 s, Punk 29 s): Die GPU liefert **identische Noten** (F1-Abweichung 0,0), braucht aber 1,5–1,7× länger als die CPU (fp32, autoregressives Dekodieren in kleinen Batches).
-- Das PyPI-`torchcodec` ist gegen CUDA gebaut (`libnvrtc.so.13`), und AMD bietet kein ROCm-torchcodec an. Adapter laden Audio deshalb mit `soundfile`.
-- Der Kanal `whl-next` (ROCm 10.x) wurde nicht getestet, weil `whl-multi-arch` auf Anhieb lief.
+- `torch[device-gfx1152]==2.12.0+rocm7.14.1` from `whl-multi-arch`, Python 3.12, kernel 7.2: `torch.cuda.is_available()` is True, and "AMD Radeon 840M Graphics (gfx1152)" is detected. A transformer layer runs on the GPU.
+- Matmul throughput: fp32 ~120–200 GFLOP/s, on par with the CPU. fp16 up to 1.4 TFLOP/s, bf16 up to 1.05 TFLOP/s.
+- ADT_STR on MDB drum stems (Rock 13 s, Punk 29 s): the GPU produces **identical notes** (F1 deviation 0.0), but takes 1.5–1.7× as long as the CPU (fp32, autoregressive decoding in small batches).
+- The PyPI `torchcodec` is built against CUDA (`libnvrtc.so.13`), and AMD does not offer a ROCm build of torchcodec. Adapters therefore load audio with `soundfile`.
+- The `whl-next` channel (ROCm 10.x) was not tested, because `whl-multi-arch` worked right away.
 
-## Entscheidung
-- GPU-Unterstützung ist **pro Adapter optional**. Wer `[tool.stickler.rocm]` deklariert, bekommt mit `stickler setup --device rocm` eine zweite Umgebung `.venv-rocm`. Darin sind die Torch-Pakete durch die AMD-Wheels ersetzt. Die übrigen **direkten** Abhängigkeiten löst uv frisch auf, denn die transitiven Pins des CPU-Locks (z. B. `setuptools`) widersprechen den ROCm-Wheels.
-- Standard-Kanal: `whl-multi-arch`, ROCm 7.14.1, PyTorch 2.12.0, torchaudio 2.11.0.
-- `prefer_gpu = false` sorgt dafür, dass `device=auto` die CPU nimmt, wenn die GPU für ein Modell nachweislich langsamer ist. Das gilt für ADT_STR. `device=gpu` erzwingt die GPU weiterhin.
-- Der Cache-Schlüssel enthält die Umgebung (cpu/rocm). Schlüssel für reine CPU-Läufe bleiben unverändert.
+## Decision
+- GPU support is **optional per adapter**. Whoever declares `[tool.stickler.rocm]` gets a second environment `.venv-rocm` via `stickler setup --device rocm`. In it, the Torch packages are replaced by the AMD wheels. The remaining **direct** dependencies are resolved fresh by uv, because the transitive pins of the CPU lock (e.g. `setuptools`) conflict with the ROCm wheels.
+- Default channel: `whl-multi-arch`, ROCm 7.14.1, PyTorch 2.12.0, torchaudio 2.11.0.
+- `prefer_gpu = false` ensures that `device=auto` uses the CPU when the GPU is demonstrably slower for a model. This applies to ADT_STR. `device=gpu` still forces the GPU.
+- The cache key includes the environment (cpu/rocm). Keys for pure CPU runs remain unchanged.
 
-## Konsequenzen
-- Die ROCm-Umgebung ist weniger reproduzierbar als die CPU-Umgebung (kein Lock). Die Versionen der Torch-Pakete sind gepinnt.
-- Ein Geschwindigkeitsgewinn ist vor allem bei Modellen zu erwarten, die fp16/bf16 rechnen oder große Batches verarbeiten (Separatoren wie Demucs/RoFormer). Das misst Task 7/8.
-- fp16-Autocast für ADT_STR wäre möglich, verändert aber die Numerik und wäre damit ein anderer Kandidat. Wird nur nach Rückfrage untersucht.
-- ~5 GB Speicher je ROCm-Umgebung.
+## Consequences
+- The ROCm environment is less reproducible than the CPU environment (no lock). The Torch package versions are pinned.
+- A speed gain is mainly to be expected for models that compute in fp16/bf16 or process large batches (separators such as Demucs/RoFormer). Tasks 7/8 measure this.
+- fp16 autocast for ADT_STR would be possible, but it changes the numerics and would thus be a different candidate. It will only be examined after consultation.
+- ~5 GB of storage per ROCm environment.

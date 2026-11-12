@@ -1,19 +1,19 @@
-# ADR 0001: Demucs über den gepflegten Fork adefossez/demucs
+# ADR 0001: Demucs via the maintained fork adefossez/demucs
 
-- Status: angenommen
-- Datum: 2026-11-11
+- Status: accepted
+- Date: 2026-11-11
 
-## Kontext
-Das ursprüngliche Repository `facebookresearch/demucs` ist seit dem 1. Januar 2025 archiviert und nur noch lesbar. Alexandre Défossez, der Hauptautor, pflegt seitdem den Fork `github.com/adefossez/demucs` und bezeichnet ihn als offiziell gepflegte Fassung. Neue Features sind laut seinem Hinweis nicht geplant. Für Stickler gelten zwei Vorgaben: nur Open Source und nur aktiv gepflegte Projekte.
+## Context
+The original repository `facebookresearch/demucs` has been archived since January 1, 2025 and is read-only. Alexandre Défossez, the main author, has since maintained the fork `github.com/adefossez/demucs` and describes it as the officially maintained version. According to his note, no new features are planned. Two requirements apply to Stickler: open source only, and actively maintained projects only.
 
-## Entscheidung
-Der Separator-Adapter `demucs` installiert Demucs aus `adefossez/demucs`, gepinnt auf einen Commit bzw. ein Release. Das archivierte Meta-Repo und PyPI-Pakete Dritter (z. B. `demucs-infer`, `demucs-torchcodec`) werden nicht verwendet.
+## Decision
+The separator adapter `demucs` installs Demucs from `adefossez/demucs`, pinned to a commit or release. The archived meta repo and third-party PyPI packages (e.g. `demucs-infer`, `demucs-torchcodec`) are not used.
 
-## Konsequenzen
-- Fixes für Kompatibilität (neue PyTorch-Versionen, torchaudio → torchcodec) kommen aus dem Fork.
-- Demucs ist Vergleichsbasis neben neueren Trennern (BS-/Mel-RoFormer), nicht gesetzt.
-- Bricht der Fork mit ROCm-Wheels, wird das im Adapter-README dokumentiert und notfalls nur CPU genutzt.
+## Consequences
+- Compatibility fixes (new PyTorch versions, torchaudio → torchcodec) come from the fork.
+- Demucs is the baseline for comparison alongside newer separators (BS-/Mel-RoFormer), not a fixed choice.
+- If the fork breaks with ROCm wheels, this is documented in the adapter README and, if necessary, only the CPU is used.
 
-## Quellen
-- https://github.com/facebookresearch/demucs (Archiv-Hinweis)
+## Sources
+- https://github.com/facebookresearch/demucs (archive notice)
 - https://github.com/adefossez/demucs

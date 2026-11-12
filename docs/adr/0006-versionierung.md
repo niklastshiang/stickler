@@ -1,22 +1,21 @@
-# ADR 0006: Fortlaufende Versionsnummern statt SemVer
+# ADR 0006: Sequential version numbers instead of SemVer
 
-- Status: angenommen
-- Datum: 2026-11-12
+- Status: accepted
+- Date: 2026-11-12
 
-## Kontext
-Stickler ist ein privates Werkzeug ohne fremde Nutzer, die sich auf API-Kompatibilität verlassen.
-Die Unterscheidung von Major, Minor und Patch bringt hier keinen Nutzen. Der Projektinhaber wünscht
-schlichte Release-Nummern, die bei jedem Release um eins steigen, ähnlich wie bei Firefox.
+## Context
+Stickler is a private tool with no external users who rely on API compatibility.
+Distinguishing major, minor and patch brings no benefit here. The project owner wants plain release numbers that increase by one with every release, similar to Firefox.
 
-## Entscheidung
-- **Format:** Die Version ist eine Ganzzahl. `0` steht für den Stand vor dem ersten Release, danach folgen `1`, `2`, `3` und so weiter.
-- **Release-Schritte:**
-  1. Version in `pyproject.toml` und `src/stickler/__init__.py` um eins erhöhen.
-  2. Commit „Release N“ anlegen.
-  3. Git-Tag `vN` setzen und mit `git push --tags` hochladen.
-- **Kompatibilität:** Eine einzelne Ganzzahl ist PEP-440-konform, `uv` und `importlib.metadata` kommen damit zurecht.
-- **Adapter:** Die Versionen in den Adapter-`pyproject.toml` (`package = false`) werden nicht veröffentlicht und bleiben unberührt. Maßgeblich ist das jeweilige Modell (Version oder Commit), dokumentiert in `meta.json` und im README des Adapters.
+## Decision
+- **Format:** The version is an integer. `0` stands for the state before the first release; then `1`, `2`, `3` and so on follow.
+- **Release steps:**
+  1. Increase the version in `pyproject.toml` and `src/stickler/__init__.py` by one.
+  2. Create the commit "Release N".
+  3. Set the Git tag `vN` and upload it with `git push --tags`.
+- **Compatibility:** A single integer is PEP 440-compliant; `uv` and `importlib.metadata` handle it.
+- **Adapters:** The versions in the adapter `pyproject.toml` files (`package = false`) are not published and remain untouched. What matters is the respective model (version or commit), documented in `meta.json` and in the adapter's README.
 
-## Konsequenzen
-- Am Versionssprung lässt sich nicht ablesen, ob ein Release inkompatibel ist. Was sich geändert hat, steht in der Release-Beschreibung.
-- Ein Test prüft, dass die Version eine Ganzzahl ist und Paket und `pyproject.toml` übereinstimmen.
+## Consequences
+- The version jump does not show whether a release is incompatible. What changed is stated in the release description.
+- A test checks that the version is an integer and that the package and `pyproject.toml` match.

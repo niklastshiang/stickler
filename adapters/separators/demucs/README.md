@@ -1,27 +1,27 @@
 # Adapter `demucs`
 
-Hybrid Transformer Demucs (v4), Variante `htdemucs_ft`, trennt den Drum-Stem aus dem Mix.
+Hybrid Transformer Demucs (v4), variant `htdemucs_ft`, separates the drum stem from the mix.
 
 | | |
 |---|---|
 | Paper | Rouard, Massa, Défossez: *Hybrid Transformers for Music Source Separation*, ICASSP 2023 |
-| Code | https://github.com/adefossez/demucs (gepflegter Fork, ADR 0001), PyPI `demucs==4.1.0` (Release 2026-07-11), Stand Commit `829d218` (2026-10-26) |
-| Gewichte | Hugging Face, geladen über `demucs.api` (seit v4.1.0), Ablage `weights/` |
-| Lizenz | MIT (Code und Gewichte) |
-| Stems | drums, bass, other, vocals. Genutzt wird nur `drums` |
+| Code | https://github.com/adefossez/demucs (maintained fork, ADR 0001), PyPI `demucs==4.1.0` (release 2026-07-11), as of commit `829d218` (2026-10-26) |
+| Weights | Hugging Face, loaded via `demucs.api` (since v4.1.0), stored in `weights/` |
+| License | MIT (code and weights) |
+| Stems | drums, bass, other, vocals. Only `drums` is used |
 
-## Nutzung
+## Usage
 ```bash
 uv run stickler setup --adapter demucs                # CPU
-uv run stickler setup --adapter demucs --device rocm  # zusätzlich GPU-Umgebung
+uv run stickler setup --adapter demucs --device rocm  # additionally GPU environment
 ```
-Die Inferenz läuft über `demucs.api.Separator(model="htdemucs_ft").separate_audio_file(...)` mit den Standardparametern der Kommandozeile. Der Drum-Stem wird als 24-bit-WAV in der Modell-Abtastrate (44,1 kHz, Stereo) gespeichert.
+Inference runs via `demucs.api.Separator(model="htdemucs_ft").separate_audio_file(...)` with the default parameters of the command line. The drum stem is saved as a 24-bit WAV at the model's sample rate (44.1 kHz, stereo).
 
-## Messungen (2026-11-11, MDB `MusicDelta_Punk`, 29 s)
-| | Laufzeit | Macro-F1 mit `adt_str` |
+## Measurements (2026-11-11, MDB `MusicDelta_Punk`, 29 s)
+| | Runtime | Macro-F1 with `adt_str` |
 |---|---|---|
-| `oracle` (echter Drum-Stem) | – | 0,811 |
-| `demucs`, CPU | 68 s | 0,790 |
-| `demucs`, GPU (ROCm) | 120 s | 0,792 |
+| `oracle` (real drum stem) | – | 0.811 |
+| `demucs`, CPU | 68 s | 0.790 |
+| `demucs`, GPU (ROCm) | 120 s | 0.792 |
 
-Die GPU ist in fp32 auf der Radeon 840M langsamer, deshalb gilt `prefer_gpu = false` (ADR 0003). Die Stems von CPU und GPU unterscheiden sich leicht (SNR 27 dB). Ein Grund ist der zufällige Zeitversatz bei `shifts=1`, dem Standardwert von Demucs. Ergebnisse sind deshalb nicht bitgenau reproduzierbar, der Cache hält sie aber fest.
+The GPU is slower on the Radeon 840M in fp32, so `prefer_gpu = false` applies (ADR 0003). The stems from CPU and GPU differ slightly (SNR 27 dB). One reason is the random time offset with `shifts=1`, Demucs's default value. Results are therefore not bit-exactly reproducible, but the cache stores them.

@@ -1,183 +1,183 @@
-# Aufgaben: Stickler
+# Tasks: Stickler
 
-Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein Commit pro Aufgabe gemacht wurde (siehe CONSTRAINTS.md).
+Each task is only done once `scripts/check.sh task` is green and one commit has been made per task (see CONSTRAINTS.md).
 
-## Phase 0: Doku
+## Phase 0: Docs
 
-- [x] **Task 0: ADRs für getroffene Entscheidungen** (XS)
-  - Acceptance: `docs/adr/0001-demucs-fork.md` (adefossez/demucs statt archiviertem Repo) und `0002-nc-lizenzen.md` (NC-Gewichte für private Nutzung erlaubt), jeweils mit Kontext, Entscheidung und Konsequenzen.
-  - Verify: Dateien vorhanden, in SPEC.md verlinkt.
-  - Dependencies: keine · Files: `docs/adr/*`, `SPEC.md`
+- [x] **Task 0: ADRs for decisions made** (XS)
+  - Acceptance: `docs/adr/0001-demucs-fork.md` (adefossez/demucs instead of the archived repo) and `0002-nc-lizenzen.md` (NC weights allowed for private use), each with context, decision and consequences.
+  - Verify: Files present, linked in SPEC.md.
+  - Dependencies: none · Files: `docs/adr/*`, `SPEC.md`
 
-## Phase 1: Durchstich (`none` × `adt_str` auf MDB)
+## Phase 1: Vertical slice (`none` × `adt_str` on MDB)
 
-- [x] **Task 1: Klassen-Mapping und Bewertung** (M)
+- [x] **Task 1: Class mapping and scoring** (M)
   - Acceptance:
-    - `Onsets`-Datenklasse.
-    - `config/classes.yaml` + `classes.py` bilden GM-Pitches auf das 5er-Schema (KD/SD/TT/HH/CY) und das 3er-Schema (KD/SD/HH) ab.
-    - `evaluate.score()` liefert P/R/F1 je Klasse sowie Micro und Macro.
-    - Selbstvergleich ergibt F1 = 1,0, ein Versatz von 60 ms zählt als Fehler, einer von 40 ms als Treffer (Success Criterion 1).
+    - `Onsets` data class.
+    - `config/classes.yaml` + `classes.py` map GM pitches to the 5-class scheme (KD/SD/TT/HH/CY) and the 3-class scheme (KD/SD/HH).
+    - `evaluate.score()` returns P/R/F1 per class as well as micro and macro.
+    - Self-comparison yields F1 = 1.0; a 60 ms offset counts as an error, a 40 ms offset as a hit (Success Criterion 1).
   - Verify: `uv run pytest tests/test_evaluate.py tests/test_classes.py`
-  - Dependencies: keine · Files: `src/stickler/{classes,evaluate}.py`, `config/classes.yaml`, Tests
+  - Dependencies: none · Files: `src/stickler/{classes,evaluate}.py`, `config/classes.yaml`, tests
 
-- [x] **Task 2: MDB-Drums-Loader und `stickler fetch mdb`** (M)
+- [x] **Task 2: MDB Drums loader and `stickler fetch mdb`** (M)
   - Acceptance:
-    - `api.fetch_dataset("mdb")` lädt MDB Drums nach `data/mdb/`, und zwar idempotent.
-    - `datasets/mdb.py` liefert pro Track: Mix-Pfad, Drum-Stem-Pfad und Referenz als `Onsets`.
-    - Die CLI ruft nur die API auf (Test für Success Criterion 9).
+    - `api.fetch_dataset("mdb")` downloads MDB Drums to `data/mdb/`, idempotently.
+    - `datasets/mdb.py` provides per track: mix path, drum-stem path and reference as `Onsets`.
+    - The CLI only calls the API (test for Success Criterion 9).
   - Verify:
-    - Unit-Test mit Mini-Fixture der Annotationsdatei.
-    - `uv run stickler fetch mdb` meldet 23 Tracks.
-  - Dependencies: 1 · Files: `src/stickler/{api,cli}.py`, `src/stickler/datasets/mdb.py`, Tests
+    - Unit test with a mini fixture of the annotation file.
+    - `uv run stickler fetch mdb` reports 23 tracks.
+  - Dependencies: 1 · Files: `src/stickler/{api,cli}.py`, `src/stickler/datasets/mdb.py`, tests
 
-- [x] **Task 3: Adapter-Vertrag und Dummy-Adapter** (M)
+- [x] **Task 3: Adapter contract and dummy adapter** (M)
   - Acceptance:
-    - `adapters.py` ruft Adapter per `uv run --project` auf, liest `meta.json` und protokolliert Fehler, ohne abzubrechen.
-    - `adapters/_common` stellt Geräte-Wahl, Zeitmessung und Peak-RSS bereit.
-    - Ein Dummy-Transkriber unter `tests/fixtures/` lässt sich nur per Config einbinden (Success Criterion 6).
+    - `adapters.py` calls adapters via `uv run --project`, reads `meta.json` and logs errors without aborting.
+    - `adapters/_common` provides device selection, timing and peak RSS.
+    - A dummy transcriber under `tests/fixtures/` can be integrated through config only (Success Criterion 6).
   - Verify: `uv run pytest tests/test_adapters.py`
-  - Dependencies: 1 · Files: `src/stickler/adapters.py`, `adapters/_common/*`, Tests/Fixtures
+  - Dependencies: 1 · Files: `src/stickler/adapters.py`, `adapters/_common/*`, tests/fixtures
 
-- [x] **Task 4: Transkriber-Adapter `adt_str` (CPU)** (M)
+- [x] **Task 4: Transcriber adapter `adt_str` (CPU)** (M)
   - Acceptance:
-    - `stickler setup --adapter adt_str` baut die Umgebung und lädt `setting-tau-0.8`.
-    - `run.py` schreibt `drums.mid` mit GM-Pitches und `meta.json`.
-    - Das Adapter-README nennt Quelle, Commit und Lizenz.
+    - `stickler setup --adapter adt_str` builds the environment and loads `setting-tau-0.8`.
+    - `run.py` writes `drums.mid` with GM pitches and `meta.json`.
+    - The adapter README names source, commit and license.
   - Verify:
-    - `uv run pytest -m adapters -k adt_str` (10-s-Clip → gültiges MIDI).
-    - Manuell: das MIDI eines MDB-Tracks in MuseScore ansehen.
+    - `uv run pytest -m adapters -k adt_str` (10 s clip → valid MIDI).
+    - Manual: view the MIDI of an MDB track in MuseScore.
   - Dependencies: 3 · Files: `adapters/transcribers/adt_str/*`, `src/stickler/api.py` (setup)
 
-- [ ] **Task 5: `stickler run` und `stickler eval` mit Cache** (M)
+- [ ] **Task 5: `stickler run` and `stickler eval` with cache** (M)
   - Acceptance:
-    - `run` rechnet die in `config/benchmark.yaml` aktiven Kombinationen über einen Datensatz.
-    - `eval` schreibt `results/metrics.csv`.
-    - Ein zweiter `run` hat nur Cache-Treffer (Success Criterion 7).
+    - `run` computes the combinations active in `config/benchmark.yaml` over a dataset.
+    - `eval` writes `results/metrics.csv`.
+    - A second `run` has only cache hits (Success Criterion 7).
   - Verify:
-    - Unit-Test mit Dummy-Adapter (Cache, CSV-Spalten).
-    - Echter Lauf `none` × `adt_str` über MDB.
-  - Dependencies: 2, 3, 4 · Files: `src/stickler/{api,cli,runner,cache}.py`, `config/benchmark.yaml`, Tests
+    - Unit test with the dummy adapter (cache, CSV columns).
+    - Real run of `none` × `adt_str` over MDB.
+  - Dependencies: 2, 3, 4 · Files: `src/stickler/{api,cli,runner,cache}.py`, `config/benchmark.yaml`, tests
 
 ### Checkpoint A
-- [ ] Alle Tests grün, `metrics.csv` mit plausiblen F1-Werten für `none` × `adt_str` (KD deutlich > 0,5)
-- [ ] Review mit dem User
+- [ ] All tests green, `metrics.csv` with plausible F1 values for `none` × `adt_str` (kick clearly > 0.5)
+- [ ] Review with the user
 
-## Phase 2: GPU (früh, weil riskant)
+## Phase 2: GPU (early, because it is risky)
 
-- [x] **Task 6: ROCm-Spike und `stickler doctor`** (M)
+- [x] **Task 6: ROCm spike and `stickler doctor`** (M)
   - Acceptance:
-    - `setup --device rocm` installiert `torch[device-gfx1152]` in die Umgebung von `adt_str`.
-    - `doctor` meldet GPU, Umgebungen, HF-Login und MuseScore.
-    - GPU- und CPU-Ergebnisse weichen um höchstens 0,01 F1 ab, die Laufzeiten werden verglichen.
-    - Die Entscheidung über den Kanal (7.14 vs. 10.x) steht in `docs/adr/0003-rocm-kanal.md`.
-  - Verify: `uv run stickler doctor`, Vergleichslauf auf 3 MDB-Tracks
+    - `setup --device rocm` installs `torch[device-gfx1152]` into the `adt_str` environment.
+    - `doctor` reports GPU, environments, HF login and MuseScore.
+    - GPU and CPU results deviate by at most 0.01 F1; runtimes are compared.
+    - The channel decision (7.14 vs. 10.x) is recorded in `docs/adr/0003-rocm-kanal.md`.
+  - Verify: `uv run stickler doctor`, comparison run on 3 MDB tracks
   - Dependencies: 5 · Files: `src/stickler/{api,doctor}.py`, `adapters/_common/*`, ADR
 
-## Phase 3: Kandidaten in die Breite
+## Phase 3: Candidates across the board
 
-- [x] **Task 7: Separator `demucs` (adefossez-Fork, `htdemucs_ft`)** (S)
-  - Acceptance: liefert `drums.wav`, cpu und rocm. README mit Quelle, Commit und Lizenz.
-  - Verify: `pytest -m adapters -k demucs`, Lauf `demucs` × `adt_str` auf MDB
-  - Dependencies: 5 (6 für rocm) · Files: `adapters/separators/demucs/*`, `config/benchmark.yaml`
+- [x] **Task 7: Separator `demucs` (adefossez fork, `htdemucs_ft`)** (S)
+  - Acceptance: provides `drums.wav`, cpu and rocm. README with source, commit and license.
+  - Verify: `pytest -m adapters -k demucs`, run `demucs` × `adt_str` on MDB
+  - Dependencies: 5 (6 for rocm) · Files: `adapters/separators/demucs/*`, `config/benchmark.yaml`
 
 - [x] **Task 8: Separator `roformer` (python-audio-separator)** (S)
-  - Acceptance: Checkpoint mit Drum-Stem gewählt und begründet in `docs/adr/0004-roformer-checkpoint.md`. Liefert `drums.wav`.
-  - Verify: `pytest -m adapters -k roformer`, Lauf auf MDB
+  - Acceptance: checkpoint with drum stem selected and justified in `docs/adr/0004-roformer-checkpoint.md`. Provides `drums.wav`.
+  - Verify: `pytest -m adapters -k roformer`, run on MDB
   - Dependencies: 5 · Files: `adapters/separators/roformer/*`, ADR
 
-- [x] **Task 9: Transkriber `adtof` (ADTOF-pytorch)** (M)
-  - Acceptance: 5 Klassen auf GM-Pitches gemappt, gültiges MIDI.
-  - Verify: `pytest -m adapters -k adtof`, Lauf auf MDB
+- [x] **Task 9: Transcriber `adtof` (ADTOF-pytorch)** (M)
+  - Acceptance: 5 classes mapped to GM pitches, valid MIDI.
+  - Verify: `pytest -m adapters -k adtof`, run on MDB
   - Dependencies: 5 · Files: `adapters/transcribers/adtof/*`, `config/classes.yaml`
 
-- [x] **Task 10: Transkriber `muscriptor_s` und `muscriptor_m`** (M)
-  - Acceptance: Es wird nur die Drum-Spur aus der Mehrinstrumenten-Ausgabe übernommen. Fehlt der HF-Login, kommt eine klare Fehlermeldung.
-  - Verify: `pytest -m adapters -k muscriptor`, Lauf auf MDB
-  - Dependencies: 5, User-Login · Files: `adapters/transcribers/muscriptor/*`
+- [x] **Task 10: Transcribers `muscriptor_s` and `muscriptor_m`** (M)
+  - Acceptance: Only the drum track is taken from the multi-instrument output. If the HF login is missing, a clear error message is shown.
+  - Verify: `pytest -m adapters -k muscriptor`, run on MDB
+  - Dependencies: 5, user login · Files: `adapters/transcribers/muscriptor/*`
 
-- [x] **Task 11: Transkriber `yourmt3`** (M, Risiko): im ersten Anlauf lauffähig; Smoke-Test auf 10 s MDB-Mix, weil das Modell im synthetischen Clip nichts erkennt
-  - Acceptance: Die Inferenz aus dem HF-Space-Code läuft lokal mit gepinntem Commit, die Drum-Spur kommt als GM-MIDI heraus. Scheitert das nach 2 Anläufen: Kandidat per ADR streichen.
+- [x] **Task 11: Transcriber `yourmt3`** (M, risk): runnable on the first attempt; smoke test on 10 s of MDB mix, because the model detects nothing in the synthetic clip
+  - Acceptance: The inference from the HF Space code runs locally with a pinned commit; the drum track comes out as GM MIDI. If this fails after 2 attempts: remove the candidate via ADR.
   - Verify: `pytest -m adapters -k yourmt3`
   - Dependencies: 5 · Files: `adapters/transcribers/yourmt3/*`
 
-- [ ] **Task 12: Transkriber `drumsep_onset`** (M)
-  - Acceptance: Das 6-Stem-Modell DrumSep (MDX23C) und eine librosa-Onset-Erkennung pro Stem ergeben ein GM-MIDI.
-  - Verify: `pytest -m adapters -k drumsep`, Lauf auf MDB
+- [ ] **Task 12: Transcriber `drumsep_onset`** (M)
+  - Acceptance: The 6-stem model DrumSep (MDX23C) and librosa onset detection per stem yield GM MIDI.
+  - Verify: `pytest -m adapters -k drumsep`, run on MDB
   - Dependencies: 5 · Files: `adapters/transcribers/drumsep_onset/*`
 
 ### Checkpoint B
-- [ ] Volle Matrix auf MDB: jede Kombination liefert ein MIDI oder einen protokollierten Fehler (Success Criterion 2)
-- [ ] Review mit dem User
+- [ ] Full matrix on MDB: every combination yields a MIDI or a logged error (Success Criterion 2)
+- [ ] Review with the user
 
-## Phase 4: Report und eigene Songs
+## Phase 4: Report and own songs
 
-- [ ] **Task 13: HTML-Report** (M)
+- [ ] **Task 13: HTML report** (M)
   - Acceptance:
-    - `stickler report` erzeugt `results/report.html`.
-    - Inhalt: Ranking nach Macro-F1, F1 pro Klasse (5er/3er), Laufzeit, RTF, RAM und CPU vs. GPU.
-    - Hinweis zur möglichen Trainingsdaten-Überschneidung bei MDB.
-  - Verify: Unit-Test auf den Inhalt; manuell im Browser öffnen
-  - Dependencies: 5 · Files: `src/stickler/report.py`, `templates/report.html.j2`, Tests
+    - `stickler report` produces `results/report.html`.
+    - Content: ranking by macro-F1, F1 per class (5/3-class), runtime, RTF, RAM and CPU vs. GPU.
+    - Note on possible training-data overlap for MDB.
+  - Verify: Unit test on the content; open manually in the browser
+  - Dependencies: 5 · Files: `src/stickler/report.py`, `templates/report.html.j2`, tests
 
-- [x] **Task 14: Beat-Adapter `beat_this`** (S): nur CPU (15 s je Song); ROCm entfällt wie bei ADTOF, weil die GPU bisher nie schneller war (ADR 0003)
-  - Acceptance: `beats.json` mit Beats und Downbeats, cpu und rocm.
+- [x] **Task 14: Beat adapter `beat_this`** (S): CPU only (15 s per song); ROCm is dropped, as with ADTOF, because the GPU has never been faster so far (ADR 0003)
+  - Acceptance: `beats.json` with beats and downbeats, cpu and rocm.
   - Verify: `pytest -m adapters -k beat_this`
   - Dependencies: 3 · Files: `adapters/beats/beat_this/*`
 
-- [ ] **Task 15: Eigene Songs: Loader, Alignment, Click-Check** (M)
+- [ ] **Task 15: Own songs: loader, alignment, click check** (M)
   - Acceptance:
-    - `references/own/<song>.mid` + `.yaml` werden über die Beat-Positionen auf die Audio-Zeit gelegt.
-    - `stickler align` erzeugt eine Click-Check-WAV.
-    - Der Song geht in `run`/`eval` ein (Success Criterion 4).
-  - Verify: Unit-Tests für `align` (synthetisches Tempo-Rubato); der User hört die Click-Check-WAV ab
-  - Dependencies: 5, 14, User-MIDI · Files: `src/stickler/{align,datasets/own}.py`, Tests
+    - `references/own/<song>.mid` + `.yaml` are mapped onto audio time via the beat positions.
+    - `stickler align` produces a click-check WAV.
+    - The song enters `run`/`eval` (Success Criterion 4).
+  - Verify: Unit tests for `align` (synthetic tempo rubato); the user listens to the click-check WAV
+  - Dependencies: 5, 14, user MIDI · Files: `src/stickler/{align,datasets/own}.py`, tests
 
-- [ ] **Task 16: ENST-Antrag und Loader** (S)
-  - Acceptance: `docs/enst-antrag.md` als Entwurf für den User. `datasets/enst.py` lädt den Datensatz, sobald `data/enst/` existiert, sonst wird er übersprungen.
-  - Verify: Unit-Test mit Mini-Fixture
-  - Dependencies: 1 · Files: `docs/enst-antrag.md`, `src/stickler/datasets/enst.py`, Tests
+- [ ] **Task 16: ENST application and loader** (S)
+  - Acceptance: `docs/enst-antrag.md` as a draft for the user. `datasets/enst.py` loads the dataset as soon as `data/enst/` exists, otherwise it is skipped.
+  - Verify: Unit test with a mini fixture
+  - Dependencies: 1 · Files: `docs/enst-antrag.md`, `src/stickler/datasets/enst.py`, tests
 
 ### Checkpoint C
-- [ ] Report mit MDB und mindestens einem eigenen Song (Success Criteria 3 und 4)
-- [ ] Review mit dem User: Gewinner-Pipeline wählen, `docs/adr/0005-gewinner-pipeline.md`
+- [ ] Report with MDB and at least one own song (Success Criteria 3 and 4)
+- [ ] Review with the user: choose the winning pipeline, `docs/adr/0005-gewinner-pipeline.md`
 
-## Phase 5: Noten
+## Phase 5: Notes
 
-- [ ] **Task 17: Quantisierung und MusicXML** (M)
+- [ ] **Task 17: Quantization and MusicXML** (M)
   - Acceptance:
-    - `notation.py` quantisiert auf das Beat-Raster (1/16 und Achteltriolen) und filtert Ghost Notes per Velocity-Schwelle.
-    - MusicXML mit Taktart, Percussion-Notenzeile und Notenköpfen für Becken.
-  - Verify: Unit-Tests (Quantisierung, Triolen-Erkennung, gültiges MusicXML per music21-Roundtrip)
-  - Dependencies: 14 · Files: `src/stickler/notation.py`, Tests
+    - `notation.py` quantizes to the beat grid (1/16 and eighth-note triplets) and filters ghost notes via a velocity threshold.
+    - MusicXML with time signature, percussion staff and note heads for cymbals.
+  - Verify: Unit tests (quantization, triplet detection, valid MusicXML via a music21 round trip)
+  - Dependencies: 14 · Files: `src/stickler/notation.py`, tests
 
-- [ ] **Task 18: `stickler notate` von Ende zu Ende** (S)
-  - Acceptance: Audio → Gewinner-Pipeline → MusicXML. PDF, falls MuseScore 4 (Flatpak) installiert ist (Success Criterion 5).
-  - Verify: „Easy Fill Ins“ notieren, in MuseScore öffnen und mit dem Original-PDF vergleichen
+- [ ] **Task 18: `stickler notate` end to end** (S)
+  - Acceptance: Audio → winning pipeline → MusicXML. PDF, if MuseScore 4 (Flatpak) is installed (Success Criterion 5).
+  - Verify: Notate "Easy Fill Ins", open it in MuseScore and compare with the original PDF
   - Dependencies: 13, 17 · Files: `src/stickler/{api,cli}.py`
 
 ### Checkpoint D
-- [ ] Alle 9 Success Criteria aus SPEC.md erfüllt
-- [ ] Abschluss-Review mit dem User
+- [ ] All 9 success criteria from SPEC.md met
+- [ ] Final review with the user
 
-## Phase 6: Später (vom User vorgemerkt, 2026-11-12)
+## Phase 6: Later (noted by the user, 2026-11-12)
 
-Noch nicht geplant, nur festgehalten. Vor dem Start jeweils SPEC.md ergänzen und in Tasks zerlegen.
+Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
 
-- [ ] **Release-Pipeline: Flatpak und AppImage bei jedem Release**
-  - Wunsch: Ein neuer Release-Tag `vN` (ADR 0006) baut automatisch ein Flatpak und ein AppImage.
-  - Offene Punkte:
-    - **Abhängigkeit:** Setzt die GTK-Oberfläche voraus.
-    - **Größe:** Die Modell-Umgebungen sind groß (PyTorch je Adapter, Gewichte bis ~760 MB). Zu klären ist, ob Gewichte und Umgebungen erst beim ersten Start geladen werden.
-    - **Lizenzen:** NC-Gewichte dürfen nicht in ein verteiltes Paket (ADR 0002).
-    - **CI:** Die Pipeline braucht einen CI-Dienst. Codeberg kommt nicht infrage, dort sind vorwiegend KI-generierte Programme nicht erlaubt.
+- [ ] **Release pipeline: Flatpak and AppImage with every release**
+  - Wish: A new release tag `vN` (ADR 0006) automatically builds a Flatpak and an AppImage.
+  - Open points:
+    - **Dependency:** Requires the GTK interface.
+    - **Size:** The model environments are large (PyTorch per adapter, weights up to ~760 MB). It needs to be decided whether weights and environments are only loaded on first start.
+    - **Licenses:** NC weights must not go into a distributed package (ADR 0002).
+    - **CI:** The pipeline needs a CI service. Codeberg is out of the question, as it mostly disallows AI-generated programs.
 
-- [ ] **Alles auf Englisch**
-  - Wunsch: Code-Kommentare, Docstrings, CLI-Ausgaben, README, SPEC, ADRs und Aufgaben auf Englisch.
-  - Dabei ändert sich auch die Regel in CLAUDE.md (bisher: Kommentare und Docstrings auf Deutsch).
+- [ ] **Everything in English**
+  - Wish: Code comments, docstrings, CLI output, README, SPEC, ADRs and tasks in English.
+  - This also changes the rule in CLAUDE.md (previously: comments and docstrings in German).
 
-- [ ] **App-Icon im GNOME-Stil**
-  - Wunsch: Ein Icon im Stil der GNOME-App-Icons von Daudix (https://daudix.one/design/).
-  - Umsetzung: Nach den GNOME HIG als SVG anlegen, mit symbolischer Variante.
+- [ ] **App icon in GNOME style**
+  - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
+  - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.
 
-- [ ] **Ultrareview, sobald die Anwendung steht**
-  - Startet der User selbst mit `/code-review ultra`. Ich kann es nicht auslösen.
+- [ ] **Ultrareview once the application is finished**
+  - The user starts it themselves with `/code-review ultra`. I cannot trigger it.

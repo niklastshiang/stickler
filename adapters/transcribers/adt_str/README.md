@@ -1,25 +1,25 @@
 # Adapter `adt_str`
 
-Transformer-basierte Schlagzeug-Transkription, trainiert auf realistischen synthetischen Daten.
+Transformer-based drum transcription, trained on realistic synthetic data.
 
 | | |
 |---|---|
 | Paper | Melucci, Merialdo, Akama: *Towards Realistic Synthetic Data for Automatic Drum Transcription*, arXiv:2601.09520 (Jan. 2026) |
-| Code | https://github.com/pier-maker92/ADT_STR, v1.0.0 (Commit `77dbef2`, 2026-09-19) |
-| Gewichte | https://huggingface.co/Pierfrancesco/adt-str, Revision `a33c5c6` (2026-09-17), Variante `setting-tau-0.8` |
-| Lizenz | CC BY-SA 4.0 (Code und Gewichte, laut Repository) |
-| Klassen | 26 GM-Klassen (47 GM-Percussion-Noten zusammengefasst) |
-| Audio | 24 kHz, Abschnitte von 2,56 s |
+| Code | https://github.com/pier-maker92/ADT_STR, v1.0.0 (commit `77dbef2`, 2026-09-19) |
+| Weights | https://huggingface.co/Pierfrancesco/adt-str, revision `a33c5c6` (2026-09-17), variant `setting-tau-0.8` |
+| License | CC BY-SA 4.0 (code and weights, according to the repository) |
+| Classes | 26 GM classes (47 GM percussion notes grouped) |
+| Audio | 24 kHz, segments of 2.56 s |
 
-Laut Paper erreicht das Modell neue Bestwerte auf ENST und MDB. Achtung: MDB ist damit kein unabhängiger Test für dieses Modell.
+According to the paper, the model sets new best results on ENST and MDB. Note: MDB is therefore not an independent test for this model.
 
-## Nutzung
+## Usage
 ```bash
-uv run stickler setup --adapter adt_str      # Umgebung bauen + Bundle laden (~Gewichte nach weights/)
+uv run stickler setup --adapter adt_str      # build environment and load bundle (weights into weights/)
 ```
-Die Inferenz nutzt `ADTTranscriber.from_pretrained(...)` aus dem HF-Bundle, wie im offiziellen README beschrieben. Zwei Anpassungen, beide aus dem offiziellen Repository übernommen:
+Inference uses `ADTTranscriber.from_pretrained(...)` from the HF bundle, as described in the official README. Two adjustments, both taken from the official repository:
 
-1. **Normalisierung pro Abschnitt:** Die offizielle Auswertung (`eval.py` → `utils.audio_utils.normalize`) normalisiert jeden 2,56-s-Abschnitt auf Spitzenpegel, `ADTTranscriber.transcribe` macht das nicht. Ohne diesen Schritt ergab der 10-s-Ausschnitt von MDB `MusicDelta_Rock` (Drum-Stem) Macro-F1 0,48, mit ihm 0,75. Die Laufzeit sank von 215 s auf 9 s, weil der Decoder nicht mehr bis `max_length` läuft.
-2. **Nummerierung:** Das Modell gibt eigene Klassennummern (35–60) aus, kein GM. Der Adapter übersetzt sie mit `MappingUtils.GM_custom_midi_to_Gm_standard_Mapping` aus dem Bundle zurück und schreibt das Ergebnis nach dem Stickler-Vertrag auf Kanal 10.
+1. **Normalization per segment:** The official evaluation (`eval.py` → `utils.audio_utils.normalize`) normalizes each 2.56 s segment to peak level; `ADTTranscriber.transcribe` does not. Without this step, the 10 s excerpt of MDB `MusicDelta_Rock` (drum stem) gave macro-F1 0.48, with it 0.75. The runtime dropped from 215 s to 9 s, because the decoder no longer runs up to `max_length`.
+2. **Numbering:** The model outputs its own class numbers (35–60), not GM. The adapter maps them back with `MappingUtils.GM_custom_midi_to_Gm_standard_Mapping` from the bundle and writes the result on channel 10, per the Stickler contract.
 
-**Beobachtung:** Auf dem kompletten Mix ist das Modell deutlich schwächer (Hi-Hats werden als Toms erkannt). Es ist auf reinen Schlagzeug-Signalen trainiert, deshalb gehört vor diesen Adapter ein Separator.
+**Observation:** On the complete mix the model is clearly weaker (hi-hats are recognized as toms). It is trained on pure drum signals, so a separator must come before this adapter.
