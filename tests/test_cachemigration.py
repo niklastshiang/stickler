@@ -100,3 +100,33 @@ def test_cache_hit_after_migration_on_any_device(world, monkeypatch):
             world["registry"]["dummy"], world["mix"], world["cache"], device, True
         )
         assert res.ok and res.output.read_bytes() == b"midi-cpu"
+
+
+def test_rekey_after_a_cosmetic_edit_keeps_results(world):
+    reg, cache, mix = world["registry"], world["cache"], world["mix"]
+    cachemigration.migrate(cache, reg, [mix])
+    before = cachemigration.digests(reg)
+    run_py = reg["dummy"].path / "run.py"
+    run_py.write_text(run_py.read_text() + '\nMESSAGE = "translated"\n', encoding="utf-8")
+    assert cachemigration.digests(reg)["dummy"] != before["dummy"]
+    report = cachemigration.migrate(cache, reg, [mix], previous_digests=before)
+    assert report.moved == 2 and report.orphaned == 0  # mix and stem transcription
+    assert (runner.cache_dir_for(cache, reg["dummy"], mix) / "drums.mid").read_bytes() == (
+        b"midi-cpu"
+    )
+
+
+def test_without_rekey_a_code_change_orphans_old_results(world):
+    reg, cache, mix = world["registry"], world["cache"], world["mix"]
+    cachemigration.migrate(cache, reg, [mix])
+    run_py = reg["dummy"].path / "run.py"
+    run_py.write_text(run_py.read_text() + "\nX = 2\n", encoding="utf-8")
+    report = cachemigration.migrate(cache, reg, [mix])
+    assert report.moved == 0 and report.orphaned == 2
+
+
+def test_digest_snapshot_round_trip(world, tmp_path):
+    reg = world["registry"]
+    path = tmp_path / "digests.json"
+    cachemigration.save_digests(path, reg)
+    assert cachemigration.load_digests(path) == cachemigration.digests(reg)

@@ -523,13 +523,25 @@ def migrate_cache(
     cache_dir: Path = CACHE_DIR,
     data_dir: Path = DATA_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
+    rekey_from: Path | None = None,
 ) -> cachemigration.Report:
     """Moves cache entries from the old device-dependent keys to the current keys (see
-    stickler.cachemigration). Inputs: MDB mixes and stems, the own songs' recordings."""
+    stickler.cachemigration). Inputs: MDB mixes and stems, the own songs' recordings.
+    `rekey_from`: digest snapshot (save_digests) taken before a behaviour-neutral edit."""
     inputs: list[Path] = []
     for track in mdb.tracks(data_dir / "mdb"):
         inputs += [track.mix, track.drums]
     inputs += [song.audio for song in own.songs(REFERENCES_DIR, data_dir)]
+    previous = cachemigration.load_digests(rekey_from) if rekey_from else None
     return cachemigration.migrate(
-        cache_dir, adapters.discover(adapters_root), inputs, dry_run=dry_run
+        cache_dir,
+        adapters.discover(adapters_root),
+        inputs,
+        dry_run=dry_run,
+        previous_digests=previous,
     )
+
+
+def save_digests(path: Path, adapters_root: Path = ADAPTERS_ROOT) -> None:
+    """Snapshot of every adapter's code digest, for `migrate_cache(rekey_from=...)`."""
+    cachemigration.save_digests(path, adapters.discover(adapters_root))

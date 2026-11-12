@@ -126,9 +126,10 @@ def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path) -> Path:
     return cache / spec.id / cache_key(spec, _sha1_file(audio))
 
 
-def cache_key(spec: adapters.AdapterSpec, audio_sha1: str) -> str:
-    """Folder name for an input with the given SHA-1 (see cache_dir_for)."""
-    text = f"{CACHE_KEY_VERSION}|{audio_sha1}|{spec.id}|{code_digest(spec)}"
+def cache_key(spec: adapters.AdapterSpec, audio_sha1: str, digest: str | None = None) -> str:
+    """Folder name for an input with the given SHA-1 (see cache_dir_for); `digest` overrides
+    the adapter's current code digest (used to find entries made before a cosmetic edit)."""
+    text = f"{CACHE_KEY_VERSION}|{audio_sha1}|{spec.id}|{digest or code_digest(spec)}"
     return hashlib.sha1(text.encode()).hexdigest()[:16]
 
 

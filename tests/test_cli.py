@@ -218,7 +218,21 @@ def test_remote_delegates_to_api(monkeypatch, tmp_path):
 def test_cache_migrate_reports(monkeypatch):
     from stickler.cachemigration import Report
 
-    monkeypatch.setattr(api, "migrate_cache", lambda dry_run: Report(3, 1, 2, 4))
-    result = CliRunner().invoke(cli.app, ["cache-migrate", "--dry-run"])
+    seen = {}
+
+    def fake(dry_run, rekey_from):
+        seen.update(dry_run=dry_run, rekey_from=rekey_from)
+        return Report(3, 1, 2, 4)
+
+    monkeypatch.setattr(api, "migrate_cache", fake)
+    result = CliRunner().invoke(cli.app, ["cache-migrate", "--dry-run", "--rekey-from", "d.json"])
     assert result.exit_code == 0
     assert "would move 3" in result.output and "1 duplicates" in result.output
+    assert seen == {"dry_run": True, "rekey_from": Path("d.json")}
+
+
+def test_cache_digests_writes_snapshot(monkeypatch):
+    seen = []
+    monkeypatch.setattr(api, "save_digests", seen.append)
+    result = CliRunner().invoke(cli.app, ["cache-digests", "d.json"])
+    assert result.exit_code == 0 and seen == [Path("d.json")]

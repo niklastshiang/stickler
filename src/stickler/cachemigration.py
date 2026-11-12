@@ -10,11 +10,17 @@ moves matching folders. Nothing is deleted:
 - folders that match no known input with the current adapter code (e.g. made by an older
   adapter version) go to `cache/_orphaned/`.
 The migration is idempotent; it is run again after results come back from a rented GPU.
+
+Rekeying: after an edit that does not change behaviour but does change the code digest (e.g.
+translating a `description` or an error message), entries made under the previous digest are
+moved to the current one. It is explicit (`previous_digests`, saved with `save_digests` before
+the edit) because applying it to a real code change would hand old results to new code.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,6 +55,27 @@ def legacy_key(spec: adapters.AdapterSpec, audio_sha1: str, env: str) -> str:
     ]
 
 
+def digests(registry: dict[str, adapters.AdapterSpec]) -> dict[str, str]:
+    """Current code digest per adapter id."""
+    return {spec_id: runner.code_digest(spec) for spec_id, spec in sorted(registry.items())}
+
+
+def save_digests(path: Path, registry: dict[str, adapters.AdapterSpec]) -> None:
+    path.write_text(json.dumps(digests(registry), indent=1) + "\n", encoding="utf-8")
+
+
+def load_digests(path: Path) -> dict[str, str]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _old_names(spec, sha: str, previous: str | None) -> list[str]:
+    """Names an entry for this input may still have: v1 keys, then the previous v2 digest."""
+    names = [legacy_key(spec, sha, env) for env in LEGACY_ENVS]
+    if previous and previous != runner.code_digest(spec):
+        names.append(runner.cache_key(spec, sha, previous))
+    return names
+
+
 def _sha1(path: Path) -> str:
     with path.open("rb") as f:
         return hashlib.file_digest(f, "sha1").hexdigest()
@@ -60,6 +87,7 @@ def migrate(
     inputs: list[Path],
     *,
     dry_run: bool = False,
+    previous_digests: dict[str, str] | None = None,
 ) -> Report:
     """`inputs`: original audio (mixes, dataset stems, own songs). Separator outputs found in
     the cache are added automatically, because transcribers ran on them. Works on content
@@ -82,8 +110,7 @@ def migrate(
         report.current += len(claimed)
         handled: set[str] = set()
         for name, sha in wanted.items():
-            for env in LEGACY_ENVS:
-                old = legacy_key(spec, sha, env)
+            for old in _old_names(spec, sha, (previous_digests or {}).get(spec.id)):
                 if old not in existing or old in handled or old == name:
                     continue
                 handled.add(old)

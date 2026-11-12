@@ -480,10 +480,23 @@ def test_migrate_cache_collects_inputs(tmp_path, monkeypatch):
     )
     seen = {}
 
-    def fake_migrate(cache, registry, inputs, *, dry_run):
-        seen.update(inputs=inputs, dry_run=dry_run)
+    def fake_migrate(cache, registry, inputs, *, dry_run, previous_digests=None):
+        seen.update(inputs=inputs, dry_run=dry_run, previous=previous_digests)
         return cachemigration.Report(moved=2)
 
     monkeypatch.setattr(cachemigration, "migrate", fake_migrate)
     report = api.migrate_cache(dry_run=True, cache_dir=tmp_path, data_dir=tmp_path)
-    assert report.moved == 2 and seen == {"inputs": [mix, stem, song], "dry_run": True}
+    assert report.moved == 2
+    assert seen == {"inputs": [mix, stem, song], "dry_run": True, "previous": None}
+    snapshot = tmp_path / "digests.json"
+    snapshot.write_text('{"adtof": "abc"}', encoding="utf-8")
+    api.migrate_cache(cache_dir=tmp_path, data_dir=tmp_path, rekey_from=snapshot)
+    assert seen["previous"] == {"adtof": "abc"}
+
+
+def test_save_digests_writes_every_adapter(tmp_path):
+    out = tmp_path / "d.json"
+    api.save_digests(out)
+    import json
+
+    assert {"adtof", "demucs"} <= json.loads(out.read_text()).keys()

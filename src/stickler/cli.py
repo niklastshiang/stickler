@@ -184,14 +184,29 @@ def remote_cmd(
 @app.command("cache-migrate")
 def cache_migrate_cmd(
     dry_run: Annotated[bool, typer.Option("--dry-run", help="only report")] = False,
+    rekey_from: Annotated[
+        Path | None,
+        typer.Option(
+            "--rekey-from",
+            help="digest snapshot (stickler cache-digests) taken before an edit that does not "
+            "change behaviour, e.g. a translation; never use it after a real code change",
+        ),
+    ] = None,
 ) -> None:
     """Move cache entries to the current (device-independent) keys; nothing is deleted."""
-    r = api.migrate_cache(dry_run=dry_run)
+    r = api.migrate_cache(dry_run=dry_run, rekey_from=rekey_from)
     prefix = "would move" if dry_run else "moved"
     typer.echo(
         f"{prefix} {r.moved}, set aside {r.superseded} duplicates and {r.orphaned} unknown "
         f"entries, {r.current} already current"
     )
+
+
+@app.command("cache-digests")
+def cache_digests_cmd(out: Path) -> None:
+    """Save every adapter's code digest, before a behaviour-neutral edit (see cache-migrate)."""
+    api.save_digests(out)
+    typer.echo(f"Digests: {out}")
 
 
 @app.command("doctor")
