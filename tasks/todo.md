@@ -171,9 +171,9 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
     - **Licenses:** NC weights must not go into a distributed package (ADR 0002).
     - **CI:** The pipeline needs a CI service. Codeberg is out of the question, as it mostly disallows AI-generated programs.
 
-- [ ] **Everything in English**
-  - Wish: Code comments, docstrings, CLI output, README, SPEC, ADRs and tasks in English.
-  - This also changes the rule in CLAUDE.md (previously: comments and docstrings in German).
+- [ ] **Everything in English** (mostly done on 2026-11-12)
+  - Done: code comments, docstrings, messages, tests, README, SPEC, ADRs, tasks, adapter READMEs, CONSTRAINTS.md, CLAUDE.md; commit messages in English from now on.
+  - Remaining, only after the MDB benchmark has finished successfully (owner's decision): the adapters' `run.py`, `setup.py` and `pyproject.toml`. First make the cache key ignore comments (e.g. hash the AST / parsed TOML), migrate existing cache entries from old to new keys so no result is lost, then translate.
 
 - [ ] **App icon in GNOME style**
   - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
