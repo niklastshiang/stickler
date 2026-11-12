@@ -90,7 +90,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
   - Verify: `pytest -m adapters -k adtof`, Lauf auf MDB
   - Dependencies: 5 · Files: `adapters/transcribers/adtof/*`, `config/classes.yaml`
 
-- [ ] **Task 10: Transkriber `muscriptor_s` und `muscriptor_m`** (M)
+- [x] **Task 10: Transkriber `muscriptor_s` und `muscriptor_m`** (M)
   - Acceptance: Es wird nur die Drum-Spur aus der Mehrinstrumenten-Ausgabe übernommen. Fehlt der HF-Login, kommt eine klare Fehlermeldung.
   - Verify: `pytest -m adapters -k muscriptor`, Lauf auf MDB
   - Dependencies: 5, User-Login · Files: `adapters/transcribers/muscriptor/*`
