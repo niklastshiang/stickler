@@ -1,4 +1,4 @@
-"""Lädt BS-Roformer-SW über audio-separator nach weights/ (Download mit SHA-256-Prüfung)."""
+"""Downloads BS-Roformer-SW via audio-separator to weights/ (download with SHA-256 check)."""
 
 import tempfile
 

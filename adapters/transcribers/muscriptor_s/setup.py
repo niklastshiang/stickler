@@ -1,4 +1,4 @@
-"""Lädt MuScriptor (gated: Lizenz auf Hugging Face akzeptieren, `uvx hf auth login`)."""
+"""Downloads MuScriptor (gated: accept the licence on Hugging Face, `uvx hf auth login`)."""
 
 from common import SIZE, WEIGHTS
 from muscriptor.transcription_model import TranscriptionModel

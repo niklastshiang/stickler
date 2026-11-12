@@ -1,4 +1,4 @@
-"""Lädt die Gewichte von htdemucs_ft (Hugging Face, über demucs.api) nach weights/."""
+"""Downloads the htdemucs_ft weights (Hugging Face, via demucs.api) to weights/."""
 
 import demucs.api
 from common import MODEL, WEIGHTS

@@ -1,7 +1,7 @@
 [project]
 name = "stickler-adapter"
 version = "0.1.0"
-description = "Gemeinsame Helfer für Stickler-Adapter: CLI-Vertrag, Geräte-Wahl, meta.json"
+description = "Shared helpers for Stickler adapters: CLI contract, device choice, meta.json"
 requires-python = ">=3.10"
 dependencies = []
 

@@ -162,12 +162,12 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 
 ## Phase 5b: Rented GPU for development (RunPod, decided 2026-11-12)
 
-- [~] **Task 19: CUDA environments for adapters** (M): implemented and unit-tested (locked versions via `uv export`, torch from cu128 → cu130 → cu126, `doctor` shows NVIDIA GPU and CUDA envs); real check on the first pod still open
+- [x] **Task 19: CUDA environments for adapters** (M): implemented and unit-tested (locked versions via `uv export`, torch from cu128 → cu130 → cu126, `doctor` shows NVIDIA GPU and CUDA envs); checked for real on 2026-11-12 on a RunPod RTX 4090: all adapters set up and ran with `--device gpu`
   - Acceptance: `stickler setup --device cuda` builds `.venv-cuda` from the adapter's direct dependencies with torch/torchaudio at the `uv.lock` version from the PyTorch CUDA index; `--device gpu` uses it; adapter files untouched.
   - Verify: unit tests with mocked subprocess; real check on the first pod (`stickler doctor`, smoke tests with `--device gpu`)
 - [x] **Task 20: Cache migration** (M): done on 2026-11-12 after the owner stopped the laptop runs (sustained 95 °C; the laptop timings were already measured). v2 key = input content + adapter id + code without comments/docstrings; `stickler cache-migrate` moved all 169 entries, evaluation identical before and after. The adapters' run.py/setup.py/pyproject.toml can now be translated without losing results (still planned for after the benchmark).
   - Acceptance: cache key = input content + adapter id + comment-insensitive code digest (AST for .py, parsed TOML) without the device; a migration moves every existing entry to its new key; `stickler eval` gives identical numbers before and after. Then translate the adapters' run.py/setup.py/pyproject.toml.
-- [~] **Task 21: `stickler remote`** (M): implemented and unit-tested (bootstrap, rsync of code/data/audio/cache, CUDA setup, live run output, cache download, pod stop also on failure; HF token via stdin, API key from RUNPOD_API_KEY); first real run pending (needs Task 20 first so GPU results count as cache hits)
+- [x] **Task 21: `stickler remote`** (M): implemented and unit-tested (bootstrap, rsync of code/data/audio/cache, CUDA setup, live run output, cache download, pod stop also on failure; HF token via stdin, API key from RUNPOD_API_KEY); real runs on 2026-11-12: own-roformer, the rest of MDB and own (0 errors), pod stopped automatically via the REST API v2
   - Acceptance: rsync code, required audio (MDB, own songs under the same `~`-relative paths) and cache to an SSH host; remote setup (uv, CUDA envs, HF token from env); run a config with `--device gpu`; rsync new cache entries back; optional pod stop via RunPod API (`RUNPOD_API_KEY`).
   - Verify: unit tests for command construction; first real run: RoFormer on the own songs (Secure Cloud, EU).
 
@@ -183,9 +183,9 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
     - **Licenses:** NC weights must not go into a distributed package (ADR 0002).
     - **CI:** The pipeline needs a CI service. Codeberg is out of the question, as it mostly disallows AI-generated programs.
 
-- [ ] **Everything in English** (mostly done on 2026-11-12)
+- [x] **Everything in English** (done on 2026-11-12)
   - Done: code comments, docstrings, messages, tests, README, SPEC, ADRs, tasks, adapter READMEs, CONSTRAINTS.md, CLAUDE.md; commit messages in English from now on.
-  - Remaining, only after the MDB benchmark has finished successfully (owner's decision): the adapters' `run.py`, `setup.py` and `pyproject.toml`. First make the cache key ignore comments (e.g. hash the AST / parsed TOML), migrate existing cache entries from old to new keys so no result is lost, then translate.
+  - Adapters' `run.py`, `setup.py` and `pyproject.toml` translated after the benchmark finished. The `description` values and two error messages changed the code digests, so the cache was rekeyed (`stickler cache-digests` before, `stickler cache-migrate --rekey-from` after): 445 entries moved, evaluation identical before and after.
 
 - [ ] **Design the interface together (before any GTK code)**
   - Wish (2026-11-12): design a beautiful interface together with the owner, following current design principles, including the GNOME Human Interface Guidelines.

@@ -1,8 +1,8 @@
-"""Stickler-Adapter: ADTOF (Frame_RNN) transkribiert Kick, Snare, Toms, Hi-Hat und Becken.
+"""Stickler adapter: ADTOF (Frame_RNN) transcribes kick, snare, toms, hi-hat and cymbals.
 
-Offizielle API `adtof_pytorch.transcribe_to_midi` mit den Standard-Schwellen des Modells
-(FRAME_RNN_THRESHOLDS). Ausgabe sind bereits GM-Pitches 35/38/47/42/49.
-ADTOF ist auf echten Songs (Mix) trainiert, verträgt also auch den Original-Mix.
+Official API `adtof_pytorch.transcribe_to_midi` with the model's default thresholds
+(FRAME_RNN_THRESHOLDS). The output already uses GM pitches 35/38/47/42/49.
+ADTOF is trained on real songs (mixes), so it also handles the original mix.
 """
 
 import tempfile

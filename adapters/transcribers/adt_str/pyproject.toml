@@ -1,10 +1,10 @@
 [project]
 name = "stickler-adt-str"
 version = "0.1.0"
-description = "Stickler-Adapter für ADT_STR (Melucci, Merialdo, Akama 2026)"
+description = "Stickler adapter for ADT_STR (Melucci, Merialdo, Akama 2026)"
 requires-python = ">=3.12,<3.13"
-# Versionen wie im offiziellen pyproject.toml von pier-maker92/ADT_STR (v1.0.0),
-# reduziert auf die Imports des Inferenz-Pfads. torchcodec entfällt: Audio lädt soundfile.
+# Versions as in the official pyproject.toml of pier-maker92/ADT_STR (v1.0.0), reduced to the
+# imports of the inference path. No torchcodec: soundfile loads the audio.
 dependencies = [
     "stickler-adapter",
     "torch==2.8.0",
@@ -34,16 +34,16 @@ name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
-# Trainiert nur auf (synthetischem) reinem Schlagzeug: auf dem Mix halluziniert der Decoder
-# und läuft bis max_length (>10 min für 36 s). Daher nie ohne Separator.
+# Trained only on (synthetic) isolated drums: on the mix the decoder hallucinates and runs up
+# to max_length (>10 min for 36 s). Hence never without a separator.
 [tool.stickler]
 input = "stem"
 
-# GPU-Variante (stickler setup --adapter adt_str --device rocm), siehe docs/adr/0003-rocm-kanal.md
+# GPU-Variante (stickler setup --adapter adt_str --device rocm), see docs/adr/0003-rocm-kanal.md
 [tool.stickler.rocm]
 index = "https://repo.amd.com/rocm/whl-multi-arch/"
 replace = ["torch", "torchaudio"]
-# Gemessen (MDB Rock/Punk, Drum-Stem): GPU liefert identische Noten, braucht aber 1,5–1,7× länger
+# Measured (MDB Rock/Punk, drum stem): the GPU gives identical notes but takes 1.5–1.7× longer
 prefer_gpu = false
 packages = [
     "torch[device-gfx1152]==2.12.0+rocm7.14.1",

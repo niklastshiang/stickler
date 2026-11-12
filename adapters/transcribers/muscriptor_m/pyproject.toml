@@ -1,19 +1,19 @@
 [project]
 name = "stickler-muscriptor-m"
 version = "0.1.0"
-description = "Stickler-Adapter: MuScriptor medium (Kyutai/Mirelo/IRCAM, 2026), nur die Drum-Spur"
+description = "Stickler adapter: MuScriptor medium (Kyutai/Mirelo/IRCAM, 2026), drum track only"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "stickler-adapter",
     "muscriptor==0.4.0",
     "torch>=2.3",
-    "torchaudio",  # über beat-this; muss zum CPU-torch passen
+    "torchaudio",  # via beat-this; must match the CPU torch
 ]
 
 [tool.uv]
 package = false
-# Stickler läuft nur unter Linux; muscriptor pinnt für Intel-macOS ein altes torch,
-# das sich mit dem CPU-Index nicht auflösen lässt.
+# Stickler only runs on Linux; muscriptor pins an old torch for Intel macOS that cannot be
+# resolved with the CPU index.
 environments = ["sys_platform == 'linux'"]
 
 [tool.uv.sources]
@@ -26,11 +26,11 @@ name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
-# GPU-Variante (stickler setup --adapter muscriptor_m --device rocm), siehe docs/adr/0003-rocm-kanal.md
-# MuScriptor rechnet auf CUDA/ROCm per fp16-Autocast, da ist die Radeon 840M stark.
+# GPU-Variante (stickler setup --adapter muscriptor_m --device rocm), see docs/adr/0003-rocm-kanal.md
+# MuScriptor computes with fp16 autocast on CUDA/ROCm, where the Radeon 840M is strong.
 [tool.stickler.rocm]
 index = "https://repo.amd.com/rocm/whl-multi-arch/"
 replace = ["torch", "torchaudio"]
 packages = ["torch[device-gfx1152]==2.12.0+rocm7.14.1", "torchaudio==2.11.0+rocm7.14.1"]
-# Gemessen (medium, MDB Punk 29 s Mix): GPU 357 s, CPU 213 s, identische Noten → CPU bevorzugen
+# Measured (medium, MDB Punk 29 s mix): GPU 357 s, CPU 213 s, identical notes → prefer the CPU
 prefer_gpu = false

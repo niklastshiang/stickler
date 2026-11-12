@@ -1,11 +1,11 @@
 [project]
 name = "stickler-demucs"
 version = "0.1.0"
-description = "Stickler-Adapter: Drum-Stem mit Demucs v4 (gepflegter Fork adefossez/demucs)"
+description = "Stickler adapter: drum stem with Demucs v4 (maintained fork adefossez/demucs)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "stickler-adapter",
-    "demucs==4.1.0",  # PyPI-Release des Forks github.com/adefossez/demucs (ADR 0001)
+    "demucs==4.1.0",  # PyPI release of the fork github.com/adefossez/demucs (ADR 0001)
     "torch>=2.1",
     "soundfile>=0.12.1",
 ]
@@ -22,10 +22,10 @@ name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
-# GPU-Variante (stickler setup --adapter demucs --device rocm), siehe docs/adr/0003-rocm-kanal.md
+# GPU-Variante (stickler setup --adapter demucs --device rocm), see docs/adr/0003-rocm-kanal.md
 [tool.stickler.rocm]
 index = "https://repo.amd.com/rocm/whl-multi-arch/"
 replace = ["torch"]
 packages = ["torch[device-gfx1152]==2.12.0+rocm7.14.1"]
-# Gemessen (MDB Punk, 29 s Mix): GPU 120 s, CPU 68 s, gleiche Noten danach → CPU bevorzugen
+# Measured (MDB Punk, 29 s mix): GPU 120 s, CPU 68 s, same notes afterwards → prefer the CPU
 prefer_gpu = false

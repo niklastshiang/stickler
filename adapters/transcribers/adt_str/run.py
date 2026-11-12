@@ -1,14 +1,14 @@
-"""Stickler-Adapter: ADT_STR transkribiert Schlagzeug-Audio zu GM-Drum-MIDI.
+"""Stickler adapter: ADT_STR transcribes drum audio to GM drum MIDI.
 
-Zwei Anpassungen gegenüber `ADTTranscriber.transcribe` aus dem HF-Bundle, beide aus dem
-offiziellen Repository übernommen:
-1. Jeder 2,56-s-Abschnitt wird auf Spitzenpegel normalisiert, wie in der offiziellen
-   Auswertung (eval.py → data_modules → utils.audio_utils.normalize). Ohne diesen Schritt
-   erkennt das Modell auf MDB kaum Hi-Hats.
-2. Das Modell gibt eine eigene Nummerierung (26 Klassen, 35–60) aus, kein GM. Rückübersetzung
-   mit `MappingUtils.GM_custom_midi_to_Gm_standard_Mapping` aus dem Bundle.
-Audio wird mit soundfile geladen und als Tensor übergeben (offizielle Tensor-API von
-`transcribe`). So braucht der Adapter kein torchcodec, das es für ROCm nicht gibt.
+Two changes compared with `ADTTranscriber.transcribe` from the HF bundle, both taken from the
+official repository:
+1. Every 2.56 s segment is peak-normalised, as in the official evaluation
+   (eval.py → data_modules → utils.audio_utils.normalize). Without this step the model
+   hardly detects any hi-hats on MDB.
+2. The model outputs its own numbering (26 classes, 35–60), not GM. It is mapped back with
+   `MappingUtils.GM_custom_midi_to_Gm_standard_Mapping` from the bundle.
+Audio is loaded with soundfile and passed as a tensor (official tensor API of `transcribe`),
+so the adapter does not need torchcodec, which does not exist for ROCm.
 """
 
 import sys
@@ -24,8 +24,8 @@ VERSION = f"v1.0.0/{VARIANT}@a33c5c6+segnorm+sf"
 
 def transcribe(audio: Path, out_dir: Path, device: str) -> None:
     if not (WEIGHTS / VARIANT).is_dir():
-        raise RuntimeError("Gewichte fehlen: zuerst `stickler setup --adapter adt_str`")
-    sys.path.insert(0, str(WEIGHTS))  # das HF-Bundle bringt seinen Inferenz-Code selbst mit
+        raise RuntimeError("Weights missing: run `stickler setup --adapter adt_str` first")
+    sys.path.insert(0, str(WEIGHTS))  # the HF bundle ships its own inference code
     import adt_transcriber
     import pretty_midi
     import soundfile

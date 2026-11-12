@@ -1,4 +1,4 @@
-"""Lädt Inferenz-Code und den genutzten Checkpoint aus dem YourMT3-Space nach weights/."""
+"""Downloads the inference code and the checkpoint in use from the YourMT3 Space to weights/."""
 
 from common import EXP, REPO_ID, REVISION, WEIGHTS
 from huggingface_hub import snapshot_download
@@ -12,4 +12,4 @@ if __name__ == "__main__":
         allow_patterns=["model_helper.py", "amt/src/**", f"amt/logs/2024/{EXP}/checkpoints/*"],
         ignore_patterns=["amt/src/extras/**", "amt/src/tests/**", "*.DS_Store", "*.coverage"],
     )
-    print(f"YourMT3-Bundle in {path}")
+    print(f"YourMT3 bundle in {path}")

@@ -1,9 +1,9 @@
-"""Stickler-Adapter: Beat This! findet Beats und Downbeats (Sekunden) ohne DBN-Nachbearbeitung.
+"""Stickler adapter: Beat This! finds beats and downbeats (seconds) without DBN postprocessing.
 
-Offizielle API `beat_this.inference.Audio2Beats` mit dem Standard-Checkpoint `final0` und dem
-minimalen Postprocessor (Empfehlung der Autoren; die DBN braucht madmom und setzt ein festes
-Taktmaß voraus). Audio wird per soundfile geladen (MP3/FLAC/WAV), gemischt auf Mono.
-Ausgabe: beats.json = {"beats": [...], "downbeats": [...]}.
+Official API `beat_this.inference.Audio2Beats` with the default checkpoint `final0` and the
+minimal postprocessor (the authors' recommendation; the DBN needs madmom and assumes a fixed
+time signature). Audio is loaded with soundfile (MP3/FLAC/WAV) and mixed down to mono.
+Output: beats.json = {"beats": [...], "downbeats": [...]}.
 """
 
 import json

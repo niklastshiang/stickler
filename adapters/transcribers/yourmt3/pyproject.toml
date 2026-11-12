@@ -1,15 +1,15 @@
 [project]
 name = "stickler-yourmt3"
 version = "0.1.0"
-description = "Stickler-Adapter: YourMT3+ YPTF.MoE+Multi (Chang et al. 2024), Inferenz-Code aus dem HF-Space"
+description = "Stickler adapter: YourMT3+ YPTF.MoE+Multi (Chang et al. 2024), inference code from the HF Space"
 requires-python = ">=3.12,<3.13"
-# Abhängigkeiten nach requirements.txt des Space (Revision siehe common.py); ohne Gradio,
-# yt-dlp, die nur die Web-Oberfläche brauchen.
+# Dependencies following the Space's requirements.txt (revision: see common.py), without
+# Gradio and yt-dlp, which only the web interface needs.
 dependencies = [
     "stickler-adapter",
     "huggingface_hub",
     "torch==2.8.0",
-    "torchaudio==2.8.0",  # vor torchcodec; Audio lädt run.py ohnehin per soundfile
+    "torchaudio==2.8.0",  # before torchcodec; run.py loads audio with soundfile anyway
     "pytorch-lightning>=2.2.1",
     "transformers==4.45.1",
     "numpy==1.26.4",
@@ -19,7 +19,7 @@ dependencies = [
     "mir_eval",
     "librosa",
     "soundfile>=0.12",
-    "wandb",  # wird in model/ymt3.py beim Import geladen, Logging bleibt aus
+    "wandb",  # imported by model/ymt3.py; logging stays off
 ]
 
 [tool.uv]

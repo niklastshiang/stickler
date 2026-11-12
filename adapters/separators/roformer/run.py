@@ -1,8 +1,8 @@
-"""Stickler-Adapter: BS-RoFormer (Band-Split RoFormer, Checkpoint „SW“) trennt den Drum-Stem.
+"""Stickler adapter: BS-RoFormer (Band-Split RoFormer, checkpoint "SW") separates the drum stem.
 
-Nutzt die offizielle Python-API von python-audio-separator mit deren Standardparametern.
-Die Stem-Namen dieses Checkpoints sind kleingeschrieben („drums“); gewählt wird die Ausgabedatei
-mit „(drums)“ im Namen, unabhängig von der Schreibweise.
+Uses the official Python API of python-audio-separator with its default parameters.
+This checkpoint's stem names are lower case ("drums"); the output file with "(drums)" in its
+name is chosen, regardless of case.
 """
 
 import tempfile
@@ -16,8 +16,8 @@ from stickler_adapter import run
 
 
 def separate(audio: Path, out_dir: Path, device: str) -> None:
-    # Gerät: audio-separator nimmt selbst die GPU, wenn torch eine sieht (ROCm-Umgebung);
-    # in der CPU-Umgebung gibt es keine. Der Harness wählt die Umgebung passend zu `device`.
+    # Device: audio-separator uses the GPU by itself if torch sees one (ROCm/CUDA environment);
+    # the CPU environment has none. The harness picks the environment matching `device`.
     with tempfile.TemporaryDirectory() as tmp:
         separator = Separator(
             model_file_dir=str(WEIGHTS),
@@ -29,7 +29,7 @@ def separate(audio: Path, out_dir: Path, device: str) -> None:
         outputs = separator.separate(str(audio))
         drums = [f for f in outputs if "(drums)" in Path(f).name.lower()]
         if len(drums) != 1:
-            raise RuntimeError(f"Drum-Stem nicht eindeutig in {outputs}")
+            raise RuntimeError(f"Drum stem is ambiguous in {outputs}")
         samples, sample_rate = soundfile.read(Path(tmp) / Path(drums[0]).name, always_2d=True)
     soundfile.write(out_dir / "drums.wav", samples, sample_rate, subtype="PCM_24")
 

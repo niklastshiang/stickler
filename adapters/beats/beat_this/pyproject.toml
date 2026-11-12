@@ -1,7 +1,7 @@
 [project]
 name = "stickler-beat-this"
 version = "0.1.0"
-description = "Stickler-Adapter: Beat This! (Foscarin, Schlüter, Widmer, ISMIR 2024), Beats und Downbeats"
+description = "Stickler adapter: Beat This! (Foscarin, Schlüter, Widmer, ISMIR 2024), beats and downbeats"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "stickler-adapter",

@@ -1,10 +1,9 @@
-"""Stickler-Adapter: MuScriptor transkribiert alle Instrumente; übernommen wird nur die Drum-Spur.
+"""Stickler adapter: MuScriptor transcribes all instruments; only the drum track is kept.
 
-Offizielle API `TranscriptionModel.transcribe` (greedy, alle Instrumente erlaubt), rohe
-Ereignisse ohne `transcribe_and_postprocess`: Dessen Zeitkorrektur über das Beat-Raster
-verschob die Noten auf MDB Punk um 15–40 ms zu früh (Macro-F1 Mix 0,47 statt 0,79,
-Demucs-Stem 0,32 statt 0,73), während die rohen Ereignisse schon pünktlich sind (+10/0 ms).
-Drum-Ereignisse tragen GM-Pitches.
+Official API `TranscriptionModel.transcribe` (greedy, all instruments allowed), raw events
+without `transcribe_and_postprocess`: its timing correction along the beat grid moved the notes
+on MDB Punk 15–40 ms too early (macro-F1 mix 0.47 instead of 0.79, Demucs stem 0.32 instead of
+0.73), while the raw events are already on time (+10/0 ms). Drum events carry GM pitches.
 """
 
 from importlib.metadata import version

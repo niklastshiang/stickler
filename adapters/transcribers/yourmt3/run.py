@@ -1,11 +1,11 @@
-"""Stickler-Adapter: YourMT3+ (YPTF.MoE+Multi, PS) transkribiert alle Instrumente,
-übernommen wird nur die Drum-Spur.
+"""Stickler adapter: YourMT3+ (YPTF.MoE+Multi, PS) transcribes all instruments; only the drum
+track is kept.
 
-Nachbau von `transcribe()` aus model_helper.py des Space (Revision in common.py):
-Mono, Resampling auf 16 kHz, Segmente à `input_frames`, Batch-Inferenz, Detokenisierung je
-Decoder-Kanal. Abweichung: Audio wird per soundfile geladen (torchaudio.load braucht in
-neueren Versionen torchcodec) und das MIDI schreibt der gemeinsame Helfer statt des
-Space-Writers. Die Drum-Pitches sind bereits GM.
+Re-implementation of `transcribe()` from the Space's model_helper.py (revision in common.py):
+mono, resampling to 16 kHz, segments of `input_frames`, batch inference, detokenisation per
+decoder channel. Difference: audio is loaded with soundfile (torchaudio.load needs torchcodec
+in newer versions) and the MIDI is written by the shared helper instead of the Space's writer.
+The drum pitches are already GM.
 """
 
 import os
@@ -25,7 +25,7 @@ BATCH = 8
 
 def _load_model(device: str):
     sys.path[:0] = [str(SRC), str(WEIGHTS)]
-    os.chdir(WEIGHTS)  # Checkpoint-Pfad im Space-Code ist relativ (amt/logs/...)
+    os.chdir(WEIGHTS)  # the Space code's checkpoint path is relative (amt/logs/...)
     from model_helper import load_model_checkpoint
 
     return load_model_checkpoint(args=ARGS, device=device)
