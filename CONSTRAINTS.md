@@ -1,6 +1,6 @@
 # Constraints
 
-Last reviewed: 2026-11-11 vom Projektinhaber (Interview: keine weiteren Dimensionen, Verstöße blockieren, Abdeckung 80 % fest)
+Last reviewed: 2026-11-12 vom Projektinhaber (Interview: keine weiteren Dimensionen, Verstöße blockieren; Abdeckung am 2026-11-12 von 80 % auf 95 % angehoben)
 
 Gilt für den Harness (`src/stickler/`, `tests/`, `scripts/`). Adapter unter `adapters/` sind dünne Wrapper um fremden Modellcode. Für sie gelten der Floor und Lint, aber keine Abdeckungsgrenze.
 
@@ -23,10 +23,11 @@ Geprüft durch `uv run python scripts/floor_guard.py` (diff-basiert, Exit 0 saub
 | Format | Zero files needing reformat | `uv run ruff format --check .` | every edit |
 | Floor | Zero floor violations in the diff | `uv run python scripts/floor_guard.py` | every edit |
 | Tests | All tests pass | `uv run pytest -q` | task end, pre-commit |
-| Coverage | `src/stickler` line coverage >= 80% (ohne `cli.py`) | `uv run pytest -q --cov --cov-fail-under=80` | task end, pre-commit |
+| Coverage | `src/stickler` line coverage >= 95% (ohne `cli.py`) | `uv run pytest -q --cov --cov-fail-under=95` | task end, pre-commit |
 
 Gründe:
 - **80 % fest:** Das Projekt startet bei null, damit ist die Zahl für neuen Code von Anfang an erreichbar. Sie zwingt zu Tests für die Bewertungslogik, an der die Aussagekraft des ganzen Benchmarks hängt.
+- **Anhebung auf 95 % (2026-11-12):** Auf Wunsch des Projektinhabers, beim Stand von 97,5 %. Der Puffer zu 100 % lässt Platz für Pfade, die nur mit echter GPU oder echten Modellen laufen.
 - **Verstöße blockieren:** Der Git-Hook `.githooks/pre-commit` führt `scripts/check.sh task` aus. Ein roter Check verhindert den Commit.
 - **Zeitbudget:** `scripts/check.sh fast` < 5 s, `scripts/check.sh task` < 90 s. Langsame Modell-Tests (`pytest -m adapters`) zählen nicht zum Standardlauf und laufen bei Aufgaben, die Adapter betreffen.
 

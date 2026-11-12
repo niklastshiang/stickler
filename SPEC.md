@@ -131,7 +131,7 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 - **pytest**, Tests unter `tests/`, Test zuerst (red → green → refactor).
 - Unit-Tests ohne Modelle und Netz: `classes`, `evaluate`, `align`, `notation`, Dataset-Loader (mit Mini-Fixtures in `tests/fixtures/`).
 - Adapter-Smoke-Tests (`pytest -m adapters`, nicht im Standardlauf): 10 s Testaudio, geprüft wird gültiges MIDI und `meta.json`.
-- Abdeckung ≥ 80 % für `src/stickler/` außer `cli.py`.
+- Abdeckung ≥ 95 % für `src/stickler/` außer `cli.py`.
 
 ## Boundaries
 - **Always:** Tests vor jedem Commit; ein Commit pro Task; die Quelle (offizielle README/Paper, Version/Commit-Hash) im Adapter-README; Lizenz jedes Modells dokumentieren.

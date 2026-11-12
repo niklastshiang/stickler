@@ -8,5 +8,5 @@ uv run ruff check .
 uv run ruff format --check .
 uv run python scripts/floor_guard.py
 if [[ "$stage" == "task" ]]; then
-  uv run pytest -q --cov --cov-fail-under=80
+  uv run pytest -q --cov --cov-fail-under=95
 fi
