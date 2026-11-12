@@ -160,6 +160,17 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 - [ ] All 9 success criteria from SPEC.md met
 - [ ] Final review with the user
 
+## Phase 5b: Rented GPU for development (RunPod, decided 2026-11-12)
+
+- [ ] **Task 19: CUDA environments for adapters** (M)
+  - Acceptance: `stickler setup --device cuda` builds `.venv-cuda` from the adapter's direct dependencies with torch/torchaudio at the `uv.lock` version from the PyTorch CUDA index; `--device gpu` uses it; adapter files untouched.
+  - Verify: unit tests with mocked subprocess; real check on the first pod (`stickler doctor`, smoke tests with `--device gpu`)
+- [ ] **Task 20: Cache migration** (M, only after the MDB benchmark has finished successfully)
+  - Acceptance: cache key = input content + adapter id + comment-insensitive code digest (AST for .py, parsed TOML) without the device; a migration moves every existing entry to its new key; `stickler eval` gives identical numbers before and after. Then translate the adapters' run.py/setup.py/pyproject.toml.
+- [ ] **Task 21: `stickler remote`** (M)
+  - Acceptance: rsync code, required audio (MDB, own songs under the same `~`-relative paths) and cache to an SSH host; remote setup (uv, CUDA envs, HF token from env); run a config with `--device gpu`; rsync new cache entries back; optional pod stop via RunPod API (`RUNPOD_API_KEY`).
+  - Verify: unit tests for command construction; first real run: RoFormer on the own songs (Secure Cloud, EU).
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
