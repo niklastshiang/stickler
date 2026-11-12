@@ -467,13 +467,32 @@ def export_drum_track(stem: Path, dest: Path) -> Path:
     return dest
 
 
+RUNPOD_KEY_FILE = Path.home() / ".config" / "stickler" / "runpod.env"
+
+
+def runpod_api_key() -> str:
+    """RUNPOD_API_KEY from the environment, else from RUNPOD_KEY_FILE. The file is read as
+    text, never executed: either the bare key or `[export ]RUNPOD_API_KEY=<key>`."""
+    if key := os.environ.get("RUNPOD_API_KEY", ""):
+        return key
+    if not RUNPOD_KEY_FILE.exists():
+        return ""
+    for line in RUNPOD_KEY_FILE.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        value = line.split("=", 1)[1] if "=" in line else line
+        return value.strip().strip("'\"")
+    return ""
+
+
 def run_remote(host: str, port: int, config_path: Path, *, pod_id: str | None = None) -> None:
     """Runs a benchmark config on a rented GPU over SSH and brings the new cache entries
     back (development only). Secrets come from the environment: HF_TOKEN (or the file from
-    `hf auth login`) and, to stop the pod afterwards, RUNPOD_API_KEY."""
-    api_key = os.environ.get("RUNPOD_API_KEY", "")
+    `hf auth login`) and, to stop the pod afterwards, the RunPod key (`runpod_api_key`)."""
+    api_key = runpod_api_key()
     if pod_id and not api_key:
-        raise ValueError("--pod-id needs the RunPod API key in the environment (RUNPOD_API_KEY)")
+        raise ValueError(f"--pod-id needs the RunPod API key (RUNPOD_API_KEY or {RUNPOD_KEY_FILE})")
     hf_token = os.environ.get("HF_TOKEN", "")
     if not hf_token and doctor.HF_TOKEN_FILE.exists():
         hf_token = doctor.HF_TOKEN_FILE.read_text(encoding="utf-8").strip()

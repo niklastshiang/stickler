@@ -446,5 +446,23 @@ def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
 
 def test_run_remote_with_pod_id_needs_an_api_key(tmp_path, monkeypatch):
     monkeypatch.delenv("RUNPOD_API_KEY", raising=False)
+    monkeypatch.setattr(api, "RUNPOD_KEY_FILE", tmp_path / "missing")
     with pytest.raises(ValueError, match="RUNPOD_API_KEY"):
         api.run_remote("root@h", 22, api.CONFIG, pod_id="pod1")
+
+
+@pytest.mark.parametrize(
+    "content", ["abc123\n", "export RUNPOD_API_KEY=abc123\n", "RUNPOD_API_KEY='abc123'"]
+)
+def test_runpod_key_file_is_parsed_without_a_shell(tmp_path, monkeypatch, content):
+    key_file = tmp_path / "runpod.env"
+    key_file.write_text(content, encoding="utf-8")
+    monkeypatch.delenv("RUNPOD_API_KEY", raising=False)
+    monkeypatch.setattr(api, "RUNPOD_KEY_FILE", key_file)
+    assert api.runpod_api_key() == "abc123"
+
+
+def test_runpod_key_from_environment_wins(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNPOD_API_KEY", "from-env")
+    monkeypatch.setattr(api, "RUNPOD_KEY_FILE", tmp_path / "missing")
+    assert api.runpod_api_key() == "from-env"
