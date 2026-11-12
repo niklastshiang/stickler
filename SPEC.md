@@ -147,7 +147,7 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 - Abdeckung ≥ 95 % für `src/stickler/` außer `cli.py`.
 
 ## Boundaries
-- **Always:** Tests vor jedem Commit; ein Commit pro Task; die Quelle (offizielle README/Paper, Version/Commit-Hash) im Adapter-README; Lizenz jedes Modells dokumentieren.
+- **Always:** Releases fortlaufend nummerieren (1, 2, 3 …, Tag `vN`, ADR 0006); Tests vor jedem Commit; ein Commit pro Task; die Quelle (offizielle README/Paper, Version/Commit-Hash) im Adapter-README; Lizenz jedes Modells dokumentieren.
 - **Ask first:** neue Harness-Abhängigkeiten; einen neuen Modellkandidaten aufnehmen oder einen streichen; Bewertungsparameter ändern (Toleranzfenster, Klassen-Mapping); größere Downloads (> 2 GB).
 - **Never:** Audio, Datensätze oder Modellgewichte committen; proprietäre oder Closed-Source-Dienste nutzen; Tests abschwächen oder überspringen, um grün zu werden; das archivierte facebookresearch/demucs verwenden.
 
@@ -168,6 +168,7 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 - [0003 GPU über AMD-ROCm-Wheels](docs/adr/0003-rocm-kanal.md)
 - [0004 RoFormer-Checkpoint BS-Roformer-SW](docs/adr/0004-roformer-checkpoint.md)
 - [0005 YourMT3+-Variante PS](docs/adr/0005-yourmt3-variante.md)
+- [0006 Fortlaufende Versionsnummern](docs/adr/0006-versionierung.md)
 
 ## Geklärte Fragen
 1. MuScriptor: Der User akzeptiert die Lizenz auf Hugging Face und loggt sich per `uvx hf auth login` ein.

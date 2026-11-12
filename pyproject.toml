@@ -1,6 +1,6 @@
 [project]
 name = "stickler"
-version = "0.1.0"
+version = "0"  # fortlaufend: jedes Release +1 (ADR 0006)
 description = "Benchmark für automatische Schlagzeug-Transkription mit Open-Source-Modellen"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"

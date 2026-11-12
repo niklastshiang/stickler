@@ -30,8 +30,12 @@ def rules(diff: str) -> set[str]:
     return {rule for rule, _, _ in floor_guard.check(diff)}
 
 
-def test_package_version():
-    assert stickler.__version__ == "0.1.0"
+def test_package_version_is_a_release_number():
+    """Fortlaufende Versionsnummern (ADR 0006): eine Ganzzahl, gleich in Paket und pyproject."""
+    from importlib.metadata import version
+
+    assert stickler.__version__.isdigit()
+    assert version("stickler") == stickler.__version__
 
 
 def test_clean_diff_passes():
