@@ -18,7 +18,12 @@ dependencies = [
 stickler = "stickler.cli:app"
 
 [dependency-groups]
-dev = ["pytest>=8", "pytest-cov>=6", "ruff>=0.14"]
+dev = [
+    "music21>=10.5.2",
+    "pytest>=8",
+    "pytest-cov>=6",
+    "ruff>=0.14",
+]
 
 [build-system]
 requires = ["hatchling"]

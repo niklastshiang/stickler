@@ -143,7 +143,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 
 ## Phase 5: Notes
 
-- [ ] **Task 17: Quantization and MusicXML** (M)
+- [x] **Task 17: Quantization and MusicXML** (M): stdlib MusicXML writer, music21 only as a dev dependency for round-trip tests; RATATATA (ADTOF + Demucs): 1811 hits → 126 bars of 4/4
   - Acceptance:
     - `notation.py` quantizes to the beat grid (1/16 and eighth-note triplets) and filters ghost notes via a velocity threshold.
     - MusicXML with time signature, percussion staff and note heads for cymbals.
