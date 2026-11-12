@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/lizenz-MIT-ff8800?style=flat-square&labelColor=0d1117" /></a>
   <img src="https://img.shields.io/badge/python-3.12-ff8800?style=flat-square&logo=python&logoColor=ff8800&labelColor=0d1117" />
   <img src="https://img.shields.io/badge/umgebungen-uv-ff8800?style=flat-square&labelColor=0d1117" />
   <img src="https://img.shields.io/badge/sprache-deutsch%20%F0%9F%87%A9%F0%9F%87%AA-ff8800?style=flat-square&labelColor=0d1117" />
@@ -307,13 +308,18 @@ stickler/
 
 ## `> LIZENZ`
 
-**Für den Code ist noch keine Lizenz gewählt.** Das Repository ist privat.
+**Der Code von Stickler** steht unter [**MIT**](LICENSE). Das gilt für Harness, Adapter,
+Skripte, Tests und Dokumentation. Benutzen, ändern, weitergeben und verkaufen ist erlaubt,
+solange der Urheberrechtsvermerk dabei bleibt.
 
-**Die Modelle** bringen ihre eigenen Lizenzen mit, siehe [`> KANDIDATEN`](#-kandidaten).
-Gewichte unter Non-Commercial-Lizenzen sind nur für den privaten Gebrauch zugelassen
-([ADR 0002](docs/adr/0002-nc-lizenzen.md)). **MDB Drums** steht unter CC BY-NC-SA 4.0. Noten und
-Aufnahmen der eigenen Songs gehören ihren Urhebern und liegen deshalb nicht im
-Repository.
+**Die Modelle** sind davon nicht berührt. Stickler lädt sie erst bei
+`stickler setup` herunter, sie liegen nicht im Repository und bringen ihre eigenen
+Lizenzen mit, siehe [`> KANDIDATEN`](#-kandidaten). Gewichte unter Non-Commercial-Lizenzen
+sind nur für den privaten Gebrauch zugelassen ([ADR 0002](docs/adr/0002-nc-lizenzen.md)).
+Wer Stickler verteilt, muss sie weglassen oder ersetzen.
+
+**Daten:** MDB Drums steht unter CC BY-NC-SA 4.0. Noten und Aufnahmen der eigenen Songs
+gehören ihren Urhebern und liegen deshalb nicht im Repository.
 
 ---
 
