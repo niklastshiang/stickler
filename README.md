@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <strong>Welches Open-Source-Modell schreibt die besten Schlagzeug-Noten? Stickler misst nach.</strong><br/>
+  <strong>Song rein, Schlagzeug-Noten raus. Lokal, mit Open-Source-Modellen.</strong><br/>
   <em>Stickler (engl.): Pedant, Korinthenkacker. Und einer, der die Sticks hält.</em>
 </p>
 
@@ -33,7 +33,7 @@
   ║        ╚══════╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝         ║
   ║                                                                             ║
   ║                        🥁 SONG REIN  //  NOTEN RAUS                         ║
-  ║             OPEN-SOURCE-BENCHMARK FÜR SCHLAGZEUG-TRANSKRIPTION              ║
+  ║         SCHLAGZEUG-NOTEN AUS JEDEM SONG  //  OPEN SOURCE  //  LOKAL         ║
   ║                                                                             ║
   ╚═════════════════════════════════════════════════════════════════════════════╝
 </code>
@@ -43,15 +43,17 @@
 
 ## `> WAS IST DAS`
 
-**Stickler** soll aus einem Song Schlagzeug-Noten machen, die man in MuseScore nur noch
-korrigieren muss. Davor steht eine Frage, die sich nicht durch Lesen von Papern beantworten
-lässt: **Welche Kombination aus Drum-Trennung und Transkriptionsmodell liefert die besten
-Noten?** Auf Benchmark-Daten, und vor allem auf echter Musik.
+**Stickler** wird eine Desktop-Anwendung, die aus einem Song Schlagzeug-Noten macht: MP3
+oder FLAC hineinziehen, Noten als MusicXML oder PDF bekommen, in MuseScore nur noch
+korrigieren. Mit einer Oberfläche in GTK 4, als Flatpak und AppImage.
 
-Deshalb ist Stickler zuerst ein Prüfstand. Jedes Modell steckt in einem eigenen Adapter mit
-eigener Python-Umgebung und muss gegen dieselben Referenzen antreten: Kick, Snare, Toms,
-Hi-Hat und Becken, jeder Schlag auf ±50 ms genau. Gewonnen hat, wer am wenigsten daneben
-haut.
+**Gerade ist Stickler ein Prüfstand.** Bevor die Anwendung entsteht, muss eine Frage geklärt
+sein, die sich nicht durch Lesen von Papern beantworten lässt: **Welche Kombination aus
+Drum-Trennung und Transkriptionsmodell liefert die besten Noten?** Gemessen wird auf
+Benchmark-Daten und vor allem auf echter Musik. Jedes Modell steckt in einem eigenen
+Adapter mit eigener Python-Umgebung und tritt gegen dieselben Referenzen an: Kick, Snare,
+Toms, Hi-Hat und Becken, jeder Schlag auf ±50 ms genau. Die Gewinner-Pipeline wird zum
+Kern der Anwendung.
 
 Erlaubt sind **nur Open-Source-Modelle aus aktiv gepflegten Projekten.** Kein Cloud-Dienst,
 keine Blackbox, alles läuft lokal auf dem eigenen Rechner.
@@ -204,12 +206,12 @@ scripts/check.sh task
 - [ ] Eigene Songs abgleichen und prüfen
 - [ ] Transkriber `drumsep_onset` (DrumSep plus Onset-Erkennung je Trommel)
 
-**Danach**
+**Danach: von der Messung zur Anwendung**
 
 - [ ] HTML-Report mit Ranking, Klassen, Laufzeit und Speicher
 - [ ] ENST-Drums als dritter Datensatz
 - [ ] Noten aus der Gewinner-Pipeline: Quantisierung, MusicXML, `stickler notate`
-- [ ] Oberfläche in GTK 4 und libadwaita
+- [ ] Anwendung mit Oberfläche in GTK 4 und libadwaita
 - [ ] Release-Pipeline: Flatpak und AppImage bei jedem Release
 - [ ] Alles auf Englisch: Code, Ausgaben und Dokumentation
 

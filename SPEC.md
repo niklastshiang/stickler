@@ -11,6 +11,8 @@
 5. Erst nur Schlagzeug. Andere Instrumente kommen später als neue Adapter dazu, ohne den Kern umzubauen.
 
 ## Objective
+**Endziel:** eine fertige Desktop-Anwendung (GTK 4 + libadwaita, verteilt als Flatpak und AppImage), die aus einem Song Schlagzeug-Noten erzeugt. Der Benchmark ist der erste Schritt dorthin, er bestimmt die Pipeline im Kern der Anwendung.
+
 Herausfinden, **welche Kombination aus Drum-Stem-Trennung und Transkriptionsmodell die besten Schlagzeug-Noten liefert**, und zwar auf öffentlichen Testdaten und auf den eigenen Songs (Metal/Elektro, z. B. Electric Callboy). Die beste Pipeline erzeugt am Ende MusicXML bzw. PDF-Noten.
 
 User Stories:
