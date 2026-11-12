@@ -248,3 +248,8 @@ def test_load_tracks_own_requires_alignment(tmp_path, monkeypatch):
     monkeypatch.setattr(api, "REFERENCES_DIR", tmp_path)
     with pytest.raises(ValueError, match="stickler align"):
         api.load_tracks("own", tmp_path)
+
+
+def test_results_dir_depends_on_config(tmp_path):
+    assert api.results_dir_for(api.CONFIG) == api.RESULTS_DIR
+    assert api.results_dir_for(tmp_path / "own.yaml") == api.RESULTS_DIR / "own"

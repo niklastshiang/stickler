@@ -1,0 +1,13 @@
+# Benchmark on the owner's songs (`stickler run --config config/own.yaml`, results in results/own/).
+# Only songs whose alignment passed the quality checks take part (`stickler align`).
+# No `oracle`: there is no isolated drum stem for commercial recordings.
+# No `roformer` for now: ~7x real time on the CPU (about 4.5 h for 10 songs) and weaker than
+# Demucs in the first sample; can be added later, results are cached.
+datasets: [own]
+separators: [none, demucs]
+transcribers: [adt_str, adtof, muscriptor_s, muscriptor_m, yourmt3]
+device: auto
+schemes: ["5", "3"]
+timeout:
+  separators: 1800
+  transcribers: {factor: 10, min: 120}  # 10 x song length, at least 120 s

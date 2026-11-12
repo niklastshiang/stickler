@@ -75,7 +75,7 @@ def test_run_and_eval_delegate_to_api(monkeypatch, tmp_path):
             "macro_f1": 0.6,
         }
     ]
-    monkeypatch.setattr(api, "evaluate_benchmark", lambda cfg: summary)
+    monkeypatch.setattr(api, "evaluate_benchmark", lambda cfg, results_dir=None: summary)
     result = CliRunner().invoke(cli.app, ["eval"])
     assert result.exit_code == 0, result.output
     assert "adt_str" in result.output and "0.700" in result.output
@@ -123,3 +123,19 @@ def test_align_prints_quality_and_reasons(monkeypatch, tmp_path):
     assert "limit ≥ 0.85" in result.output and "Score missing" in result.output
     assert "score passages not in the recording: 8.0% (info)" in result.output
     assert "✓ ohr" in result.output and "approved by ear: checked click.wav" in result.output
+
+
+def test_run_and_eval_accept_another_config(monkeypatch, tmp_path):
+    cfg = tmp_path / "own.yaml"
+    seen = {}
+    monkeypatch.setattr(
+        api, "run_benchmark", lambda c, device=None, progress=None: seen.setdefault("run", c) and []
+    )
+    monkeypatch.setattr(
+        api,
+        "evaluate_benchmark",
+        lambda c, results_dir=None: seen.update(eval=c, out=results_dir) or [],
+    )
+    assert CliRunner().invoke(cli.app, ["run", "--config", str(cfg)]).exit_code == 0
+    assert CliRunner().invoke(cli.app, ["eval", "--config", str(cfg)]).exit_code == 0
+    assert seen == {"run": cfg, "eval": cfg, "out": api.RESULTS_DIR / "own"}

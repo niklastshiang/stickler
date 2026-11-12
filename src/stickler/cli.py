@@ -48,15 +48,18 @@ def setup(
 Device = Annotated[str | None, typer.Option(help="auto | cpu | gpu (overrides the config)")]
 
 
+ConfigOpt = Annotated[Path | None, typer.Option("--config", help="default: config/benchmark.yaml")]
+
+
 @app.command("run")
-def run_cmd(device: Device = None) -> None:
+def run_cmd(device: Device = None, config: ConfigOpt = None) -> None:
     """Compute the benchmark matrix (results are cached)."""
 
     def progress(done: int, total: int, label: str) -> None:
         typer.echo(f"[{done}/{total}] {label}")
 
     try:
-        records = api.run_benchmark(api.CONFIG, device=device, progress=progress)
+        records = api.run_benchmark(config or api.CONFIG, device=device, progress=progress)
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -67,10 +70,11 @@ def run_cmd(device: Device = None) -> None:
 
 
 @app.command("eval")
-def eval_cmd() -> None:
-    """Score cached results → results/metrics.csv and results/summary.csv."""
+def eval_cmd(config: ConfigOpt = None) -> None:
+    """Score cached results → metrics.csv and summary.csv in results/ (or results/<config>/)."""
+    cfg = config or api.CONFIG
     try:
-        summary = api.evaluate_benchmark(api.CONFIG)
+        summary = api.evaluate_benchmark(cfg, results_dir=api.results_dir_for(cfg))
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc

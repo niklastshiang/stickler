@@ -137,6 +137,13 @@ def run_benchmark(
     )
 
 
+def results_dir_for(config_path: Path) -> Path:
+    """results/ for the default config, results/<config name>/ for any other."""
+    if config_path.resolve() == CONFIG.resolve():
+        return RESULTS_DIR
+    return RESULTS_DIR / config_path.stem
+
+
 def evaluate_benchmark(
     config_path: Path = CONFIG,
     *,
