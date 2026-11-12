@@ -1,0 +1,28 @@
+[project]
+name = "stickler-adtof"
+version = "0.1.0"
+description = "Stickler-Adapter: ADTOF Frame_RNN (Zehren et al. 2023), PyTorch-Port von xavriley"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "stickler-adapter",
+    "adtof-pytorch",
+    "torch>=2.1",
+    "pretty_midi",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+stickler-adapter = { path = "../../_common", editable = true }
+# Nicht auf PyPI; gepinnt auf den Stand vom 2025-11-11 (Gewichte im Paket enthalten)
+adtof-pytorch = { git = "https://github.com/xavriley/ADTOF-pytorch", rev = "85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9" }
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# Keine GPU-Variante: ~1 s je Song auf der CPU (MDB Punk, 29 s), eine ROCm-Umgebung (~5 GB)
+# lohnt nicht (ADR 0003: fp32 auf der Radeon 840M ohnehin nicht schneller).

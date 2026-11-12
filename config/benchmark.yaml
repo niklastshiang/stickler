@@ -5,7 +5,7 @@
 #              ([tool.stickler] input = "stem"), wird nicht mit `none` kombiniert.
 datasets: [mdb]
 separators: [none, oracle, demucs, roformer]
-transcribers: [adt_str]
+transcribers: [adt_str, adtof]
 device: auto          # auto | cpu | gpu
 schemes: ["5", "3"]   # aus config/classes.yaml
 # Zeitlimit je Adapter-Aufruf in Sekunden (Überschreitung = Fehler "Zeitlimit").

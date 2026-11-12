@@ -85,7 +85,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
   - Verify: `pytest -m adapters -k roformer`, Lauf auf MDB
   - Dependencies: 5 · Files: `adapters/separators/roformer/*`, ADR
 
-- [ ] **Task 9: Transkriber `adtof` (ADTOF-pytorch)** (M)
+- [x] **Task 9: Transkriber `adtof` (ADTOF-pytorch)** (M)
   - Acceptance: 5 Klassen auf GM-Pitches gemappt, gültiges MIDI.
   - Verify: `pytest -m adapters -k adtof`, Lauf auf MDB
   - Dependencies: 5 · Files: `adapters/transcribers/adtof/*`, `config/classes.yaml`

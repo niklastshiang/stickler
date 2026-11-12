@@ -50,7 +50,7 @@ def drum_clip(tmp_path_factory) -> Path:
     return path
 
 
-@pytest.mark.parametrize("adapter_id", ["adt_str"])
+@pytest.mark.parametrize("adapter_id", ["adt_str", "adtof"])
 def test_transcriber_produces_midi(adapter_id, drum_clip, tmp_path):
     spec = adapters.discover(ROOT / "adapters")[adapter_id]
     result = adapters.run_adapter(spec, drum_clip, tmp_path / adapter_id, device="cpu")
