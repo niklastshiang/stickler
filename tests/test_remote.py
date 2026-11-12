@@ -1,5 +1,6 @@
 """Tests for running a benchmark config on a rented GPU over SSH (all commands mocked)."""
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -119,31 +120,54 @@ def test_pod_is_stopped_even_if_the_run_fails(tmp_path, plan):
     assert stopped == [True]
 
 
-def test_stop_pod_calls_the_runpod_api():
+class _Response:
+    def __init__(self, status):
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_stop_pod_calls_the_runpod_api_v2():
     seen = {}
-
-    class Response:
-        status = 200
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            return False
 
     def opener(request, timeout):
         seen["url"], seen["method"] = request.full_url, request.get_method()
         seen["auth"] = request.get_header("Authorization")
         seen["agent"] = request.get_header("User-agent")
-        return Response()
+        seen["body"] = json.loads(request.data)
+        return _Response(200)
 
     remote.stop_pod("abc123", "key", opener=opener)
     assert seen == {
-        "url": "https://rest.runpod.io/v1/pods/abc123/stop",
+        "url": "https://api.runpod.io/v2/pods/abc123/action",
         "method": "POST",
         "auth": "Bearer key",
         "agent": remote.USER_AGENT,  # Cloudflare blocks Python's default agent (error 1010)
+        "body": {"action": "stop"},
     }
+
+
+def test_stop_pod_already_stopped_is_fine():
+    import urllib.error
+
+    def opener(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, 409, "Conflict", {}, None)
+
+    remote.stop_pod("abc123", "key", opener=opener)
+
+
+def test_stop_pod_rejected_key_raises():
+    import urllib.error
+
+    def opener(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, 401, "Unauthorized", {}, None)
+
+    with pytest.raises(RuntimeError, match="401"):
+        remote.stop_pod("abc123", "key", opener=opener)
 
 
 def test_sync_plan_for_own_songs(tmp_path, monkeypatch):

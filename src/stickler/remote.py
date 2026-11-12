@@ -10,8 +10,10 @@ session's stdin, the RunPod API key only goes into an HTTPS header.
 
 from __future__ import annotations
 
+import json
 import shlex
 import subprocess
+import urllib.error
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -23,7 +25,8 @@ from stickler.datasets import own
 from stickler.runner import BUILTIN_SEPARATORS
 
 REMOTE_DIR = "stickler"
-RUNPOD_API = "https://rest.runpod.io/v1"
+# REST API v2 (v1 on rest.runpod.io is being retired and rejects the new scoped keys)
+RUNPOD_API = "https://api.runpod.io/v2"
 # Cloudflare in front of the RunPod API rejects Python's default user agent (error 1010).
 USER_AGENT = "stickler (+https://github.com/niklastshiang/stickler)"
 SSH_OPTIONS = ["-o", "ServerAliveInterval=30", "-o", "StrictHostKeyChecking=accept-new"]
@@ -115,14 +118,25 @@ uv run stickler eval --config {config}
 
 
 def stop_pod(pod_id: str, api_key: str, opener: Callable = urllib.request.urlopen) -> None:
+    """Stops a RunPod pod (`POST /v2/pods/{id}/action {"action": "stop"}`). A pod that is
+    already stopped (409) is fine; any other error raises RuntimeError."""
     request = urllib.request.Request(
-        f"{RUNPOD_API}/pods/{pod_id}/stop",
+        f"{RUNPOD_API}/pods/{pod_id}/action",
+        data=json.dumps({"action": "stop"}).encode(),
         method="POST",
-        headers={"Authorization": f"Bearer {api_key}", "User-Agent": USER_AGENT},
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "User-Agent": USER_AGENT,
+            "Content-Type": "application/json",
+        },
     )
-    with opener(request, timeout=60) as response:
-        if response.status != 200:
-            raise RuntimeError(f"RunPod: stopping pod {pod_id} failed ({response.status})")
+    try:
+        with opener(request, timeout=60) as response:
+            if response.status not in (200, 202, 204):
+                raise RuntimeError(f"RunPod: stopping pod {pod_id} failed ({response.status})")
+    except urllib.error.HTTPError as exc:
+        if exc.code != 409:
+            raise RuntimeError(f"RunPod: stopping pod {pod_id} failed ({exc.code})") from None
 
 
 def _ok(proc: subprocess.CompletedProcess, step: str) -> None:
