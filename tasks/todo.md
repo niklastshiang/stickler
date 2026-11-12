@@ -187,5 +187,8 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
   - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.
 
+- [ ] **Prettier README badges** (small)
+  - Wish (2026-11-12): nicer-looking badges in the README; the current ones are plain shields.io flat-square.
+
 - [ ] **Ultrareview once the application is finished**
   - The user starts it themselves with `/code-review ultra`. I cannot trigger it.
