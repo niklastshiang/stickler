@@ -124,3 +124,13 @@ def test_unknown_pitch_falls_back_to_a_neutral_position():
 def test_hit_a_hair_before_the_first_beat_snaps_to_it():
     q = notation.quantize([(-0.02, KICK, 100), (-0.2, SNARE, 100)], BEATS)
     assert [(n.beat, n.position, n.pitch) for n in q] == [(0, (0, 4), KICK)]
+
+
+def test_tempo_uses_the_average_beat_not_the_20ms_grid():
+    """Beat This! rounds to 20 ms: at 140 BPM most gaps read 0.42 s (143 BPM) or 0.44 s."""
+    import numpy as np
+
+    true = np.arange(200) * 60 / 140
+    beats = list(np.round(true / 0.02) * 0.02)
+    xml = notation.to_musicxml([(0.0, KICK, 100)], beats, beats[::4])
+    assert 'tempo="140"' in xml

@@ -151,7 +151,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Verify: Unit tests (quantization, triplet detection, valid MusicXML via a music21 round trip)
   - Dependencies: 14 · Files: `src/stickler/notation.py`, tests
 
-- [~] **Task 18: `stickler notate` end to end** (S): implemented (MusicXML, PDF via MuseScore if installed, `--drums` export, default pipeline demucs+adtof, RATATATA in 4 s from cache). Open: check in MuseScore against the original PDF (MuseScore is not installed yet)
+- [x] **Task 18: `stickler notate` end to end** (S): MusicXML, PDF via MuseScore (verified: MuseScore 4.7.5 renders RATATATA, 4 pages, 140 BPM, 4/4), `--drums` export, default pipeline demucs+adtof
   - Acceptance: Audio → winning pipeline → MusicXML. PDF, if MuseScore 4 (Flatpak) is installed (Success Criterion 5).
   - Verify: Notate "Easy Fill Ins", open it in MuseScore and compare with the original PDF
   - Dependencies: 13, 17 · Files: `src/stickler/{api,cli}.py`

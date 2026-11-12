@@ -233,7 +233,8 @@ def to_musicxml(
     by_voice: dict[tuple[int, int], list[QNote]] = {}
     for n in q:
         by_voice.setdefault((STAFF.get(n.pitch, OTHER).voice, n.beat), []).append(n)
-    tempo = round(60.0 / float(np.median(np.diff(b)))) if len(b) > 1 else 120
+    # average beat over the song: Beat This! rounds single beats to its 20 ms frame grid
+    tempo = round(60.0 * (len(b) - 1) / float(b[-1] - b[0])) if len(b) > 1 else 120
     used = sorted({n.pitch for n in q})
 
     measures = []
