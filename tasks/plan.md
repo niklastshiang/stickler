@@ -20,6 +20,7 @@ Stickler vergleicht Pipelines aus Drum-Stem-Trennung und Schlagzeug-Transkriptio
 | 3 Kandidaten | 7–12 | volle Matrix auf MDB |
 | 4 Report & eigene Songs | 13–16 | HTML-Report, Alignment eigener Songs, ENST-Antrag |
 | 5 Noten | 17–18 | `stickler notate` → MusicXML/PDF |
+| 6 Später | – | vorgemerkt: Release-Pipeline (Flatpak, AppImage), alles auf Englisch |
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |

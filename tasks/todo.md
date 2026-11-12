@@ -158,3 +158,19 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
 ### Checkpoint D
 - [ ] Alle 9 Success Criteria aus SPEC.md erfüllt
 - [ ] Abschluss-Review mit dem User
+
+## Phase 6: Später (vom User vorgemerkt, 2026-11-12)
+
+Noch nicht geplant, nur festgehalten. Vor dem Start jeweils SPEC.md ergänzen und in Tasks zerlegen.
+
+- [ ] **Release-Pipeline: Flatpak und AppImage bei jedem Release**
+  - Wunsch: Ein neuer Release-Tag `vN` (ADR 0006) baut automatisch ein Flatpak und ein AppImage.
+  - Offene Punkte:
+    - **Abhängigkeit:** Setzt die GTK-Oberfläche voraus.
+    - **Größe:** Die Modell-Umgebungen sind groß (PyTorch je Adapter, Gewichte bis ~760 MB). Zu klären ist, ob Gewichte und Umgebungen erst beim ersten Start geladen werden.
+    - **Lizenzen:** NC-Gewichte dürfen nicht in ein verteiltes Paket (ADR 0002).
+    - **CI:** Die Pipeline braucht einen CI-Dienst. Codeberg kommt nicht infrage, dort sind vorwiegend KI-generierte Programme nicht erlaubt.
+
+- [ ] **Alles auf Englisch**
+  - Wunsch: Code-Kommentare, Docstrings, CLI-Ausgaben, README, SPEC, ADRs und Aufgaben auf Englisch.
+  - Dabei ändert sich auch die Regel in CLAUDE.md (bisher: Kommentare und Docstrings auf Deutsch).
