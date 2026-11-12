@@ -52,6 +52,8 @@ User stories:
 - For this to work, v1 needs: a public API in `stickler/api.py` (`run_benchmark`, `evaluate`, `transcribe_song`, `notate`) with progress callbacks and cancellation support, no `print`s in the logic (logging instead), and results as data objects, not only as files.
 - **Design together first:** before any GTK code, the owner and Claude design the interface together, following current design principles, above all the GNOME Human Interface Guidelines (libadwaita patterns, adaptive layout, accessibility). Mockups first, then implementation.
 - Features requested by the owner:
+  - **Two modes instead of a model choice:** "Fast" and "Quality" (pipelines decided after the benchmark).
+  - **Readable sheet music:** fold repeated bars and passages into repeat signs.
   - **Export drum track:** a button that saves the separated drum stem (the pipeline produces it anyway) as WAV or FLAC, next to the sheet music export. The API returns the stem path as part of the result, e.g. `transcribe_song(...).stem`.
 
 ## Commands

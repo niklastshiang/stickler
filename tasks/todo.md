@@ -188,6 +188,15 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
   - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.
 
+- [ ] **Readable sheet music: repeat signs** (owner, 2026-11-12)
+  - Today every hit is written out. Detect repeated bars and passages (identical quantized bars, 1-bar and 2-bar repeat signs, repeat barlines with voltas) and fold them, so the sheet music reads like a human transcription.
+  - Keep the unfolded version available (e.g. for the benchmark and for playback).
+
+- [ ] **Two pipeline modes for the app: "Fast" and "Quality"** (owner, 2026-11-12)
+  - Working hypothesis from the partial results: Fast = Demucs + ADT_STR (~6 min per 3.5-minute song on the laptop CPU), Quality = RoFormer + ADT_STR (~30 min).
+  - Before deciding: finish both runs, run RoFormer on the own songs (~4.5 h), and measure `htdemucs` (single model, ~4x faster than `htdemucs_ft`) as a faster Fast candidate.
+  - ADT_STR has 26 classes (ride, china, open hi-hat, tom heights) and gives richer notation than ADTOF's 5 classes; the 5-class benchmark does not show this.
+
 - [ ] **Prettier README badges** (small)
   - Wish (2026-11-12): nicer-looking badges in the README, in the style of https://shieldcn.dev/showcase, ideally with a gradient effect.
   - Must include a few nonsense badges as well (e.g. "drums: loud", "neighbours: annoyed").
