@@ -1,4 +1,4 @@
-"""Stickler-Adapter: YourMT3+ (YPTF.MoE+Multi, noPS) transkribiert alle Instrumente,
+"""Stickler-Adapter: YourMT3+ (YPTF.MoE+Multi, PS) transkribiert alle Instrumente,
 übernommen wird nur die Drum-Spur.
 
 Nachbau von `transcribe()` aus model_helper.py des Space (Revision in common.py):
@@ -19,7 +19,7 @@ import torchaudio
 from common import ARGS, SRC, WEIGHTS
 from stickler_adapter import run, torch_device, write_drum_midi
 
-VERSION = "YourMT3-space@5e66c1e/YPTF.MoE+Multi-noPS/fp32"
+VERSION = "YourMT3-space@5e66c1e/YPTF.MoE+Multi-PS/fp32"
 BATCH = 8
 
 

@@ -7,9 +7,10 @@ REVISION = "5e66c1ea173a8186e0d20432b841d3180cc015b5"  # Stand 2025-01-31
 WEIGHTS = Path(__file__).parent / "weights"
 SRC = WEIGHTS / "amt" / "src"
 
-# Bestes Modell laut Paper und Standard im Space: YPTF.MoE+Multi (noPS)
-EXP = "mc13_256_g4_all_v7_mt3f_sqr_rms_moe_wf4_n8k2_silu_rope_rp_b36_nops"
-CHECKPOINT = f"{EXP}@last.ckpt"
+# YPTF.MoE+Multi (PS): mit Pitch-Shift-Augmentierung trainiert. Auf 7 MDB-Proben beim
+# Schlagzeug klar besser als die Space-Voreinstellung (noPS), siehe ADR 0005
+EXP = "mc13_256_g4_all_v7_mt3f_sqr_rms_moe_wf4_n8k2_silu_rope_rp_b80_ps2"
+CHECKPOINT = f"{EXP}@model.ckpt"
 # Argumente wie in app.py des Space, Präzision 32 statt 16 (CPU)
 ARGS = [
     CHECKPOINT,
