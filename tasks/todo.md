@@ -133,9 +133,10 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Dependencies: 5, 14, user MIDI · Files: `src/stickler/{align,datasets/own}.py`, tests
 
 - [ ] **Task 16: ENST application and loader** (S)
-  - Acceptance: `docs/enst-antrag.md` as a draft for the user. `datasets/enst.py` loads the dataset as soon as `data/enst/` exists, otherwise it is skipped.
+  - Acceptance: `docs/enst-request.md` as a draft for the user. `datasets/enst.py` loads the dataset as soon as `data/enst/` exists, otherwise it is skipped.
+  - Status 2026-11-12: request draft done (`docs/enst-request.md`, licence summarised). The loader waits for the data, so it can be built against the real folder layout.
   - Verify: Unit test with a mini fixture
-  - Dependencies: 1 · Files: `docs/enst-antrag.md`, `src/stickler/datasets/enst.py`, tests
+  - Dependencies: 1 · Files: `docs/enst-request.md`, `src/stickler/datasets/enst.py`, tests
 
 ### Checkpoint C
 - [ ] Report with MDB and at least one own song (Success Criteria 3 and 4)
@@ -188,7 +189,8 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.
 
 - [ ] **Prettier README badges** (small)
-  - Wish (2026-11-12): nicer-looking badges in the README; the current ones are plain shields.io flat-square.
+  - Wish (2026-11-12): nicer-looking badges in the README, in the style of https://shieldcn.dev/showcase, ideally with a gradient effect.
+  - Must include a few nonsense badges as well (e.g. "drums: loud", "neighbours: annoyed").
 
 - [ ] **Ultrareview once the application is finished**
   - The user starts it themselves with `/code-review ultra`. I cannot trigger it.
