@@ -17,7 +17,7 @@ def registry():
 
 
 def test_discover_finds_adapters_by_folder(registry):
-    assert set(registry) == {"dummy", "broken", "copysep", "stemonly"}
+    assert set(registry) == {"dummy", "broken", "copysep", "stemonly", "sleepy"}
     assert registry["dummy"].stage == "transcribers"
     assert registry["dummy"].expected_output == "drums.mid"
 
@@ -113,3 +113,17 @@ def test_setup_failure_raises(tmp_path):
 def test_input_requirement_is_read(registry):
     assert registry["stemonly"].needs_stem
     assert not registry["dummy"].needs_stem
+
+
+def test_timeout_kills_model_process_under_uv(registry, tmp_path):
+    import os
+    import time
+
+    out = tmp_path / "out"
+    start = time.monotonic()
+    result = adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=5)
+    assert time.monotonic() - start < 20
+    assert not result.ok and "Zeitlimit" in result.error
+    pid = int((out / "pid").read_text())
+    time.sleep(0.5)
+    assert not os.path.exists(f"/proc/{pid}"), "Modellprozess läuft nach dem Zeitlimit weiter"

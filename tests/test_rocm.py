@@ -74,11 +74,11 @@ def test_run_adapter_uses_rocm_python(spec, monkeypatch, tmp_path):
     py = fake_rocm_env(spec)
     seen = []
 
-    def fake_run(cmd, **kw):
+    def fake_run_group(cmd, timeout):
         seen.append(cmd)
         return subprocess.CompletedProcess(cmd, 1, "", "absichtlich")
 
-    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(adapters, "_run_group", fake_run_group)
     adapters.run_adapter(spec, tmp_path / "a.wav", tmp_path / "out", device="auto")
     assert seen[0][0] == str(py)
     assert seen[0][-1] == "auto"

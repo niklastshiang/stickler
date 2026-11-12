@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import signal
 import subprocess
 import tempfile
 import tomllib
@@ -126,6 +128,22 @@ def discover(root: Path) -> dict[str, AdapterSpec]:
     return found
 
 
+def _run_group(cmd: list[str], timeout: float | None) -> subprocess.CompletedProcess | None:
+    """Startet den Adapter in einer eigenen Prozessgruppe. Bei Zeitüberschreitung wird die ganze
+    Gruppe beendet: `uv run` startet das Modell als Enkelprozess, der sonst weiterliefe.
+    Gibt None bei Zeitüberschreitung zurück."""
+    with subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True
+    ) as proc:
+        try:
+            stdout, stderr = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.communicate()
+            return None
+    return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+
+
 def _fail(out_dir: Path, message: str) -> AdapterResult:
     log.warning(message)
     (out_dir / "error.log").write_text(message, encoding="utf-8")
@@ -156,9 +174,8 @@ def run_adapter(
     args = ["--in", str(audio), "--out", str(out_dir), "--device", device]
     cmd = [*python, str(spec.path / "run.py"), *args]
     log.info("%s: %s", spec.id, audio.name)
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
+    proc = _run_group(cmd, timeout)
+    if proc is None:
         return _fail(out_dir, f"{spec.id}: Zeitlimit {timeout} s überschritten")
     if proc.returncode != 0:
         tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
