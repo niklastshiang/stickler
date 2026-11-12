@@ -50,6 +50,8 @@ User stories:
 ### Later: GTK interface (not part of v1)
 - GTK 4 + libadwaita via PyGObject, separate package `stickler-gtk` that only uses `stickler.api`.
 - For this to work, v1 needs: a public API in `stickler/api.py` (`run_benchmark`, `evaluate`, `transcribe_song`, `notate`) with progress callbacks and cancellation support, no `print`s in the logic (logging instead), and results as data objects, not only as files.
+- Features requested by the owner:
+  - **Export drum track:** a button that saves the separated drum stem (the pipeline produces it anyway) as WAV or FLAC, next to the sheet music export. The API returns the stem path as part of the result, e.g. `transcribe_song(...).stem`.
 
 ## Commands
 ```bash

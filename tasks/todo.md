@@ -175,6 +175,10 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Done: code comments, docstrings, messages, tests, README, SPEC, ADRs, tasks, adapter READMEs, CONSTRAINTS.md, CLAUDE.md; commit messages in English from now on.
   - Remaining, only after the MDB benchmark has finished successfully (owner's decision): the adapters' `run.py`, `setup.py` and `pyproject.toml`. First make the cache key ignore comments (e.g. hash the AST / parsed TOML), migrate existing cache entries from old to new keys so no result is lost, then translate.
 
+- [ ] **App feature: export the drum track**
+  - Wish (2026-11-12): a button in the app that exports the separated drum stem ("can't hurt to have it").
+  - Implementation: the stem already exists as an intermediate result. `transcribe_song` should return its path, and the GUI saves it as WAV or FLAC (FLAC via ffmpeg).
+
 - [ ] **App icon in GNOME style**
   - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
   - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.

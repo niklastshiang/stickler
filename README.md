@@ -224,7 +224,7 @@ scripts/check.sh task
 - [ ] HTML report with ranking, classes, runtime and memory
 - [ ] ENST-Drums as a third dataset
 - [ ] Notes from the winning pipeline: quantization, MusicXML, `stickler notate`
-- [ ] Application with a GTK 4 and libadwaita interface, app icon in GNOME style
+- [ ] Application with a GTK 4 and libadwaita interface, app icon in GNOME style, export of the separated drum track
 - [ ] Ultrareview of the finished application
 - [ ] Release pipeline: Flatpak and AppImage with every release
 - [ ] Everything in English: code, output and documentation
