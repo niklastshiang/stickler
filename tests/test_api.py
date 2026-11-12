@@ -156,7 +156,8 @@ def test_config_timeout_relative_needs_factor(tmp_path):
 
 
 def _synth_song(tmp_path):
-    """Synthetic song: 2 s silence, then 16 bars of groove at 120 BPM, as MIDI and WAV."""
+    """Synthetic song: 2 s silence, then 64 bars of groove at 120 BPM (128 s, above the
+    2-minute minimum), as MIDI and WAV."""
     import mido
     import numpy as np
 
@@ -164,11 +165,11 @@ def _synth_song(tmp_path):
 
     sr, offset = 22050, 2.0
     notes = []
-    for bar in range(16):
+    for bar in range(64):
         t0 = bar * 2.0
         notes += [(t0, 36), (t0 + 1.0, 36), (t0 + 0.5, 38), (t0 + 1.5, 38)]
         notes += [(t0 + k * 0.25, 42) for k in range(8)]
-    sig = np.zeros(int((offset + 34) * sr), dtype=np.float32)
+    sig = np.zeros(int((offset + 130) * sr), dtype=np.float32)
     rng = np.random.default_rng(0)
     t = np.arange(int(0.15 * sr)) / sr
     sounds = {
@@ -190,7 +191,7 @@ def _synth_song(tmp_path):
         tick = round(time * 960)
         track.append(mido.Message("note_on", channel=9, note=pitch, velocity=90, time=tick - now))
         now = tick
-    beats = [offset + k * 0.5 for k in range(65)]  # Beat This! reports beats up to the end
+    beats = [offset + k * 0.5 for k in range(257)]  # Beat This! reports beats up to the end
     return wav, mid, notes, beats
 
 

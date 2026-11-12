@@ -97,6 +97,7 @@ def test_align_prints_quality_and_reasons(monkeypatch, tmp_path):
         "beat_fit": 1.0,
         "coverage": 0.6,
         "explained": 0.95,
+        "evaluated_seconds": 140.0,
         "excluded_strong": 0.05,
         "score_unmatched": 0.08,
     }
@@ -104,6 +105,16 @@ def test_align_prints_quality_and_reasons(monkeypatch, tmp_path):
         api.AlignReport("gut", "Gut", True, {**q, "coverage": 0.99}, [], 3.0, tmp_path / "c.wav"),
         api.AlignReport("schlecht", "S", False, q, ["coverage = 0.600 (limit ≥ 0.85)"], 0, None),
         api.AlignReport("ohne", "O", False, {}, [], 0.0, None, "Score missing"),
+        api.AlignReport(
+            "ohr",
+            "E",
+            True,
+            q,
+            ["explained = 0.700 (limit ≥ 0.9)"],
+            0,
+            None,
+            approved_by_ear="checked click.wav",
+        ),
     ]
     monkeypatch.setattr(api, "align_songs", lambda song=None: reports)
     result = CliRunner().invoke(cli.app, ["align"])
@@ -111,3 +122,4 @@ def test_align_prints_quality_and_reasons(monkeypatch, tmp_path):
     assert "✓ gut" in result.output and "✗ schlecht" in result.output
     assert "limit ≥ 0.85" in result.output and "Score missing" in result.output
     assert "score passages not in the recording: 8.0% (info)" in result.output
+    assert "✓ ohr" in result.output and "approved by ear: checked click.wav" in result.output

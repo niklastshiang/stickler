@@ -99,7 +99,11 @@ def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
         typer.echo(
             f"{'✓' if r.passed else '✗'} {r.song:24} Beats {q['beat_fit']:.3f}  "
             f"coverage {q['coverage']:.3f}  explained {q['explained']:.3f}  "
-            f"excluded {q['excluded_strong']:.1%} ({r.excluded_seconds:.0f} s)"
+            f"evaluated {q['evaluated_seconds']:.0f} s"
+        )
+        typer.echo(
+            f"    excluded: {q['excluded_strong']:.1%} of clear onsets, "
+            f"{r.excluded_seconds:.0f} s (info)"
         )
         if q.get("score_unmatched", 0) > 0:
             typer.echo(
@@ -107,6 +111,8 @@ def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
             )
         for reason in r.reasons:
             typer.echo(f"    {reason}")
+        if r.approved_by_ear:
+            typer.echo(f"    approved by ear: {r.approved_by_ear}")
         typer.echo(f"    Check: {r.click}")
 
 

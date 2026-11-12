@@ -167,10 +167,12 @@ references are demonstrably correct:
 | Paired note beats that sit cleanly on the recording (±70 ms) | ≥ 95% |
 | Note hits with an audible attack in the drum stem (±50 ms) | ≥ 85% |
 | Clear attacks in the stem that appear in the notes | ≥ 90% |
-| Clear attacks in excluded passages | ≤ 20% |
+| Evaluated music (excluded passages do not count) | ≥ 2 min |
 
 Passages that only exist in the sheet music, such as extra repeats, are dropped from the
 reference. They are reported, but they are no reason to reject a song.
+If the automatic checks are fooled, for example by a bass bleeding into the drum stem, a
+song can be approved by ear after listening to its `click.wav`.
 
 To check by ear, `stickler align` writes a `click.wav` per song: the recording on the left, clicks
 on the note hits on the right.

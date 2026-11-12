@@ -61,3 +61,26 @@ def test_alignment_file_is_readable_json(layout):
     saved = json.loads(path.read_text())
     assert saved["excluded"] == [[5.0, None]] and saved["passed"] is True
     assert own.load_alignment(song)["excluded"] == [(5.0, float("inf"))]
+
+
+def test_approval_by_ear_overrides_failed_checks(layout):
+    refs, data, _ = layout
+    (refs / "song_c.yaml").write_text(
+        'title: "C"\naudio: "/c.mp3"\napproved_by_ear: "bass bleed fools the check"\n',
+        encoding="utf-8",
+    )
+    song = next(s for s in own.songs(refs, data) if s.id == "song_c")
+    assert song.approved_by_ear == "bass bleed fools the check"
+    own.save_alignment(
+        song,
+        notes=[(1.0, 36)],
+        excluded=[],
+        quality={},
+        reasons=["explained"],
+        shift=0.0,
+        approved_by_ear=song.approved_by_ear,
+    )
+    saved = own.load_alignment(song)
+    assert saved["passed"] is True and saved["reasons"] == ["explained"]
+    assert saved["approved_by_ear"] == "bass bleed fools the check"
+    assert "song_c" in [t.id for t in own.tracks(refs, data)]

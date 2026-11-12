@@ -46,8 +46,9 @@ ONSET_TOL = 0.05  # s
 STRONG_SHARE = 0.2  # the strongest 20 % of the onsets count as clear
 MIN_SHIFT_SAMPLES = 10
 
-# Minimum and maximum values; calibrated on MDB (correct references), see SPEC.md
-THRESHOLDS = {"beat_fit": 0.95, "coverage": 0.85, "explained": 0.90, "excluded_strong": 0.20}
+# Minimum values a reference must reach (shares calibrated on MDB, see SPEC.md). Owner's rule:
+# at least 2 minutes of evaluated music; excluded regions are info only.
+THRESHOLDS = {"beat_fit": 0.95, "coverage": 0.85, "explained": 0.90, "evaluated_seconds": 120.0}
 
 
 @dataclass(frozen=True)
@@ -61,7 +62,8 @@ class Quality:
     beat_fit: float  # share of paired, played note beats that sit within ±70 ms
     coverage: float  # share of note hits with an onset in the stem (±50 ms)
     explained: float  # share of clear onsets with a note hit (±50 ms)
-    excluded_strong: float  # share of clear onsets in excluded regions
+    evaluated_seconds: float  # first to last reference note, minus excluded regions
+    excluded_strong: float  # info: share of clear onsets in excluded regions
     # Info only, no limit (owner's rule): share of played note beats without a counterpart in
     # the recording, e.g. repeats the transcriber added. They are dropped from the reference.
     score_unmatched: float = 0.0
@@ -277,6 +279,15 @@ def _inside(times: np.ndarray, intervals: list[tuple[float, float]]) -> np.ndarr
     return mask
 
 
+def _evaluated_seconds(ref: np.ndarray, excluded: list[tuple[float, float]]) -> float:
+    """Length of the span from the first to the last reference note, minus excluded parts."""
+    if len(ref) < 2:
+        return 0.0
+    lo, hi = float(ref[0]), float(ref[-1])
+    cut = sum(max(0.0, min(b, hi) - max(a, lo)) for a, b in excluded)
+    return hi - lo - cut
+
+
 def _fraction(num: int, den: int) -> float:
     return num / den if den else 0.0
 
@@ -363,19 +374,19 @@ def align(
         "beat_fit": _fraction(fit, len(paired)),
         "coverage": _fraction(len(match_events(ref, onset_t, ONSET_TOL)), len(ref)),
         "explained": _fraction(len(match_events(ref, strong_out, ONSET_TOL)), len(strong_out)),
-        "excluded_strong": _fraction(int(strong_in.sum()), len(strong_t)),
+        "evaluated_seconds": _evaluated_seconds(ref, excluded),
     }
     reasons = [
-        f"{name} = {value:.3f} (limit {'≤' if name == 'excluded_strong' else '≥'} "
-        f"{THRESHOLDS[name]})"
+        f"{name} = {value:.3f} (limit ≥ {THRESHOLDS[name]})"
         for name, value in quality_vals.items()
-        if (value > THRESHOLDS[name] if name == "excluded_strong" else value < THRESHOLDS[name])
+        if value < THRESHOLDS[name]
     ]
     return Alignment(
         mapped_times=mapped,
         excluded=excluded,
         quality=Quality(
             **quality_vals,
+            excluded_strong=_fraction(int(strong_in.sum()), len(strong_t)),
             score_unmatched=_fraction(len(playing) - len(paired), len(playing)),
             reasons=reasons,
         ),

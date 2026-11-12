@@ -68,7 +68,7 @@ def test_read_score_beats_follow_tempo_changes(tmp_path):
 
 
 def test_aligns_offset_and_rubato():
-    notes = groove(32)
+    notes = groove(64)  # 128 s: above the 120 s minimum of evaluated music
     score = make_score(notes)
     true = [(warp(t), p) for t, p in notes]
     ft, flux = flux_for(true, warp(score.beats[-1]) + 2, noise=0.05)
@@ -198,7 +198,7 @@ def test_pause_in_recording_does_not_bend_neighbours():
 def test_score_passage_missing_in_recording_does_not_fail():
     """The score repeats 2 bars that the recording does not have (owner's rule: extra score
     passages are reported, but are no reason to fail)."""
-    notes = groove(24)
+    notes = groove(72)  # 144 s, so 140 s remain after the cut (minimum: 120 s)
     cut, extra = 16.0, 4.0  # score bars 8-9 (16-20 s) are not in the recording
 
     def f(t):
@@ -210,6 +210,27 @@ def test_score_passage_missing_in_recording_does_not_fail():
     kept = score.beats[(score.beats < cut) | (score.beats >= cut + extra)]
     result = align.align(score, beats_for(kept, f), ft, flux)
     assert result.quality.passed, result.quality.reasons
-    assert result.quality.score_unmatched == pytest.approx(8 / 96, abs=0.03)
+    assert result.quality.score_unmatched == pytest.approx(8 / 288, abs=0.02)
     after = [(a, f(t)) for (t, _), a in zip(notes, result.mapped_times, strict=True) if t > 22]
     assert max(abs(a - b) for a, b in after) < 0.02
+
+
+def test_too_little_evaluated_music_fails():
+    """Owner's rule: at least 2 minutes of evaluated music."""
+    notes = groove(16)  # 32 s
+    score = make_score(notes)
+    ft, flux = flux_for([(warp(t), p) for t, p in notes], warp(score.beats[-1]) + 2, noise=0.05)
+    result = align.align(score, beats_for(score.beats, warp), ft, flux)
+    assert not result.quality.passed
+    assert any("evaluated_seconds" in r for r in result.quality.reasons)
+
+
+def test_evaluated_seconds_excludes_gaps():
+    full = groove(16)
+    gap = (8.0, 12.0)
+    notes = [(t, p) for t, p in full if not gap[0] <= t < gap[1]]
+    score = make_score(notes, n_beats=66)
+    ft, flux = flux_for([(warp(t), p) for t, p in full], warp(33) + 2, noise=0.05)
+    result = align.align(score, beats_for(score.beats, warp), ft, flux)
+    span = warp(full[-1][0]) - warp(0.0)
+    assert result.quality.evaluated_seconds == pytest.approx(span - 4.0, abs=0.6)

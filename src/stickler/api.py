@@ -185,6 +185,7 @@ class AlignReport:
         Path | None
     )  # check WAV: recording on the left, clicks on the reference notes on the right
     error: str | None = None
+    approved_by_ear: str | None = None  # owner overrode failed checks after listening
 
 
 CLICK_SR = 22050
@@ -224,7 +225,8 @@ def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) ->
         if not np.isnan(t) and not any(a <= t < b for a, b in result.excluded)
     ]
     q = result.quality
-    quality = {k: round(getattr(q, k), 4) for k in [*align.THRESHOLDS, "score_unmatched"]}
+    info = ["excluded_strong", "score_unmatched"]
+    quality = {k: round(getattr(q, k), 4) for k in [*align.THRESHOLDS, *info]}
     own.save_alignment(
         song,
         notes=notes,
@@ -232,17 +234,19 @@ def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) ->
         quality=quality,
         reasons=q.reasons,
         shift=result.shift,
+        approved_by_ear=song.approved_by_ear,
     )
     end = audio.duration(song.audio)
     excluded_seconds = sum(min(b, end) - a for a, b in result.excluded if a < end)
     return AlignReport(
         song.id,
         song.title,
-        q.passed,
+        q.passed or bool(song.approved_by_ear),
         quality,
         q.reasons,
         excluded_seconds,
         _click_track(song, notes),
+        approved_by_ear=song.approved_by_ear if not q.passed else None,
     )
 
 

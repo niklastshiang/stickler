@@ -26,6 +26,8 @@ class Song:
     audio: Path
     dir: Path  # data/own/<id>
     exclude: tuple[Interval, ...] = ()
+    # Owner listened to click.wav and approves despite failed automatic checks (reason text)
+    approved_by_ear: str | None = None
 
     @property
     def score(self) -> Path:
@@ -59,6 +61,7 @@ def songs(references_dir: Path, data_dir: Path) -> list[Song]:
                 audio=Path(raw["audio"]).expanduser(),
                 dir=data_dir / "own" / path.stem,
                 exclude=tuple((float(a), float(b)) for a, b in raw.get("exclude") or []),
+                approved_by_ear=raw.get("approved_by_ear"),
             )
         )
     return out
@@ -72,13 +75,15 @@ def save_alignment(
     quality: dict,
     reasons: list[str],
     shift: float,
+    approved_by_ear: str | None = None,
 ) -> Path:
     song.dir.mkdir(parents=True, exist_ok=True)
     data = {
         "song": song.id,
         "audio": str(song.audio),
-        "passed": not reasons,
+        "passed": not reasons or bool(approved_by_ear),
         "reasons": reasons,
+        "approved_by_ear": approved_by_ear,
         "quality": quality,
         "shift": shift,
         "excluded": [[a, None if math.isinf(b) else b] for a, b in excluded],
