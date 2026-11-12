@@ -101,6 +101,10 @@ def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
             f"coverage {q['coverage']:.3f}  explained {q['explained']:.3f}  "
             f"excluded {q['excluded_strong']:.1%} ({r.excluded_seconds:.0f} s)"
         )
+        if q.get("score_unmatched", 0) > 0:
+            typer.echo(
+                f"    score passages not in the recording: {q['score_unmatched']:.1%} (info)"
+            )
         for reason in r.reasons:
             typer.echo(f"    {reason}")
         typer.echo(f"    Check: {r.click}")

@@ -224,7 +224,7 @@ def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) ->
         if not np.isnan(t) and not any(a <= t < b for a, b in result.excluded)
     ]
     q = result.quality
-    quality = {k: round(getattr(q, k), 4) for k in align.THRESHOLDS}
+    quality = {k: round(getattr(q, k), 4) for k in [*align.THRESHOLDS, "score_unmatched"]}
     own.save_alignment(
         song,
         notes=notes,

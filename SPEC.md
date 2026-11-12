@@ -120,10 +120,12 @@ uv run --project adapters/<stage>/<id> python adapters/<stage>/<id>/run.py --in 
 
 | Criterion | Threshold | Calibration on MDB (correct references, Demucs stem) |
 |---|---|---|
-| Note hits whose beat is paired and sits within ±70 ms of a Beat This! beat | ≥ 95% | – |
+| Paired note beats that sit within ±70 ms of a Beat This! beat | ≥ 95% | – |
 | Note hits with an onset in the stem (±50 ms) | ≥ 85% | median 98%, worst 88.5% |
 | Clear onsets (strongest 20%) with a note hit (±50 ms) | ≥ 90% | median 100%, worst 92% |
 | Clear onsets in excluded areas | ≤ 20% | – |
+
+Score passages without a counterpart in the recording (e.g. repeats the transcriber added) are dropped from the reference and reported for information only. They are no reason to fail (owner's rule, 2026-11-12).
 
 ## Code Style
 ruff with default rules and line length 100. Type hints throughout, `dataclass`es instead of dicts for domain objects, no global state. Code, comments, docstrings, user-facing messages and documentation in English (since 2026-11-12); the project owner is addressed in German.

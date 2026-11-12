@@ -93,7 +93,13 @@ def test_doctor_prints_checks(monkeypatch):
 
 
 def test_align_prints_quality_and_reasons(monkeypatch, tmp_path):
-    q = {"beat_fit": 1.0, "coverage": 0.6, "explained": 0.95, "excluded_strong": 0.05}
+    q = {
+        "beat_fit": 1.0,
+        "coverage": 0.6,
+        "explained": 0.95,
+        "excluded_strong": 0.05,
+        "score_unmatched": 0.08,
+    }
     reports = [
         api.AlignReport("gut", "Gut", True, {**q, "coverage": 0.99}, [], 3.0, tmp_path / "c.wav"),
         api.AlignReport("schlecht", "S", False, q, ["coverage = 0.600 (limit ≥ 0.85)"], 0, None),
@@ -104,3 +110,4 @@ def test_align_prints_quality_and_reasons(monkeypatch, tmp_path):
     assert result.exit_code == 0
     assert "✓ gut" in result.output and "✗ schlecht" in result.output
     assert "limit ≥ 0.85" in result.output and "Score missing" in result.output
+    assert "score passages not in the recording: 8.0% (info)" in result.output

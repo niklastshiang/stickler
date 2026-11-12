@@ -58,10 +58,13 @@ class Score:
 
 @dataclass(frozen=True)
 class Quality:
-    beat_fit: float  # share of played note beats that are paired and sit within ±70 ms
+    beat_fit: float  # share of paired, played note beats that sit within ±70 ms
     coverage: float  # share of note hits with an onset in the stem (±50 ms)
     explained: float  # share of clear onsets with a note hit (±50 ms)
     excluded_strong: float  # share of clear onsets in excluded regions
+    # Info only, no limit (owner's rule): share of played note beats without a counterpart in
+    # the recording, e.g. repeats the transcriber added. They are dropped from the reference.
+    score_unmatched: float = 0.0
     reasons: list[str] = field(default_factory=list)
 
     @property
@@ -347,11 +350,8 @@ def align(
 
     playing = [i for i in range(len(fs)) if fs[i].any()]
     pair_of = dict(pairs)
-    fit = sum(
-        1
-        for i in playing
-        if i in pair_of and i in mapping and abs(mapping[i][0] - ab[pair_of[i]]) <= BEAT_TOL
-    )
+    paired = [i for i in playing if i in pair_of and i in mapping]
+    fit = sum(1 for i in paired if abs(mapping[i][0] - ab[pair_of[i]]) <= BEAT_TOL)
 
     ref = np.unique(np.round(mapped[~np.isnan(mapped)], 3))
     ref = ref[~_inside(ref, excluded)]
@@ -360,7 +360,7 @@ def align(
     strong_in = _inside(strong_t, excluded)
     strong_out = strong_t[~strong_in]
     quality_vals = {
-        "beat_fit": _fraction(fit, len(playing)),
+        "beat_fit": _fraction(fit, len(paired)),
         "coverage": _fraction(len(match_events(ref, onset_t, ONSET_TOL)), len(ref)),
         "explained": _fraction(len(match_events(ref, strong_out, ONSET_TOL)), len(strong_out)),
         "excluded_strong": _fraction(int(strong_in.sum()), len(strong_t)),
@@ -374,6 +374,10 @@ def align(
     return Alignment(
         mapped_times=mapped,
         excluded=excluded,
-        quality=Quality(**quality_vals, reasons=reasons),
+        quality=Quality(
+            **quality_vals,
+            score_unmatched=_fraction(len(playing) - len(paired), len(playing)),
+            reasons=reasons,
+        ),
         shift=shift,
     )

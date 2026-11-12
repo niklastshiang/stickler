@@ -164,10 +164,13 @@ references are demonstrably correct:
 
 | Criterion | Threshold |
 |---|---|
-| Note hits whose beat sits cleanly on the recording (±70 ms) | ≥ 95% |
+| Paired note beats that sit cleanly on the recording (±70 ms) | ≥ 95% |
 | Note hits with an audible attack in the drum stem (±50 ms) | ≥ 85% |
 | Clear attacks in the stem that appear in the notes | ≥ 90% |
 | Clear attacks in excluded passages | ≤ 20% |
+
+Passages that only exist in the sheet music, such as extra repeats, are dropped from the
+reference. They are reported, but they are no reason to reject a song.
 
 To check by ear, `stickler align` writes a `click.wav` per song: the recording on the left, clicks
 on the note hits on the right.

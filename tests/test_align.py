@@ -193,3 +193,23 @@ def test_pause_in_recording_does_not_bend_neighbours():
         if not pause_at - 0.5 < t < pause_at  # in the beat with the pause the position is open
     ]
     assert max(errors) < 0.02
+
+
+def test_score_passage_missing_in_recording_does_not_fail():
+    """The score repeats 2 bars that the recording does not have (owner's rule: extra score
+    passages are reported, but are no reason to fail)."""
+    notes = groove(24)
+    cut, extra = 16.0, 4.0  # score bars 8-9 (16-20 s) are not in the recording
+
+    def f(t):
+        return warp(t) if t < cut else warp(t - extra)
+
+    audio_notes = [(f(t), p) for t, p in notes if not cut <= t < cut + extra]
+    score = make_score(notes)
+    ft, flux = flux_for(audio_notes, f(score.beats[-1]) + 2, noise=0.05)
+    kept = score.beats[(score.beats < cut) | (score.beats >= cut + extra)]
+    result = align.align(score, beats_for(kept, f), ft, flux)
+    assert result.quality.passed, result.quality.reasons
+    assert result.quality.score_unmatched == pytest.approx(8 / 96, abs=0.03)
+    after = [(a, f(t)) for (t, _), a in zip(notes, result.mapped_times, strict=True) if t > 22]
+    assert max(abs(a - b) for a, b in after) < 0.02
