@@ -1,4 +1,4 @@
-"""Tests für den Adapter-Vertrag (Subprozess, meta.json, Fehlerprotokoll, Erweiterbarkeit)."""
+"""Tests for the adapter contract (subprocess, meta.json, error log, extensibility)."""
 
 import json
 from pathlib import Path
@@ -56,8 +56,8 @@ def test_broken_adapter_is_logged_not_raised(registry, tmp_path):
     audio.write_bytes(b"")
     result = adapters.run_adapter(registry["broken"], audio, tmp_path / "out", device="cpu")
     assert not result.ok
-    assert "Modell explodiert" in result.error
-    assert "Modell explodiert" in (tmp_path / "out" / "error.log").read_text()
+    assert "Model exploded" in result.error
+    assert "Model exploded" in (tmp_path / "out" / "error.log").read_text()
 
 
 def test_missing_output_counts_as_error(tmp_path):
@@ -89,7 +89,7 @@ def test_timeout_is_logged(registry, tmp_path):
         registry["dummy"], tmp_path / "in.wav", tmp_path / "out", device="cpu", timeout=0.001
     )
     assert not result.ok
-    assert "Zeitlimit" in result.error
+    assert "time limit" in result.error
 
 
 def test_setup_adapter_syncs_and_runs_setup_py(registry):
@@ -100,7 +100,7 @@ def test_setup_adapter_syncs_and_runs_setup_py(registry):
 
 
 def test_setup_without_setup_py_only_syncs(registry):
-    adapters.setup_adapter(registry["broken"])  # darf nicht werfen
+    adapters.setup_adapter(registry["broken"])  # must not raise
 
 
 def test_setup_failure_raises(tmp_path):
@@ -123,7 +123,7 @@ def test_timeout_kills_model_process_under_uv(registry, tmp_path):
     start = time.monotonic()
     result = adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=5)
     assert time.monotonic() - start < 20
-    assert not result.ok and "Zeitlimit" in result.error
+    assert not result.ok and "time limit" in result.error
     pid = int((out / "pid").read_text())
     time.sleep(0.5)
-    assert not os.path.exists(f"/proc/{pid}"), "Modellprozess läuft nach dem Zeitlimit weiter"
+    assert not os.path.exists(f"/proc/{pid}"), "model process keeps running after the time limit"

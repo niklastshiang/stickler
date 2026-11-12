@@ -1,9 +1,9 @@
-"""Gemeinsame Einstellungen für setup.py und run.py: Modell und Ablage der Gewichte."""
+"""Shared settings for setup.py and run.py: model and location of the weights."""
 
 import os
 from pathlib import Path
 
 MODEL = "htdemucs_ft"
 WEIGHTS = Path(__file__).parent / "weights"
-# Gewichte liegen im Adapter-Ordner statt im globalen Hugging-Face-Cache
+# Weights live in the adapter folder instead of the global Hugging Face cache
 os.environ["HF_HUB_CACHE"] = str(WEIGHTS)

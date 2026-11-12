@@ -1,4 +1,4 @@
-"""Tests für das GM-Pitch → Klassen-Mapping."""
+"""Tests for the GM pitch → class mapping."""
 
 from pathlib import Path
 
@@ -51,7 +51,7 @@ def test_onsets_from_notes_sorts_and_groups(schemes):
 
 
 def test_simultaneous_hits_of_one_class_count_once(schemes):
-    # Crash + Ride gleichzeitig ist ein CY-Ereignis, kein Doppeltreffer.
+    # Crash + ride at the same time is one CY event, not a double hit.
     notes = [(1.000, 49), (1.004, 51), (1.5, 49)]
     onsets = onsets_from_notes(notes, schemes["5"])
     np.testing.assert_allclose(onsets.by_class["CY"], [1.0, 1.5])

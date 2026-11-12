@@ -1,4 +1,4 @@
-"""MIDI lesen: Schlagzeug-Noten (Kanal 10) als (Zeit s, GM-Pitch)."""
+"""Read MIDI: drum notes (channel 10) as (time s, GM pitch)."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ from pathlib import Path
 
 import mido
 
-DRUM_CHANNEL = 9  # Kanal 10, nullbasiert
+DRUM_CHANNEL = 9  # channel 10, zero-based
 
 
 def read_drum_notes(path: Path) -> list[tuple[float, int]]:
-    """Alle Note-ons auf Kanal 10, nach Zeit sortiert; Tempowechsel werden berücksichtigt."""
+    """All note-ons on channel 10, sorted by time; tempo changes are taken into account."""
     notes: list[tuple[float, int]] = []
     now = 0.0
     for msg in mido.MidiFile(path):

@@ -1,11 +1,11 @@
-"""Adapter-Vertrag: Modelle laufen als Subprozess in ihrer eigenen uv-Umgebung.
+"""Adapter contract: models run as a subprocess in their own uv environment.
 
 Aufruf:  uv run --project <adapter> python <adapter>/run.py --in <audio> --out <dir> --device <d>
-Ergebnis: Stufen-Ausgabe + meta.json, bei Fehlern error.log. Der Harness bricht nie ab.
+Result: stage output + meta.json, error.log on failure. The harness never aborts.
 
-GPU (AMD ROCm): Adapter, die in ihrem pyproject.toml `[tool.stickler.rocm]` deklarieren, bekommen
-mit `setup_adapter(spec, device="rocm")` eine zweite Umgebung `.venv-rocm`. Darin sind die
-CPU-Torch-Pakete durch die ROCm-Wheels von AMD ersetzt, alle anderen Versionen kommen aus dem Lock.
+GPU (AMD ROCm): adapters that declare `[tool.stickler.rocm]` in their pyproject.toml get a
+second environment `.venv-rocm` via `setup_adapter(spec, device="rocm")`. In it, the CPU torch
+packages are replaced by AMD's ROCm wheels; all other versions come from the lock.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ class AdapterSpec:
 
     @property
     def needs_stem(self) -> bool:
-        """True, wenn das Modell nur Drum-Stems verträgt ([tool.stickler] input = "stem")."""
+        """True if the model only accepts drum stems ([tool.stickler] input = "stem")."""
         pyproject = self.path / "pyproject.toml"
         if not pyproject.exists():
             return False
@@ -54,7 +54,7 @@ class RocmConfig:
     index: str
     replace: list[str]
     packages: list[str]
-    # False: bei device="auto" trotzdem CPU (wenn die GPU für dieses Modell langsamer ist)
+    # False: still use CPU with device="auto" (if the GPU is slower for this model)
     prefer_gpu: bool = True
 
 
@@ -76,9 +76,9 @@ def _rocm_python(spec: AdapterSpec) -> Path:
 
 
 def env_variant(spec: AdapterSpec, device: str) -> str | None:
-    """Welche Umgebung läuft: 'rocm' (falls gebaut und nicht cpu verlangt), sonst 'cpu'.
-    Bei 'auto' entscheidet zusätzlich `prefer_gpu`. None, wenn 'gpu' verlangt ist, aber keine
-    ROCm-Umgebung existiert."""
+    """Which environment runs: 'rocm' (if built and cpu not requested), else 'cpu'.
+    With 'auto', `prefer_gpu` also decides. None if 'gpu' is requested but no ROCm
+    environment exists."""
     has_rocm = _rocm_python(spec).exists()
     if device == "cpu":
         return "cpu"
@@ -89,10 +89,10 @@ def env_variant(spec: AdapterSpec, device: str) -> str | None:
 
 
 def rocm_requirements(spec: AdapterSpec, replace: list[str]) -> list[str]:
-    """Direkte Abhängigkeiten aus pyproject.toml ohne die zu ersetzenden Pakete.
+    """Direct dependencies from pyproject.toml without the packages to be replaced.
 
-    Bewusst nicht der CPU-Lock: dessen transitive Pins (z. B. setuptools) passen nicht zu den
-    ROCm-Wheels. Pfad-Quellen aus [tool.uv.sources] werden zu `-e <pfad>`.
+    Deliberately not the CPU lock: its transitive pins (e.g. setuptools) do not match the
+    ROCm wheels. Path sources from [tool.uv.sources] become `-e <path>`.
     """
     data = tomllib.loads((spec.path / "pyproject.toml").read_text(encoding="utf-8"))
     sources = data.get("tool", {}).get("uv", {}).get("sources", {})
@@ -115,7 +115,7 @@ class AdapterResult:
 
 
 def discover(root: Path) -> dict[str, AdapterSpec]:
-    """Findet `root/<stufe>/<id>/run.py`. Ordner mit `_` am Anfang werden übersprungen."""
+    """Finds `root/<stage>/<id>/run.py`. Folders starting with `_` are skipped."""
     found: dict[str, AdapterSpec] = {}
     for run_py in sorted(root.glob("*/*/run.py")):
         adapter_dir = run_py.parent
@@ -123,15 +123,15 @@ def discover(root: Path) -> dict[str, AdapterSpec]:
         if stage.startswith("_"):
             continue
         if stage not in OUTPUTS:
-            raise ValueError(f"Unbekannte Stufe {stage!r} in {adapter_dir}")
+            raise ValueError(f"Unknown stage {stage!r} in {adapter_dir}")
         found[adapter_dir.name] = AdapterSpec(id=adapter_dir.name, stage=stage, path=adapter_dir)
     return found
 
 
 def _run_group(cmd: list[str], timeout: float | None) -> subprocess.CompletedProcess | None:
-    """Startet den Adapter in einer eigenen Prozessgruppe. Bei Zeitüberschreitung wird die ganze
-    Gruppe beendet: `uv run` startet das Modell als Enkelprozess, der sonst weiterliefe.
-    Gibt None bei Zeitüberschreitung zurück."""
+    """Starts the adapter in its own process group. On timeout the whole group is killed:
+    `uv run` starts the model as a grandchild process that would otherwise keep running.
+    Returns None on timeout."""
     with subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True
     ) as proc:
@@ -158,14 +158,14 @@ def run_adapter(
     timeout: float | None = None,
 ) -> AdapterResult:
     if device not in DEVICES:
-        raise ValueError(f"device muss eines von {DEVICES} sein, nicht {device!r}")
+        raise ValueError(f"device must be one of {DEVICES}, not {device!r}")
     out_dir.mkdir(parents=True, exist_ok=True)
     variant = env_variant(spec, device)
     if variant is None:
         return _fail(
             out_dir,
-            f"{spec.id}: GPU verlangt, aber keine ROCm-Umgebung. "
-            f"Zuerst: stickler setup --adapter {spec.id} --device rocm",
+            f"{spec.id}: GPU requested, but no ROCm environment. "
+            f"First run: stickler setup --adapter {spec.id} --device rocm",
         )
     if variant == "rocm":
         python = [str(_rocm_python(spec))]
@@ -176,14 +176,14 @@ def run_adapter(
     log.info("%s: %s", spec.id, audio.name)
     proc = _run_group(cmd, timeout)
     if proc is None:
-        return _fail(out_dir, f"{spec.id}: Zeitlimit {timeout} s überschritten")
+        return _fail(out_dir, f"{spec.id}: time limit of {timeout} s exceeded")
     if proc.returncode != 0:
         tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
-        return _fail(out_dir, f"{spec.id} (Exit {proc.returncode}):\n{tail}")
+        return _fail(out_dir, f"{spec.id} (exit {proc.returncode}):\n{tail}")
     output = out_dir / spec.expected_output
     meta_path = out_dir / "meta.json"
     if not output.exists() or not meta_path.exists():
-        return _fail(out_dir, f"{spec.id}: {spec.expected_output} oder meta.json fehlt")
+        return _fail(out_dir, f"{spec.id}: {spec.expected_output} or meta.json missing")
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     return AdapterResult(ok=True, output=output, meta=meta, error=None)
 
@@ -192,14 +192,14 @@ def _check(cmd: list[str], spec: AdapterSpec, **kw) -> str:
     proc = subprocess.run(cmd, capture_output=True, text=True, **kw)
     if proc.returncode != 0:
         tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
-        raise RuntimeError(f"Setup von {spec.id} fehlgeschlagen ({cmd[0]} {cmd[1]}):\n{tail}")
+        raise RuntimeError(f"Setup of {spec.id} failed ({cmd[0]} {cmd[1]}):\n{tail}")
     return proc.stdout
 
 
 def _setup_rocm(spec: AdapterSpec) -> Path:
     cfg = rocm_config(spec)
     if cfg is None:
-        raise RuntimeError(f"{spec.id} deklariert keine ROCm-Pakete ([tool.stickler.rocm])")
+        raise RuntimeError(f"{spec.id} declares no ROCm packages ([tool.stickler.rocm])")
     python = _rocm_python(spec)
     if not python.exists():
         _check(["uv", "venv", "--quiet", "--python", "3.12", ROCM_ENV], spec, cwd=spec.path)
@@ -228,9 +228,9 @@ def _setup_rocm(spec: AdapterSpec) -> Path:
 
 
 def setup_adapter(spec: AdapterSpec, device: str = "cpu") -> None:
-    """Baut die Umgebung (cpu: uv sync, rocm: .venv-rocm) und führt ggf. setup.py aus."""
+    """Builds the environment (cpu: uv sync, rocm: .venv-rocm) and runs setup.py if present."""
     if device not in SETUP_DEVICES:
-        raise ValueError(f"device muss eines von {SETUP_DEVICES} sein, nicht {device!r}")
+        raise ValueError(f"device must be one of {SETUP_DEVICES}, not {device!r}")
     if device == "rocm":
         python = [str(_setup_rocm(spec))]
     else:
@@ -238,4 +238,4 @@ def setup_adapter(spec: AdapterSpec, device: str = "cpu") -> None:
         python = ["uv", "run", "--quiet", "--project", str(spec.path), "python"]
     if (spec.path / "setup.py").exists():
         _check([*python, str(spec.path / "setup.py")], spec)
-    log.info("%s: Setup (%s) fertig", spec.id, device)
+    log.info("%s: setup (%s) done", spec.id, device)

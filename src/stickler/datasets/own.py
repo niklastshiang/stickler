@@ -1,10 +1,10 @@
-"""Eigene Songs: Beschreibung in references/own/<id>.yaml, Partitur und Abgleich in
-data/own/<id>/ (nicht im Repo, weil Noten und Aufnahmen Dritten gehören).
+"""Own songs: description in references/own/<id>.yaml, score and alignment in
+data/own/<id>/ (not in the repo, because notes and recordings belong to third parties).
 
-YAML: `title`, `audio` (Pfad, `~` erlaubt), optional `exclude: [[von, bis], ...]` in
-Audiosekunden. Partitur: data/own/<id>/score.mid. Ergebnis von `stickler align`:
-data/own/<id>/aligned.json (Noten in Audiozeit, ausgeklammerte Bereiche, Güte).
-Nur Songs, deren Abgleich die Qualitätsprüfung besteht, werden Benchmark-Tracks.
+YAML: `title`, `audio` (path, `~` allowed), optional `exclude: [[from, to], ...]` in
+audio seconds. Score: data/own/<id>/score.mid. Result of `stickler align`:
+data/own/<id>/aligned.json (notes in audio time, excluded regions, quality).
+Only songs whose alignment passes the quality check become benchmark tracks.
 """
 
 from __future__ import annotations
@@ -97,7 +97,7 @@ def load_alignment(song: Song) -> dict | None:
 
 
 def tracks(references_dir: Path, data_dir: Path) -> list[Track]:
-    """Benchmark-Tracks: nur Songs mit bestandenem Abgleich."""
+    """Benchmark tracks: only songs with a passed alignment."""
     out = []
     for song in songs(references_dir, data_dir):
         data = load_alignment(song)

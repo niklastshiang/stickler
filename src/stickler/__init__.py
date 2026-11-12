@@ -1,3 +1,3 @@
-"""Stickler: Benchmark für automatische Schlagzeug-Transkription."""
+"""Stickler: benchmark for automatic drum transcription."""
 
-__version__ = "0"  # fortlaufend, siehe docs/adr/0006-versionierung.md
+__version__ = "0"  # consecutive, see docs/adr/0006-versionierung.md

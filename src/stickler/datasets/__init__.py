@@ -1,1 +1,1 @@
-"""Datensatz-Loader: liefern Tracks mit Audio-Pfaden und Referenz als (Zeit, GM-Pitch)."""
+"""Dataset loaders: provide tracks with audio paths and reference as (time, GM pitch)."""

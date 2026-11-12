@@ -1,4 +1,4 @@
-"""Instrumentenklassen: GM-Drum-Pitches → Klassen-Schemata (5er/3er) und Onset-Container."""
+"""Instrument classes: GM drum pitches → class schemes (5/3 classes) and onset container."""
 
 from __future__ import annotations
 
@@ -9,14 +9,14 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-# Mehrere Pitches einer Klasse innerhalb dieses Abstands gelten als ein Schlag
-# (z. B. Crash + Ride gleichzeitig). Kleiner als jeder realistische Flam (~20–40 ms).
+# Several pitches of one class within this distance count as one hit
+# (e.g. crash + ride at the same time). Smaller than any realistic flam (~20–40 ms).
 MERGE_WINDOW = 0.010
 
 
 @dataclass(frozen=True)
 class Onsets:
-    """Onset-Zeiten in Sekunden je Instrumentenklasse, aufsteigend sortiert."""
+    """Onset times in seconds per instrument class, sorted ascending."""
 
     by_class: dict[str, np.ndarray]
 
@@ -26,7 +26,7 @@ class Onsets:
 
 @dataclass(frozen=True)
 class Scheme:
-    """Ein Klassen-Schema, z. B. "5" = KD/SD/TT/HH/CY."""
+    """A class scheme, e.g. "5" = KD/SD/TT/HH/CY."""
 
     name: str
     classes: dict[str, frozenset[int]]
@@ -39,7 +39,7 @@ class Scheme:
 
 
 def load_schemes(path: Path) -> dict[str, Scheme]:
-    """Liest `config/classes.yaml`; ein Pitch darf pro Schema nur einer Klasse angehören."""
+    """Reads `config/classes.yaml`; a pitch may belong to only one class per scheme."""
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     schemes: dict[str, Scheme] = {}
     for name, classes in raw["schemes"].items():
@@ -47,7 +47,7 @@ def load_schemes(path: Path) -> dict[str, Scheme]:
         for cls, pitches in classes.items():
             for p in pitches:
                 if p in seen:
-                    raise ValueError(f"Schema {name}: Pitch {p} in {seen[p]} und {cls}")
+                    raise ValueError(f"Scheme {name}: pitch {p} in {seen[p]} and {cls}")
                 seen[p] = cls
         schemes[str(name)] = Scheme(str(name), {cls: frozenset(ps) for cls, ps in classes.items()})
     return schemes
@@ -61,7 +61,7 @@ def _merge_close(times: np.ndarray, window: float) -> np.ndarray:
 
 
 def onsets_from_notes(notes: Iterable[tuple[float, int]], scheme: Scheme) -> Onsets:
-    """(Zeit, GM-Pitch)-Paare → Onsets je Klasse; unbekannte Pitches werden ignoriert."""
+    """(time, GM pitch) pairs → onsets per class; unknown pitches are ignored."""
     grouped: dict[str, list[float]] = {cls: [] for cls in scheme.classes}
     for time, pitch in notes:
         cls = scheme.class_of(pitch)

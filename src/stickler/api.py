@@ -1,4 +1,4 @@
-"""Öffentliche API von Stickler. CLI und spätere GTK-Oberfläche nutzen nur diese Funktionen."""
+"""Public API of Stickler. The CLI and the later GTK interface only use these functions."""
 
 from __future__ import annotations
 
@@ -33,15 +33,15 @@ class BenchmarkConfig:
     transcribers: list[str]
     device: str
     schemes: list[str]
-    timeout: runner.Timeout = None  # Sekunden je Adapter-Aufruf, gesamt oder je Stufe
+    timeout: runner.Timeout = None  # seconds per adapter call, overall or per stage
 
 
 def _parse_limit(stage: str, raw: object) -> float | runner.RelativeLimit:
-    """`300` = feste Sekunden, `{factor: 10, min: 120}` = 10 × Audiodauer, mindestens 120 s."""
+    """`300` = fixed seconds, `{factor: 10, min: 120}` = 10 × audio duration, at least 120 s."""
     if not isinstance(raw, dict):
         return float(raw)
     if "factor" not in raw:
-        raise ValueError(f"timeout.{stage}: relatives Zeitlimit braucht 'factor'")
+        raise ValueError(f"timeout.{stage}: relative time limit needs 'factor'")
     return runner.RelativeLimit(factor=float(raw["factor"]), minimum=float(raw.get("min", 0)))
 
 
@@ -57,7 +57,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     missing = [k for k in ("datasets", "separators", "transcribers") if not raw.get(k)]
     if missing:
-        raise ValueError(f"{path.name}: fehlende Einträge: {', '.join(missing)}")
+        raise ValueError(f"{path.name}: missing entries: {', '.join(missing)}")
     return BenchmarkConfig(
         datasets=list(raw["datasets"]),
         separators=list(raw["separators"]),
@@ -74,32 +74,30 @@ def load_tracks(name: str, data_dir: Path) -> list[runner.Track]:
     elif name == "own":
         found = own.tracks(REFERENCES_DIR, data_dir)
         if not found:
-            raise ValueError(
-                "keine eigenen Songs mit bestandenem Abgleich: zuerst `stickler align`"
-            )
+            raise ValueError("no own songs with a passed alignment: run `stickler align` first")
         return found
     else:
-        raise ValueError(f"Datensatz {name!r} unbekannt (verfügbar: {', '.join(DATASETS)})")
+        raise ValueError(f"Dataset {name!r} unknown (available: {', '.join(DATASETS)})")
     if not found:
-        raise ValueError(f"Datensatz {name} fehlt: zuerst `stickler fetch {name}`")
+        raise ValueError(f"Dataset {name} missing: run `stickler fetch {name}` first")
     return found
 
 
 def fetch_dataset(name: str, data_dir: Path) -> int:
-    """Lädt einen Datensatz nach `data_dir/<name>`; gibt die Anzahl der Tracks zurück."""
+    """Downloads a dataset to `data_dir/<name>`; returns the number of tracks."""
     if name == "mdb":
         return mdb.fetch(data_dir / "mdb")
-    raise ValueError(f"Datensatz {name!r} unbekannt (verfügbar: {', '.join(DATASETS)})")
+    raise ValueError(f"Dataset {name!r} unknown (available: {', '.join(DATASETS)})")
 
 
 def setup_adapters(
     adapter: str | None, device: str = "cpu", adapters_root: Path = ADAPTERS_ROOT
 ) -> list[str]:
-    """Richtet einen Adapter (oder mit None alle) für cpu oder rocm ein; gibt die IDs zurück.
-    Bei rocm ohne Adapter-Angabe werden nur Adapter mit ROCm-Deklaration eingerichtet."""
+    """Sets up one adapter (or all with None) for cpu or rocm; returns the IDs.
+    For rocm without an adapter given, only adapters with a ROCm declaration are set up."""
     registry = adapters.discover(adapters_root)
     if adapter is not None and adapter not in registry:
-        raise ValueError(f"Adapter {adapter!r} unbekannt (verfügbar: {', '.join(registry)})")
+        raise ValueError(f"Adapter {adapter!r} unknown (available: {', '.join(registry)})")
     if adapter:
         ids = [adapter]
     elif device == "rocm":
@@ -122,7 +120,7 @@ def run_benchmark(
     progress: runner.Progress | None = None,
     cancel: threading.Event | None = None,
 ) -> list[runner.Record]:
-    """Rechnet die Matrix aus der Konfiguration; Ergebnisse landen im Cache."""
+    """Computes the matrix from the configuration; results end up in the cache."""
     cfg = load_benchmark_config(config_path)
     tracks = {name: load_tracks(name, data_dir) for name in cfg.datasets}
     return runner.run_matrix(
@@ -148,7 +146,7 @@ def evaluate_benchmark(
     adapters_root: Path = ADAPTERS_ROOT,
     results_dir: Path = RESULTS_DIR,
 ) -> list[dict]:
-    """Bewertet die gecachten Ergebnisse (rechnet nichts); schreibt metrics.csv und summary.csv."""
+    """Scores the cached results (computes nothing); writes metrics.csv and summary.csv."""
     cfg = load_benchmark_config(config_path)
     tracks = {name: load_tracks(name, data_dir) for name in cfg.datasets}
     records = run_benchmark(
@@ -171,7 +169,7 @@ def evaluate_benchmark(
 def run_doctor(
     adapters_root: Path = ADAPTERS_ROOT, data_dir: Path = DATA_DIR
 ) -> list[doctor.Check]:
-    """Prüft GPU, Adapter, Gewichte, Hugging-Face-Login, MuseScore und Datensätze."""
+    """Checks GPU, adapters, weights, Hugging Face login, MuseScore and datasets."""
     return doctor.run_all(adapters_root, data_dir)
 
 
@@ -182,13 +180,15 @@ class AlignReport:
     passed: bool
     quality: dict
     reasons: list[str]
-    excluded_seconds: float  # ausgeklammerte Dauer innerhalb des Songs
-    click: Path | None  # Kontroll-WAV: links die Aufnahme, rechts Klicks auf den Referenznoten
+    excluded_seconds: float  # excluded duration within the song
+    click: (
+        Path | None
+    )  # check WAV: recording on the left, clicks on the reference notes on the right
     error: str | None = None
 
 
 CLICK_SR = 22050
-CLICK_FREQ = {0: 700.0, 1: 1400.0, 2: 2800.0}  # Kick, Snare/Toms, Becken
+CLICK_FREQ = {0: 700.0, 1: 1400.0, 2: 2800.0}  # kick, snare/toms, cymbals
 
 
 def _click_track(song: own.Song, notes: list[tuple[float, int]]) -> Path:
@@ -208,7 +208,7 @@ def _click_track(song: own.Song, notes: list[tuple[float, int]]) -> Path:
 def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) -> AlignReport:
     if not song.score.exists():
         return AlignReport(
-            song.id, song.title, False, {}, [], 0.0, None, f"Partitur fehlt: {song.score}"
+            song.id, song.title, False, {}, [], 0.0, None, f"Score missing: {song.score}"
         )
     stem = runner.cached_or_run(registry["demucs"], song.audio, cache_dir, device, True)
     beats = runner.cached_or_run(registry["beat_this"], song.audio, cache_dir, device, True)
@@ -255,12 +255,12 @@ def align_songs(
     adapters_root: Path = ADAPTERS_ROOT,
     device: str = "auto",
 ) -> list[AlignReport]:
-    """Legt die Noten eigener Songs auf die Aufnahmen und prüft die Güte (Demucs-Stem und
-    Beat-This!-Beats kommen aus dem Cache). Nur bestandene Songs gehen in den Benchmark."""
+    """Lays the notes of own songs onto the recordings and checks the quality (Demucs stem and
+    Beat This! beats come from the cache). Only passed songs go into the benchmark."""
     found = own.songs(references_dir or REFERENCES_DIR, data_dir)
     if song is not None:
         found = [s for s in found if s.id == song]
         if not found:
-            raise ValueError(f"Song {song!r} unbekannt (references/own/{song}.yaml fehlt)")
+            raise ValueError(f"Song {song!r} unknown (references/own/{song}.yaml missing)")
     registry = adapters.discover(adapters_root)
     return [_align_song(s, registry, cache_dir, device) for s in found]

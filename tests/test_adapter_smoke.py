@@ -1,7 +1,7 @@
-"""Smoke-Tests mit echten Modell-Adaptern (langsam): `uv run pytest -m adapters`.
+"""Smoke tests with real model adapters (slow): `uv run pytest -m adapters`.
 
-Voraussetzung: `uv run stickler setup --adapter <id>`. Das Testaudio wird synthetisch erzeugt,
-damit kein Audio im Repository liegt.
+Prerequisite: `uv run stickler setup --adapter <id>`. The test audio is generated synthetically
+so that no audio lives in the repository.
 """
 
 import json
@@ -21,7 +21,7 @@ pytestmark = pytest.mark.adapters
 
 
 def synth_drums(path: Path, seconds: float = 10.0, sr: int = 44100) -> None:
-    """Viertel-Kicks (abfallender Sinus) und Snares (Rauschen) auf 2 und 4 bei 120 BPM."""
+    """Quarter-note kicks (falling sine) and snares (noise) on 2 and 4 at 120 BPM."""
     n = int(seconds * sr)
     samples = [0.0] * n
     seed = 1
@@ -57,17 +57,17 @@ def test_transcriber_produces_midi(adapter_id, drum_clip, tmp_path):
     result = adapters.run_adapter(spec, drum_clip, tmp_path / adapter_id, device="cpu")
     assert result.ok, result.error
     notes = read_drum_notes(result.output)
-    assert notes, "keine Noten erkannt"
-    assert all(35 <= pitch <= 81 for _, pitch in notes), "Pitches außerhalb des GM-Drum-Bereichs"
+    assert notes, "no notes detected"
+    assert all(35 <= pitch <= 81 for _, pitch in notes), "pitches outside the GM drum range"
     assert json.loads((tmp_path / adapter_id / "meta.json").read_text())["device"] == "cpu"
 
 
 @pytest.fixture(scope="module")
 def mdb_clip(tmp_path_factory) -> Path:
-    """Die ersten 10 s des MDB-Mixes `MusicDelta_Punk` (für Modelle, die synthetische Drums
-    nicht als Musik erkennen). Braucht `stickler fetch mdb`."""
+    """The first 10 s of the MDB mix `MusicDelta_Punk` (for models that do not recognise
+    synthetic drums as music). Needs `stickler fetch mdb`."""
     tracks = {t.id: t for t in mdb.tracks(ROOT / "data" / "mdb")}
-    assert "MusicDelta_Punk" in tracks, "MDB fehlt → uv run stickler fetch mdb"
+    assert "MusicDelta_Punk" in tracks, "MDB missing → uv run stickler fetch mdb"
     path = tmp_path_factory.mktemp("audio") / "punk_10s.wav"
     with wave.open(str(tracks["MusicDelta_Punk"].mix)) as src, wave.open(str(path), "wb") as dst:
         dst.setparams(src.getparams())
@@ -76,13 +76,13 @@ def mdb_clip(tmp_path_factory) -> Path:
 
 
 def test_yourmt3_produces_midi_on_real_mix(mdb_clip, tmp_path):
-    """YourMT3+ erkennt im synthetischen Clip gar nichts, auch keine anderen Instrumente."""
+    """YourMT3+ detects nothing at all in the synthetic clip, not even other instruments."""
     spec = adapters.discover(ROOT / "adapters")["yourmt3"]
     result = adapters.run_adapter(spec, mdb_clip, tmp_path / "yourmt3", device="cpu")
     assert result.ok, result.error
     pitches = {pitch for _, pitch in read_drum_notes(result.output)}
-    assert {36, 38} <= pitches, f"Kick und Snare fehlen: {sorted(pitches)}"
-    assert all(35 <= p <= 81 for p in pitches), "Pitches außerhalb des GM-Drum-Bereichs"
+    assert {36, 38} <= pitches, f"kick and snare missing: {sorted(pitches)}"
+    assert all(35 <= p <= 81 for p in pitches), "pitches outside the GM drum range"
 
 
 @pytest.mark.parametrize("adapter_id", ["demucs", "roformer"])
@@ -96,7 +96,7 @@ def test_separator_produces_drum_stem(adapter_id, drum_clip, tmp_path):
 
 
 def test_beat_tracker_finds_120_bpm(drum_clip, tmp_path):
-    """Der synthetische Clip hat Viertel bei 120 BPM: Beat-Abstand 0,5 s."""
+    """The synthetic clip has quarter notes at 120 BPM: beat spacing 0.5 s."""
     spec = adapters.discover(ROOT / "adapters")["beat_this"]
     result = adapters.run_adapter(spec, drum_clip, tmp_path / "beat_this", device="cpu")
     assert result.ok, result.error

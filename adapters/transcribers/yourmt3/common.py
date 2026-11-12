@@ -1,17 +1,17 @@
-"""Gemeinsame Einstellungen für setup.py und run.py."""
+"""Shared settings for setup.py and run.py."""
 
 from pathlib import Path
 
-REPO_ID = "mimbres/YourMT3"  # Hugging-Face-Space mit Inferenz-Code und Checkpoints
-REVISION = "5e66c1ea173a8186e0d20432b841d3180cc015b5"  # Stand 2025-01-31
+REPO_ID = "mimbres/YourMT3"  # Hugging Face Space with inference code and checkpoints
+REVISION = "5e66c1ea173a8186e0d20432b841d3180cc015b5"  # as of 2025-01-31
 WEIGHTS = Path(__file__).parent / "weights"
 SRC = WEIGHTS / "amt" / "src"
 
-# YPTF.MoE+Multi (PS): mit Pitch-Shift-Augmentierung trainiert. Auf 7 MDB-Proben beim
-# Schlagzeug klar besser als die Space-Voreinstellung (noPS), siehe ADR 0005
+# YPTF.MoE+Multi (PS): trained with pitch-shift augmentation. On 7 MDB samples it is clearly
+# better for drums than the Space default (noPS), see ADR 0005
 EXP = "mc13_256_g4_all_v7_mt3f_sqr_rms_moe_wf4_n8k2_silu_rope_rp_b80_ps2"
 CHECKPOINT = f"{EXP}@model.ckpt"
-# Argumente wie in app.py des Space, Präzision 32 statt 16 (CPU)
+# Arguments as in the Space's app.py, precision 32 instead of 16 (CPU)
 ARGS = [
     CHECKPOINT,
     "-p",

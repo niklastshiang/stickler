@@ -1,4 +1,4 @@
 title: "Electric Callboy feat. BABYMETAL – RATATATA"
 audio: "~/Musik/Sync/Eiserne Faust/Electric Callboy, BABYMETAL - RATATATA.flac"
-# Partitur: data/own/ratatata/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+# Score: data/own/ratatata/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

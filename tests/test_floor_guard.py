@@ -1,4 +1,4 @@
-"""Tests für scripts/floor_guard.py: jeder Floor-Verstoß wird erkannt, saubere Diffs nicht."""
+"""Tests for scripts/floor_guard.py: every floor violation is detected, clean diffs are not."""
 
 import importlib.util
 import subprocess
@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("floor_guard", ROOT / "scripts" / "floor_guard.py")
 assert _spec and _spec.loader
 floor_guard = importlib.util.module_from_spec(_spec)
-sys.modules["floor_guard"] = floor_guard  # nötig für @dataclass
+sys.modules["floor_guard"] = floor_guard  # needed for @dataclass
 _spec.loader.exec_module(floor_guard)
 
 
@@ -31,7 +31,7 @@ def rules(diff: str) -> set[str]:
 
 
 def test_package_version_is_a_release_number():
-    """Fortlaufende Versionsnummern (ADR 0006): eine Ganzzahl, gleich in Paket und pyproject."""
+    """Consecutive version numbers (ADR 0006): an integer, equal in package and pyproject."""
     from importlib.metadata import version
 
     assert stickler.__version__.isdigit()
@@ -52,9 +52,9 @@ def test_clean_diff_passes():
         ("if debug:  # pragma: no cover", "silenced-checker"),
         ("    raise NotImplementedError", "unfinished-work"),
         ("except Exception: pass", "unfinished-work"),
-        ("# TODO später", "unfinished-work"),
-        ("@pytest.mark.skip(reason='rot')", "test-made-easier"),
-        ("    pytest.skip('später')", "test-made-easier"),
+        ("# TODO later", "unfinished-work"),
+        ("@pytest.mark.skip(reason='red')", "test-made-easier"),
+        ("    pytest.skip('later')", "test-made-easier"),
     ],
 )
 def test_added_violations_are_flagged(line, rule):
@@ -111,7 +111,7 @@ def test_constraints_rule_removed_is_flagged():
 
 
 def test_new_exception_is_flagged():
-    row = "| W1 | coverage | src/x.py | Grund | owner | 2027-01-01 |"
+    row = "| W1 | coverage | src/x.py | reason | owner | 2027-01-01 |"
     assert "new-exception" in rules(diff_for("CONSTRAINTS.md", [row]))
 
 

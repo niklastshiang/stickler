@@ -1,4 +1,4 @@
-"""Tests für das gemeinsame Adapter-Paket (adapters/_common), direkt importiert."""
+"""Tests for the shared adapter package (adapters/_common), imported directly."""
 
 import importlib.util
 import sys

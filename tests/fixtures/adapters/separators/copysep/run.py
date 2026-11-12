@@ -1,4 +1,4 @@
-"""Dummy-Separator für Tests: kopiert die Eingabe als drums.wav."""
+"""Dummy separator for tests: copies the input as drums.wav."""
 
 import shutil
 from pathlib import Path

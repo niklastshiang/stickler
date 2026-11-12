@@ -1,9 +1,9 @@
-"""Gemeinsame Einstellungen für setup.py und run.py."""
+"""Shared settings for setup.py and run.py."""
 
 import os
 from pathlib import Path
 
 SIZE = "medium"
 WEIGHTS = Path(__file__).parent / "weights"
-# Gewichte (gated, Login nötig) im Adapter-Ordner statt im globalen Hugging-Face-Cache
+# Weights (gated, login required) in the adapter folder instead of the global Hugging Face cache
 os.environ["HF_HUB_CACHE"] = str(WEIGHTS)

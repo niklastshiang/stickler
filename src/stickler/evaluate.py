@@ -1,4 +1,4 @@
-"""Bewertung nach mir_eval: Precision/Recall/F1 je Klasse, Mikro und Makro."""
+"""Scoring with mir_eval: precision/recall/F1 per class, micro and macro."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import numpy as np
 
 from stickler.classes import Onsets
 
-# Toleranzfenster ±50 ms, Standard in der ADT-Literatur (MDB, ENST, ADTOF).
+# Tolerance window ±50 ms, standard in the ADT literature (MDB, ENST, ADTOF).
 WINDOW = 0.05
 _EMPTY = np.empty(0)
 
@@ -38,7 +38,7 @@ class PRF:
 class Scores:
     per_class: dict[str, PRF]
     micro: PRF
-    # Mittel der F1-Werte über Klassen mit Referenz-Ereignissen; None, wenn es keine gibt.
+    # Mean of the F1 values over classes with reference events; None if there are none.
     macro_f1: float | None
 
 
@@ -48,7 +48,7 @@ def _match(ref: np.ndarray, est: np.ndarray, window: float) -> PRF:
 
 
 def score(ref: Onsets, est: Onsets, window: float = WINDOW) -> Scores:
-    """Vergleicht geschätzte mit Referenz-Onsets; jede Schätzung trifft höchstens eine Referenz."""
+    """Compares estimated with reference onsets; each estimate hits at most one reference."""
     classes = list(ref.by_class) + [c for c in est.by_class if c not in ref.by_class]
     per_class = {
         c: _match(ref.by_class.get(c, _EMPTY), est.by_class.get(c, _EMPTY), window) for c in classes

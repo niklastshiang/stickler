@@ -1,4 +1,4 @@
-"""Tests für den MDB-Drums-Loader. Ein lokales Fake-Repo ersetzt GitHub (kein Netz nötig)."""
+"""Tests for the MDB Drums loader. A local fake repo replaces GitHub (no network needed)."""
 
 import subprocess
 from pathlib import Path
@@ -26,7 +26,7 @@ def fake_repo(tmp_path: Path) -> Path:
         f"{ROOT}/audio/drum_only/MusicDelta_Rock_Drum.wav": "drums",
         f"{ROOT}/audio/full_mix/MusicDelta_Punk_MIX.wav": "mix",
         f"{ROOT}/audio/drum_only/MusicDelta_Punk_Drum.wav": "drums",
-        f"{ROOT}/audio/multi-tracks/MusicDelta_Rock/RAW/big.wav": "nicht laden",
+        f"{ROOT}/audio/multi-tracks/MusicDelta_Rock/RAW/big.wav": "do not download",
         "README.md": "readme",
     }
     for rel, content in files.items():
@@ -49,7 +49,7 @@ def test_fetch_checks_out_only_needed_folders(fake_repo, tmp_path):
 def test_fetch_is_idempotent(fake_repo, tmp_path):
     target = tmp_path / "mdb"
     mdb.fetch(target, repo_url=str(fake_repo))
-    assert mdb.fetch(target, repo_url="/gibt/es/nicht") == 2  # kein zweiter Clone
+    assert mdb.fetch(target, repo_url="/gibt/es/nicht") == 2  # no second clone
 
 
 def test_fetch_failure_raises(tmp_path):
@@ -70,7 +70,7 @@ def test_reference_maps_subclasses_to_gm(fake_repo, tmp_path):
     target = tmp_path / "mdb"
     mdb.fetch(target, repo_url=str(fake_repo))
     rock = mdb.tracks(target)[1]
-    # TMB (Tamburin) hat keine Klasse im Schema → GM 54, wird später beim Mapping ignoriert
+    # TMB (tambourine) has no class in the scheme → GM 54, ignored later during mapping
     assert rock.reference_notes() == [(0.0, 36), (0.02, 42), (0.528254, 38), (0.6, 37), (0.7, 54)]
 
 

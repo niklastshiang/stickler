@@ -1,4 +1,4 @@
-"""Tests für den Datensatz eigener Songs (references/own/*.yaml + data/own/<song>/)."""
+"""Tests for the own-songs dataset (references/own/*.yaml + data/own/<song>/)."""
 
 import json
 
@@ -42,7 +42,7 @@ def test_only_passed_alignments_become_tracks(layout):
         shift=0.01,
     )
     own.save_alignment(
-        b, notes=[(1.0, 36)], excluded=[], quality={}, reasons=["zu schlecht"], shift=0.0
+        b, notes=[(1.0, 36)], excluded=[], quality={}, reasons=["too poor"], shift=0.0
     )
     tracks = own.tracks(refs, data)
     assert [t.id for t in tracks] == ["song_a"]

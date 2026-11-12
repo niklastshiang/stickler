@@ -1,4 +1,4 @@
-"""Tests für die Audiodauer per ffprobe."""
+"""Tests for audio duration via ffprobe."""
 
 import wave
 
@@ -33,7 +33,7 @@ def test_load_mono_resamples_and_mixes(tmp_path):
         w.setnchannels(2)
         w.setsampwidth(2)
         w.setframerate(44100)
-        w.writeframes(b"\x00\x40\x00\x00" * 44100)  # links 0,5, rechts 0
+        w.writeframes(b"\x00\x40\x00\x00" * 44100)  # left 0.5, right 0
     signal = audio.load_mono(path, sr=22050)
     assert signal.dtype.name == "float32"
     assert len(signal) == pytest.approx(22050, abs=50)
@@ -55,4 +55,4 @@ def test_write_stereo_wav(tmp_path):
     with wave.open(str(path)) as w:
         assert (w.getnchannels(), w.getframerate(), w.getnframes()) == (2, 8000, 100)
         frames = np.frombuffer(w.readframes(1), dtype="<i2")
-    assert frames[0] == pytest.approx(16383, abs=1) and frames[1] == -32767  # rechts begrenzt
+    assert frames[0] == pytest.approx(16383, abs=1) and frames[1] == -32767  # right clipped

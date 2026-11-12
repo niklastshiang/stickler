@@ -1,4 +1,4 @@
-"""Dummy-Setup: hinterlegt eine Markierungsdatei."""
+"""Dummy setup: leaves a marker file."""
 
 from pathlib import Path
 

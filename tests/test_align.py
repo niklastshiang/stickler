@@ -1,4 +1,4 @@
-"""Tests für den Zeitabgleich eigener Noten auf die Aufnahme (synthetische Daten)."""
+"""Tests for the time alignment of own notes onto the recording (synthetic data)."""
 
 import mido
 import numpy as np
@@ -10,7 +10,7 @@ KICK, SNARE, HAT, CRASH = 36, 38, 42, 49
 
 
 def groove(bars, beat=0.5, fill_every=4):
-    """4/4-Groove (Kick 1+3, Snare 2+4, Achtel-Hi-Hat), jeder 4. Takt mit Snare-Fill."""
+    """4/4 groove (kick 1+3, snare 2+4, eighth-note hi-hat), every 4th bar with a snare fill."""
     notes = []
     for bar in range(bars):
         t0 = bar * 4 * beat
@@ -25,12 +25,12 @@ def groove(bars, beat=0.5, fill_every=4):
 
 
 def warp(t):
-    """Aufnahme: 3 s Intro, leicht schwankendes Tempo (±2 %)."""
+    """Recording: 3 s intro, slightly fluctuating tempo (±2 %)."""
     return 3.0 + t * 1.0 + 0.15 * np.sin(t / 6.0)
 
 
 def flux_for(times_pitches, duration, noise=0.0, seed=0):
-    """Synthetischer Bandfluss: Impulse je Klasse im passenden Band."""
+    """Synthetic band flux: impulses per class in the matching band."""
     rng = np.random.default_rng(seed)
     t = np.arange(0, duration, align.onsets.HOP)
     flux = rng.random((len(t), 3)) * noise
@@ -57,7 +57,7 @@ def test_read_score_beats_follow_tempo_changes(tmp_path):
     track.append(mido.MetaMessage("set_tempo", tempo=500000, time=0))  # 120 BPM
     track.append(mido.Message("note_on", channel=9, note=KICK, velocity=100, time=0))
     track.append(mido.Message("note_off", channel=9, note=KICK, velocity=0, time=480))
-    track.append(mido.MetaMessage("set_tempo", tempo=1000000, time=480))  # ab Beat 2: 60 BPM
+    track.append(mido.MetaMessage("set_tempo", tempo=1000000, time=480))  # from beat 2: 60 BPM
     track.append(mido.Message("note_on", channel=9, note=SNARE, velocity=100, time=0))
     track.append(mido.Message("note_off", channel=9, note=SNARE, velocity=0, time=480))
     path = tmp_path / "s.mid"
@@ -75,16 +75,16 @@ def test_aligns_offset_and_rubato():
     result = align.align(score, beats_for(score.beats, warp), ft, flux)
     got = dict(((round(t, 3), p), a) for (t, p), a in zip(notes, result.mapped_times, strict=True))
     errors = [abs(got[(round(t, 3), p)] - warp(t)) for t, p in notes]
-    assert max(errors) < 0.02  # Flux-Raster 10 ms + Beat-Jitter
+    assert max(errors) < 0.02  # flux grid 10 ms + beat jitter
     assert result.quality.passed, result.quality.reasons
 
 
 def test_audio_section_missing_in_score_is_excluded():
-    """Die Aufnahme spielt 2 Takte (8 Beats) mehr, als in den Noten stehen: Kick-Achtel mit
-    Crash, ein Muster, das in den Noten nicht vorkommt (sonst wäre die Lage mehrdeutig)."""
+    """The recording plays 2 bars (8 beats) more than the notes contain: eighth-note kicks with
+    crash, a pattern that does not occur in the notes (otherwise the position is ambiguous)."""
     notes = groove(24)
     score = make_score(notes)
-    insert_at, extra = 6.0, 4.0  # 2 Takte à 2 s nach Score-Sekunde 6
+    insert_at, extra = 6.0, 4.0  # 2 bars of 2 s after score second 6
 
     def f(t):
         return warp(t) + (extra if t >= insert_at else 0.0)
@@ -104,7 +104,7 @@ def test_audio_section_missing_in_score_is_excluded():
 
 
 def test_score_gap_with_drums_in_audio_is_excluded():
-    """Noten pausieren 2 Takte ("Drum Loop"), in der Aufnahme wird gespielt."""
+    """The notes rest for 2 bars ("drum loop"), the recording plays."""
     full = groove(16)
     gap = (8.0, 12.0)
     notes = [(t, p) for t, p in full if not gap[0] <= t < gap[1]]
@@ -117,7 +117,7 @@ def test_score_gap_with_drums_in_audio_is_excluded():
 
 
 def test_half_time_beats_are_handled():
-    """Beat This! hört halbes Tempo: nur jeder zweite Beat wird gemeldet."""
+    """Beat This! hears half tempo: only every second beat is reported."""
     notes = groove(32)
     score = make_score(notes)
     ft, flux = flux_for([(warp(t), p) for t, p in notes], warp(score.beats[-1]) + 2, noise=0.05)
@@ -127,9 +127,9 @@ def test_half_time_beats_are_handled():
 
 
 def test_wrong_reference_fails_quality():
-    """Noten passen nicht zur Aufnahme (anderes Muster): Prüfung schlägt fehl."""
+    """Notes do not match the recording (different pattern): the check fails."""
     notes = groove(32)
-    other = [(t + 0.25, SNARE) for t, p in notes if p == KICK]  # Synkopen statt Groove
+    other = [(t + 0.25, SNARE) for t, p in notes if p == KICK]  # syncopation instead of groove
     score = make_score(notes)
     ft, flux = flux_for([(warp(t), p) for t, p in other], warp(score.beats[-1]) + 2, noise=0.05)
     result = align.align(score, beats_for(score.beats, warp), ft, flux)
@@ -138,7 +138,7 @@ def test_wrong_reference_fails_quality():
 
 
 def test_beat_level_switching_between_sections():
-    """Beat This! hört abschnittsweise Achtel statt Viertel (wie bei Bat Country)."""
+    """Beat This! hears eighths instead of quarters in some sections (as with Bat Country)."""
     notes = groove(32)
     score = make_score(notes)
     ft, flux = flux_for([(warp(t), p) for t, p in notes], warp(score.beats[-1]) + 2, noise=0.05)
@@ -169,7 +169,7 @@ def test_half_time_section_gets_midpoints():
 
 
 def test_normalize_beats_fills_gaps_without_duplicates():
-    """Lücke von 1,45 Vierteln: wird geteilt, kein Beat doppelt."""
+    """Gap of 1.45 quarters: gets split, no beat duplicated."""
     beats = np.array([0.0, 0.5, 1.0, 1.725, 2.225, 2.725])
     flux = np.zeros((300, 3))
     out = align._normalize_beats(beats, 0.5, np.arange(300) * 0.01, flux)
@@ -177,7 +177,7 @@ def test_normalize_beats_fills_gaps_without_duplicates():
 
 
 def test_pause_in_recording_does_not_bend_neighbours():
-    """Die Aufnahme hält nach Takt 12 kurz an (0,25 s Break), die Noten laufen durch."""
+    """The recording pauses briefly after bar 12 (0.25 s break), the notes run on."""
     notes = groove(24)
     score = make_score(notes)
     pause_at = 24.0
@@ -190,6 +190,6 @@ def test_pause_in_recording_does_not_bend_neighbours():
     errors = [
         abs(a - f(t))
         for (t, _), a in zip(notes, result.mapped_times, strict=True)
-        if not pause_at - 0.5 < t < pause_at  # im Beat mit der Pause ist die Lage offen
+        if not pause_at - 0.5 < t < pause_at  # in the beat with the pause the position is open
     ]
     assert max(errors) < 0.02

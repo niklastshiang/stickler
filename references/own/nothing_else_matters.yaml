@@ -1,4 +1,4 @@
 title: "Metallica – Nothing Else Matters"
 audio: "~/Musik/Sync/Old Skool Rulez/Metallica - Nothing Else Matters.mp3"
-# Partitur: data/own/nothing_else_matters/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+# Score: data/own/nothing_else_matters/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Floor-Guard: diff-basierte Prüfung des Floors aus CONSTRAINTS.md.
+"""Floor guard: diff-based check of the floor from CONSTRAINTS.md.
 
-Python-Portierung der Referenz aus agent-skills/constraint-driven-development
-(references/floor-guard.md). Vertrag: Exit 0 = sauber, 1 = Verstoß, 2 = Guard konnte
-nicht laufen. Meldet Regel und Fundstelle, nie den Wert eines Secrets.
+Python port of the reference from agent-skills/constraint-driven-development
+(references/floor-guard.md). Contract: exit 0 = clean, 1 = violation, 2 = guard could not
+run. Reports the rule and location, never the value of a secret.
 
-Aufruf: python scripts/floor_guard.py [--base <ref>]   (Standard: HEAD = uncommittete Arbeit)
+Usage: python scripts/floor_guard.py [--base <ref>]   (default: HEAD = uncommitted work)
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 
 def git(args: list[str], *, diff_exit: bool = False) -> str | None:
-    """Git aufrufen; None bei Fehler. `diff --no-index` endet bei Unterschieden mit 1."""
+    """Call git; None on error. `diff --no-index` exits with 1 when there are differences."""
     proc = subprocess.run(["git", *args], capture_output=True, text=True)
     if proc.returncode == 0 or (diff_exit and proc.returncode == 1):
         return proc.stdout
@@ -45,7 +45,7 @@ STUBS = re.compile(
     r"raise\s+NotImplementedError|except\b[^:]*:\s*pass\b|\bTODO\b|\bFIXME\b|\bpass\s*#\s*stub"
 )
 SKIPS = re.compile(r"@pytest\.mark\.(skip|xfail)\b|\bpytest\.skip\(|\bunittest\.skip\b")
-# Nur Muster, der Wert wird nie ausgegeben.
+# Patterns only; the value is never printed.
 SECRETS = re.compile(
     r"\bhf_[A-Za-z0-9]{30,}\b|\bgh[pousr]_[A-Za-z0-9]{30,}\b|BEGIN [A-Z ]*PRIVATE KEY"
 )
@@ -72,7 +72,7 @@ def is_constraints(path: str) -> bool:
 
 
 def is_guard(path: str) -> bool:
-    """Der Guard selbst und seine Tests enthalten die Muster absichtlich."""
+    """The guard itself and its tests contain the patterns on purpose."""
     return path.endswith("scripts/floor_guard.py") or path.endswith("tests/test_floor_guard.py")
 
 
@@ -102,7 +102,7 @@ def thresholds(text: str) -> list[tuple[float, str | None]]:
 
 
 def parse_diff(diff: str) -> tuple[list[Line], list[Line], list[str], list[str]]:
-    """Unified Diff → hinzugefügte/entfernte Zeilen, gelöschte und neue Dateien."""
+    """Unified diff → added/removed lines, deleted and new files."""
     added: list[Line] = []
     removed: list[Line] = []
     deleted: list[str] = []
@@ -144,12 +144,12 @@ def check(diff: str) -> list[tuple[str, str, str]]:
 
     for f in created:
         if BINARIES.search(f):
-            flag("binary-in-git", f, "Audio/Gewichte gehören nicht ins Repo")
+            flag("binary-in-git", f, "Audio/weights do not belong in the repo")
 
     for ln in added:
         if is_guard(ln.file):
             continue
-        is_doc = ln.file.endswith(".md")  # Doku nennt die Muster, ohne sie anzuwenden
+        is_doc = ln.file.endswith(".md")  # docs name the patterns without applying them
         if SUPPRESSIONS.search(ln.text) and not is_doc:
             flag("silenced-checker", ln.file, ln.text)
         if STUBS.search(ln.text) and not is_doc:
@@ -164,8 +164,8 @@ def check(diff: str) -> list[tuple[str, str, str]]:
     for f in deleted:
         if is_test(f):
             flag("test-deleted", f, "file deleted")
-    # Eine geänderte Assertion (entfernt + neu in derselben Datei) ist kein Abschwächen;
-    # gemeldet wird, wenn eine Testdatei unterm Strich Assertions verliert.
+    # A changed assertion (removed + new in the same file) is not a weakening;
+    # it is reported when a test file loses assertions on balance.
     assertion = re.compile(r"\bassert\b|pytest\.raises|approx\(")
     lost: dict[str, list[str]] = {}
     for ln in removed:
@@ -243,7 +243,7 @@ def main() -> None:
     for rule, path, text in findings:
         print(f"  [{rule}] {path}: {text}", file=sys.stderr)
     print(
-        "\nJeder Fund senkt die Latte. Code reparieren oder eine eingetragene Exception nutzen.",
+        "\nEvery finding lowers the bar. Fix the code or use a registered exception.",
         file=sys.stderr,
     )
     sys.exit(1)

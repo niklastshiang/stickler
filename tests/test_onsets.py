@@ -1,4 +1,4 @@
-"""Tests für die Onset-Erkennung je Frequenzband (synthetische Signale)."""
+"""Tests for onset detection per frequency band (synthetic signals)."""
 
 import numpy as np
 import pytest
@@ -14,7 +14,7 @@ def kick(t):
 
 
 def hat(t, rng):
-    """Hochpass-Rauschen: Differenz aufeinanderfolgender Samples."""
+    """High-pass noise: difference of consecutive samples."""
     noise = rng.standard_normal(len(t) + 1)
     return 0.3 * np.exp(-t * 80) * np.diff(noise)
 

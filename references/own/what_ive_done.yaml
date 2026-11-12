@@ -1,4 +1,4 @@
 title: "Linkin Park – What I've Done"
 audio: "~/Musik/Archiv/Linkin_Park/linkin_park_-_what_i've_done.mp3"
-# Partitur: data/own/what_ive_done/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+# Score: data/own/what_ive_done/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

@@ -1,4 +1,4 @@
-"""Systemprüfung: GPU, Adapter-Umgebungen, Gewichte, Hugging-Face-Login, MuseScore, Datensätze."""
+"""System check: GPU, adapter environments, weights, Hugging Face login, MuseScore, datasets."""
 
 from __future__ import annotations
 
@@ -23,11 +23,11 @@ class Check:
 
 
 def check_gpu(kfd: Path = Path("/dev/kfd"), drm: Path = Path("/sys/class/drm")) -> Check:
-    """AMD-GPU für ROCm: /dev/kfd vorhanden und eine DRM-Karte mit Vendor 0x1002."""
+    """AMD GPU for ROCm: /dev/kfd present and a DRM card with vendor 0x1002."""
     amd = [v for v in drm.glob("card*/device/vendor") if v.read_text().strip() == "0x1002"]
     if kfd.exists() and amd:
-        return Check("gpu", True, f"AMD-GPU ({amd[0].parent.parent.name}), /dev/kfd vorhanden")
-    return Check("gpu", False, "keine AMD-GPU mit ROCm-Zugang (/dev/kfd) gefunden")
+        return Check("gpu", True, f"AMD GPU ({amd[0].parent.parent.name}), /dev/kfd present")
+    return Check("gpu", False, "no AMD GPU with ROCm access (/dev/kfd) found")
 
 
 def _rocm_device_name(spec: adapters.AdapterSpec) -> str | None:
@@ -46,22 +46,22 @@ def check_adapters(root: Path, probe_gpu: bool = False) -> list[Check]:
     for adapter_id, spec in sorted(adapters.discover(root).items()):
         problems = []
         if not (spec.path / ".venv").is_dir():
-            problems.append("CPU-Umgebung fehlt")
+            problems.append("CPU environment missing")
         if (spec.path / "setup.py").exists():
             weights = spec.path / "weights"
             if not weights.is_dir() or not any(weights.iterdir()):
-                problems.append("Gewichte fehlen")
+                problems.append("weights missing")
         cfg = adapters.rocm_config(spec) if (spec.path / "pyproject.toml").exists() else None
         if cfg is None:
             rocm = "ROCm: –"
         elif not (spec.path / adapters.ROCM_ENV).is_dir():
-            rocm = "ROCm: nicht gebaut"
+            rocm = "ROCm: not built"
         else:
             name = _rocm_device_name(spec) if probe_gpu else None
-            rocm = f"ROCm: {name}" if name else "ROCm: gebaut"
+            rocm = f"ROCm: {name}" if name else "ROCm: built"
             if not cfg.prefer_gpu:
-                rocm += " (auto nimmt CPU)"
-        detail = "; ".join(problems) if problems else "bereit"
+                rocm += " (auto uses CPU)"
+        detail = "; ".join(problems) if problems else "ready"
         if problems:
             detail += f" → stickler setup --adapter {adapter_id}"
         checks.append(Check(f"adapter {adapter_id}", not problems, f"{detail}; {rocm}"))
@@ -70,8 +70,8 @@ def check_adapters(root: Path, probe_gpu: bool = False) -> list[Check]:
 
 def check_hf_login(token_file: Path = HF_TOKEN_FILE) -> Check:
     if os.environ.get("HF_TOKEN") or token_file.exists():
-        return Check("hugging face", True, "angemeldet")
-    return Check("hugging face", False, "nicht angemeldet → uvx hf auth login (für MuScriptor)")
+        return Check("hugging face", True, "logged in")
+    return Check("hugging face", False, "not logged in → uvx hf auth login (for MuScriptor)")
 
 
 def _flatpak_ids() -> set[str]:
@@ -90,14 +90,14 @@ def check_musescore(flatpak_ids: Callable[[], set[str]] = _flatpak_ids) -> Check
     if "org.musescore.MuseScore" in flatpak_ids():
         return Check("musescore", True, "Flatpak org.musescore.MuseScore")
     return Check(
-        "musescore", False, "nicht gefunden (optional, für PDF): flathub org.musescore.MuseScore"
+        "musescore", False, "not found (optional, for PDF): flathub org.musescore.MuseScore"
     )
 
 
 def check_datasets(data_dir: Path) -> list[Check]:
     n = len(mdb.tracks(data_dir / "mdb"))
-    detail = f"{n} Tracks" if n else "fehlt → stickler fetch mdb"
-    return [Check("datensatz mdb", n > 0, detail)]
+    detail = f"{n} tracks" if n else "missing → stickler fetch mdb"
+    return [Check("dataset mdb", n > 0, detail)]
 
 
 def run_all(adapters_root: Path, data_dir: Path) -> list[Check]:

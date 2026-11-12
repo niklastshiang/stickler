@@ -1,9 +1,10 @@
-"""MDB Drums (Southall et al., ISMIR 2017): 23 Tracks aus MedleyDB, CC BY-NC-SA 4.0.
+"""MDB Drums (Southall et al., ISMIR 2017): 23 tracks from MedleyDB, CC BY-NC-SA 4.0.
 
-Quelle: https://github.com/CarlSouthall/MDBDrums
-Geladen werden nur die Subclass-Annotationen, der Mix und der Drum-Stem (die Multitracks nicht).
-Als Referenz dienen die 21 Subclass-Labels, abgebildet auf GM-Pitches. So gilt für Referenz und
-Modelle dasselbe Klassen-Schema (z. B. zählt der Side Stick, den MDB unter "OT" führt, als SD).
+Source: https://github.com/CarlSouthall/MDBDrums
+Only the subclass annotations, the mix and the drum stem are downloaded (not the multitracks).
+The 21 subclass labels, mapped to GM pitches, serve as the reference. This way the same class
+scheme applies to reference and models (e.g. the side stick, which MDB lists under "OT",
+counts as SD).
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ SPARSE_PATHS = [
     f"/{ROOT}/audio/drum_only/",
 ]
 
-# MDB-Subclass → GM-Drum-Pitch (Bedeutungen laut MDB-Drums-Paper)
+# MDB subclass → GM drum pitch (meanings according to the MDB Drums paper)
 SUBCLASS_TO_GM: dict[str, int] = {
     "KD": 36,  # Kick
     "SD": 38,  # Snare
@@ -32,11 +33,11 @@ SUBCLASS_TO_GM: dict[str, int] = {
     "SDD": 38,  # Snare: Drag
     "SDF": 38,  # Snare: Flam
     "SDG": 38,  # Snare: Ghost Note
-    "SDNS": 38,  # Snare ohne Teppich
+    "SDNS": 38,  # Snare without snares
     "SST": 37,  # Side Stick
-    "CHH": 42,  # Hi-Hat geschlossen
-    "PHH": 44,  # Hi-Hat Pedal
-    "OHH": 46,  # Hi-Hat offen
+    "CHH": 42,  # Hi-hat closed
+    "PHH": 44,  # Hi-hat pedal
+    "OHH": 46,  # Hi-hat open
     "LFT": 41,  # Low Floor Tom
     "HFT": 43,  # High Floor Tom
     "MHT": 45,  # Mid Tom
@@ -46,7 +47,7 @@ SUBCLASS_TO_GM: dict[str, int] = {
     "CRC": 49,  # Crash
     "CHC": 52,  # China
     "SPC": 55,  # Splash
-    "TMB": 54,  # Tamburin
+    "TMB": 54,  # Tambourine
 }
 
 
@@ -56,21 +57,21 @@ class Track:
     mix: Path
     drums: Path
     annotation: Path
-    excluded: tuple[tuple[float, float], ...] = ()  # MDB ist vollständig annotiert
+    excluded: tuple[tuple[float, float], ...] = ()  # MDB is fully annotated
 
     def reference_notes(self) -> list[tuple[float, int]]:
         return read_subclass_file(self.annotation)
 
 
 def read_subclass_file(path: Path) -> list[tuple[float, int]]:
-    """Liest `<zeit> \\t <label>`-Zeilen und bildet die Labels auf GM-Pitches ab."""
+    """Reads `<time> \\t <label>` lines and maps the labels to GM pitches."""
     notes: list[tuple[float, int]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         time, label = line.split()
         if label not in SUBCLASS_TO_GM:
-            raise ValueError(f"{path.name}: unbekanntes MDB-Label {label!r}")
+            raise ValueError(f"{path.name}: unknown MDB label {label!r}")
         notes.append((float(time), SUBCLASS_TO_GM[label]))
     return notes
 
@@ -80,7 +81,7 @@ def _annotation_dir(target: Path) -> Path:
 
 
 def tracks(target: Path) -> list[Track]:
-    """Alle vorhandenen Tracks, sortiert nach ID; leer, wenn der Datensatz fehlt."""
+    """All available tracks, sorted by ID; empty if the dataset is missing."""
     ann_dir = _annotation_dir(target)
     if not ann_dir.is_dir():
         return []
@@ -104,10 +105,10 @@ def _git(*args: str) -> None:
 
 
 def fetch(target: Path, repo_url: str = REPO_URL) -> int:
-    """Lädt MDB Drums per Sparse-Checkout nach `target` (idempotent); liefert die Track-Anzahl."""
+    """Downloads MDB Drums via sparse checkout to `target` (idempotent); returns the track count."""
     existing = tracks(target)
     if existing:
-        log.info("MDB Drums schon vorhanden: %d Tracks", len(existing))
+        log.info("MDB Drums already present: %d tracks", len(existing))
         return len(existing)
     target.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -125,5 +126,5 @@ def fetch(target: Path, repo_url: str = REPO_URL) -> int:
         _git("-C", str(target), "checkout", "-q")
     except subprocess.CalledProcessError as exc:
         shutil.rmtree(target, ignore_errors=True)
-        raise RuntimeError(f"MDB-Download fehlgeschlagen: {exc.stderr.strip()}") from exc
+        raise RuntimeError(f"MDB download failed: {exc.stderr.strip()}") from exc
     return len(tracks(target))

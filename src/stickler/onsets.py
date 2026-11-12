@@ -1,23 +1,23 @@
-"""Onset-Erkennung ohne Modell: spektraler Fluss je Frequenzband (numpy).
+"""Onset detection without a model: spectral flux per frequency band (numpy).
 
-Dient der Qualitätsprüfung eigener Referenzen und dem Zeitabgleich. Bewusst kein
-Transkriptionsmodell, damit die Modelle nicht ihre eigenen Prüfer beurteilen.
+Used for the quality check of own references and for time alignment. Deliberately not a
+transcription model, so that the models do not judge their own checkers.
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-HOP = 0.01  # s je Frame
+HOP = 0.01  # s per frame
 N_FFT = 1024
-# Kick, Snare/Toms, Becken/Hi-Hat (Hz)
+# kick, snare/toms, cymbals/hi-hat (Hz)
 BANDS = ((20.0, 150.0), (150.0, 2500.0), (5000.0, 16000.0))
-MIN_GAP = 0.04  # s: zwei Onsets dichter als das gelten als einer
-WINDOW = 0.1  # s: Umgebung für die adaptive Schwelle
-FLOOR = 0.05  # Anteil des 99. Perzentils, unter dem nichts zählt
-# Die Flux-Spitze kommt vor dem eigentlichen Anschlag (zentriertes 46-ms-Fenster). Gemessen an
-# MDB gegen die Annotationen: Median −10,6 ms (Oracle-Stems, 23 Songs), −11,0 ms (Demucs, 10).
-# Die Zeitachse wird darum korrigiert, sonst würden abgeglichene Referenzen verfrüht.
+MIN_GAP = 0.04  # s: two onsets closer than this count as one
+WINDOW = 0.1  # s: neighbourhood for the adaptive threshold
+FLOOR = 0.05  # share of the 99th percentile below which nothing counts
+# The flux peak comes before the actual attack (centred 46 ms window). Measured on MDB
+# against the annotations: median −10.6 ms (oracle stems, 23 songs), −11.0 ms (Demucs, 10).
+# The time axis is therefore corrected, otherwise aligned references would be early.
 DETECTOR_LEAD = 0.011  # s
 
 
@@ -33,8 +33,8 @@ def _stft_mag(signal: np.ndarray, sr: int) -> tuple[np.ndarray, int]:
 
 
 def band_flux(signal: np.ndarray, sr: int) -> tuple[np.ndarray, np.ndarray]:
-    """Zeiten (s) und positiver spektraler Fluss je Band, Form (Frames, len(BANDS)).
-    Mittelwert über die Frequenzstufen, damit breite Bänder schmale nicht überdecken."""
+    """Times (s) and positive spectral flux per band, shape (frames, len(BANDS)).
+    Mean over the frequency bins, so that wide bands do not drown out narrow ones."""
     mag, hop = _stft_mag(signal, sr)
     log = np.log1p(100.0 * mag)
     rise = np.maximum(0.0, np.diff(log, axis=0, prepend=log[:1]))
@@ -47,7 +47,7 @@ def band_flux(signal: np.ndarray, sr: int) -> tuple[np.ndarray, np.ndarray]:
 
 
 def combined(flux: np.ndarray) -> np.ndarray:
-    """Bänder auf ihr 99. Perzentil normiert und summiert (stille Bänder zählen nicht)."""
+    """Bands normalised to their 99th percentile and summed (silent bands do not count)."""
     if len(flux) == 0:
         return np.zeros(0)
     scale = np.percentile(flux, 99, axis=0)
@@ -56,7 +56,7 @@ def combined(flux: np.ndarray) -> np.ndarray:
 
 
 def pick_peaks(env: np.ndarray, frame_rate: float) -> np.ndarray:
-    """Indizes lokaler Maxima über einer adaptiven Schwelle (Mittel der Umgebung)."""
+    """Indices of local maxima above an adaptive threshold (mean of the neighbourhood)."""
     if len(env) == 0 or env.max() <= 0:
         return np.zeros(0, dtype=int)
     gap = max(1, int(round(MIN_GAP * frame_rate)))
@@ -74,6 +74,6 @@ def pick_peaks(env: np.ndarray, frame_rate: float) -> np.ndarray:
 
 
 def onset_times(signal: np.ndarray, sr: int) -> np.ndarray:
-    """Onset-Zeiten (s) über alle Bänder."""
+    """Onset times (s) over all bands."""
     times, flux = band_flux(signal, sr)
     return times[pick_peaks(combined(flux), 1.0 / HOP)]

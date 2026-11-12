@@ -1,4 +1,4 @@
-"""Ergebnisse: CSV schreiben und über Tracks zusammenfassen."""
+"""Results: write CSV and summarise across tracks."""
 
 from __future__ import annotations
 
@@ -35,8 +35,8 @@ def _new_group() -> dict:
 
 
 def summarize(rows: list[dict]) -> list[dict]:
-    """Je Kombination (Datensatz, Separator, Transkriber, Schema): Zählungen über alle Tracks
-    summieren, daraus F1 je Klasse, Mikro-F1 und Makro-F1 (Klassen mit Referenz-Ereignissen)."""
+    """Per combination (dataset, separator, transcriber, scheme): sum the counts over all tracks,
+    from them F1 per class, micro F1 and macro F1 (classes with reference events)."""
     groups: dict[tuple, dict] = defaultdict(_new_group)
     for r in rows:
         g = groups[tuple(r[k] for k in GROUP)]

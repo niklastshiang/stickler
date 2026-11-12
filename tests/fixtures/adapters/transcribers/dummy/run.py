@@ -1,4 +1,4 @@
-"""Dummy-Transkriber für Tests: MIDI mit Kick (36) bei 0,5 s und Snare (38) bei 1,0 s."""
+"""Dummy transcriber for tests: MIDI with kick (36) at 0.5 s and snare (38) at 1.0 s."""
 
 from pathlib import Path
 

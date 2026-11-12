@@ -1,4 +1,4 @@
-"""Tests für CSV-Ausgabe und Zusammenfassung über Tracks."""
+"""Tests for CSV output and summary across tracks."""
 
 import csv
 

@@ -1,4 +1,4 @@
-"""Tests für die öffentliche API."""
+"""Tests for the public API."""
 
 import pytest
 
@@ -14,7 +14,7 @@ def test_fetch_dataset_mdb_uses_data_subfolder(monkeypatch, tmp_path):
 
 
 def test_fetch_unknown_dataset_raises(tmp_path):
-    with pytest.raises(ValueError, match="unbekannt"):
+    with pytest.raises(ValueError, match="unknown"):
         api.fetch_dataset("foo", tmp_path)
 
 
@@ -32,7 +32,7 @@ def test_setup_adapters_selects_one_or_all(monkeypatch, tmp_path):
     assert api.setup_adapters("a", adapters_root=tmp_path) == ["a"]
     assert api.setup_adapters(None, adapters_root=tmp_path) == ["a", "b"]
     assert done == [("a", "cpu"), ("a", "cpu"), ("b", "cpu")]
-    # rocm ohne Angabe: nur Adapter mit [tool.stickler.rocm]
+    # rocm without an adapter given: only adapters with [tool.stickler.rocm]
     (tmp_path / "transcribers" / "b" / "pyproject.toml").write_text(
         '[tool.stickler.rocm]\nindex = "i"\nreplace = []\npackages = []\n', encoding="utf-8"
     )
@@ -118,7 +118,7 @@ def test_missing_dataset_raises(monkeypatch, tmp_path):
 
 def test_run_doctor_returns_checks(tmp_path):
     names = [c.name for c in api.run_doctor(adapters_root=tmp_path, data_dir=tmp_path)]
-    assert names[0] == "gpu" and "datensatz mdb" in names
+    assert names[0] == "gpu" and "dataset mdb" in names
 
 
 def test_config_timeout_optional(tmp_path):
@@ -156,7 +156,7 @@ def test_config_timeout_relative_needs_factor(tmp_path):
 
 
 def _synth_song(tmp_path):
-    """Synthetischer Song: 2 s Stille, dann 16 Takte Groove bei 120 BPM, als MIDI und WAV."""
+    """Synthetic song: 2 s silence, then 16 bars of groove at 120 BPM, as MIDI and WAV."""
     import mido
     import numpy as np
 
@@ -190,7 +190,7 @@ def _synth_song(tmp_path):
         tick = round(time * 960)
         track.append(mido.Message("note_on", channel=9, note=pitch, velocity=90, time=tick - now))
         now = tick
-    beats = [offset + k * 0.5 for k in range(65)]  # Beat This! meldet Beats bis zum Ende
+    beats = [offset + k * 0.5 for k in range(65)]  # Beat This! reports beats up to the end
     return wav, mid, notes, beats
 
 
@@ -212,7 +212,7 @@ def test_align_songs_end_to_end(tmp_path, monkeypatch):
             out = tmp_path / "beats.json"
             out.write_text(json.dumps({"beats": beats, "downbeats": beats[::4]}))
             return ad.AdapterResult(True, out, {}, None)
-        return ad.AdapterResult(True, wav, {}, None)  # Stem = der Mix selbst
+        return ad.AdapterResult(True, wav, {}, None)  # stem = the mix itself
 
     monkeypatch.setattr(runner, "cached_or_run", fake_cached_or_run)
     registry = {
@@ -227,7 +227,7 @@ def test_align_songs_end_to_end(tmp_path, monkeypatch):
     got = track.reference_notes()
     assert len(got) == len(notes)
     assert all(abs(g[0] - (n[0] + 2.0)) < 0.03 for g, n in zip(got, sorted(notes), strict=True))
-    assert any(b <= 2.0 for a, b in track.excluded)  # Stille vor dem Song ist ausgeklammert
+    assert any(b <= 2.0 for a, b in track.excluded)  # silence before the song is excluded
 
 
 def test_align_songs_missing_score_is_reported(tmp_path, monkeypatch):
@@ -239,7 +239,7 @@ def test_align_songs_missing_score_is_reported(tmp_path, monkeypatch):
 
 
 def test_align_songs_unknown_song_raises(tmp_path):
-    with pytest.raises(ValueError, match="unbekannt"):
+    with pytest.raises(ValueError, match="unknown"):
         api.align_songs("nix", references_dir=tmp_path, data_dir=tmp_path, cache_dir=tmp_path)
 
 

@@ -1,8 +1,8 @@
-"""Benchmark-Matrix: Datensatz × Separator × Transkriber, mit inhaltsbasiertem Cache.
+"""Benchmark matrix: dataset × separator × transcriber, with a content-based cache.
 
-Eingebaute Separatoren:
-- `none`: der Original-Mix geht direkt in den Transkriber
-- `oracle`: der isolierte Drum-Stem des Datensatzes (Obergrenze für perfekte Trennung)
+Built-in separators:
+- `none`: the original mix goes straight into the transcriber
+- `oracle`: the dataset's isolated drum stem (upper bound for perfect separation)
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ BUILTIN_SEPARATORS = ("none", "oracle")
 
 @dataclass(frozen=True)
 class RelativeLimit:
-    """Zeitlimit relativ zur Länge der Eingabe: factor × Dauer, mindestens `minimum` Sekunden.
-    Fair für langsame Modelle auf langen Songs, bremst trotzdem Ausreißer."""
+    """Time limit relative to the input length: factor × duration, at least `minimum` seconds.
+    Fair for slow models on long songs, yet still stops outliers."""
 
     factor: float
     minimum: float = 0.0
@@ -39,8 +39,8 @@ class RelativeLimit:
         return max(self.minimum, self.factor * duration)
 
 
-# Zeitlimit: eine Zahl (Sekunden) für alle Stufen oder je Stufe {"separators": …, ...},
-# je Stufe auch relativ zur Audiodauer
+# Time limit: one number (seconds) for all stages or per stage {"separators": ..., ...},
+# per stage also relative to the audio duration
 Timeout = float | dict[str, float | RelativeLimit] | None
 
 
@@ -58,7 +58,7 @@ class Track(Protocol):
     id: str
     mix: Path
     drums: Path | None
-    excluded: tuple[tuple[float, float], ...]  # Audiozeit-Intervalle ohne Bewertung
+    excluded: tuple[tuple[float, float], ...]  # audio-time intervals without scoring
 
     def reference_notes(self) -> list[tuple[float, int]]: ...
 
@@ -95,10 +95,12 @@ def _adapter_digest(spec: adapters.AdapterSpec) -> str:
 
 
 def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path, device: str) -> Path:
-    """Cache-Ordner: hängt vom Eingabe-Inhalt, vom Adapter-Code, vom Gerät und von der
-    Umgebung (cpu/rocm) ab, denn GPU- und CPU-Ergebnisse können minimal abweichen."""
-    variant = adapters.env_variant(spec, device) or "fehlt"
-    env = device if variant == "cpu" else f"{device}|{variant}"  # CPU-Schlüssel wie bisher
+    """Cache folder: depends on the input content, the adapter code, the device and the
+    environment (cpu/rocm), because GPU and CPU results can differ slightly."""
+    variant = (
+        adapters.env_variant(spec, device) or "fehlt"
+    )  # German literal kept: it is part of the cache key
+    env = device if variant == "cpu" else f"{device}|{variant}"  # CPU key as before
     key = hashlib.sha1(
         f"{_sha1_file(audio)}|{spec.id}|{_adapter_digest(spec)}|{env}".encode()
     ).hexdigest()[:16]
@@ -118,7 +120,7 @@ def cached_or_run(
     if output.exists() and meta.exists():
         return adapters.AdapterResult(True, output, json.loads(meta.read_text()), None)
     if not execute:
-        return adapters.AdapterResult(False, None, None, f"{spec.id}: nicht berechnet")
+        return adapters.AdapterResult(False, None, None, f"{spec.id}: not computed")
     try:
         limit = _stage_timeout(timeout, spec.stage, audio)
     except RuntimeError as exc:
@@ -139,7 +141,7 @@ def _separate(
         return adapters.AdapterResult(True, track.mix, None, None)
     if separator == "oracle":
         if track.drums is None or not track.drums.exists():
-            return adapters.AdapterResult(False, None, None, "oracle: Datensatz hat keinen Stem")
+            return adapters.AdapterResult(False, None, None, "oracle: dataset has no stem")
         return adapters.AdapterResult(True, track.drums, None, None)
     return cached_or_run(registry[separator], track.mix, cache, device, execute, timeout)
 
@@ -148,7 +150,7 @@ def _check_ids(ids: list[str], stage: str, registry: dict[str, adapters.AdapterS
     builtin = BUILTIN_SEPARATORS if stage == "separators" else ()
     for i in ids:
         if i not in builtin and (i not in registry or registry[i].stage != stage):
-            raise ValueError(f"{stage}: Adapter {i!r} unbekannt")
+            raise ValueError(f"{stage}: adapter {i!r} unknown")
 
 
 def run_matrix(
@@ -163,10 +165,10 @@ def run_matrix(
     cancel: threading.Event | None = None,
     timeout: Timeout = None,
 ) -> list[Record]:
-    """Rechnet (oder liest aus dem Cache) alle Kombinationen; Fehler landen im Record.
+    """Computes (or reads from the cache) all combinations; errors end up in the Record.
 
-    Transkriber, die nur Drum-Stems vertragen (input="stem"), laufen nicht auf `none`.
-    `timeout` begrenzt jeden einzelnen Adapter-Aufruf (Sekunden, gesamt oder je Stufe)."""
+    Transcribers that only accept drum stems (input="stem") do not run on `none`.
+    `timeout` limits each single adapter call (seconds, overall or per stage)."""
     _check_ids(separators, "separators", registry)
     _check_ids(transcribers, "transcribers", registry)
     jobs = [
@@ -228,8 +230,8 @@ def score_records(
     schemes: dict[str, Scheme],
     read_notes: Callable[[Path], list[tuple[float, int]]] = read_drum_notes,
 ) -> list[dict]:
-    """Eine Zeile je Record × Schema × Klasse (plus 'micro'/'macro'); Fehler als eigene Zeilen.
-    Noten in ausgeklammerten Bereichen des Tracks zählen weder als Treffer noch als Fehler."""
+    """One row per record × scheme × class (plus 'micro'/'macro'); errors as their own rows.
+    Notes in excluded regions of the track count neither as hits nor as errors."""
     by_id = {(ds, t.id): t for ds, ts in tracks.items() for t in ts}
     rows: list[dict] = []
     for rec in records:

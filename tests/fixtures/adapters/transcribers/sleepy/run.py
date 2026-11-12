@@ -1,4 +1,4 @@
-"""Test-Adapter, der hängt: Ein Zeitlimit muss auch den Modellprozess unter uv beenden."""
+"""Test adapter that hangs: a time limit must also end the model process under uv."""
 
 import time
 from pathlib import Path

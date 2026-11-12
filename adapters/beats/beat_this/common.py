@@ -1,9 +1,9 @@
-"""Gemeinsame Einstellungen für setup.py und run.py."""
+"""Shared settings for setup.py and run.py."""
 
 import os
 from pathlib import Path
 
-CHECKPOINT = "final0"  # Standard der Bibliothek: trainiert auf allen Daten außer GTZAN, Seed 0
+CHECKPOINT = "final0"  # library default: trained on all data except GTZAN, seed 0
 WEIGHTS = Path(__file__).parent / "weights"
-# torch.hub legt den Checkpoint unter $TORCH_HOME/hub/checkpoints ab → im Adapter-Ordner
+# torch.hub stores the checkpoint under $TORCH_HOME/hub/checkpoints → in the adapter folder
 os.environ["TORCH_HOME"] = str(WEIGHTS)

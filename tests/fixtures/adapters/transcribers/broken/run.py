@@ -1,4 +1,4 @@
-"""Absichtlich kaputter Adapter: der Harness muss den Fehler protokollieren und weitermachen."""
+"""Deliberately broken adapter: the harness must log the error and carry on."""
 
 from pathlib import Path
 
@@ -6,7 +6,7 @@ from stickler_adapter import run
 
 
 def transcribe(audio: Path, out_dir: Path, device: str) -> None:
-    raise RuntimeError("Modell explodiert")
+    raise RuntimeError("Model exploded")
 
 
 if __name__ == "__main__":

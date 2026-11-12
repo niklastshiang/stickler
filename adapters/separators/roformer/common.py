@@ -1,4 +1,4 @@
-"""Gemeinsame Einstellungen für setup.py und run.py."""
+"""Shared settings for setup.py and run.py."""
 
 from pathlib import Path
 

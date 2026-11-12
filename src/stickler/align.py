@@ -1,16 +1,17 @@
-"""Zeitabgleich: Noten eines eigenen Songs (MIDI, Partiturzeit) auf die Aufnahme legen.
+"""Time alignment: lay the notes of an own song (MIDI, score time) onto the recording.
 
-Ablauf:
-1. Partitur-Beats (Viertel) aus der Tempokarte des MIDI, Audio-Beats von Beat This!,
-   abschnittsweise auf Viertel gebracht (Beat This! wechselt mitunter auf Achtel oder Halbe).
-2. Je Beat ein Rhythmusmuster (3 Gruppen × 4 Sechzehntel): aus den Noten bzw. aus dem
-   spektralen Fluss des Drum-Stems (Kick tief, Snare/Toms mittel, Becken hoch).
-3. DTW über die Beat-Folgen: diagonal = gepaart, sonst fehlt der Beat auf einer Seite.
-4. Gepaarte Beats je zusammenhängendem Abschnitt glätten (Beat This! rastert auf 20 ms),
-   Noten zwischen den Beats linear abbilden, systematischen Versatz zu den Onsets abziehen.
-5. Ausklammern, was nicht vergleichbar ist: Audio ohne Gegenstück in den Noten und Takte,
-   in denen die Noten pausieren, im Audio aber deutlich gespielt wird ("Drum Loop").
-6. Qualitätsprüfung ohne Transkriptionsmodell (Schwellen siehe SPEC.md, kalibriert an MDB).
+Procedure:
+1. Score beats (quarters) from the tempo map of the MIDI, audio beats from Beat This!,
+   brought to quarter level section by section (Beat This! sometimes switches to eighths or
+   halves).
+2. One rhythm pattern per beat (3 groups × 4 sixteenths): from the notes and from the
+   spectral flux of the drum stem respectively (kick low, snare/toms mid, cymbals high).
+3. DTW over the beat sequences: diagonal = paired, otherwise the beat is missing on one side.
+4. Smooth paired beats per contiguous section (Beat This! quantises to 20 ms), map notes
+   between the beats linearly, subtract the systematic offset to the onsets.
+5. Exclude what is not comparable: audio without a counterpart in the notes and bars in which
+   the notes rest but the audio clearly plays ("drum loop").
+6. Quality check without a transcription model (thresholds see SPEC.md, calibrated on MDB).
 """
 
 from __future__ import annotations
@@ -24,43 +25,43 @@ from mir_eval.util import match_events
 
 from stickler import onsets
 
-SUB = 4  # Slots je Beat (Sechzehntel bei Viertel-Beats)
+SUB = 4  # slots per beat (sixteenths for quarter beats)
 KICKS = frozenset({35, 36})
-METALS = frozenset({42, 44, 46, 49, 51, 52, 53, 55, 57, 59})  # Hi-Hat und Becken
-# DTW mit affinen Lückenkosten: eine Lücke zu öffnen ist teuer, sie zu verlängern billig.
-# Sonst verteilt der Pfad eine fehlende Passage bei sich wiederholenden Grooves auf mehrere
-# Stellen und paart dazwischen falsche Beats.
+METALS = frozenset({42, 44, 46, 49, 51, 52, 53, 55, 57, 59})  # hi-hat and cymbals
+# DTW with affine gap costs: opening a gap is expensive, extending it is cheap.
+# Otherwise the path spreads a missing passage over several places in repeating grooves
+# and pairs wrong beats in between.
 GAP_OPEN = 1.5
 GAP_EXTEND = 0.3
-EDGE_SKIP = 0.5  # je Beat vor dem ersten/nach dem letzten Paar; teurer als eine Verlängerung
-SMOOTH = 4.0  # s links und rechts (Partiturzeit) für die lokale Geradenanpassung
-STEP_JUMP = 0.25  # Beat-Abstand weicht so stark vom Abschnitt ab → Glättung teilen
-ACTIVE = 0.3  # Audio-Beat gilt als gespielt, wenn ein Slot diesen Anteil erreicht
-# Leerer Noten-Beat gegen gespieltes Audio: billiger als zwei Lücken, damit Notenlücken
-# ("Drum Loop") diagonal gepaart bleiben und als Lücke ausgeklammert werden.
+EDGE_SKIP = 0.5  # per beat before the first/after the last pair; more expensive than an extension
+SMOOTH = 4.0  # s left and right (score time) for the local line fit
+STEP_JUMP = 0.25  # beat spacing deviates this much from the section → split the smoothing
+ACTIVE = 0.3  # audio beat counts as played if a slot reaches this share
+# Empty note beat against played audio: cheaper than two gaps, so that note gaps
+# ("drum loop") stay diagonally paired and are excluded as a gap.
 EMPTY_SCORE_COST = 0.6
-GAP_BEATS = 4  # so viele leere Noten-Beats mit Spiel im Audio ergeben eine Lücke
+GAP_BEATS = 4  # this many empty note beats with playing in the audio make a gap
 BEAT_TOL = 0.07  # s
 ONSET_TOL = 0.05  # s
-STRONG_SHARE = 0.2  # die stärksten 20 % der Onsets gelten als deutlich
+STRONG_SHARE = 0.2  # the strongest 20 % of the onsets count as clear
 MIN_SHIFT_SAMPLES = 10
 
-# Mindest- bzw. Höchstwerte; kalibriert an MDB (korrekte Referenzen), siehe SPEC.md
+# Minimum and maximum values; calibrated on MDB (correct references), see SPEC.md
 THRESHOLDS = {"beat_fit": 0.95, "coverage": 0.85, "explained": 0.90, "excluded_strong": 0.20}
 
 
 @dataclass(frozen=True)
 class Score:
-    beats: np.ndarray  # Viertel-Beats in Partitursekunden, einer über die letzte Note hinaus
-    notes: list[tuple[float, int]]  # (Partitursekunde, GM-Pitch)
+    beats: np.ndarray  # quarter beats in score seconds, one beyond the last note
+    notes: list[tuple[float, int]]  # (score second, GM pitch)
 
 
 @dataclass(frozen=True)
 class Quality:
-    beat_fit: float  # Anteil gespielter Noten-Beats, die gepaart und ±70 ms genau sitzen
-    coverage: float  # Anteil der Notenschläge mit Onset im Stem (±50 ms)
-    explained: float  # Anteil der deutlichen Onsets mit Notenschlag (±50 ms)
-    excluded_strong: float  # Anteil der deutlichen Onsets in ausgeklammerten Bereichen
+    beat_fit: float  # share of played note beats that are paired and sit within ±70 ms
+    coverage: float  # share of note hits with an onset in the stem (±50 ms)
+    explained: float  # share of clear onsets with a note hit (±50 ms)
+    excluded_strong: float  # share of clear onsets in excluded regions
     reasons: list[str] = field(default_factory=list)
 
     @property
@@ -70,14 +71,14 @@ class Quality:
 
 @dataclass(frozen=True)
 class Alignment:
-    mapped_times: np.ndarray  # Audiozeit je Note aus Score.notes, NaN = nicht abbildbar
-    excluded: list[tuple[float, float]]  # Audiozeit-Intervalle ohne Bewertung
+    mapped_times: np.ndarray  # audio time per note from Score.notes, NaN = cannot be mapped
+    excluded: list[tuple[float, float]]  # audio-time intervals without scoring
     quality: Quality
-    shift: float  # abgezogener systematischer Versatz (s)
+    shift: float  # subtracted systematic offset (s)
 
 
 def read_score(path: Path) -> Score:
-    """Drum-Noten (Kanal 10) und Viertel-Beats aus einem MIDI mit Tempokarte."""
+    """Drum notes (channel 10) and quarter beats from a MIDI with a tempo map."""
     mid = mido.MidiFile(path)
     tpb = mid.ticks_per_beat
     tick, sec, tempo = 0, 0.0, 500000
@@ -104,18 +105,18 @@ def _group(pitch: int) -> int:
     return 0 if pitch in KICKS else 2 if pitch in METALS else 1
 
 
-QUARTER_WINDOW = (0.7, 1.4)  # nächster Viertel-Beat: so viele Viertel nach dem letzten
-TEMPO_MEMORY = 8  # Beats für die laufende Tempo-Schätzung
+QUARTER_WINDOW = (0.7, 1.4)  # next quarter beat: this many quarters after the last one
+TEMPO_MEMORY = 8  # beats for the running tempo estimate
 
 
 def _normalize_beats(
     beats: np.ndarray, quarter: float, times: np.ndarray, flux: np.ndarray
 ) -> np.ndarray:
-    """Audio-Beats auf Partitur-Viertel nachführen. Beat This! wechselt je nach Abschnitt die
-    Ebene (Bat Country: Achtel in den schnellen Teilen, sonst Viertel). Ab jedem behaltenen Beat
-    wird der nächste etwa eine Viertel später gesucht; liegt keiner im Fenster, wird er
-    eingefügt. So bleibt die Phase über Abschnittsgrenzen stabil. Nur am Anfang entscheidet die
-    Kick/Snare-Energie, ob der erste oder zweite Beat auf der Viertel liegt."""
+    """Track audio beats to score quarters. Beat This! switches level depending on the section
+    (Bat Country: eighths in the fast parts, otherwise quarters). From each kept beat, the next
+    one is searched about a quarter later; if none lies in the window, one is inserted. This
+    keeps the phase stable across section boundaries. Only at the start does the kick/snare
+    energy decide whether the first or second beat lies on the quarter."""
     if len(beats) < 3:
         return beats
     env = flux[:, :2].sum(axis=1)
@@ -134,8 +135,8 @@ def _normalize_beats(
         q = float(np.median(np.diff(kept[-TEMPO_MEMORY:]))) if len(kept) > 2 else quarter
         gap = b - kept[-1]
         if gap < lo * q:
-            continue  # Zwischen-Beat (Achtel-Ebene)
-        while gap > hi * q:  # Beat fehlt (Halbe-Ebene oder Aussetzer): auffüllen
+            continue  # in-between beat (eighth level)
+        while gap > hi * q:  # beat missing (half level or dropout): fill in
             kept.append(kept[-1] + gap / max(2, round(gap / q)))
             gap = b - kept[-1]
         kept.append(float(b))
@@ -143,7 +144,7 @@ def _normalize_beats(
 
 
 def _score_features(notes: list[tuple[float, int]], beats: np.ndarray) -> np.ndarray:
-    """Slots sind auf die Rasterpunkte zentriert: ein Schlag knapp vor dem Beat zählt zum Beat."""
+    """Slots are centred on the grid points: a hit just before the beat counts for the beat."""
     feats = np.zeros((len(beats) - 1, 3 * SUB))
     for t, pitch in notes:
         i = int(np.searchsorted(beats, t, side="right")) - 1
@@ -156,8 +157,8 @@ def _score_features(notes: list[tuple[float, int]], beats: np.ndarray) -> np.nda
 
 
 def _audio_features(beats: np.ndarray, times: np.ndarray, flux: np.ndarray) -> np.ndarray:
-    """Je Band auf das 99,5. Perzentil normiert (seltene Schläge wie Kick auf 1 und 3 liegen
-    über dem 95. Perzentil); Slot-Fenster zentriert auf die Rasterpunkte wie bei den Noten."""
+    """Each band normalised to the 99.5th percentile (rare hits such as kick on 1 and 3 lie
+    above the 95th percentile); slot windows centred on the grid points as for the notes."""
     scale = np.percentile(flux, 99.5, axis=0)
     norm = np.clip(flux / np.where(scale > 0, scale, 1.0), 0.0, 1.0)
     feats = np.zeros((len(beats) - 1, 3 * SUB))
@@ -182,18 +183,18 @@ def _cost(fs: np.ndarray, fa: np.ndarray) -> np.ndarray:
 
 
 def _dtw(cost: np.ndarray) -> list[tuple[int, int]]:
-    """Gepaarte Beats (i Noten, j Audio) entlang des günstigsten Pfads.
+    """Paired beats (i notes, j audio) along the cheapest path.
 
-    Drei Zustände: M = beide Seiten gehen einen Beat weiter (Kosten aus dem Muster),
-    X = nur die Noten (Beat fehlt im Audio), Y = nur das Audio (Beat fehlt in den Noten).
-    Ränder: Beats vor dem ersten bzw. nach dem letzten Paar kosten EDGE_SKIP je Beat."""
+    Three states: M = both sides advance one beat (cost from the pattern),
+    X = only the notes (beat missing in the audio), Y = only the audio (beat missing in the notes).
+    Edges: beats before the first and after the last pair cost EDGE_SKIP per beat."""
     n, m = cost.shape
     inf = np.inf
     big_m, big_x, big_y = (np.full((n + 1, m + 1), inf) for _ in range(3))
     big_m[0, 0] = 0.0
     big_x[1:, 0] = np.arange(1, n + 1) * EDGE_SKIP
     big_y[0, 1:] = np.arange(1, m + 1) * EDGE_SKIP
-    ptr_m = np.zeros((n + 1, m + 1), dtype=np.int8)  # Vorgänger-Zustand 0=M, 1=X, 2=Y
+    ptr_m = np.zeros((n + 1, m + 1), dtype=np.int8)  # predecessor state 0=M, 1=X, 2=Y
     ptr_x = np.zeros((n + 1, m + 1), dtype=np.int8)
     ptr_y = np.zeros((n + 1, m + 1), dtype=np.int8)
     opened = GAP_OPEN + GAP_EXTEND
@@ -207,7 +208,7 @@ def _dtw(cost: np.ndarray) -> list[tuple[int, int]]:
         ptr_x[i, 1:] = up.argmin(axis=0)
         big_x[i, 1:] = up.min(axis=0)
         row_m, row_x, row_y = big_m[i], big_x[i], big_y[i]
-        for j in range(1, m + 1):  # Y hängt von Y[i, j-1] ab: sequentiell
+        for j in range(1, m + 1):  # Y depends on Y[i, j-1]: sequential
             options = (row_m[j - 1] + opened, row_x[j - 1] + opened, row_y[j - 1] + GAP_EXTEND)
             best = int(np.argmin(options))
             row_y[j], ptr_y[i, j] = options[best], (0, 1, 2)[best]
@@ -229,8 +230,8 @@ def _dtw(cost: np.ndarray) -> list[tuple[int, int]]:
 
 
 def _smoothed_runs(pairs: list[tuple[int, int]], sb: np.ndarray, ab: np.ndarray) -> dict:
-    """Gepaarte Beat-Grenzen je Abschnitt (beide Seiten lückenlos) lokal linear glätten.
-    Ergebnis: Partitur-Beat-Index → (Audiozeit, Abschnitts-Nr.)."""
+    """Smooth paired beat boundaries per section (both sides gapless) with a local linear fit.
+    Result: score beat index → (audio time, section no.)."""
     runs: list[list[tuple[int, int]]] = []
     for i, j in pairs:
         if runs and runs[-1][-1] == (i - 1, j - 1):
@@ -239,10 +240,10 @@ def _smoothed_runs(pairs: list[tuple[int, int]], sb: np.ndarray, ab: np.ndarray)
             runs.append([(i, j)])
     mapping = {}
     for r, run in enumerate(runs):
-        pts = [*run, (run[-1][0] + 1, run[-1][1] + 1)]  # Intervall i deckt Grenzen i und i+1
+        pts = [*run, (run[-1][0] + 1, run[-1][1] + 1)]  # interval i covers boundaries i and i+1
         xs, ys = np.array([sb[i] for i, _ in pts]), np.array([ab[j] for _, j in pts])
-        # Sprung im Beat-Abstand (kurze Pause, Fermate) teilt die Glättung, sonst verbiegt die
-        # Gerade beide Seiten des Sprungs.
+        # A jump in beat spacing (short pause, fermata) splits the smoothing, otherwise the
+        # line bends both sides of the jump.
         ratio = np.diff(ys) / np.diff(xs)
         jump = np.abs(ratio / np.median(ratio) - 1.0) > STEP_JUMP
         segment = np.concatenate([[0], np.cumsum(jump)])
@@ -284,8 +285,8 @@ def align(
     flux: np.ndarray,
     exclude: tuple[tuple[float, float], ...] = (),
 ) -> Alignment:
-    """Legt die Noten auf die Aufnahme und prüft die Güte (siehe Moduldoku).
-    `exclude`: zusätzliche, von Hand ausgeklammerte Audiozeit-Intervalle."""
+    """Lays the notes onto the recording and checks the quality (see module docs).
+    `exclude`: additional audio-time intervals excluded by hand."""
     quarter = float(np.median(np.diff(score.beats)))
     ab = _normalize_beats(np.asarray(audio_beats, dtype=float), quarter, flux_times, flux)
     sb = score.beats
@@ -335,8 +336,8 @@ def align(
         gap = []
     if len(gap) >= GAP_BEATS:
         excluded.append((float(ab[gap[0][1]]), float(ab[gap[-1][1] + 1])))
-    # Grenzen um die Onset-Toleranz nach innen: Noten auf dem ersten/letzten gepaarten Beat
-    # gehören zum bewerteten Teil, auch wenn der Versatzabzug sie ein paar ms verschiebt.
+    # Boundaries moved inward by the onset tolerance: notes on the first/last paired beat
+    # belong to the scored part even if the offset subtraction shifts them by a few ms.
     excluded = [
         (a + ONSET_TOL if a > 0 else a, b - ONSET_TOL)
         for a, b in _merge(excluded)
@@ -365,7 +366,7 @@ def align(
         "excluded_strong": _fraction(int(strong_in.sum()), len(strong_t)),
     }
     reasons = [
-        f"{name} = {value:.3f} (Grenze {'≤' if name == 'excluded_strong' else '≥'} "
+        f"{name} = {value:.3f} (limit {'≤' if name == 'excluded_strong' else '≥'} "
         f"{THRESHOLDS[name]})"
         for name, value in quality_vals.items()
         if (value > THRESHOLDS[name] if name == "excluded_strong" else value < THRESHOLDS[name])

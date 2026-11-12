@@ -1,4 +1,4 @@
-"""Tests für `stickler doctor`: Systemprüfung ohne echte GPU (Pfade und Befehle gemockt)."""
+"""Tests for `stickler doctor`: system check without a real GPU (paths and commands mocked)."""
 
 from pathlib import Path
 
@@ -47,7 +47,7 @@ def test_adapter_checks(tmp_path):
     (tmp_path / "transcribers" / "c" / "pyproject.toml").write_text("", encoding="utf-8")
     (tmp_path / "transcribers" / "c" / "setup.py").write_text("", encoding="utf-8")
     checks = by_name(doctor.check_adapters(tmp_path))
-    assert checks["adapter a"].ok and "ROCm: nicht gebaut" in checks["adapter a"].detail
+    assert checks["adapter a"].ok and "ROCm: not built" in checks["adapter a"].detail
     assert checks["adapter b"].ok and "ROCm: –" in checks["adapter b"].detail
     assert not checks["adapter c"].ok and "setup" in checks["adapter c"].detail
 
@@ -72,4 +72,4 @@ def test_musescore_found_via_path_or_flatpak(monkeypatch):
 
 
 def test_datasets(tmp_path):
-    assert not by_name(doctor.check_datasets(tmp_path))["datensatz mdb"].ok
+    assert not by_name(doctor.check_datasets(tmp_path))["dataset mdb"].ok

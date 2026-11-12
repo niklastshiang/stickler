@@ -1,4 +1,4 @@
-"""Die CLI ist eine dünne Schicht über stickler.api (Success Criterion 9)."""
+"""The CLI is a thin layer over stickler.api (success criterion 9)."""
 
 import ast
 from pathlib import Path
@@ -60,7 +60,7 @@ def test_run_and_eval_delegate_to_api(monkeypatch, tmp_path):
     )
     result = CliRunner().invoke(cli.app, ["run", "--device", "cpu"])
     assert result.exit_code == 0, result.output
-    assert "1 Kombinationen, 1 Fehler" in result.output
+    assert "1 combinations, 1 errors" in result.output
     assert "kaputt" in result.output
 
     summary = [
@@ -96,11 +96,11 @@ def test_align_prints_quality_and_reasons(monkeypatch, tmp_path):
     q = {"beat_fit": 1.0, "coverage": 0.6, "explained": 0.95, "excluded_strong": 0.05}
     reports = [
         api.AlignReport("gut", "Gut", True, {**q, "coverage": 0.99}, [], 3.0, tmp_path / "c.wav"),
-        api.AlignReport("schlecht", "S", False, q, ["coverage = 0.600 (Grenze ≥ 0.85)"], 0, None),
-        api.AlignReport("ohne", "O", False, {}, [], 0.0, None, "Partitur fehlt"),
+        api.AlignReport("schlecht", "S", False, q, ["coverage = 0.600 (limit ≥ 0.85)"], 0, None),
+        api.AlignReport("ohne", "O", False, {}, [], 0.0, None, "Score missing"),
     ]
     monkeypatch.setattr(api, "align_songs", lambda song=None: reports)
     result = CliRunner().invoke(cli.app, ["align"])
     assert result.exit_code == 0
     assert "✓ gut" in result.output and "✗ schlecht" in result.output
-    assert "Grenze ≥ 0.85" in result.output and "Partitur fehlt" in result.output
+    assert "limit ≥ 0.85" in result.output and "Score missing" in result.output

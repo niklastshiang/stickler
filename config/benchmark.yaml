@@ -1,17 +1,17 @@
-# Welche Kombinationen `stickler run` / `stickler eval` rechnen.
-# Separatoren: none (Original-Mix), oracle (isolierter Drum-Stem des Datensatzes, Obergrenze)
-#              oder ein Adapter aus adapters/separators/
-# Transkriber: Adapter aus adapters/transcribers/. Wer nur Drum-Stems verträgt
-#              ([tool.stickler] input = "stem"), wird nicht mit `none` kombiniert.
+# Which combinations `stickler run` / `stickler eval` compute.
+# Separators: none (original mix), oracle (the dataset's isolated drum stem, upper bound)
+#             or an adapter from adapters/separators/
+# Transcribers: adapters from adapters/transcribers/. Those that only accept drum stems
+#               ([tool.stickler] input = "stem") are not combined with `none`.
 datasets: [mdb]
 separators: [none, oracle, demucs, roformer]
 transcribers: [adt_str, adtof, muscriptor_s, muscriptor_m]
 device: auto          # auto | cpu | gpu
-schemes: ["5", "3"]   # aus config/classes.yaml
-# Zeitlimit je Adapter-Aufruf in Sekunden (Überschreitung = Fehler "Zeitlimit").
-# Transkriber relativ zur Songlänge: MuScriptor medium braucht ~7× Echtzeit auf dem Mix,
-# ADT_STR auf Jazz-Drums ~17× (28 min für 103 s) – das soll abgebrochen werden.
-# Separatoren 30 min: RoFormer braucht auf der CPU ~7× Echtzeit.
+schemes: ["5", "3"]   # from config/classes.yaml
+# Time limit per adapter call in seconds (exceeding it = "time limit" error).
+# Transcribers relative to the song length: MuScriptor medium needs ~7× real time on the mix,
+# ADT_STR on jazz drums ~17× (28 min for 103 s) – that should be aborted.
+# Separators 30 min: RoFormer needs ~7× real time on the CPU.
 timeout:
   separators: 1800
-  transcribers: {factor: 10, min: 120}  # 10 × Songlänge, mindestens 120 s
+  transcribers: {factor: 10, min: 120}  # 10 × song length, at least 120 s

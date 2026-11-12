@@ -1,4 +1,4 @@
-"""Tests für die Benchmark-Matrix: Ausführung, Cache, Fehler, Bewertung."""
+"""Tests for the benchmark matrix: execution, cache, errors, scoring."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -79,29 +79,27 @@ def test_adapter_separator_then_transcriber(setup):
 
 def test_second_run_hits_cache(setup, monkeypatch):
     run(setup, separators=["copysep"])
-    monkeypatch.setattr(
-        adapters, "run_adapter", lambda *a, **k: pytest.fail("Cache-Treffer erwartet")
-    )
+    monkeypatch.setattr(adapters, "run_adapter", lambda *a, **k: pytest.fail("cache hit expected"))
     (rec,) = run(setup, separators=["copysep"])
     assert rec.ok
 
 
 def test_changed_input_invalidates_cache(setup):
     first = run(setup)[0].midi
-    setup["tracks"]["fake"][0].mix.write_bytes(b"neuer mix")
+    setup["tracks"]["fake"][0].mix.write_bytes(b"new mix")
     assert run(setup)[0].midi != first
 
 
 def test_execute_false_reports_missing(setup):
     (rec,) = run(setup, execute=False)
     assert not rec.ok
-    assert "nicht berechnet" in rec.error
+    assert "not computed" in rec.error
 
 
 def test_failing_transcriber_is_recorded_and_retried(setup):
     (rec,) = run(setup, transcribers=["broken"])
     assert not rec.ok
-    assert "Modell explodiert" in rec.error
+    assert "Model exploded" in rec.error
 
 
 def test_unknown_adapter_raises(setup):
@@ -120,7 +118,7 @@ def test_progress_and_cancel(setup):
         cancel.set()
 
     recs = run(setup, separators=["none", "oracle"], progress=progress, cancel=cancel)
-    assert len(recs) == 1  # nach dem ersten Job abgebrochen
+    assert len(recs) == 1  # aborted after the first job
     assert seen == [(1, 2, "fake/song: none → dummy")]
 
 
@@ -224,7 +222,7 @@ def test_excluded_intervals_are_not_scored(setup):
     mix = setup["tracks"]["fake"][0].mix
     track = GapTrack("song", mix, None, notes=((0.5, 36), (2.5, 38)))
     rec = runner.Record("fake", "song", "none", "dummy", mix, None, None, None, None)
-    est = [(0.5, 36), (2.2, 42), (2.6, 42)]  # beide Hi-Hats liegen in der Lücke
+    est = [(0.5, 36), (2.2, 42), (2.6, 42)]  # both hi-hats lie in the gap
 
     rows = runner.score_records([rec], {"fake": [track]}, SCHEMES, read_notes=lambda _: est)
     micro = next(r for r in rows if r["scheme"] == "5" and r["class"] == "micro")

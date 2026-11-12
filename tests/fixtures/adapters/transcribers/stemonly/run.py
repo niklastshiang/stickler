@@ -1,4 +1,4 @@
-"""Test-Transkriber, der nur Drum-Stems verträgt (input = "stem")."""
+"""Test transcriber that only accepts drum stems (input = "stem")."""
 
 from pathlib import Path
 

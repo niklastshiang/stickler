@@ -1,4 +1,4 @@
-"""Tests für die Onset-Bewertung (Success Criterion 1)."""
+"""Tests for the onset scoring (success criterion 1)."""
 
 import numpy as np
 import pytest
@@ -49,7 +49,7 @@ def test_macro_averages_classes_present_in_reference():
     result = score(ref, est)
     assert result.per_class["KD"].f1 == 1.0
     assert result.per_class["SD"].f1 == 0.0
-    # TT hat keine Referenz → nicht im Makro-Mittel, aber als Fehlalarm im Mikro-Wert
+    # TT has no reference → not in the macro mean, but counted as a false alarm in the micro value
     assert result.macro_f1 == pytest.approx(0.5)
     assert result.micro.fp == 2
 

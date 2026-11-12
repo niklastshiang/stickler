@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Spiegelt die "Checked by"-Spalte in CONSTRAINTS.md. Bei Abweichung gilt CONSTRAINTS.md.
-#   fast: nach jeder Änderung (< 5 s)   task: Aufgabenende / pre-commit (< 90 s)
+# Mirrors the "Checked by" column in CONSTRAINTS.md. On any deviation, CONSTRAINTS.md wins.
+#   fast: after every change (< 5 s)   task: end of task / pre-commit (< 90 s)
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 stage="${1:-task}"

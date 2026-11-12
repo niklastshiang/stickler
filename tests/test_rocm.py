@@ -1,4 +1,4 @@
-"""Tests für die ROCm-Variante der Adapter-Umgebungen (ohne echte GPU, Subprozesse gemockt)."""
+"""Tests for the ROCm variant of the adapter environments (no real GPU, subprocesses mocked)."""
 
 import subprocess
 from pathlib import Path
@@ -76,7 +76,7 @@ def test_run_adapter_uses_rocm_python(spec, monkeypatch, tmp_path):
 
     def fake_run_group(cmd, timeout):
         seen.append(cmd)
-        return subprocess.CompletedProcess(cmd, 1, "", "absichtlich")
+        return subprocess.CompletedProcess(cmd, 1, "", "deliberate")
 
     monkeypatch.setattr(adapters, "_run_group", fake_run_group)
     adapters.run_adapter(spec, tmp_path / "a.wav", tmp_path / "out", device="auto")

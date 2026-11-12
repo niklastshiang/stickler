@@ -1,10 +1,10 @@
-"""Gemeinsame Helfer für Stickler-Adapter.
+"""Shared helpers for Stickler adapters.
 
-Jeder Adapter ruft `run(fn, stage=..., adapter=..., version=...)` auf. Das setzt den Vertrag um:
+Every adapter calls `run(fn, stage=..., adapter=..., version=...)`. This implements the contract:
     python run.py --in <audio> --out <dir> [--device auto|cpu|gpu]
-`fn(audio, out_dir, device)` schreibt die Stufen-Ausgabe (drums.wav / drums.mid / beats.json),
-`run` ergänzt meta.json (Adapter, Version, Gerät, Laufzeit, Peak-RAM) bzw. error.log.
-Bewusst ohne Abhängigkeiten, damit es in jede Adapter-Umgebung passt.
+`fn(audio, out_dir, device)` writes the stage output (drums.wav / drums.mid / beats.json),
+`run` adds meta.json (adapter, version, device, runtime, peak RAM) or error.log.
+Deliberately free of dependencies so that it fits into every adapter environment.
 """
 
 from __future__ import annotations
@@ -27,22 +27,22 @@ def _gpu_available() -> bool:
         import torch
     except ImportError:
         return False
-    # ROCm-Builds von PyTorch melden AMD-GPUs ebenfalls über torch.cuda.
+    # ROCm builds of PyTorch also report AMD GPUs via torch.cuda.
     return bool(torch.cuda.is_available())
 
 
 def choose_device(requested: str) -> str:
-    """'auto' → GPU, falls vorhanden, sonst CPU. 'gpu' ohne GPU ist ein Fehler."""
+    """'auto' → GPU if available, otherwise CPU. 'gpu' without a GPU is an error."""
     if requested == "cpu":
         return "cpu"
     available = _gpu_available()
     if requested == "gpu" and not available:
-        raise RuntimeError("GPU angefordert, aber torch sieht keine GPU (ROCm-Umgebung gebaut?)")
+        raise RuntimeError("GPU requested, but torch sees no GPU (ROCm environment built?)")
     return "gpu" if available else "cpu"
 
 
 def torch_device(device: str) -> str:
-    """Stickler-Gerät → torch-Gerätename."""
+    """Stickler device → torch device name."""
     return "cuda" if device == "gpu" else "cpu"
 
 
@@ -56,22 +56,22 @@ def _vlq(value: int) -> bytes:
 
 
 def write_drum_midi(path: Path, notes: Iterable[tuple[float, int, int]]) -> None:
-    """Schreibt (Zeit s, GM-Pitch, Velocity) als SMF Typ 0 auf Kanal 10, 120 BPM, 480 PPQ."""
-    ticks_per_second = 960  # 480 PPQ bei 120 BPM
-    duration = 10  # Ticks (~10 ms); Schlagzeug braucht keine echte Notenlänge
-    events: list[tuple[int, int, bytes]] = []  # (Tick, Reihenfolge, Bytes): note-off vor note-on
+    """Writes (time s, GM pitch, velocity) as SMF type 0 on channel 10, 120 BPM, 480 PPQ."""
+    ticks_per_second = 960  # 480 PPQ at 120 BPM
+    duration = 10  # ticks (~10 ms); drums need no real note length
+    events: list[tuple[int, int, bytes]] = []  # (tick, order, bytes): note-off before note-on
     for t, pitch, velocity in notes:
         tick = round(t * ticks_per_second)
         vel = max(1, min(127, int(velocity)))
         events.append((tick, 1, bytes([0x99, pitch, vel])))
         events.append((tick + duration, 0, bytes([0x89, pitch, 0])))
     events.sort()
-    track = bytearray(b"\x00\xff\x51\x03\x07\xa1\x20")  # Tempo 500000 µs/Beat = 120 BPM
+    track = bytearray(b"\x00\xff\x51\x03\x07\xa1\x20")  # tempo 500000 µs/beat = 120 BPM
     last = 0
     for tick, _, data in events:
         track += _vlq(tick - last) + data
         last = tick
-    track += b"\x00\xff\x2f\x00"  # Track-Ende
+    track += b"\x00\xff\x2f\x00"  # end of track
     header = b"MThd" + struct.pack(">IHHH", 6, 0, 1, 480)
     path.write_bytes(header + b"MTrk" + struct.pack(">I", len(track)) + bytes(track))
 
@@ -83,7 +83,7 @@ def _peak_rss_mb() -> float:
 
 
 def run(fn: Callable[[Path, Path, str], None], *, stage: str, adapter: str, version: str) -> None:
-    parser = argparse.ArgumentParser(description=f"Stickler-Adapter {adapter} ({stage})")
+    parser = argparse.ArgumentParser(description=f"Stickler adapter {adapter} ({stage})")
     parser.add_argument("--in", dest="audio", type=Path, required=True)
     parser.add_argument("--out", dest="out_dir", type=Path, required=True)
     parser.add_argument("--device", choices=DEVICES, default="auto")
