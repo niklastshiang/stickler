@@ -2,7 +2,7 @@
 
 import pytest
 
-from stickler import api
+from stickler import api, runner
 from stickler.datasets import mdb
 
 
@@ -134,3 +134,22 @@ def test_config_timeout_per_stage(tmp_path):
         cfg.read_text() + "timeout:\n  separators: 1800\n  transcribers: 300\n", encoding="utf-8"
     )
     assert api.load_benchmark_config(cfg).timeout == {"separators": 1800.0, "transcribers": 300.0}
+
+
+def test_config_timeout_relative(tmp_path):
+    cfg = _bench(tmp_path)
+    cfg.write_text(
+        cfg.read_text() + "timeout:\n  separators: 1800\n  transcribers: {factor: 10, min: 120}\n",
+        encoding="utf-8",
+    )
+    assert api.load_benchmark_config(cfg).timeout == {
+        "separators": 1800.0,
+        "transcribers": runner.RelativeLimit(factor=10.0, minimum=120.0),
+    }
+
+
+def test_config_timeout_relative_needs_factor(tmp_path):
+    cfg = _bench(tmp_path)
+    cfg.write_text(cfg.read_text() + "timeout:\n  transcribers: {min: 120}\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="factor"):
+        api.load_benchmark_config(cfg)

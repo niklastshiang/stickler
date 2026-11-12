@@ -33,11 +33,20 @@ class BenchmarkConfig:
     timeout: runner.Timeout = None  # Sekunden je Adapter-Aufruf, gesamt oder je Stufe
 
 
+def _parse_limit(stage: str, raw: object) -> float | runner.RelativeLimit:
+    """`300` = feste Sekunden, `{factor: 10, min: 120}` = 10 × Audiodauer, mindestens 120 s."""
+    if not isinstance(raw, dict):
+        return float(raw)
+    if "factor" not in raw:
+        raise ValueError(f"timeout.{stage}: relatives Zeitlimit braucht 'factor'")
+    return runner.RelativeLimit(factor=float(raw["factor"]), minimum=float(raw.get("min", 0)))
+
+
 def _parse_timeout(raw: object) -> runner.Timeout:
     if not raw:
         return None
     if isinstance(raw, dict):
-        return {str(stage): float(seconds) for stage, seconds in raw.items()}
+        return {str(stage): _parse_limit(str(stage), limit) for stage, limit in raw.items()}
     return float(raw)
 
 

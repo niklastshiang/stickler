@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Protocol
 
 from stickler import adapters
+from stickler.audio import duration as audio_duration
 from stickler.classes import Scheme, onsets_from_notes
 from stickler.evaluate import PRF, score
 from stickler.midi import read_drum_notes
@@ -24,12 +25,30 @@ from stickler.midi import read_drum_notes
 log = logging.getLogger(__name__)
 
 BUILTIN_SEPARATORS = ("none", "oracle")
-# Zeitlimit in Sekunden: eine Zahl für alle Stufen oder je Stufe {"separators": …, ...}
-Timeout = float | dict[str, float] | None
 
 
-def _stage_timeout(timeout: Timeout, stage: str) -> float | None:
-    return timeout.get(stage) if isinstance(timeout, dict) else timeout
+@dataclass(frozen=True)
+class RelativeLimit:
+    """Zeitlimit relativ zur Länge der Eingabe: factor × Dauer, mindestens `minimum` Sekunden.
+    Fair für langsame Modelle auf langen Songs, bremst trotzdem Ausreißer."""
+
+    factor: float
+    minimum: float = 0.0
+
+    def seconds(self, duration: float) -> float:
+        return max(self.minimum, self.factor * duration)
+
+
+# Zeitlimit: eine Zahl (Sekunden) für alle Stufen oder je Stufe {"separators": …, ...},
+# je Stufe auch relativ zur Audiodauer
+Timeout = float | dict[str, float | RelativeLimit] | None
+
+
+def _stage_timeout(timeout: Timeout, stage: str, audio_in: Path) -> float | None:
+    limit = timeout.get(stage) if isinstance(timeout, dict) else timeout
+    if isinstance(limit, RelativeLimit):
+        return limit.seconds(audio_duration(audio_in))
+    return limit
 
 
 Progress = Callable[[int, int, str], None]
@@ -99,7 +118,10 @@ def _cached_or_run(
         return adapters.AdapterResult(True, output, json.loads(meta.read_text()), None)
     if not execute:
         return adapters.AdapterResult(False, None, None, f"{spec.id}: nicht berechnet")
-    limit = _stage_timeout(timeout, spec.stage)
+    try:
+        limit = _stage_timeout(timeout, spec.stage, audio)
+    except RuntimeError as exc:
+        return adapters.AdapterResult(False, None, None, f"{spec.id}: {exc}")
     return adapters.run_adapter(spec, audio, out_dir, device=device, timeout=limit)
 
 

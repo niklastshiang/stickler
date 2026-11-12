@@ -186,3 +186,29 @@ def test_timeout_per_stage(setup, monkeypatch):
     monkeypatch.setattr(adapters, "run_adapter", fake_run_adapter)
     run(setup, separators=["copysep"], timeout={"separators": 1800.0, "transcribers": 300.0})
     assert seen == {"separators": 1800.0, "transcribers": 300.0}
+
+
+def test_relative_limit_scales_with_duration():
+    limit = runner.RelativeLimit(factor=10.0, minimum=120.0)
+    assert limit.seconds(5.0) == 120.0
+    assert limit.seconds(30.0) == 300.0
+
+
+def test_relative_timeout_uses_input_duration(setup, monkeypatch):
+    from test_audio import write_wav
+
+    write_wav(setup["tracks"]["fake"][0].mix, 2.0)
+    seen = {}
+
+    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None):
+        seen["timeout"] = timeout
+        return adapters.AdapterResult(False, None, None, "x")
+
+    monkeypatch.setattr(adapters, "run_adapter", fake_run_adapter)
+    run(setup, timeout={"transcribers": runner.RelativeLimit(factor=100.0, minimum=1.0)})
+    assert seen["timeout"] == pytest.approx(200.0, abs=1.0)
+
+
+def test_relative_timeout_on_unreadable_audio_is_record_error(setup):
+    (rec,) = run(setup, timeout={"transcribers": runner.RelativeLimit(factor=10.0)})
+    assert not rec.ok and "ffprobe" in rec.error
