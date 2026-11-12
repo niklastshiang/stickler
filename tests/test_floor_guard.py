@@ -91,6 +91,15 @@ def test_constraints_threshold_tightened_is_silent():
     assert rules(diff_for("CONSTRAINTS.md", [new], [old])) == set()
 
 
+@pytest.mark.parametrize(
+    ("before", "after", "found"), [("80", "95", set()), ("80", "70", {"threshold-loosened"})]
+)
+def test_fail_under_is_a_minimum(before, after, found):
+    row = "| Coverage | >= {0}% | `pytest --cov --cov-fail-under={0}` | task end |"
+    diff = diff_for("CONSTRAINTS.md", [row.format(after)], [row.format(before)])
+    assert rules(diff) == found
+
+
 def test_constraints_rule_removed_is_flagged():
     assert "rule-removed" in rules(
         diff_for("CONSTRAINTS.md", [], ["| Lint | Zero errors | ruff | edit |"])

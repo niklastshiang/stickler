@@ -53,7 +53,8 @@ BINARIES = re.compile(r"\.(wav|mp3|flac|ogg|ckpt|pth|pt|safetensors|onnx)$", re.
 EXCEPTION_ROW = re.compile(r"^\| *(W|E)\d+ *\|")
 
 MIN_BEFORE = re.compile(
-    r"(>=|>|≥|at least|minimum|\bmin\b|no less than|not fall|not drop|mindestens)\s*$"
+    r"(>=|>|≥|at least|minimum|\bmin\b|no less than|not fall|not drop|mindestens"
+    r"|fail[-_]under=?)\s*$"
 )
 MAX_BEFORE = re.compile(
     r"(<=|<|≤|at most|maximum|\bmax\b|no more than|under|below|not grow|not exceed|höchstens)\s*$"
