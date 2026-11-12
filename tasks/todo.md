@@ -174,3 +174,10 @@ Noch nicht geplant, nur festgehalten. Vor dem Start jeweils SPEC.md ergänzen un
 - [ ] **Alles auf Englisch**
   - Wunsch: Code-Kommentare, Docstrings, CLI-Ausgaben, README, SPEC, ADRs und Aufgaben auf Englisch.
   - Dabei ändert sich auch die Regel in CLAUDE.md (bisher: Kommentare und Docstrings auf Deutsch).
+
+- [ ] **App-Icon im GNOME-Stil**
+  - Wunsch: Ein Icon im Stil der GNOME-App-Icons von Daudix (https://daudix.one/design/).
+  - Umsetzung: Nach den GNOME HIG als SVG anlegen, mit symbolischer Variante.
+
+- [ ] **Ultrareview, sobald die Anwendung steht**
+  - Startet der User selbst mit `/code-review ultra`. Ich kann es nicht auslösen.

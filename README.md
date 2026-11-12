@@ -211,7 +211,8 @@ scripts/check.sh task
 - [ ] HTML-Report mit Ranking, Klassen, Laufzeit und Speicher
 - [ ] ENST-Drums als dritter Datensatz
 - [ ] Noten aus der Gewinner-Pipeline: Quantisierung, MusicXML, `stickler notate`
-- [ ] Anwendung mit Oberfläche in GTK 4 und libadwaita
+- [ ] Anwendung mit Oberfläche in GTK 4 und libadwaita, App-Icon im GNOME-Stil
+- [ ] Ultrareview der fertigen Anwendung
 - [ ] Release-Pipeline: Flatpak und AppImage bei jedem Release
 - [ ] Alles auf Englisch: Code, Ausgaben und Dokumentation
 

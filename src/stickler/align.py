@@ -1,7 +1,8 @@
 """Zeitabgleich: Noten eines eigenen Songs (MIDI, Partiturzeit) auf die Aufnahme legen.
 
 Ablauf:
-1. Partitur-Beats aus der Tempokarte des MIDI, Audio-Beats von Beat This!.
+1. Partitur-Beats (Viertel) aus der Tempokarte des MIDI, Audio-Beats von Beat This!,
+   abschnittsweise auf Viertel gebracht (Beat This! wechselt mitunter auf Achtel oder Halbe).
 2. Je Beat ein Rhythmusmuster (3 Gruppen × 4 Sechzehntel): aus den Noten bzw. aus dem
    spektralen Fluss des Drum-Stems (Kick tief, Snare/Toms mittel, Becken hoch).
 3. DTW über die Beat-Folgen: diagonal = gepaart, sonst fehlt der Beat auf einer Seite.
@@ -33,6 +34,7 @@ GAP_OPEN = 1.5
 GAP_EXTEND = 0.3
 EDGE_SKIP = 0.5  # je Beat vor dem ersten/nach dem letzten Paar; teurer als eine Verlängerung
 SMOOTH = 4.0  # s links und rechts (Partiturzeit) für die lokale Geradenanpassung
+STEP_JUMP = 0.25  # Beat-Abstand weicht so stark vom Abschnitt ab → Glättung teilen
 ACTIVE = 0.3  # Audio-Beat gilt als gespielt, wenn ein Slot diesen Anteil erreicht
 # Leerer Noten-Beat gegen gespieltes Audio: billiger als zwei Lücken, damit Notenlücken
 # ("Drum Loop") diagonal gepaart bleiben und als Lücke ausgeklammert werden.
@@ -72,7 +74,6 @@ class Alignment:
     excluded: list[tuple[float, float]]  # Audiozeit-Intervalle ohne Bewertung
     quality: Quality
     shift: float  # abgezogener systematischer Versatz (s)
-    beat_factor: int  # Partitur-Beat = Viertel × 2**beat_factor
 
 
 def read_score(path: Path) -> Score:
@@ -103,16 +104,42 @@ def _group(pitch: int) -> int:
     return 0 if pitch in KICKS else 2 if pitch in METALS else 1
 
 
-def _beat_grid(score: Score, audio_beats: np.ndarray) -> tuple[np.ndarray, int]:
-    """Partitur-Beats auf die Ebene bringen, die Beat This! hört (halbes/doppeltes Tempo)."""
-    ratio = np.median(np.diff(audio_beats)) / np.median(np.diff(score.beats))
-    k = int(np.clip(np.round(np.log2(ratio)), -1, 1))
-    if k == 1:
-        return score.beats[::2], k
-    if k == -1:
-        mids = (score.beats[:-1] + score.beats[1:]) / 2
-        return np.sort(np.concatenate([score.beats, mids])), k
-    return score.beats, k
+QUARTER_WINDOW = (0.7, 1.4)  # nächster Viertel-Beat: so viele Viertel nach dem letzten
+TEMPO_MEMORY = 8  # Beats für die laufende Tempo-Schätzung
+
+
+def _normalize_beats(
+    beats: np.ndarray, quarter: float, times: np.ndarray, flux: np.ndarray
+) -> np.ndarray:
+    """Audio-Beats auf Partitur-Viertel nachführen. Beat This! wechselt je nach Abschnitt die
+    Ebene (Bat Country: Achtel in den schnellen Teilen, sonst Viertel). Ab jedem behaltenen Beat
+    wird der nächste etwa eine Viertel später gesucht; liegt keiner im Fenster, wird er
+    eingefügt. So bleibt die Phase über Abschnittsgrenzen stabil. Nur am Anfang entscheidet die
+    Kick/Snare-Energie, ob der erste oder zweite Beat auf der Viertel liegt."""
+    if len(beats) < 3:
+        return beats
+    env = flux[:, :2].sum(axis=1)
+
+    def energy(at: np.ndarray) -> float:
+        idx = np.clip(np.searchsorted(times, at), 0, len(env) - 1)
+        return float(np.mean([env[max(0, i - 3) : i + 4].max() for i in idx])) if len(idx) else 0.0
+
+    start = 0
+    if (beats[1] - beats[0]) / quarter < QUARTER_WINDOW[0]:
+        head = beats[:16]
+        start = int(np.argmax([energy(head[p::2]) for p in (0, 1)]))
+    kept = [float(beats[start])]
+    lo, hi = QUARTER_WINDOW
+    for b in beats[start + 1 :]:
+        q = float(np.median(np.diff(kept[-TEMPO_MEMORY:]))) if len(kept) > 2 else quarter
+        gap = b - kept[-1]
+        if gap < lo * q:
+            continue  # Zwischen-Beat (Achtel-Ebene)
+        while gap > hi * q:  # Beat fehlt (Halbe-Ebene oder Aussetzer): auffüllen
+            kept.append(kept[-1] + gap / max(2, round(gap / q)))
+            gap = b - kept[-1]
+        kept.append(float(b))
+    return np.array(kept)
 
 
 def _score_features(notes: list[tuple[float, int]], beats: np.ndarray) -> np.ndarray:
@@ -214,8 +241,13 @@ def _smoothed_runs(pairs: list[tuple[int, int]], sb: np.ndarray, ab: np.ndarray)
     for r, run in enumerate(runs):
         pts = [*run, (run[-1][0] + 1, run[-1][1] + 1)]  # Intervall i deckt Grenzen i und i+1
         xs, ys = np.array([sb[i] for i, _ in pts]), np.array([ab[j] for _, j in pts])
+        # Sprung im Beat-Abstand (kurze Pause, Fermate) teilt die Glättung, sonst verbiegt die
+        # Gerade beide Seiten des Sprungs.
+        ratio = np.diff(ys) / np.diff(xs)
+        jump = np.abs(ratio / np.median(ratio) - 1.0) > STEP_JUMP
+        segment = np.concatenate([[0], np.cumsum(jump)])
         for k, (i, _) in enumerate(pts):
-            near = np.abs(xs - xs[k]) <= SMOOTH
+            near = (np.abs(xs - xs[k]) <= SMOOTH) & (segment == segment[k])
             if near.sum() >= 2:
                 slope, icpt = np.polyfit(xs[near], ys[near], 1)
                 mapping[i] = (slope * xs[k] + icpt, r)
@@ -254,8 +286,9 @@ def align(
 ) -> Alignment:
     """Legt die Noten auf die Aufnahme und prüft die Güte (siehe Moduldoku).
     `exclude`: zusätzliche, von Hand ausgeklammerte Audiozeit-Intervalle."""
-    sb, factor = _beat_grid(score, np.asarray(audio_beats))
-    ab = np.asarray(audio_beats)
+    quarter = float(np.median(np.diff(score.beats)))
+    ab = _normalize_beats(np.asarray(audio_beats, dtype=float), quarter, flux_times, flux)
+    sb = score.beats
     fs, fa = _score_features(score.notes, sb), _audio_features(ab, flux_times, flux)
     pairs = _dtw(_cost(fs, fa))
     mapping = _smoothed_runs(pairs, sb, ab)
@@ -342,5 +375,4 @@ def align(
         excluded=excluded,
         quality=Quality(**quality_vals, reasons=reasons),
         shift=shift,
-        beat_factor=factor,
     )

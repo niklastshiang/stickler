@@ -135,3 +135,61 @@ def test_wrong_reference_fails_quality():
     result = align.align(score, beats_for(score.beats, warp), ft, flux)
     assert not result.quality.passed
     assert result.quality.reasons
+
+
+def test_beat_level_switching_between_sections():
+    """Beat This! hört abschnittsweise Achtel statt Viertel (wie bei Bat Country)."""
+    notes = groove(32)
+    score = make_score(notes)
+    ft, flux = flux_for([(warp(t), p) for t, p in notes], warp(score.beats[-1]) + 2, noise=0.05)
+    quarters = score.beats
+    eighths = np.sort(np.concatenate([quarters, (quarters[:-1] + quarters[1:]) / 2]))
+    mixed = np.concatenate(
+        [
+            quarters[quarters < 16],
+            eighths[(eighths >= 16) & (eighths < 40)],
+            quarters[quarters >= 40],
+        ]
+    )
+    result = align.align(score, beats_for(mixed, warp), ft, flux)
+    errors = [abs(a - warp(t)) for (t, _), a in zip(notes, result.mapped_times, strict=True)]
+    assert max(errors) < 0.02
+    assert result.quality.beat_fit > 0.95
+
+
+def test_half_time_section_gets_midpoints():
+    notes = groove(32)
+    score = make_score(notes)
+    ft, flux = flux_for([(warp(t), p) for t, p in notes], warp(score.beats[-1]) + 2, noise=0.05)
+    q = score.beats
+    mixed = np.concatenate([q[q < 20], q[(q >= 20) & (q < 44)][::2], q[q >= 44]])
+    result = align.align(score, beats_for(mixed, warp), ft, flux)
+    errors = [abs(a - warp(t)) for (t, _), a in zip(notes, result.mapped_times, strict=True)]
+    assert max(errors) < 0.02
+
+
+def test_normalize_beats_fills_gaps_without_duplicates():
+    """Lücke von 1,45 Vierteln: wird geteilt, kein Beat doppelt."""
+    beats = np.array([0.0, 0.5, 1.0, 1.725, 2.225, 2.725])
+    flux = np.zeros((300, 3))
+    out = align._normalize_beats(beats, 0.5, np.arange(300) * 0.01, flux)
+    assert np.all(np.diff(out) > 0.3)
+
+
+def test_pause_in_recording_does_not_bend_neighbours():
+    """Die Aufnahme hält nach Takt 12 kurz an (0,25 s Break), die Noten laufen durch."""
+    notes = groove(24)
+    score = make_score(notes)
+    pause_at = 24.0
+
+    def f(t):
+        return warp(t) + (0.25 if t >= pause_at else 0.0)
+
+    ft, flux = flux_for([(f(t), p) for t, p in notes], f(score.beats[-1]) + 2, noise=0.05)
+    result = align.align(score, beats_for(score.beats, f), ft, flux)
+    errors = [
+        abs(a - f(t))
+        for (t, _), a in zip(notes, result.mapped_times, strict=True)
+        if not pause_at - 0.5 < t < pause_at  # im Beat mit der Pause ist die Lage offen
+    ]
+    assert max(errors) < 0.02
