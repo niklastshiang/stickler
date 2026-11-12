@@ -135,18 +135,18 @@ def test_score_records_rows(setup):
     assert broken and all(r["error"] for r in broken)
 
 
-def test_rocm_env_changes_cache_key(setup):
+def test_cache_key_ignores_device_and_environment(setup):
+    """Since 2026-11-12 results from a GPU (ROCm or rented CUDA) count as cache hits on the
+    CPU and vice versa; the device is recorded in meta.json instead."""
     spec = setup["registry"]["dummy"]
     audio = setup["tracks"]["fake"][0].mix
-    without_env = runner.cache_dir_for(setup["cache"], spec, audio, "gpu")
+    without_env = runner.cache_dir_for(setup["cache"], spec, audio)
     py = spec.path / adapters.ROCM_ENV / "bin" / "python"
     py.parent.mkdir(parents=True)
     try:
         py.write_text("", encoding="utf-8")
-        assert runner.cache_dir_for(setup["cache"], spec, audio, "gpu") != without_env
-        assert runner.cache_dir_for(setup["cache"], spec, audio, "cpu") == runner.cache_dir_for(
-            setup["cache"], spec, audio, "cpu"
-        )
+        assert runner.cache_dir_for(setup["cache"], spec, audio) == without_env
+        assert without_env.parent == setup["cache"] / "dummy"
     finally:
         import shutil
 

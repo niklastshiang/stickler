@@ -17,6 +17,7 @@ from stickler import (
     adapters,
     align,
     audio,
+    cachemigration,
     doctor,
     musescore,
     notation,
@@ -513,4 +514,22 @@ def run_remote(host: str, port: int, config_path: Path, *, pod_id: str | None = 
         home=Path.home(),
         hf_token=hf_token,
         stop=(lambda: remote.stop_pod(pod_id, api_key)) if pod_id else None,
+    )
+
+
+def migrate_cache(
+    *,
+    dry_run: bool = False,
+    cache_dir: Path = CACHE_DIR,
+    data_dir: Path = DATA_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> cachemigration.Report:
+    """Moves cache entries from the old device-dependent keys to the current keys (see
+    stickler.cachemigration). Inputs: MDB mixes and stems, the own songs' recordings."""
+    inputs: list[Path] = []
+    for track in mdb.tracks(data_dir / "mdb"):
+        inputs += [track.mix, track.drums]
+    inputs += [song.audio for song in own.songs(REFERENCES_DIR, data_dir)]
+    return cachemigration.migrate(
+        cache_dir, adapters.discover(adapters_root), inputs, dry_run=dry_run
     )

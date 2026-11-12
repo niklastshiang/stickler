@@ -181,6 +181,19 @@ def remote_cmd(
     typer.echo("Done: new results are in cache/; run `stickler eval` and `stickler report`.")
 
 
+@app.command("cache-migrate")
+def cache_migrate_cmd(
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="only report")] = False,
+) -> None:
+    """Move cache entries to the current (device-independent) keys; nothing is deleted."""
+    r = api.migrate_cache(dry_run=dry_run)
+    prefix = "would move" if dry_run else "moved"
+    typer.echo(
+        f"{prefix} {r.moved}, set aside {r.superseded} duplicates and {r.orphaned} unknown "
+        f"entries, {r.current} already current"
+    )
+
+
 @app.command("doctor")
 def doctor_cmd() -> None:
     """System check: GPU, adapter environments, weights, HF login, MuseScore, datasets."""

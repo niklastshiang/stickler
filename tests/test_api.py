@@ -466,3 +466,24 @@ def test_runpod_key_from_environment_wins(tmp_path, monkeypatch):
     monkeypatch.setenv("RUNPOD_API_KEY", "from-env")
     monkeypatch.setattr(api, "RUNPOD_KEY_FILE", tmp_path / "missing")
     assert api.runpod_api_key() == "from-env"
+
+
+def test_migrate_cache_collects_inputs(tmp_path, monkeypatch):
+    from stickler import cachemigration
+    from stickler.datasets import mdb as mdb_mod
+    from stickler.datasets import own as own_mod
+
+    mix, stem, song = tmp_path / "m.wav", tmp_path / "d.wav", tmp_path / "s.mp3"
+    monkeypatch.setattr(mdb_mod, "tracks", lambda d: [mdb_mod.Track("t", mix, stem, tmp_path)])
+    monkeypatch.setattr(
+        own_mod, "songs", lambda r, d: [own_mod.Song("s", "S", song, tmp_path / "own" / "s")]
+    )
+    seen = {}
+
+    def fake_migrate(cache, registry, inputs, *, dry_run):
+        seen.update(inputs=inputs, dry_run=dry_run)
+        return cachemigration.Report(moved=2)
+
+    monkeypatch.setattr(cachemigration, "migrate", fake_migrate)
+    report = api.migrate_cache(dry_run=True, cache_dir=tmp_path, data_dir=tmp_path)
+    assert report.moved == 2 and seen == {"inputs": [mix, stem, song], "dry_run": True}

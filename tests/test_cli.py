@@ -213,3 +213,12 @@ def test_remote_delegates_to_api(monkeypatch, tmp_path):
     )
     assert result.exit_code == 0, result.output
     assert seen == {"host": "root@h", "port": 2222, "config": Path("config/own.yaml"), "pod": "p1"}
+
+
+def test_cache_migrate_reports(monkeypatch):
+    from stickler.cachemigration import Report
+
+    monkeypatch.setattr(api, "migrate_cache", lambda dry_run: Report(3, 1, 2, 4))
+    result = CliRunner().invoke(cli.app, ["cache-migrate", "--dry-run"])
+    assert result.exit_code == 0
+    assert "would move 3" in result.output and "1 duplicates" in result.output

@@ -7,10 +7,12 @@ Built-in separators:
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import logging
 import threading
+import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,6 +27,7 @@ from stickler.midi import read_drum_notes
 log = logging.getLogger(__name__)
 
 BUILTIN_SEPARATORS = ("none", "oracle")
+CACHE_KEY_VERSION = "v2"  # v1: raw file bytes and the device were part of the key
 
 
 @dataclass(frozen=True)
@@ -85,26 +88,48 @@ def _sha1_file(path: Path) -> str:
         return hashlib.file_digest(f, "sha1").hexdigest()
 
 
-def _adapter_digest(spec: adapters.AdapterSpec) -> str:
+def _canonical(path: Path) -> bytes:
+    """What defines an adapter's behaviour: Python as syntax tree without docstrings (comments
+    are not part of it), TOML as parsed data. Comments and translations do not change it."""
+    text = path.read_text(encoding="utf-8")
+    if path.suffix == ".py":
+        tree = ast.parse(text)
+        for node in ast.walk(tree):
+            body = getattr(node, "body", None)
+            if (
+                isinstance(node, ast.Module | ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+                and body
+                and isinstance(body[0], ast.Expr)
+                and isinstance(body[0].value, ast.Constant)
+                and isinstance(body[0].value.value, str)
+            ):
+                node.body = body[1:] or [ast.Pass()]
+        return ast.dump(tree).encode()
+    if path.suffix == ".toml":
+        return json.dumps(tomllib.loads(text), sort_keys=True).encode()
+    return text.encode()
+
+
+def code_digest(spec: adapters.AdapterSpec) -> str:
     h = hashlib.sha1()
     for name in ("run.py", "pyproject.toml", "setup.py"):
         p = spec.path / name
         if p.exists():
-            h.update(p.read_bytes())
+            h.update(name.encode() + b"\0" + _canonical(p) + b"\0")
     return h.hexdigest()
 
 
-def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path, device: str) -> Path:
-    """Cache folder: depends on the input content, the adapter code, the device and the
-    environment (cpu/rocm), because GPU and CPU results can differ slightly."""
-    variant = (
-        adapters.env_variant(spec, device) or "fehlt"
-    )  # German literal kept: it is part of the cache key
-    env = device if variant == "cpu" else f"{device}|{variant}"  # CPU key as before
-    key = hashlib.sha1(
-        f"{_sha1_file(audio)}|{spec.id}|{_adapter_digest(spec)}|{env}".encode()
-    ).hexdigest()[:16]
-    return cache / spec.id / key
+def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path) -> Path:
+    """Cache folder: depends only on the input content and the adapter's code (ignoring
+    comments and docstrings). The device is recorded in meta.json, not in the key, so results
+    computed on a rented GPU count as cache hits on the laptop (decided 2026-11-12)."""
+    return cache / spec.id / cache_key(spec, _sha1_file(audio))
+
+
+def cache_key(spec: adapters.AdapterSpec, audio_sha1: str) -> str:
+    """Folder name for an input with the given SHA-1 (see cache_dir_for)."""
+    text = f"{CACHE_KEY_VERSION}|{audio_sha1}|{spec.id}|{code_digest(spec)}"
+    return hashlib.sha1(text.encode()).hexdigest()[:16]
 
 
 def cached_or_run(
@@ -115,7 +140,7 @@ def cached_or_run(
     execute: bool,
     timeout: Timeout = None,
 ) -> adapters.AdapterResult:
-    out_dir = cache_dir_for(cache, spec, audio, device)
+    out_dir = cache_dir_for(cache, spec, audio)
     output, meta = out_dir / spec.expected_output, out_dir / "meta.json"
     if output.exists() and meta.exists():
         return adapters.AdapterResult(True, output, json.loads(meta.read_text()), None)
