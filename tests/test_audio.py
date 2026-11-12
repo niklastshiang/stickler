@@ -25,3 +25,23 @@ def test_duration_of_invalid_file_raises(tmp_path):
     bad.write_bytes(b"kein audio")
     with pytest.raises(RuntimeError, match="kaputt.wav"):
         audio.duration(bad)
+
+
+def test_load_mono_resamples_and_mixes(tmp_path):
+    path = tmp_path / "stereo.wav"
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(2)
+        w.setsampwidth(2)
+        w.setframerate(44100)
+        w.writeframes(b"\x00\x40\x00\x00" * 44100)  # links 0,5, rechts 0
+    signal = audio.load_mono(path, sr=22050)
+    assert signal.dtype.name == "float32"
+    assert len(signal) == pytest.approx(22050, abs=50)
+    assert float(signal[1000:-1000].mean()) == pytest.approx(0.25, abs=0.01)
+
+
+def test_load_mono_invalid_raises(tmp_path):
+    bad = tmp_path / "kaputt.wav"
+    bad.write_bytes(b"kein audio")
+    with pytest.raises(RuntimeError, match="kaputt.wav"):
+        audio.load_mono(bad)
