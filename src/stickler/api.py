@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import threading
@@ -12,7 +13,18 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from stickler import adapters, align, audio, doctor, musescore, notation, onsets, report, runner
+from stickler import (
+    adapters,
+    align,
+    audio,
+    doctor,
+    musescore,
+    notation,
+    onsets,
+    remote,
+    report,
+    runner,
+)
 from stickler.classes import load_schemes
 from stickler.datasets import mdb, own
 from stickler.midi import read_drum_hits
@@ -453,3 +465,33 @@ def export_drum_track(stem: Path, dest: Path) -> Path:
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg: {dest.name}: {proc.stderr.strip()}")
     return dest
+
+
+def run_remote(host: str, port: int, config_path: Path, *, pod_id: str | None = None) -> None:
+    """Runs a benchmark config on a rented GPU over SSH and brings the new cache entries
+    back (development only). Secrets come from the environment: HF_TOKEN (or the file from
+    `hf auth login`) and, to stop the pod afterwards, RUNPOD_API_KEY."""
+    api_key = os.environ.get("RUNPOD_API_KEY", "")
+    if pod_id and not api_key:
+        raise ValueError("--pod-id needs the RunPod API key in the environment (RUNPOD_API_KEY)")
+    hf_token = os.environ.get("HF_TOKEN", "")
+    if not hf_token and doctor.HF_TOKEN_FILE.exists():
+        hf_token = doctor.HF_TOKEN_FILE.read_text(encoding="utf-8").strip()
+    config = config_path.resolve()
+    plan = remote.sync_plan(
+        config,
+        project_root=PROJECT_ROOT,
+        references_dir=REFERENCES_DIR,
+        data_dir=DATA_DIR,
+        home=Path.home(),
+    )
+    remote.run_remote(
+        remote.Host(host, port),
+        str(config.relative_to(PROJECT_ROOT)),
+        remote.adapters_for(config),
+        plan,
+        project_root=PROJECT_ROOT,
+        home=Path.home(),
+        hf_token=hf_token,
+        stop=(lambda: remote.stop_pod(pod_id, api_key)) if pod_id else None,
+    )

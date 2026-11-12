@@ -417,3 +417,34 @@ def test_config_skip_combinations(tmp_path):
     cfg.write_text(cfg.read_text() + 'skip: ["kaputt"]\n', encoding="utf-8")
     with pytest.raises(ValueError, match="skip"):
         api.load_benchmark_config(cfg)
+
+
+def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
+    from stickler import remote
+
+    token_file = tmp_path / "token"
+    token_file.write_text("tok\n", encoding="utf-8")
+    monkeypatch.setattr(api.doctor, "HF_TOKEN_FILE", token_file)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.setenv("RUNPOD_API_KEY", "key")
+    monkeypatch.setattr(remote, "sync_plan", lambda cfg, **kw: remote.SyncPlan(code=[]))
+    seen = {}
+
+    def fake_run_remote(host, config, adapter_ids, plan, *, project_root, home, hf_token, stop):
+        seen.update(host=host, config=config, ids=adapter_ids, token=hf_token)
+        stop()
+
+    monkeypatch.setattr(remote, "run_remote", fake_run_remote)
+    monkeypatch.setattr(remote, "stop_pod", lambda pod, key: seen.update(stopped=(pod, key)))
+    api.run_remote(
+        "root@203.0.113.7", 22077, api.PROJECT_ROOT / "config" / "own.yaml", pod_id="pod1"
+    )
+    assert seen["host"] == remote.Host("root@203.0.113.7", 22077)
+    assert seen["config"] == "config/own.yaml" and seen["token"] == "tok"
+    assert seen["stopped"] == ("pod1", "key") and "demucs" in seen["ids"]
+
+
+def test_run_remote_with_pod_id_needs_an_api_key(tmp_path, monkeypatch):
+    monkeypatch.delenv("RUNPOD_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="RUNPOD_API_KEY"):
+        api.run_remote("root@h", 22, api.CONFIG, pod_id="pod1")

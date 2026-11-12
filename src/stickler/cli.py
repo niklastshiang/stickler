@@ -163,6 +163,24 @@ def notate_cmd(
         typer.echo(f"Drum track: {exported}")
 
 
+@app.command("remote")
+def remote_cmd(
+    host: Annotated[str, typer.Argument(help="user@address of the GPU machine, e.g. a pod")],
+    port: Annotated[int, typer.Option(help="SSH port")] = 22,
+    config: ConfigOpt = None,
+    pod_id: Annotated[
+        str | None, typer.Option("--pod-id", help="RunPod pod to stop afterwards")
+    ] = None,
+) -> None:
+    """Run a benchmark config on a rented GPU and fetch the results (development only)."""
+    try:
+        api.run_remote(host, port, config or api.CONFIG, pod_id=pod_id)
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo("Done: new results are in cache/; run `stickler eval` and `stickler report`.")
+
+
 @app.command("doctor")
 def doctor_cmd() -> None:
     """System check: GPU, adapter environments, weights, HF login, MuseScore, datasets."""

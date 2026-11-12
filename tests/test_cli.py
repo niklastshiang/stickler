@@ -196,3 +196,20 @@ def test_notate_error_exits_nonzero(monkeypatch, tmp_path):
     monkeypatch.setattr(api, "notate", boom)
     result = CliRunner().invoke(cli.app, ["notate", str(tmp_path / "s.mp3")])
     assert result.exit_code == 1 and "unknown transcriber" in result.output
+
+
+def test_remote_delegates_to_api(monkeypatch, tmp_path):
+    seen = {}
+    monkeypatch.setattr(
+        api,
+        "run_remote",
+        lambda host, port, config, pod_id=None: seen.update(
+            host=host, port=port, config=config, pod=pod_id
+        ),
+    )
+    result = CliRunner().invoke(
+        cli.app,
+        ["remote", "root@h", "--port", "2222", "--config", "config/own.yaml", "--pod-id", "p1"],
+    )
+    assert result.exit_code == 0, result.output
+    assert seen == {"host": "root@h", "port": 2222, "config": Path("config/own.yaml"), "pod": "p1"}

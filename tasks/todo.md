@@ -167,7 +167,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Verify: unit tests with mocked subprocess; real check on the first pod (`stickler doctor`, smoke tests with `--device gpu`)
 - [ ] **Task 20: Cache migration** (M, only after the MDB benchmark has finished successfully)
   - Acceptance: cache key = input content + adapter id + comment-insensitive code digest (AST for .py, parsed TOML) without the device; a migration moves every existing entry to its new key; `stickler eval` gives identical numbers before and after. Then translate the adapters' run.py/setup.py/pyproject.toml.
-- [ ] **Task 21: `stickler remote`** (M)
+- [~] **Task 21: `stickler remote`** (M): implemented and unit-tested (bootstrap, rsync of code/data/audio/cache, CUDA setup, live run output, cache download, pod stop also on failure; HF token via stdin, API key from RUNPOD_API_KEY); first real run pending (needs Task 20 first so GPU results count as cache hits)
   - Acceptance: rsync code, required audio (MDB, own songs under the same `~`-relative paths) and cache to an SSH host; remote setup (uv, CUDA envs, HF token from env); run a config with `--device gpu`; rsync new cache entries back; optional pod stop via RunPod API (`RUNPOD_API_KEY`).
   - Verify: unit tests for command construction; first real run: RoFormer on the own songs (Secure Cloud, EU).
 
