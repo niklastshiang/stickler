@@ -146,3 +146,53 @@ def test_report_delegates_to_api(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["report"])
     assert result.exit_code == 0, result.output
     assert "report.html" in result.output
+
+
+def test_notate_prints_outputs_and_exports_drums(monkeypatch, tmp_path):
+    from stickler.api import Notation, SongTranscription
+
+    t = SongTranscription(
+        tmp_path / "s.mp3",
+        "demucs",
+        "adtof",
+        tmp_path / "drums.wav",
+        tmp_path / "d.mid",
+        [0.0, 0.5],
+        [0.0],
+        [(0.0, 36, 100)],
+    )
+    seen = {}
+
+    def fake_notate(audio, out=None, *, pipeline, title=None, pdf=True, device="auto"):
+        seen.update(audio=audio, out=out, pipeline=pipeline, pdf=pdf)
+        return Notation(tmp_path / "s.musicxml", None, "MuseScore not installed", t)
+
+    monkeypatch.setattr(api, "notate", fake_notate)
+    monkeypatch.setattr(
+        api, "export_drum_track", lambda stem, dest: seen.setdefault("drums", (stem, dest))[1]
+    )
+    result = CliRunner().invoke(
+        cli.app,
+        [
+            "notate",
+            str(tmp_path / "s.mp3"),
+            "--pipeline",
+            "none+adtof",
+            "--drums",
+            str(tmp_path / "d.flac"),
+            "--no-pdf",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert seen["pipeline"] == "none+adtof" and seen["pdf"] is False
+    assert seen["drums"] == (tmp_path / "drums.wav", tmp_path / "d.flac")
+    assert "s.musicxml" in result.output and "MuseScore not installed" in result.output
+
+
+def test_notate_error_exits_nonzero(monkeypatch, tmp_path):
+    def boom(audio, out=None, **kw):
+        raise ValueError("pipeline: unknown transcriber 'nix'")
+
+    monkeypatch.setattr(api, "notate", boom)
+    result = CliRunner().invoke(cli.app, ["notate", str(tmp_path / "s.mp3")])
+    assert result.exit_code == 1 and "unknown transcriber" in result.output

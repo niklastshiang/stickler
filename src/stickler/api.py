@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,9 +12,10 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from stickler import adapters, align, audio, doctor, onsets, report, runner
+from stickler import adapters, align, audio, doctor, musescore, notation, onsets, report, runner
 from stickler.classes import load_schemes
 from stickler.datasets import mdb, own
+from stickler.midi import read_drum_hits
 from stickler.results import summarize, write_csv
 
 DATASETS = ("mdb", "own")
@@ -24,6 +27,8 @@ DATA_DIR = PROJECT_ROOT / "data"
 CACHE_DIR = PROJECT_ROOT / "cache"
 RESULTS_DIR = PROJECT_ROOT / "results"
 REFERENCES_DIR = PROJECT_ROOT / "references" / "own"
+# Best pipeline in the first sample (MDB Punk); revisit once the benchmark has finished.
+DEFAULT_PIPELINE = "demucs+adtof"
 
 
 @dataclass(frozen=True)
@@ -300,3 +305,129 @@ def align_songs(
             raise ValueError(f"Song {song!r} unknown (references/own/{song}.yaml missing)")
     registry = adapters.discover(adapters_root)
     return [_align_song(s, registry, cache_dir, device) for s in found]
+
+
+@dataclass(frozen=True)
+class SongTranscription:
+    audio: Path
+    separator: str
+    transcriber: str
+    stem: Path  # separated drum track (the mix itself for separator "none")
+    midi: Path
+    beats: list[float]
+    downbeats: list[float]
+    hits: list[tuple[float, int, int]]  # (seconds, GM pitch, velocity)
+
+
+@dataclass(frozen=True)
+class Notation:
+    musicxml: Path
+    pdf: Path | None
+    pdf_error: str | None  # why there is no PDF (MuseScore missing or failed)
+    transcription: SongTranscription
+
+
+def _parse_pipeline(pipeline: str, registry: dict) -> tuple[str, str]:
+    parts = pipeline.split("+")
+    if len(parts) != 2:
+        raise ValueError(f"pipeline must look like 'separator+transcriber', got {pipeline!r}")
+    sep, tr = parts
+    if sep != "none" and (sep not in registry or registry[sep].stage != "separators"):
+        raise ValueError(f"pipeline: unknown separator {sep!r}")
+    if tr not in registry or registry[tr].stage != "transcribers":
+        raise ValueError(f"pipeline: unknown transcriber {tr!r}")
+    if sep == "none" and registry[tr].needs_stem:
+        raise ValueError(f"pipeline: {tr} needs a separated drum stem, not the mix")
+    return sep, tr
+
+
+def _result(step: adapters.AdapterResult) -> Path:
+    if not step.ok:
+        raise RuntimeError(step.error or "adapter failed")
+    return step.output
+
+
+def transcribe_song(
+    audio_path: Path,
+    pipeline: str = DEFAULT_PIPELINE,
+    *,
+    device: str = "auto",
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> SongTranscription:
+    """Separation, transcription and beat tracking for one song (cached like the benchmark)."""
+    registry = adapters.discover(adapters_root)
+    sep, tr = _parse_pipeline(pipeline, registry)
+    stem = audio_path
+    if sep != "none":
+        stem = _result(runner.cached_or_run(registry[sep], audio_path, cache_dir, device, True))
+    midi = _result(runner.cached_or_run(registry[tr], stem, cache_dir, device, True))
+    beats_file = _result(
+        runner.cached_or_run(registry["beat_this"], audio_path, cache_dir, device, True)
+    )
+    beats = json.loads(beats_file.read_text(encoding="utf-8"))
+    return SongTranscription(
+        audio=audio_path,
+        separator=sep,
+        transcriber=tr,
+        stem=stem,
+        midi=midi,
+        beats=list(beats["beats"]),
+        downbeats=list(beats["downbeats"]),
+        hits=read_drum_hits(midi),
+    )
+
+
+def notate(
+    audio_path: Path,
+    out: Path | None = None,
+    *,
+    pipeline: str = DEFAULT_PIPELINE,
+    title: str | None = None,
+    pdf: bool = True,
+    device: str = "auto",
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+    results_dir: Path = RESULTS_DIR,
+) -> Notation:
+    """Song → drum sheet music as MusicXML (default: results/notation/<song>.musicxml), plus a
+    PDF next to it if MuseScore is installed."""
+    t = transcribe_song(
+        audio_path, pipeline, device=device, cache_dir=cache_dir, adapters_root=adapters_root
+    )
+    target = out or results_dir / "notation" / f"{audio_path.stem}.musicxml"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    xml = notation.to_musicxml(t.hits, t.beats, t.downbeats, title=title or audio_path.stem)
+    target.write_text(xml, encoding="utf-8")
+    pdf_path, pdf_error = None, None
+    if pdf:
+        command = musescore.find()
+        if command is None:
+            pdf_error = "MuseScore not installed (Flathub: org.musescore.MuseScore)"
+        else:
+            try:
+                pdf_path = musescore.export_pdf(target, target.with_suffix(".pdf"), command)
+            except RuntimeError as exc:
+                pdf_error = str(exc)
+    return Notation(target, pdf_path, pdf_error, t)
+
+
+DRUM_TRACK_FORMATS = (".wav", ".flac", ".ogg", ".mp3")
+
+
+def export_drum_track(stem: Path, dest: Path) -> Path:
+    """Saves the separated drum track: WAV is copied, other formats are encoded with ffmpeg."""
+    if dest.suffix.lower() not in DRUM_TRACK_FORMATS:
+        raise ValueError(
+            f"unsupported format {dest.suffix!r} (use {', '.join(DRUM_TRACK_FORMATS)})"
+        )
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.suffix.lower() == ".wav":
+        shutil.copyfile(stem, dest)
+        return dest
+    proc = subprocess.run(
+        ["ffmpeg", "-v", "error", "-y", "-i", str(stem), str(dest)], capture_output=True, text=True
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"ffmpeg: {dest.name}: {proc.stderr.strip()}")
+    return dest

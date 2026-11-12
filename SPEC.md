@@ -66,7 +66,7 @@ uv run stickler run   --config config/benchmark.yaml --device auto   # compute m
 uv run stickler eval  --config config/benchmark.yaml        # metrics → results/metrics.csv
 uv run stickler report                                       # → results/report.html
 uv run stickler align [song]                                 # check own references, verify + click.wav
-uv run stickler notate --audio song.mp3 --pipeline roformer+adt_str   # → MusicXML (+ PDF, if MuseScore is available)
+uv run stickler notate song.mp3 --pipeline demucs+adtof --drums drums.flac   # → MusicXML (+ PDF via MuseScore), drum track
 ```
 
 ## Project Structure

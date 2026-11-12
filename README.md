@@ -228,7 +228,7 @@ scripts/check.sh task
 
 - [x] HTML report with ranking, classes, runtime and memory (`stickler report`)
 - [ ] ENST-Drums as a third dataset
-- [ ] Notes from the winning pipeline: quantization, MusicXML, `stickler notate`
+- [x] Sheet music: quantization, MusicXML, `stickler notate` (PDF via MuseScore, drum track export)
 - [ ] Design the interface together, following the GNOME Human Interface Guidelines
 - [ ] Application with a GTK 4 and libadwaita interface, app icon in GNOME style, export of the separated drum track
 - [ ] Ultrareview of the finished application
@@ -279,6 +279,8 @@ uv run stickler doctor                 # what's still missing?
 uv run stickler run      # computes the matrix from config/benchmark.yaml (overnight)
 uv run stickler eval     # results/metrics.csv and results/summary.csv
 uv run stickler align    # align own songs, check them and write click.wav
+uv run stickler notate song.mp3 --drums drums.flac   # sheet music (MusicXML, PDF) and drum track
+uv run stickler report   # results/report.html
 ```
 
 ---

@@ -285,3 +285,114 @@ def test_write_report_for_given_configs(tmp_path):
 def test_write_report_without_results_still_writes_a_page(tmp_path):
     html = api.write_report(results_dir=tmp_path / "empty").read_text()
     assert "No results" in html
+
+
+def _fake_pipeline(tmp_path, monkeypatch):
+    """Cached adapter results for a fake song: stem, drum MIDI and beats."""
+    import json
+
+    import mido
+
+    from stickler import adapters as ad
+
+    audio = tmp_path / "song.wav"
+    audio.write_bytes(b"x")
+    stem = tmp_path / "drums.wav"
+    stem.write_bytes(b"stem")
+    mid = mido.MidiFile(ticks_per_beat=480)
+    track = mido.MidiTrack()
+    mid.tracks.append(track)
+    for k in range(8):
+        track.append(
+            mido.Message(
+                "note_on",
+                channel=9,
+                note=36 if k % 2 == 0 else 38,
+                velocity=90,
+                time=0 if k == 0 else 480,
+            )
+        )
+    midi_path = tmp_path / "drums.mid"
+    mid.save(midi_path)
+    beats = tmp_path / "beats.json"
+    beats.write_text(json.dumps({"beats": [k * 0.5 for k in range(9)], "downbeats": [0.0, 2.0]}))
+    calls = []
+
+    def fake(spec, audio_in, cache, device, execute, timeout=None):
+        calls.append((spec.id, audio_in))
+        out = {"separators": stem, "transcribers": midi_path, "beats": beats}[spec.stage]
+        return ad.AdapterResult(True, out, {}, None)
+
+    registry = {
+        "demucs": ad.AdapterSpec("demucs", "separators", tmp_path),
+        "adtof": ad.AdapterSpec("adtof", "transcribers", tmp_path),
+        "beat_this": ad.AdapterSpec("beat_this", "beats", tmp_path),
+    }
+    monkeypatch.setattr(runner, "cached_or_run", fake)
+    monkeypatch.setattr(api.adapters, "discover", lambda root: registry)
+    return audio, stem, calls
+
+
+def test_transcribe_song_runs_the_pipeline(tmp_path, monkeypatch):
+    audio, stem, calls = _fake_pipeline(tmp_path, monkeypatch)
+    t = api.transcribe_song(audio, "demucs+adtof", cache_dir=tmp_path)
+    assert calls == [("demucs", audio), ("adtof", stem), ("beat_this", audio)]
+    assert t.stem == stem and len(t.hits) == 8 and t.hits[1] == (0.5, 38, 90)
+    assert t.beats[:2] == [0.0, 0.5] and t.downbeats == [0.0, 2.0]
+
+
+def test_transcribe_song_without_separation_uses_the_mix(tmp_path, monkeypatch):
+    audio, _, calls = _fake_pipeline(tmp_path, monkeypatch)
+    t = api.transcribe_song(audio, "none+adtof", cache_dir=tmp_path)
+    assert calls[0] == ("adtof", audio) and t.stem == audio
+
+
+@pytest.mark.parametrize("pipeline", ["adtof", "demucs+nix", "nix+adtof", "adtof+demucs"])
+def test_transcribe_song_rejects_bad_pipelines(tmp_path, monkeypatch, pipeline):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match="pipeline"):
+        api.transcribe_song(audio, pipeline, cache_dir=tmp_path)
+
+
+def test_notate_writes_musicxml_and_reports_missing_musescore(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    monkeypatch.setattr(api.musescore, "find", lambda: None)
+    result = api.notate(audio, cache_dir=tmp_path, results_dir=tmp_path / "res")
+    assert result.musicxml == tmp_path / "res" / "notation" / "song.musicxml"
+    assert "<score-partwise" in result.musicxml.read_text()
+    assert result.pdf is None and "MuseScore" in result.pdf_error
+
+
+def test_notate_exports_pdf_when_musescore_is_there(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    monkeypatch.setattr(api.musescore, "find", lambda: ["mscore"])
+    monkeypatch.setattr(api.musescore, "export_pdf", lambda xml, pdf, cmd: pdf)
+    result = api.notate(audio, tmp_path / "out.musicxml", cache_dir=tmp_path, title="T")
+    assert result.pdf == tmp_path / "out.pdf" and result.pdf_error is None
+
+
+def test_notate_keeps_musicxml_when_pdf_export_fails(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    monkeypatch.setattr(api.musescore, "find", lambda: ["mscore"])
+
+    def boom(xml, pdf, cmd):
+        raise RuntimeError("MuseScore: crashed")
+
+    monkeypatch.setattr(api.musescore, "export_pdf", boom)
+    result = api.notate(audio, tmp_path / "out.musicxml", cache_dir=tmp_path)
+    assert result.musicxml.exists() and result.pdf is None and "crashed" in result.pdf_error
+
+
+@pytest.mark.parametrize("suffix", [".wav", ".flac"])
+def test_export_drum_track(tmp_path, suffix):
+    from test_audio import write_wav
+
+    stem = write_wav(tmp_path / "drums.wav", 0.5)
+    out = api.export_drum_track(stem, tmp_path / f"export{suffix}")
+    assert out.exists() and out.suffix == suffix
+    assert abs(__import__("stickler").audio.duration(out) - 0.5) < 0.05
+
+
+def test_export_drum_track_rejects_unknown_format(tmp_path):
+    with pytest.raises(ValueError, match="format"):
+        api.export_drum_track(tmp_path / "drums.wav", tmp_path / "x.doc")

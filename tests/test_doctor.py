@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from stickler import doctor
+from stickler import doctor, musescore
 
 
 def adapter(root: Path, stage: str, name: str, rocm: bool = False, weights: bool = False) -> Path:
@@ -63,10 +63,10 @@ def test_hf_login_via_env_or_token_file(tmp_path, monkeypatch):
 
 def test_musescore_found_via_path_or_flatpak(monkeypatch):
     monkeypatch.setattr(
-        doctor.shutil, "which", lambda name: "/usr/bin/mscore" if name == "mscore" else None
+        musescore.shutil, "which", lambda name: "/usr/bin/mscore" if name == "mscore" else None
     )
     assert doctor.check_musescore(flatpak_ids=lambda: set()).ok
-    monkeypatch.setattr(doctor.shutil, "which", lambda name: None)
+    monkeypatch.setattr(musescore.shutil, "which", lambda name: None)
     assert doctor.check_musescore(flatpak_ids=lambda: {"org.musescore.MuseScore"}).ok
     assert not doctor.check_musescore(flatpak_ids=lambda: set()).ok
 

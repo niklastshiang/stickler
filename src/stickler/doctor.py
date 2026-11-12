@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from stickler import adapters
+from stickler import adapters, musescore
 from stickler.datasets import mdb
 
 HF_TOKEN_FILE = Path.home() / ".cache" / "huggingface" / "token"
@@ -74,21 +73,11 @@ def check_hf_login(token_file: Path = HF_TOKEN_FILE) -> Check:
     return Check("hugging face", False, "not logged in → uvx hf auth login (for MuScriptor)")
 
 
-def _flatpak_ids() -> set[str]:
-    if not shutil.which("flatpak"):
-        return set()
-    proc = subprocess.run(
-        ["flatpak", "list", "--app", "--columns=application"], capture_output=True, text=True
-    )
-    return set(proc.stdout.split())
-
-
-def check_musescore(flatpak_ids: Callable[[], set[str]] = _flatpak_ids) -> Check:
-    for name in ("mscore", "musescore", "mscore4portable", "musescore4"):
-        if path := shutil.which(name):
-            return Check("musescore", True, path)
-    if "org.musescore.MuseScore" in flatpak_ids():
-        return Check("musescore", True, "Flatpak org.musescore.MuseScore")
+def check_musescore(flatpak_ids: Callable[[], set[str]] = musescore.flatpak_ids) -> Check:
+    cmd = musescore.find(flatpak_ids=flatpak_ids)
+    if cmd:
+        label = f"Flatpak {musescore.FLATPAK_ID}" if cmd[0] == "flatpak" else cmd[0]
+        return Check("musescore", True, label)
     return Check(
         "musescore", False, "not found (optional, for PDF): flathub org.musescore.MuseScore"
     )
