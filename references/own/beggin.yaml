@@ -1,0 +1,4 @@
+title: "Måneskin – Beggin'"
+audio: "~/Musik/Archiv/Måneskin/Måneskin - Beggin'.mp3"
+# Partitur: data/own/beggin/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+exclude: []

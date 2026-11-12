@@ -56,6 +56,7 @@ class Track:
     mix: Path
     drums: Path
     annotation: Path
+    excluded: tuple[tuple[float, float], ...] = ()  # MDB ist vollständig annotiert
 
     def reference_notes(self) -> list[tuple[float, int]]:
         return read_subclass_file(self.annotation)

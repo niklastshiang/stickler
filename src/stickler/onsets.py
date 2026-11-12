@@ -15,6 +15,10 @@ BANDS = ((20.0, 150.0), (150.0, 2500.0), (5000.0, 16000.0))
 MIN_GAP = 0.04  # s: zwei Onsets dichter als das gelten als einer
 WINDOW = 0.1  # s: Umgebung für die adaptive Schwelle
 FLOOR = 0.05  # Anteil des 99. Perzentils, unter dem nichts zählt
+# Die Flux-Spitze kommt vor dem eigentlichen Anschlag (zentriertes 46-ms-Fenster). Gemessen an
+# MDB gegen die Annotationen: Median −10,6 ms (Oracle-Stems, 23 Songs), −11,0 ms (Demucs, 10).
+# Die Zeitachse wird darum korrigiert, sonst würden abgeglichene Referenzen verfrüht.
+DETECTOR_LEAD = 0.011  # s
 
 
 def _stft_mag(signal: np.ndarray, sr: int) -> tuple[np.ndarray, int]:
@@ -38,7 +42,7 @@ def band_flux(signal: np.ndarray, sr: int) -> tuple[np.ndarray, np.ndarray]:
     flux = np.stack(
         [rise[:, (freqs >= lo) & (freqs < hi)].mean(axis=1) for lo, hi in BANDS], axis=1
     )
-    times = np.arange(len(flux)) * hop / sr
+    times = np.arange(len(flux)) * hop / sr + DETECTOR_LEAD
     return times, flux
 
 

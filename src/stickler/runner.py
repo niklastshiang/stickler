@@ -58,6 +58,7 @@ class Track(Protocol):
     id: str
     mix: Path
     drums: Path | None
+    excluded: tuple[tuple[float, float], ...]  # Audiozeit-Intervalle ohne Bewertung
 
     def reference_notes(self) -> list[tuple[float, int]]: ...
 
@@ -104,7 +105,7 @@ def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path, device: 
     return cache / spec.id / key
 
 
-def _cached_or_run(
+def cached_or_run(
     spec: adapters.AdapterSpec,
     audio: Path,
     cache: Path,
@@ -140,7 +141,7 @@ def _separate(
         if track.drums is None or not track.drums.exists():
             return adapters.AdapterResult(False, None, None, "oracle: Datensatz hat keinen Stem")
         return adapters.AdapterResult(True, track.drums, None, None)
-    return _cached_or_run(registry[separator], track.mix, cache, device, execute, timeout)
+    return cached_or_run(registry[separator], track.mix, cache, device, execute, timeout)
 
 
 def _check_ids(ids: list[str], stage: str, registry: dict[str, adapters.AdapterSpec]) -> None:
@@ -182,7 +183,7 @@ def run_matrix(
             break
         stem = _separate(track, sep, registry, cache, device, execute, timeout)
         if stem.ok:
-            trans = _cached_or_run(registry[tr], stem.output, cache, device, execute, timeout)
+            trans = cached_or_run(registry[tr], stem.output, cache, device, execute, timeout)
             error = trans.error
         else:
             trans, error = None, stem.error
@@ -217,10 +218,18 @@ def _row(base: dict, scheme: str, cls: str, prf: PRF | None, f1: float | None = 
     }
 
 
+def _outside(notes: list[tuple[float, int]], excluded) -> list[tuple[float, int]]:
+    return [(t, p) for t, p in notes if not any(a <= t < b for a, b in excluded)]
+
+
 def score_records(
-    records: list[Record], tracks: dict[str, list[Track]], schemes: dict[str, Scheme]
+    records: list[Record],
+    tracks: dict[str, list[Track]],
+    schemes: dict[str, Scheme],
+    read_notes: Callable[[Path], list[tuple[float, int]]] = read_drum_notes,
 ) -> list[dict]:
-    """Eine Zeile je Record × Schema × Klasse (plus 'micro'/'macro'); Fehler als eigene Zeilen."""
+    """Eine Zeile je Record × Schema × Klasse (plus 'micro'/'macro'); Fehler als eigene Zeilen.
+    Noten in ausgeklammerten Bereichen des Tracks zählen weder als Treffer noch als Fehler."""
     by_id = {(ds, t.id): t for ds, ts in tracks.items() for t in ts}
     rows: list[dict] = []
     for rec in records:
@@ -238,7 +247,8 @@ def score_records(
             rows.extend(_row(base, name, "", None) for name in schemes)
             continue
         track = by_id[(rec.dataset, rec.track)]
-        ref_notes, est_notes = track.reference_notes(), read_drum_notes(rec.midi)
+        ref_notes = _outside(track.reference_notes(), track.excluded)
+        est_notes = _outside(read_notes(rec.midi), track.excluded)
         for name, scheme in schemes.items():
             s = score(onsets_from_notes(ref_notes, scheme), onsets_from_notes(est_notes, scheme))
             for cls, prf in [*s.per_class.items(), ("micro", s.micro)]:

@@ -45,3 +45,14 @@ def test_load_mono_invalid_raises(tmp_path):
     bad.write_bytes(b"kein audio")
     with pytest.raises(RuntimeError, match="kaputt.wav"):
         audio.load_mono(bad)
+
+
+def test_write_stereo_wav(tmp_path):
+    import numpy as np
+
+    left, right = np.full(100, 0.5, dtype=np.float32), np.full(100, -2.0, dtype=np.float32)
+    path = audio.write_wav(tmp_path / "out.wav", np.stack([left, right], axis=1), 8000)
+    with wave.open(str(path)) as w:
+        assert (w.getnchannels(), w.getframerate(), w.getnframes()) == (2, 8000, 100)
+        frames = np.frombuffer(w.readframes(1), dtype="<i2")
+    assert frames[0] == pytest.approx(16383, abs=1) and frames[1] == -32767  # rechts begrenzt

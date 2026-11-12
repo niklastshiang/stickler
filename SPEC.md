@@ -60,7 +60,7 @@ uv run stickler fetch mdb                       # MDB Drums nach data/mdb/
 uv run stickler run   --config config/benchmark.yaml --device auto   # Matrix rechnen (gecacht)
 uv run stickler eval  --config config/benchmark.yaml        # Metriken → results/metrics.csv
 uv run stickler report                                       # → results/report.html
-uv run stickler align --song "Easy Fill Ins"                 # eigene Referenz auf Audio legen + Click-Check-WAV
+uv run stickler align [song]                                 # eigene Referenzen abgleichen, prüfen + click.wav
 uv run stickler notate --audio song.mp3 --pipeline roformer+adt_str   # → MusicXML (+ PDF, falls MuseScore da)
 ```
 
@@ -84,7 +84,8 @@ adapters/separators/<id>/      # pyproject.toml + run.py + README.md (Quelle, Li
 adapters/transcribers/<id>/
 adapters/beats/beat_this/
 adapters/_common/             # gemeinsame Helfer: device-Wahl, meta.json, Zeitmessung
-references/own/<song>.mid + <song>.yaml    # vom User in MuseScore erstellt
+references/own/<song>.yaml                 # Titel, Pfad zur Aufnahme, manuelle Ausschlüsse
+data/own/<song>/score.mid, aligned.json, click.wav   # Partitur (musescore.com) und Abgleich, nicht im Repo
 tests/                         # pytest, spiegelt src/stickler/
 docs/adr/                      # Architecture Decision Records
 data/ cache/ results/          # gitignored
@@ -106,6 +107,18 @@ uv run --project adapters/<stufe>/<id> python adapters/<stufe>/<id>/run.py --in 
 - `config/benchmark.yaml` → `timeout`: Zeitlimit je Adapter-Aufruf. Eine Überschreitung zählt als Fehler „Zeitlimit“.
   Je Stufe entweder feste Sekunden (`separators: 1800`) oder relativ zur Audiodauer
   (`transcribers: {factor: 10, min: 120}` = 10 × Songlänge, mindestens 120 s; Dauer per `ffprobe`).
+
+**Eigene Songs (Referenz und Gütekriterien):**
+- Partitur als MIDI von musescore.com (Wiederholungen ausgeschrieben); `stickler align` legt sie über Beat This! und Rhythmusmuster des Demucs-Stems per DTW auf die Aufnahme (`src/stickler/align.py`).
+- Nicht bewertet werden: Audio ohne Gegenstück in den Noten, Notenlücken mit Spiel im Audio (≥ 1 Takt), manuelle Ausschlüsse aus der YAML. Noten in diesen Bereichen zählen weder für die Referenz noch für die Modelle.
+- Ein Song geht nur in den Benchmark ein, wenn er alle Kriterien erfüllt (Vorgabe des Users: nur mindestens gute Referenzen). Geprüft ohne Transkriptionsmodell, mit Onsets aus dem spektralen Fluss des Demucs-Stems (Detektor-Vorlauf 11 ms an MDB gemessen und korrigiert):
+
+| Kriterium | Schwelle | Kalibrierung an MDB (korrekte Referenzen, Demucs-Stem) |
+|---|---|---|
+| Notenschläge, deren Beat gepaart ist und ±70 ms auf einem Beat-This!-Beat sitzt | ≥ 95 % | – |
+| Notenschläge mit Onset im Stem (±50 ms) | ≥ 85 % | Median 98 %, schlechtester 88,5 % |
+| deutliche Onsets (stärkste 20 %) mit Notenschlag (±50 ms) | ≥ 90 % | Median 100 %, schlechtester 92 % |
+| deutliche Onsets in ausgeklammerten Bereichen | ≤ 20 % | – |
 
 ## Code Style
 ruff mit Standardregeln und Zeilenlänge 100. Durchgehend Type Hints, `dataclass`es statt Dicts für Domänenobjekte, keine globalen Zustände. Kommentare und Docstrings auf Deutsch, Bezeichner auf Englisch.
@@ -142,7 +155,7 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 1. `evaluate`: Referenz gegen sich selbst ergibt F1 = 1,0. Ein um 60 ms verschobener Onset zählt als Fehler, einer um 40 ms als Treffer.
 2. Für alle 23 MDB-Drums-Tracks liefert jede aktive Kombination Separator × Transkriber ein MIDI oder einen protokollierten Fehler mit Ursache.
 3. `results/metrics.csv` und `results/report.html` enthalten pro Kombination und Datensatz: P/R/F1 je Klasse (5er und 3er), Micro- und Macro-F1, Laufzeit, RTF und Peak-RAM, dazu ein Ranking.
-4. Mindestens ein eigener Song ist aligned (Click-Check-WAV vorhanden, vom User abgehört) und im Report enthalten.
+4. Mindestens ein eigener Song besteht die Gütekriterien (Click-Check-WAV vorhanden, vom User abgehört) und ist im Report enthalten.
 5. `stickler notate` erzeugt für einen eigenen Song MusicXML, das sich in MuseScore 4 fehlerfrei öffnen lässt und Taktart sowie Drum-Notation enthält.
 6. Ein Dummy-Adapter lässt sich mit einem neuen Ordner und einem Config-Eintrag ohne Änderung an `src/` einbinden (per Test geprüft).
 7. Ein zweiter `run` ohne Änderungen rechnet nichts neu (Cache-Treffer).

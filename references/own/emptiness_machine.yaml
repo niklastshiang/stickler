@@ -1,0 +1,4 @@
+title: "Linkin Park – The Emptiness Machine"
+audio: "~/Musik/Sync/Pussyrock/Linkin Park - The Emptiness Machine.flac"
+# Partitur: data/own/emptiness_machine/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+exclude: []

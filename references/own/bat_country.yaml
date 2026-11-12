@@ -1,0 +1,4 @@
+title: "Avenged Sevenfold – Bat Country"
+audio: "~/Musik/Sync/Eiserne Faust/Avenged Sevenfold - Bat Country.mp3"
+# Partitur: data/own/bat_country/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+exclude: []

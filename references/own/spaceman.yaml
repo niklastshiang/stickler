@@ -1,0 +1,4 @@
+title: "Electric Callboy feat. FiNCH – Spaceman"
+audio: "~/Musik/Sync/Eiserne Faust/Eskimo Callboy - Spaceman (feat. FiNCH).mp3"
+# Partitur: data/own/spaceman/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+exclude: []

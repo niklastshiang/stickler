@@ -1,0 +1,4 @@
+title: "Disturbed – Down with the Sickness"
+audio: "~/Musik/Sync/Eiserne Faust/Disturbed - Down with the Sickness.flac"
+# Partitur: data/own/down_with_the_sickness/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+exclude: []

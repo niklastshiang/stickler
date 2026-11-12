@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import threading
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import yaml
 
-from stickler import adapters, doctor, runner
+from stickler import adapters, align, audio, doctor, onsets, runner
 from stickler.classes import load_schemes
-from stickler.datasets import mdb
+from stickler.datasets import mdb, own
 from stickler.results import summarize, write_csv
 
-DATASETS = ("mdb",)
+DATASETS = ("mdb", "own")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ADAPTERS_ROOT = PROJECT_ROOT / "adapters"
 CONFIG = PROJECT_ROOT / "config" / "benchmark.yaml"
@@ -21,6 +23,7 @@ CLASSES = PROJECT_ROOT / "config" / "classes.yaml"
 DATA_DIR = PROJECT_ROOT / "data"
 CACHE_DIR = PROJECT_ROOT / "cache"
 RESULTS_DIR = PROJECT_ROOT / "results"
+REFERENCES_DIR = PROJECT_ROOT / "references" / "own"
 
 
 @dataclass(frozen=True)
@@ -68,6 +71,13 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
 def load_tracks(name: str, data_dir: Path) -> list[runner.Track]:
     if name == "mdb":
         found = mdb.tracks(data_dir / "mdb")
+    elif name == "own":
+        found = own.tracks(REFERENCES_DIR, data_dir)
+        if not found:
+            raise ValueError(
+                "keine eigenen Songs mit bestandenem Abgleich: zuerst `stickler align`"
+            )
+        return found
     else:
         raise ValueError(f"Datensatz {name!r} unbekannt (verfügbar: {', '.join(DATASETS)})")
     if not found:
@@ -163,3 +173,94 @@ def run_doctor(
 ) -> list[doctor.Check]:
     """Prüft GPU, Adapter, Gewichte, Hugging-Face-Login, MuseScore und Datensätze."""
     return doctor.run_all(adapters_root, data_dir)
+
+
+@dataclass(frozen=True)
+class AlignReport:
+    song: str
+    title: str
+    passed: bool
+    quality: dict
+    reasons: list[str]
+    excluded_seconds: float  # ausgeklammerte Dauer innerhalb des Songs
+    click: Path | None  # Kontroll-WAV: links die Aufnahme, rechts Klicks auf den Referenznoten
+    error: str | None = None
+
+
+CLICK_SR = 22050
+CLICK_FREQ = {0: 700.0, 1: 1400.0, 2: 2800.0}  # Kick, Snare/Toms, Becken
+
+
+def _click_track(song: own.Song, notes: list[tuple[float, int]]) -> Path:
+    mix = audio.load_mono(song.audio, sr=CLICK_SR)
+    clicks = np.zeros_like(mix)
+    t = np.arange(int(0.02 * CLICK_SR)) / CLICK_SR
+    for time, pitch in notes:
+        burst = 0.6 * np.exp(-t * 200) * np.sin(2 * np.pi * CLICK_FREQ[align._group(pitch)] * t)
+        start = int(time * CLICK_SR)
+        end = min(len(clicks), start + len(burst))
+        if 0 <= start < end:
+            clicks[start:end] += burst[: end - start]
+    stereo = np.stack([0.7 * mix, clicks], axis=1)
+    return audio.write_wav(song.dir / "click.wav", stereo, CLICK_SR)
+
+
+def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) -> AlignReport:
+    if not song.score.exists():
+        return AlignReport(
+            song.id, song.title, False, {}, [], 0.0, None, f"Partitur fehlt: {song.score}"
+        )
+    stem = runner.cached_or_run(registry["demucs"], song.audio, cache_dir, device, True)
+    beats = runner.cached_or_run(registry["beat_this"], song.audio, cache_dir, device, True)
+    for step in (stem, beats):
+        if not step.ok:
+            return AlignReport(song.id, song.title, False, {}, [], 0.0, None, step.error)
+    times, flux = onsets.band_flux(audio.load_mono(stem.output), 22050)
+    beat_times = np.array(json.loads(beats.output.read_text(encoding="utf-8"))["beats"])
+    result = align.align(align.read_score(song.score), beat_times, times, flux, song.exclude)
+    notes = [
+        (float(t), p)
+        for t, (_, p) in zip(result.mapped_times, align.read_score(song.score).notes, strict=True)
+        if not np.isnan(t) and not any(a <= t < b for a, b in result.excluded)
+    ]
+    q = result.quality
+    quality = {k: round(getattr(q, k), 4) for k in align.THRESHOLDS}
+    own.save_alignment(
+        song,
+        notes=notes,
+        excluded=result.excluded,
+        quality=quality,
+        reasons=q.reasons,
+        shift=result.shift,
+    )
+    end = audio.duration(song.audio)
+    excluded_seconds = sum(min(b, end) - a for a, b in result.excluded if a < end)
+    return AlignReport(
+        song.id,
+        song.title,
+        q.passed,
+        quality,
+        q.reasons,
+        excluded_seconds,
+        _click_track(song, notes),
+    )
+
+
+def align_songs(
+    song: str | None = None,
+    *,
+    references_dir: Path | None = None,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+    device: str = "auto",
+) -> list[AlignReport]:
+    """Legt die Noten eigener Songs auf die Aufnahmen und prüft die Güte (Demucs-Stem und
+    Beat-This!-Beats kommen aus dem Cache). Nur bestandene Songs gehen in den Benchmark."""
+    found = own.songs(references_dir or REFERENCES_DIR, data_dir)
+    if song is not None:
+        found = [s for s in found if s.id == song]
+        if not found:
+            raise ValueError(f"Song {song!r} unbekannt (references/own/{song}.yaml fehlt)")
+    registry = adapters.discover(adapters_root)
+    return [_align_song(s, registry, cache_dir, device) for s in found]

@@ -83,6 +83,29 @@ def eval_cmd() -> None:
         )
 
 
+@app.command("align")
+def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
+    """Noten eigener Songs auf die Aufnahmen legen und prüfen → data/own/<song>/click.wav."""
+    try:
+        reports = api.align_songs(song)
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Fehler: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    for r in reports:
+        if r.error:
+            typer.echo(f"✗ {r.song:24} {r.error}")
+            continue
+        q = r.quality
+        typer.echo(
+            f"{'✓' if r.passed else '✗'} {r.song:24} Beats {q['beat_fit']:.3f}  "
+            f"Abdeckung {q['coverage']:.3f}  erklärt {q['explained']:.3f}  "
+            f"ausgeklammert {q['excluded_strong']:.1%} ({r.excluded_seconds:.0f} s)"
+        )
+        for reason in r.reasons:
+            typer.echo(f"    {reason}")
+        typer.echo(f"    Kontrolle: {r.click}")
+
+
 @app.command("doctor")
 def doctor_cmd() -> None:
     """Systemprüfung: GPU, Adapter-Umgebungen, Gewichte, HF-Login, MuseScore, Datensätze."""

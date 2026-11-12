@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+import wave
 from pathlib import Path
 
 import numpy as np
@@ -34,3 +35,15 @@ def load_mono(path: Path, sr: int = 22050) -> np.ndarray:
     channels = int(info.stdout.strip().splitlines()[0])
     data = np.frombuffer(proc.stdout, dtype=np.float32)
     return data.reshape(-1, channels).mean(axis=1).astype(np.float32)
+
+
+def write_wav(path: Path, signal: np.ndarray, sr: int) -> Path:
+    """16-Bit-WAV; `signal` ist (Samples,) oder (Samples, Kanäle), Werte werden auf ±1 begrenzt."""
+    data = signal if signal.ndim == 2 else signal[:, None]
+    pcm = (np.clip(data, -1.0, 1.0) * 32767).astype("<i2")
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(data.shape[1])
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes(pcm.tobytes())
+    return path

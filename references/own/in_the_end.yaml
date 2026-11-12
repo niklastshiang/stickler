@@ -1,0 +1,4 @@
+title: "Linkin Park – In the End"
+audio: "~/Musik/Sync/Pussyrock/Linkin Park - In the End (Album Version).mp3"
+# Partitur: data/own/in_the_end/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+exclude: []

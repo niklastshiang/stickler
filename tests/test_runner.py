@@ -18,6 +18,7 @@ class FakeTrack:
     mix: Path
     drums: Path | None
     notes: tuple = ((0.5, 36), (1.0, 38), (1.5, 42))
+    excluded: tuple = ()
 
     def reference_notes(self):
         return list(self.notes)
@@ -212,3 +213,19 @@ def test_relative_timeout_uses_input_duration(setup, monkeypatch):
 def test_relative_timeout_on_unreadable_audio_is_record_error(setup):
     (rec,) = run(setup, timeout={"transcribers": runner.RelativeLimit(factor=10.0)})
     assert not rec.ok and "ffprobe" in rec.error
+
+
+@dataclass(frozen=True)
+class GapTrack(FakeTrack):
+    excluded: tuple = ((2.0, 3.0),)
+
+
+def test_excluded_intervals_are_not_scored(setup):
+    mix = setup["tracks"]["fake"][0].mix
+    track = GapTrack("song", mix, None, notes=((0.5, 36), (2.5, 38)))
+    rec = runner.Record("fake", "song", "none", "dummy", mix, None, None, None, None)
+    est = [(0.5, 36), (2.2, 42), (2.6, 42)]  # beide Hi-Hats liegen in der Lücke
+
+    rows = runner.score_records([rec], {"fake": [track]}, SCHEMES, read_notes=lambda _: est)
+    micro = next(r for r in rows if r["scheme"] == "5" and r["class"] == "micro")
+    assert (micro["tp"], micro["fp"], micro["fn"]) == (1, 0, 0)

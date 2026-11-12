@@ -1,0 +1,4 @@
+title: "Bullet for My Valentine – Scream Aim Fire"
+audio: "~/Musik/Sync/Eiserne Faust/Bullet For My Valentine - Scream Aim Fire.flac"
+# Partitur: data/own/scream_aim_fire/score.mid (nicht im Repo). Manuelle Ausschlüsse in Audiosekunden:
+exclude: []

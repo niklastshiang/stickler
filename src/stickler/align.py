@@ -246,9 +246,14 @@ def _fraction(num: int, den: int) -> float:
 
 
 def align(
-    score: Score, audio_beats: np.ndarray, flux_times: np.ndarray, flux: np.ndarray
+    score: Score,
+    audio_beats: np.ndarray,
+    flux_times: np.ndarray,
+    flux: np.ndarray,
+    exclude: tuple[tuple[float, float], ...] = (),
 ) -> Alignment:
-    """Legt die Noten auf die Aufnahme und prüft die Güte (siehe Moduldoku)."""
+    """Legt die Noten auf die Aufnahme und prüft die Güte (siehe Moduldoku).
+    `exclude`: zusätzliche, von Hand ausgeklammerte Audiozeit-Intervalle."""
     sb, factor = _beat_grid(score, np.asarray(audio_beats))
     ab = np.asarray(audio_beats)
     fs, fa = _score_features(score.notes, sb), _audio_features(ab, flux_times, flux)
@@ -297,7 +302,14 @@ def align(
         gap = []
     if len(gap) >= GAP_BEATS:
         excluded.append((float(ab[gap[0][1]]), float(ab[gap[-1][1] + 1])))
-    excluded = _merge(excluded)
+    # Grenzen um die Onset-Toleranz nach innen: Noten auf dem ersten/letzten gepaarten Beat
+    # gehören zum bewerteten Teil, auch wenn der Versatzabzug sie ein paar ms verschiebt.
+    excluded = [
+        (a + ONSET_TOL if a > 0 else a, b - ONSET_TOL)
+        for a, b in _merge(excluded)
+        if b - a > 2 * ONSET_TOL
+    ]
+    excluded = _merge([*excluded, *exclude])
 
     playing = [i for i in range(len(fs)) if fs[i].any()]
     pair_of = dict(pairs)
