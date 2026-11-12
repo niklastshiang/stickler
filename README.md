@@ -337,6 +337,13 @@ to their authors and are therefore not in the repository.
 
 ---
 
+## `> SUPPORT MY WORK`
+
+Nobody reads this anyway. But if you ever run into me in real life, feel free to buy me a
+burger. 🍔
+
+---
+
 <p align="center">
   <strong><code>> COUNT ALONG. THE STICKLER DOES ANYWAY._</code></strong>
 </p>
