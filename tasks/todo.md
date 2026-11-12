@@ -80,7 +80,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
   - Verify: `pytest -m adapters -k demucs`, Lauf `demucs` × `adt_str` auf MDB
   - Dependencies: 5 (6 für rocm) · Files: `adapters/separators/demucs/*`, `config/benchmark.yaml`
 
-- [ ] **Task 8: Separator `roformer` (python-audio-separator)** (S)
+- [x] **Task 8: Separator `roformer` (python-audio-separator)** (S)
   - Acceptance: Checkpoint mit Drum-Stem gewählt und begründet in `docs/adr/0004-roformer-checkpoint.md`. Liefert `drums.wav`.
   - Verify: `pytest -m adapters -k roformer`, Lauf auf MDB
   - Dependencies: 5 · Files: `adapters/separators/roformer/*`, ADR

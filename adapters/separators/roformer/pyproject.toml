@@ -1,0 +1,32 @@
+[project]
+name = "stickler-roformer"
+version = "0.1.0"
+description = "Stickler-Adapter: Drum-Stem mit BS-RoFormer (6 Stems) über python-audio-separator"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "stickler-adapter",
+    "audio-separator[cpu]==0.48.0",
+    "audioread",  # fehlt in den Abhängigkeiten von audio-separator 0.48.0, wird aber importiert
+    "torch>=2.3",
+    "soundfile>=0.12",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+stickler-adapter = { path = "../../_common", editable = true }
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# GPU-Variante (stickler setup --adapter roformer --device rocm), siehe docs/adr/0003-rocm-kanal.md
+[tool.stickler.rocm]
+index = "https://repo.amd.com/rocm/whl-multi-arch/"
+replace = ["torch"]
+packages = ["torch[device-gfx1152]==2.12.0+rocm7.14.1"]
+# Gemessen (MDB Punk, 29 s Mix): GPU 256 s, CPU 212 s, identische Noten danach → CPU bevorzugen
+prefer_gpu = false

@@ -151,6 +151,7 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 - [0001 Demucs über den Fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC-Lizenzen erlaubt](docs/adr/0002-nc-lizenzen.md)
 - [0003 GPU über AMD-ROCm-Wheels](docs/adr/0003-rocm-kanal.md)
+- [0004 RoFormer-Checkpoint BS-Roformer-SW](docs/adr/0004-roformer-checkpoint.md)
 
 ## Geklärte Fragen
 1. MuScriptor: Der User akzeptiert die Lizenz auf Hugging Face und loggt sich per `uvx hf auth login` ein.
