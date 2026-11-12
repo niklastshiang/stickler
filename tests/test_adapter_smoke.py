@@ -93,3 +93,15 @@ def test_separator_produces_drum_stem(adapter_id, drum_clip, tmp_path):
     with wave.open(str(result.output)) as w:
         seconds = w.getnframes() / w.getframerate()
     assert seconds == pytest.approx(10.0, abs=0.1)
+
+
+def test_beat_tracker_finds_120_bpm(drum_clip, tmp_path):
+    """Der synthetische Clip hat Viertel bei 120 BPM: Beat-Abstand 0,5 s."""
+    spec = adapters.discover(ROOT / "adapters")["beat_this"]
+    result = adapters.run_adapter(spec, drum_clip, tmp_path / "beat_this", device="cpu")
+    assert result.ok, result.error
+    data = json.loads(result.output.read_text())
+    gaps = [b - a for a, b in zip(data["beats"], data["beats"][1:], strict=False)]
+    assert len(data["beats"]) >= 15
+    assert sorted(gaps)[len(gaps) // 2] == pytest.approx(0.5, abs=0.03)
+    assert set(data["downbeats"]) <= set(data["beats"])

@@ -1,0 +1,25 @@
+[project]
+name = "stickler-beat-this"
+version = "0.1.0"
+description = "Stickler-Adapter: Beat This! (Foscarin, Schlüter, Widmer, ISMIR 2024), Beats und Downbeats"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "stickler-adapter",
+    "beat-this==1.1.0",
+    "torch==2.8.0",
+    "torchaudio==2.8.0",
+    "soundfile>=0.12",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+stickler-adapter = { path = "../../_common", editable = true }
+torch = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

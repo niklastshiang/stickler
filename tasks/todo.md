@@ -119,7 +119,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
   - Verify: Unit-Test auf den Inhalt; manuell im Browser öffnen
   - Dependencies: 5 · Files: `src/stickler/report.py`, `templates/report.html.j2`, Tests
 
-- [ ] **Task 14: Beat-Adapter `beat_this`** (S)
+- [x] **Task 14: Beat-Adapter `beat_this`** (S): nur CPU (15 s je Song); ROCm entfällt wie bei ADTOF, weil die GPU bisher nie schneller war (ADR 0003)
   - Acceptance: `beats.json` mit Beats und Downbeats, cpu und rocm.
   - Verify: `pytest -m adapters -k beat_this`
   - Dependencies: 3 · Files: `adapters/beats/beat_this/*`
