@@ -229,12 +229,27 @@ def score_records(
     tracks: dict[str, list[Track]],
     schemes: dict[str, Scheme],
     read_notes: Callable[[Path], list[tuple[float, int]]] = read_drum_notes,
+    duration: Callable[[Path], float] = audio_duration,
 ) -> list[dict]:
     """One row per record × scheme × class (plus 'micro'/'macro'); errors as their own rows.
-    Notes in excluded regions of the track count neither as hits nor as errors."""
+    Notes in excluded regions of the track count neither as hits nor as errors.
+    `audio_seconds` is the mix duration (cached per track, 0.0 if unreadable); `peak_rss_mb`
+    is the larger peak RAM of the two stages (0.0 if the adapters reported none)."""
     by_id = {(ds, t.id): t for ds, ts in tracks.items() for t in ts}
+    durations: dict[tuple[str, str], float] = {}
+
+    def audio_seconds(key: tuple[str, str]) -> float:
+        if key not in durations:
+            try:
+                durations[key] = float(duration(by_id[key].mix))
+            except (RuntimeError, OSError):
+                log.warning("duration of %s/%s unreadable", *key)
+                durations[key] = 0.0
+        return durations[key]
+
     rows: list[dict] = []
     for rec in records:
+        metas = (rec.separator_meta or {}, rec.transcriber_meta or {})
         base = {
             "dataset": rec.dataset,
             "track": rec.track,
@@ -243,6 +258,8 @@ def score_records(
             "device": (rec.transcriber_meta or {}).get("device", ""),
             "sep_seconds": (rec.separator_meta or {}).get("seconds", 0.0),
             "trans_seconds": (rec.transcriber_meta or {}).get("seconds", 0.0),
+            "audio_seconds": audio_seconds((rec.dataset, rec.track)) if rec.ok else 0.0,
+            "peak_rss_mb": max(float(m.get("peak_rss_mb", 0.0)) for m in metas),
             "error": rec.error or "",
         }
         if not rec.ok:

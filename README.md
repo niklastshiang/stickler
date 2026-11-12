@@ -226,7 +226,7 @@ scripts/check.sh task
 
 **Afterwards: from measurement to application**
 
-- [ ] HTML report with ranking, classes, runtime and memory
+- [x] HTML report with ranking, classes, runtime and memory (`stickler report`)
 - [ ] ENST-Drums as a third dataset
 - [ ] Notes from the winning pipeline: quantization, MusicXML, `stickler notate`
 - [ ] Design the interface together, following the GNOME Human Interface Guidelines

@@ -213,6 +213,39 @@ def test_relative_timeout_on_unreadable_audio_is_record_error(setup):
     assert not rec.ok and "ffprobe" in rec.error
 
 
+def test_score_records_adds_audio_seconds_and_peak_ram(setup):
+    track = setup["tracks"]["fake"][0]
+    sep_meta = {"seconds": 2.0, "peak_rss_mb": 900.5, "device": "cpu"}
+    trans_meta = {"seconds": 3.0, "peak_rss_mb": 1500.0, "device": "gpu"}
+    rec = runner.Record(
+        "fake", "song", "demucs", "dummy", None, track.mix, sep_meta, trans_meta, None
+    )
+    calls = []
+
+    def fake_duration(path):
+        calls.append(path)
+        return 12.5
+
+    rows = runner.score_records(
+        [rec, rec], setup["tracks"], SCHEMES, read_notes=lambda _: [], duration=fake_duration
+    )
+    assert {r["audio_seconds"] for r in rows} == {12.5}
+    assert {r["peak_rss_mb"] for r in rows} == {1500.0}  # max over both stages
+    assert calls == [track.mix]  # cached per track
+
+
+def test_score_records_unreadable_audio_defaults_to_zero(setup):
+    recs = run(setup)
+    rows = runner.score_records(recs, setup["tracks"], SCHEMES)  # mix is not real audio
+    assert {r["audio_seconds"] for r in rows} == {0.0}
+
+
+def test_score_records_error_rows_have_zero_audio_seconds(setup):
+    recs = run(setup, transcribers=["broken"])
+    rows = runner.score_records(recs, setup["tracks"], SCHEMES, duration=lambda _: 9.0)
+    assert rows and {r["audio_seconds"] for r in rows} == {0.0}
+
+
 @dataclass(frozen=True)
 class GapTrack(FakeTrack):
     excluded: tuple = ((2.0, 3.0),)

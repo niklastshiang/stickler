@@ -7,13 +7,15 @@ import pytest
 from stickler.results import summarize, write_csv
 
 
-def row(track, cls, tp, fp, fn, f1=0.0, error="", sec=1.0):
+def row(track, cls, tp, fp, fn, f1=0.0, error="", sec=1.0, audio=10.0, ram=100.0, device="cpu"):
     return {
         "dataset": "d",
         "track": track,
         "separator": "none",
         "transcriber": "t",
-        "device": "cpu",
+        "device": device,
+        "audio_seconds": audio,
+        "peak_rss_mb": ram,
         "sep_seconds": 0.0,
         "trans_seconds": sec,
         "error": error,
@@ -57,6 +59,25 @@ def test_write_csv_roundtrip(tmp_path):
     with path.open(encoding="utf-8") as f:
         back = list(csv.DictReader(f))
     assert len(back) == len(ROWS) and back[0]["class"] == "KD"
+
+
+def test_summary_adds_audio_seconds_peak_ram_and_device():
+    rows = [
+        row("a", "KD", 1, 0, 0, audio=30.0, ram=500.0),
+        row("a", "micro", 1, 0, 0, audio=30.0, ram=500.0),
+        row("b", "KD", 1, 0, 0, audio=20.0, ram=800.0, device="gpu"),
+        row("b", "micro", 1, 0, 0, audio=20.0, ram=800.0, device="gpu"),
+    ]
+    (s,) = summarize(rows)
+    assert s["audio_seconds"] == pytest.approx(50.0)
+    assert s["peak_rss_mb"] == pytest.approx(800.0)
+    assert s["device"] == "cpu+gpu"
+
+
+def test_summary_without_new_columns_still_works():
+    old = [{k: v for k, v in r.items() if k not in ("audio_seconds", "peak_rss_mb")} for r in ROWS]
+    (s,) = summarize(old)
+    assert s["audio_seconds"] == 0.0 and s["peak_rss_mb"] == 0.0
 
 
 def test_write_csv_empty(tmp_path):

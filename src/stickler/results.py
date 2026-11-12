@@ -31,6 +31,9 @@ def _new_group() -> dict:
         "errors": set(),
         "sep": 0.0,
         "trans": 0.0,
+        "audio": 0.0,
+        "ram": 0.0,
+        "devices": set(),
     }
 
 
@@ -49,6 +52,10 @@ def summarize(rows: list[dict]) -> list[dict]:
             g["tracks"].add(r["track"])
             g["sep"] += float(r["sep_seconds"])
             g["trans"] += float(r["trans_seconds"])
+            g["audio"] += float(r.get("audio_seconds") or 0.0)
+            g["ram"] = max(g["ram"], float(r.get("peak_rss_mb") or 0.0))
+            if r.get("device"):
+                g["devices"].add(r["device"])
             continue
         c = g["counts"][r["class"]]
         c[0] += int(r["tp"])
@@ -69,6 +76,9 @@ def summarize(rows: list[dict]) -> list[dict]:
                 **{f"f1_{cls}": f1 for cls, f1 in per_class.items()},
                 "sep_seconds": g["sep"],
                 "trans_seconds": g["trans"],
+                "audio_seconds": g["audio"],
+                "peak_rss_mb": g["ram"],
+                "device": "+".join(sorted(g["devices"])),
             }
         )
     return summary

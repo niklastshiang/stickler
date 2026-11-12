@@ -253,3 +253,35 @@ def test_load_tracks_own_requires_alignment(tmp_path, monkeypatch):
 def test_results_dir_depends_on_config(tmp_path):
     assert api.results_dir_for(api.CONFIG) == api.RESULTS_DIR
     assert api.results_dir_for(tmp_path / "own.yaml") == api.RESULTS_DIR / "own"
+
+
+def _write_summary(folder):
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "summary.csv").write_text(
+        "dataset,separator,transcriber,scheme,tracks,errors,micro_f1,macro_f1,f1_KD\n"
+        "mdb,none,adtof,5,3,0,0.5,0.4,0.7\n",
+        encoding="utf-8",
+    )
+
+
+def test_write_report_reads_default_and_subfolders(tmp_path):
+    _write_summary(tmp_path)
+    _write_summary(tmp_path / "own_songs")
+    path = api.write_report(results_dir=tmp_path)
+    assert path == tmp_path / "report.html"
+    html = path.read_text(encoding="utf-8")
+    assert "Config: default" in html and "Config: own_songs" in html
+
+
+def test_write_report_for_given_configs(tmp_path):
+    _write_summary(tmp_path)
+    _write_summary(tmp_path / "own_songs")
+    html = api.write_report([api.CONFIG, tmp_path / "own_songs.yaml"], tmp_path).read_text()
+    assert "Config: default" in html and "Config: own_songs" in html
+    only = api.write_report([tmp_path / "own_songs.yaml"], tmp_path).read_text()
+    assert "Config: default" not in only
+
+
+def test_write_report_without_results_still_writes_a_page(tmp_path):
+    html = api.write_report(results_dir=tmp_path / "empty").read_text()
+    assert "No results" in html

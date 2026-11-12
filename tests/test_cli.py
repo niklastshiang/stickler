@@ -139,3 +139,10 @@ def test_run_and_eval_accept_another_config(monkeypatch, tmp_path):
     assert CliRunner().invoke(cli.app, ["run", "--config", str(cfg)]).exit_code == 0
     assert CliRunner().invoke(cli.app, ["eval", "--config", str(cfg)]).exit_code == 0
     assert seen == {"run": cfg, "eval": cfg, "out": api.RESULTS_DIR / "own"}
+
+
+def test_report_delegates_to_api(monkeypatch, tmp_path):
+    monkeypatch.setattr(api, "write_report", lambda: tmp_path / "report.html")
+    result = CliRunner().invoke(cli.app, ["report"])
+    assert result.exit_code == 0, result.output
+    assert "report.html" in result.output

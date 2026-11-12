@@ -111,13 +111,13 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 
 ## Phase 4: Report and own songs
 
-- [ ] **Task 13: HTML report** (M)
+- [x] **Task 13: HTML report** (M): `stickler report` writes a stdlib-only HTML file; `score_records` now adds `audio_seconds` and `peak_rss_mb` (RTF, RAM)
   - Acceptance:
     - `stickler report` produces `results/report.html`.
     - Content: ranking by macro-F1, F1 per class (5/3-class), runtime, RTF, RAM and CPU vs. GPU.
     - Note on possible training-data overlap for MDB.
   - Verify: Unit test on the content; open manually in the browser
-  - Dependencies: 5 · Files: `src/stickler/report.py`, `templates/report.html.j2`, tests
+  - Dependencies: 5 · Files: `src/stickler/report.py`, tests (no template engine: standard library only)
 
 - [x] **Task 14: Beat adapter `beat_this`** (S): CPU only (15 s per song); ROCm is dropped, as with ADTOF, because the GPU has never been faster so far (ADR 0003)
   - Acceptance: `beats.json` with beats and downbeats, cpu and rocm.

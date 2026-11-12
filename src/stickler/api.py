@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from stickler import adapters, align, audio, doctor, onsets, runner
+from stickler import adapters, align, audio, doctor, onsets, report, runner
 from stickler.classes import load_schemes
 from stickler.datasets import mdb, own
 from stickler.results import summarize, write_csv
@@ -171,6 +171,31 @@ def evaluate_benchmark(
     write_csv(results_dir / "metrics.csv", rows)
     write_csv(results_dir / "summary.csv", summary)
     return summary
+
+
+def write_report(config_paths: list[Path] | None = None, results_dir: Path = RESULTS_DIR) -> Path:
+    """Writes `report.html` into `results_dir` from the available summary.csv files and
+    returns its path. Without `config_paths`: the default config plus every subfolder of
+    `results_dir` that has a summary.csv; otherwise the given configs' result folders."""
+    if config_paths is None:
+        folders = {"default": results_dir}
+        folders.update({p.name: p for p in sorted(results_dir.glob("*/")) if p.is_dir()})
+    else:
+        folders = {}
+        for p in config_paths:
+            is_default = p.resolve() == CONFIG.resolve()
+            folders["default" if is_default else p.stem] = (
+                results_dir if is_default else results_dir / p.stem
+            )
+    configs = {
+        name: report.read_summary(folder / "summary.csv")
+        for name, folder in folders.items()
+        if (folder / "summary.csv").is_file()
+    }
+    path = results_dir / "report.html"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    path.write_text(report.render(configs), encoding="utf-8")
+    return path
 
 
 def run_doctor(

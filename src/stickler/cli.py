@@ -87,6 +87,13 @@ def eval_cmd(config: ConfigOpt = None) -> None:
         )
 
 
+@app.command("report")
+def report_cmd() -> None:
+    """Write results/report.html from all available summary.csv files."""
+    path = api.write_report()
+    typer.echo(f"Report: {path}")
+
+
 @app.command("align")
 def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
     """Lay own songs' notes onto the recordings and check them → data/own/<song>/click.wav."""
