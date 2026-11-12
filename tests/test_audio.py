@@ -56,3 +56,24 @@ def test_write_stereo_wav(tmp_path):
         assert (w.getnchannels(), w.getframerate(), w.getnframes()) == (2, 8000, 100)
         frames = np.frombuffer(w.readframes(1), dtype="<i2")
     assert frames[0] == pytest.approx(16383, abs=1) and frames[1] == -32767  # right clipped
+
+
+def test_load_mono_tolerates_trailing_separator_in_channel_count(tmp_path, monkeypatch):
+    """Some MP3s (e.g. with side data) make ffprobe print "2," instead of "2"."""
+    import subprocess
+
+    import numpy as np
+
+    stereo = np.array([[0.5, 0.0], [0.5, 0.0]], dtype="<f4").tobytes()
+    real_run = subprocess.run
+
+    def fake_run(cmd, **kw):
+        if cmd[0] == "ffprobe":
+            return subprocess.CompletedProcess(cmd, 0, "2,\n", "")
+        if cmd[0] == "ffmpeg":
+            return subprocess.CompletedProcess(cmd, 0, stereo, b"")
+        return real_run(cmd, **kw)
+
+    monkeypatch.setattr(audio.subprocess, "run", fake_run)
+    signal = audio.load_mono(tmp_path / "song.mp3")
+    assert signal.tolist() == pytest.approx([0.25, 0.25])
