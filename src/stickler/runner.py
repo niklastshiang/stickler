@@ -164,10 +164,12 @@ def run_matrix(
     progress: Progress | None = None,
     cancel: threading.Event | None = None,
     timeout: Timeout = None,
+    skip: set[tuple[str, str]] | frozenset[tuple[str, str]] = frozenset(),
 ) -> list[Record]:
     """Computes (or reads from the cache) all combinations; errors end up in the Record.
 
-    Transcribers that only accept drum stems (input="stem") do not run on `none`.
+    Transcribers that only accept drum stems (input="stem") do not run on `none`; the
+    (separator, transcriber) pairs in `skip` do not run at all.
     `timeout` limits each single adapter call (seconds, overall or per stage)."""
     _check_ids(separators, "separators", registry)
     _check_ids(transcribers, "transcribers", registry)
@@ -177,7 +179,7 @@ def run_matrix(
         for t in ts
         for sep in separators
         for tr in transcribers
-        if not (sep == "none" and registry[tr].needs_stem)
+        if not (sep == "none" and registry[tr].needs_stem) and (sep, tr) not in skip
     ]
     records: list[Record] = []
     for n, (ds, track, sep, tr) in enumerate(jobs, start=1):

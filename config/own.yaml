@@ -5,7 +5,12 @@
 # Demucs in the first sample; can be added later, results are cached.
 datasets: [own]
 separators: [none, demucs]
-transcribers: [adt_str, adtof, muscriptor_s, muscriptor_m, yourmt3]
+transcribers: [adt_str, adtof, muscriptor_m, yourmt3]
+# Dropped on 2026-11-12 (owner's decision, cached results are kept): MuScriptor small was last
+# in every measurement (MDB Punk, first 7 MDB songs: macro-F1 0.51-0.58, first own song 0.47);
+# MuScriptor medium on the full mix is the most expensive job (~7x real time) and ranked below
+# ADTOF on the mix and below every separated variant. Medium stays on separated stems.
+skip: ["none+muscriptor_m"]
 device: auto
 schemes: ["5", "3"]
 timeout:

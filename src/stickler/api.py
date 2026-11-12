@@ -39,6 +39,18 @@ class BenchmarkConfig:
     device: str
     schemes: list[str]
     timeout: runner.Timeout = None  # seconds per adapter call, overall or per stage
+    skip: frozenset[tuple[str, str]] = frozenset()  # (separator, transcriber) pairs not run
+
+
+def _parse_skip(raw: list) -> frozenset[tuple[str, str]]:
+    """`["none+muscriptor_m", …]` → {("none", "muscriptor_m"), …}."""
+    pairs = []
+    for item in raw:
+        parts = str(item).split("+")
+        if len(parts) != 2:
+            raise ValueError(f"skip: expected 'separator+transcriber', got {item!r}")
+        pairs.append((parts[0], parts[1]))
+    return frozenset(pairs)
 
 
 def _parse_limit(stage: str, raw: object) -> float | runner.RelativeLimit:
@@ -70,6 +82,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         device=raw.get("device", "auto"),
         schemes=[str(s) for s in raw.get("schemes", ["5", "3"])],
         timeout=_parse_timeout(raw.get("timeout")),
+        skip=_parse_skip(raw.get("skip") or []),
     )
 
 
@@ -139,6 +152,7 @@ def run_benchmark(
         progress=progress,
         cancel=cancel,
         timeout=cfg.timeout,
+        skip=cfg.skip,
     )
 
 

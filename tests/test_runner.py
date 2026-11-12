@@ -260,3 +260,10 @@ def test_excluded_intervals_are_not_scored(setup):
     rows = runner.score_records([rec], {"fake": [track]}, SCHEMES, read_notes=lambda _: est)
     micro = next(r for r in rows if r["scheme"] == "5" and r["class"] == "micro")
     assert (micro["tp"], micro["fp"], micro["fn"]) == (1, 0, 0)
+
+
+def test_skipped_combinations_are_not_run(setup):
+    recs = run(
+        setup, separators=["none", "oracle"], transcribers=["dummy"], skip={("none", "dummy")}
+    )
+    assert [(r.separator, r.transcriber) for r in recs] == [("oracle", "dummy")]

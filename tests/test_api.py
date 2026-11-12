@@ -408,3 +408,12 @@ def test_notate_takes_title_and_artist_from_tags(tmp_path, monkeypatch):
         audio_path, tmp_path / "o.musicxml", cache_dir=tmp_path, title="T", artist="A"
     ).musicxml.read_text()
     assert "<work-title>T</work-title>" in xml and ">A</creator>" in xml
+
+
+def test_config_skip_combinations(tmp_path):
+    cfg = _bench(tmp_path)
+    cfg.write_text(cfg.read_text() + 'skip: ["none+muscriptor_m"]\n', encoding="utf-8")
+    assert api.load_benchmark_config(cfg).skip == {("none", "muscriptor_m")}
+    cfg.write_text(cfg.read_text() + 'skip: ["kaputt"]\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="skip"):
+        api.load_benchmark_config(cfg)
