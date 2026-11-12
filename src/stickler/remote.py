@@ -108,6 +108,7 @@ uv sync --quiet
 {setups}
 uv run stickler doctor || true
 uv run stickler run --config {config} --device gpu
+uv run stickler eval --config {config}
 """
 
 
@@ -166,6 +167,12 @@ def run_remote(
             rsync_command(host, ["--update"], f":{REMOTE_DIR}/cache/", f"{root / 'cache'}/"),
             "cache download",
         )
+        # Scores computed on the host: GPU cache entries count as local cache hits only after
+        # the device-independent cache migration (tasks: Task 20).
+        stem = Path(config).stem
+        results = "results/" if stem == "benchmark" else f"results/{stem}/"  # see results_dir_for
+        (root / results).mkdir(parents=True, exist_ok=True)
+        run(rsync_command(host, [], f":{REMOTE_DIR}/{results}", f"{root / results}/"), "results")
     finally:
         if stop is not None:
             stop()

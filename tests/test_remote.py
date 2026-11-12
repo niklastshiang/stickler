@@ -26,7 +26,9 @@ def test_script_installs_tools_sets_up_cuda_and_runs_on_gpu():
     assert "stickler setup --adapter demucs --device cuda" in script
     assert "stickler setup --adapter adt_str --device cuda" in script
     assert "stickler run --config config/own.yaml --device gpu" in script
+    assert "stickler eval --config config/own.yaml" in script
     assert script.index("setup --adapter") < script.index("stickler run")
+    assert script.index("stickler run") < script.index("stickler eval")
 
 
 def test_adapters_for_config_skips_builtin_separators(tmp_path):
@@ -88,7 +90,11 @@ def test_run_remote_order_and_secret_on_stdin(tmp_path, plan):
     assert cmds[0][0] == "ssh" and "apt-get" in cmds[0][-1]  # bootstrap: rsync, ffmpeg
     rsyncs = [c for c in cmds if c[0] == "rsync"]
     assert any(c[-1].endswith(":stickler/cache/") for c in rsyncs)  # cache up
-    assert rsyncs[-1][-2].endswith(":stickler/cache/") and rsyncs[-1][-1].endswith("cache/")
+    cache_down = [c for c in rsyncs if c[-2].endswith(":stickler/cache/")]
+    assert cache_down and cache_down[0][-1].endswith("cache/")
+    results_down = rsyncs[-1]
+    assert results_down[-2].endswith(":stickler/results/own/")
+    assert results_down[-1].endswith("results/own/")
     script_call = next((c, i) for c, i in rec.calls if c[0] == "ssh" and i)
     assert script_call[1].startswith("secret-token\n")
     assert all("secret-token" not in part for c in cmds for part in c)
