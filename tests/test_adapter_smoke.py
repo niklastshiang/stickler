@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from stickler import adapters
+from stickler.datasets import mdb
 from stickler.midi import read_drum_notes
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,6 +60,29 @@ def test_transcriber_produces_midi(adapter_id, drum_clip, tmp_path):
     assert notes, "keine Noten erkannt"
     assert all(35 <= pitch <= 81 for _, pitch in notes), "Pitches außerhalb des GM-Drum-Bereichs"
     assert json.loads((tmp_path / adapter_id / "meta.json").read_text())["device"] == "cpu"
+
+
+@pytest.fixture(scope="module")
+def mdb_clip(tmp_path_factory) -> Path:
+    """Die ersten 10 s des MDB-Mixes `MusicDelta_Punk` (für Modelle, die synthetische Drums
+    nicht als Musik erkennen). Braucht `stickler fetch mdb`."""
+    tracks = {t.id: t for t in mdb.tracks(ROOT / "data" / "mdb")}
+    assert "MusicDelta_Punk" in tracks, "MDB fehlt → uv run stickler fetch mdb"
+    path = tmp_path_factory.mktemp("audio") / "punk_10s.wav"
+    with wave.open(str(tracks["MusicDelta_Punk"].mix)) as src, wave.open(str(path), "wb") as dst:
+        dst.setparams(src.getparams())
+        dst.writeframes(src.readframes(10 * src.getframerate()))
+    return path
+
+
+def test_yourmt3_produces_midi_on_real_mix(mdb_clip, tmp_path):
+    """YourMT3+ erkennt im synthetischen Clip gar nichts, auch keine anderen Instrumente."""
+    spec = adapters.discover(ROOT / "adapters")["yourmt3"]
+    result = adapters.run_adapter(spec, mdb_clip, tmp_path / "yourmt3", device="cpu")
+    assert result.ok, result.error
+    pitches = {pitch for _, pitch in read_drum_notes(result.output)}
+    assert {36, 38} <= pitches, f"Kick und Snare fehlen: {sorted(pitches)}"
+    assert all(35 <= p <= 81 for p in pitches), "Pitches außerhalb des GM-Drum-Bereichs"
 
 
 @pytest.mark.parametrize("adapter_id", ["demucs", "roformer"])

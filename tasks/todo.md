@@ -95,7 +95,7 @@ Jede Aufgabe ist erst erledigt, wenn `scripts/check.sh task` grün ist und ein C
   - Verify: `pytest -m adapters -k muscriptor`, Lauf auf MDB
   - Dependencies: 5, User-Login · Files: `adapters/transcribers/muscriptor/*`
 
-- [ ] **Task 11: Transkriber `yourmt3`** (M, Risiko)
+- [x] **Task 11: Transkriber `yourmt3`** (M, Risiko): im ersten Anlauf lauffähig; Smoke-Test auf 10 s MDB-Mix, weil das Modell im synthetischen Clip nichts erkennt
   - Acceptance: Die Inferenz aus dem HF-Space-Code läuft lokal mit gepinntem Commit, die Drum-Spur kommt als GM-MIDI heraus. Scheitert das nach 2 Anläufen: Kandidat per ADR streichen.
   - Verify: `pytest -m adapters -k yourmt3`
   - Dependencies: 5 · Files: `adapters/transcribers/yourmt3/*`
