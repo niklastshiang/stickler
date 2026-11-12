@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import wave
@@ -52,3 +53,18 @@ def write_wav(path: Path, signal: np.ndarray, sr: int) -> Path:
         w.setframerate(sr)
         w.writeframes(pcm.tobytes())
     return path
+
+
+def tags(path: Path) -> dict[str, str]:
+    """Title and artist from the file's tags (case-insensitive keys); {} if there are none."""
+    proc = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format_tags", "-of", "json", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    try:
+        raw = json.loads(proc.stdout).get("format", {}).get("tags", {})
+    except json.JSONDecodeError:
+        return {}
+    lower = {k.lower(): v.strip() for k, v in raw.items() if isinstance(v, str)}
+    return {k: lower[k] for k in ("title", "artist") if lower.get(k)}

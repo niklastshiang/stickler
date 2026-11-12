@@ -163,7 +163,7 @@ def test_notate_prints_outputs_and_exports_drums(monkeypatch, tmp_path):
     )
     seen = {}
 
-    def fake_notate(audio, out=None, *, pipeline, title=None, pdf=True, device="auto"):
+    def fake_notate(audio, out=None, *, pipeline, title=None, artist=None, pdf=True, device="auto"):
         seen.update(audio=audio, out=out, pipeline=pipeline, pdf=pdf)
         return Notation(tmp_path / "s.musicxml", None, "MuseScore not installed", t)
 

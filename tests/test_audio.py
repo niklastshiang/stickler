@@ -77,3 +77,33 @@ def test_load_mono_tolerates_trailing_separator_in_channel_count(tmp_path, monke
     monkeypatch.setattr(audio.subprocess, "run", fake_run)
     signal = audio.load_mono(tmp_path / "song.mp3")
     assert signal.tolist() == pytest.approx([0.25, 0.25])
+
+
+def test_tags_reads_title_and_artist(tmp_path):
+    import subprocess
+
+    src = write_wav(tmp_path / "a.wav", 0.2)
+    flac = tmp_path / "a.flac"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-i",
+            str(src),
+            "-metadata",
+            "title=Song",
+            "-metadata",
+            "ARTIST=Band",
+            str(flac),
+        ],
+        check=True,
+    )
+    assert audio.tags(flac) == {"title": "Song", "artist": "Band"}
+    assert audio.tags(src) == {}
+
+
+def test_tags_of_unreadable_file_are_empty(tmp_path):
+    bad = tmp_path / "kaputt.mp3"
+    bad.write_bytes(b"x")
+    assert audio.tags(bad) == {}

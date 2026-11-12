@@ -396,3 +396,15 @@ def test_export_drum_track(tmp_path, suffix):
 def test_export_drum_track_rejects_unknown_format(tmp_path):
     with pytest.raises(ValueError, match="format"):
         api.export_drum_track(tmp_path / "drums.wav", tmp_path / "x.doc")
+
+
+def test_notate_takes_title_and_artist_from_tags(tmp_path, monkeypatch):
+    audio_path, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    monkeypatch.setattr(api.musescore, "find", lambda: None)
+    monkeypatch.setattr(api.audio, "tags", lambda p: {"title": "Tagged", "artist": "Band"})
+    xml = api.notate(audio_path, tmp_path / "o.musicxml", cache_dir=tmp_path).musicxml.read_text()
+    assert "<work-title>Tagged</work-title>" in xml and ">Band</creator>" in xml
+    xml = api.notate(
+        audio_path, tmp_path / "o.musicxml", cache_dir=tmp_path, title="T", artist="A"
+    ).musicxml.read_text()
+    assert "<work-title>T</work-title>" in xml and ">A</creator>" in xml

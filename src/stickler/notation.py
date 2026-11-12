@@ -213,6 +213,7 @@ def to_musicxml(
     downbeats: list[float],
     *,
     title: str = "",
+    artist: str = "",
     min_velocity: int = 0,
     ghost_velocity: int = 0,
 ) -> str:
@@ -276,7 +277,12 @@ def to_musicxml(
         '"http://www.musicxml.org/dtds/partwise.dtd">\n'
         '<score-partwise version="4.0">'
         f"<work><work-title>{escape(title)}</work-title></work>"
-        '<part-list><score-part id="P1"><part-name>Drumset</part-name>'
+        + (
+            f'<identification><creator type="composer">{escape(artist)}</creator></identification>'
+            if artist
+            else ""
+        )
+        + '<part-list><score-part id="P1"><part-name>Drumset</part-name>'
         f"{instruments}</score-part></part-list>"
         f'<part id="P1">{"".join(measures)}</part></score-partwise>\n'
     )

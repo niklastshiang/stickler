@@ -134,3 +134,13 @@ def test_tempo_uses_the_average_beat_not_the_20ms_grid():
     beats = list(np.round(true / 0.02) * 0.02)
     xml = notation.to_musicxml([(0.0, KICK, 100)], beats, beats[::4])
     assert 'tempo="140"' in xml
+
+
+def test_artist_is_written_as_composer():
+    xml = notation.to_musicxml(groove(), BEATS, DOWNBEATS, title="RATATATA", artist="A & B")
+    assert '<creator type="composer">A &amp; B</creator>' in xml
+    assert parse(xml).metadata.composer == "A & B"
+
+
+def test_no_artist_no_creator():
+    assert "<creator" not in notation.to_musicxml(groove(), BEATS, DOWNBEATS)

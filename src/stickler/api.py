@@ -384,6 +384,7 @@ def notate(
     *,
     pipeline: str = DEFAULT_PIPELINE,
     title: str | None = None,
+    artist: str | None = None,
     pdf: bool = True,
     device: str = "auto",
     cache_dir: Path = CACHE_DIR,
@@ -391,13 +392,20 @@ def notate(
     results_dir: Path = RESULTS_DIR,
 ) -> Notation:
     """Song → drum sheet music as MusicXML (default: results/notation/<song>.musicxml), plus a
-    PDF next to it if MuseScore is installed."""
+    PDF next to it if MuseScore is installed. Title and artist default to the file's tags."""
     t = transcribe_song(
         audio_path, pipeline, device=device, cache_dir=cache_dir, adapters_root=adapters_root
     )
     target = out or results_dir / "notation" / f"{audio_path.stem}.musicxml"
     target.parent.mkdir(parents=True, exist_ok=True)
-    xml = notation.to_musicxml(t.hits, t.beats, t.downbeats, title=title or audio_path.stem)
+    found = audio.tags(audio_path) if title is None or artist is None else {}
+    xml = notation.to_musicxml(
+        t.hits,
+        t.beats,
+        t.downbeats,
+        title=title or found.get("title") or audio_path.stem,
+        artist=artist if artist is not None else found.get("artist", ""),
+    )
     target.write_text(xml, encoding="utf-8")
     pdf_path, pdf_error = None, None
     if pdf:
