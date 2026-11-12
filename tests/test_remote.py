@@ -134,6 +134,7 @@ def test_stop_pod_calls_the_runpod_api():
     def opener(request, timeout):
         seen["url"], seen["method"] = request.full_url, request.get_method()
         seen["auth"] = request.get_header("Authorization")
+        seen["agent"] = request.get_header("User-agent")
         return Response()
 
     remote.stop_pod("abc123", "key", opener=opener)
@@ -141,6 +142,7 @@ def test_stop_pod_calls_the_runpod_api():
         "url": "https://rest.runpod.io/v1/pods/abc123/stop",
         "method": "POST",
         "auth": "Bearer key",
+        "agent": remote.USER_AGENT,  # Cloudflare blocks Python's default agent (error 1010)
     }
 
 

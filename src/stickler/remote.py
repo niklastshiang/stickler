@@ -24,6 +24,8 @@ from stickler.runner import BUILTIN_SEPARATORS
 
 REMOTE_DIR = "stickler"
 RUNPOD_API = "https://rest.runpod.io/v1"
+# Cloudflare in front of the RunPod API rejects Python's default user agent (error 1010).
+USER_AGENT = "stickler (+https://github.com/niklastshiang/stickler)"
 SSH_OPTIONS = ["-o", "ServerAliveInterval=30", "-o", "StrictHostKeyChecking=accept-new"]
 BOOTSTRAP = (
     "command -v rsync >/dev/null && command -v ffmpeg >/dev/null || "
@@ -116,7 +118,7 @@ def stop_pod(pod_id: str, api_key: str, opener: Callable = urllib.request.urlope
     request = urllib.request.Request(
         f"{RUNPOD_API}/pods/{pod_id}/stop",
         method="POST",
-        headers={"Authorization": f"Bearer {api_key}"},
+        headers={"Authorization": f"Bearer {api_key}", "User-Agent": USER_AGENT},
     )
     with opener(request, timeout=60) as response:
         if response.status != 200:
