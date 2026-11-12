@@ -162,7 +162,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 
 ## Phase 5b: Rented GPU for development (RunPod, decided 2026-11-12)
 
-- [ ] **Task 19: CUDA environments for adapters** (M)
+- [~] **Task 19: CUDA environments for adapters** (M): implemented and unit-tested (locked versions via `uv export`, torch from cu128 → cu130 → cu126, `doctor` shows NVIDIA GPU and CUDA envs); real check on the first pod still open
   - Acceptance: `stickler setup --device cuda` builds `.venv-cuda` from the adapter's direct dependencies with torch/torchaudio at the `uv.lock` version from the PyTorch CUDA index; `--device gpu` uses it; adapter files untouched.
   - Verify: unit tests with mocked subprocess; real check on the first pod (`stickler doctor`, smoke tests with `--device gpu`)
 - [ ] **Task 20: Cache migration** (M, only after the MDB benchmark has finished successfully)

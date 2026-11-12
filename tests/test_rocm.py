@@ -113,8 +113,8 @@ def test_setup_rocm_without_config_raises(tmp_path):
 
 
 def test_setup_unknown_device_raises(spec):
-    with pytest.raises(ValueError, match="cuda"):
-        adapters.setup_adapter(spec, device="cuda")
+    with pytest.raises(ValueError, match="tpu"):
+        adapters.setup_adapter(spec, device="tpu")
 
 
 def test_auto_respects_prefer_gpu_false(spec):

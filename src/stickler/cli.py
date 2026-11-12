@@ -34,7 +34,7 @@ def fetch(name: str, data_dir: DataDir = Path("data")) -> None:
 @app.command()
 def setup(
     adapter: Annotated[str | None, typer.Option(help="Adapter ID; all if omitted")] = None,
-    device: Annotated[str, typer.Option(help="cpu | rocm (AMD GPU)")] = "cpu",
+    device: Annotated[str, typer.Option(help="cpu | rocm (AMD GPU) | cuda (NVIDIA GPU)")] = "cpu",
 ) -> None:
     """Build the adapter environment and download weights."""
     try:

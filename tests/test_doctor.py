@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from stickler import doctor, musescore
+from stickler import adapters, doctor, musescore
 
 
 def adapter(root: Path, stage: str, name: str, rocm: bool = False, weights: bool = False) -> Path:
@@ -73,3 +73,17 @@ def test_musescore_found_via_path_or_flatpak(monkeypatch):
 
 def test_datasets(tmp_path):
     assert not by_name(doctor.check_datasets(tmp_path))["dataset mdb"].ok
+
+
+def test_nvidia_gpu_detected_via_nvidia_smi(tmp_path):
+    check = doctor.check_gpu(
+        kfd=tmp_path / "missing", drm=tmp_path, nvidia=lambda: "GPU 0: NVIDIA GeForce RTX 4090"
+    )
+    assert check.ok and "RTX 4090" in check.detail
+
+
+def test_cuda_env_is_reported(tmp_path):
+    a = adapter(tmp_path, "transcribers", "t")
+    (a / adapters.CUDA_ENV / "bin").mkdir(parents=True)
+    detail = by_name(doctor.check_adapters(tmp_path))["adapter t"].detail
+    assert "CUDA: built" in detail

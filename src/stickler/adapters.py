@@ -6,6 +6,10 @@ Result: stage output + meta.json, error.log on failure. The harness never aborts
 GPU (AMD ROCm): adapters that declare `[tool.stickler.rocm]` in their pyproject.toml get a
 second environment `.venv-rocm` via `setup_adapter(spec, device="rocm")`. In it, the CPU torch
 packages are replaced by AMD's ROCm wheels; all other versions come from the lock.
+
+GPU (NVIDIA CUDA, e.g. a rented RunPod GPU): `setup_adapter(spec, device="cuda")` builds
+`.venv-cuda` for any adapter without touching its files: every package at its `uv.lock`
+version, the packages from the PyTorch CPU index at the same version from a CUDA index.
 """
 
 from __future__ import annotations
@@ -25,8 +29,12 @@ log = logging.getLogger(__name__)
 
 OUTPUTS = {"separators": "drums.wav", "transcribers": "drums.mid", "beats": "beats.json"}
 DEVICES = ("auto", "cpu", "gpu")
-SETUP_DEVICES = ("cpu", "rocm")
+SETUP_DEVICES = ("cpu", "rocm", "cuda")
 ROCM_ENV = ".venv-rocm"
+CUDA_ENV = ".venv-cuda"
+PYTORCH_CPU_INDEX = "https://download.pytorch.org/whl/cpu"
+# Tried in this order; newer torch releases are not built for every CUDA version.
+CUDA_INDEXES = tuple(f"https://download.pytorch.org/whl/{v}" for v in ("cu128", "cu130", "cu126"))
 
 
 @dataclass(frozen=True)
@@ -75,13 +83,19 @@ def _rocm_python(spec: AdapterSpec) -> Path:
     return spec.path / ROCM_ENV / "bin" / "python"
 
 
+def _cuda_python(spec: AdapterSpec) -> Path:
+    return spec.path / CUDA_ENV / "bin" / "python"
+
+
 def env_variant(spec: AdapterSpec, device: str) -> str | None:
-    """Which environment runs: 'rocm' (if built and cpu not requested), else 'cpu'.
-    With 'auto', `prefer_gpu` also decides. None if 'gpu' is requested but no ROCm
-    environment exists."""
+    """Which environment runs. 'cpu' if requested; a built CUDA environment always wins
+    (only built on machines with an NVIDIA GPU); then 'rocm' (with 'auto' only if
+    `prefer_gpu`). None if 'gpu' is requested but no GPU environment exists."""
     has_rocm = _rocm_python(spec).exists()
     if device == "cpu":
         return "cpu"
+    if _cuda_python(spec).exists():
+        return "cuda"
     if device == "gpu":
         return "rocm" if has_rocm else None
     cfg = rocm_config(spec) if has_rocm else None
@@ -164,11 +178,13 @@ def run_adapter(
     if variant is None:
         return _fail(
             out_dir,
-            f"{spec.id}: GPU requested, but no ROCm environment. "
-            f"First run: stickler setup --adapter {spec.id} --device rocm",
+            f"{spec.id}: GPU requested, but no GPU environment. "
+            f"First run: stickler setup --adapter {spec.id} --device rocm (or cuda)",
         )
     if variant == "rocm":
         python = [str(_rocm_python(spec))]
+    elif variant == "cuda":
+        python = [str(_cuda_python(spec))]
     else:
         python = ["uv", "run", "--quiet", "--project", str(spec.path), "python"]
     args = ["--in", str(audio), "--out", str(out_dir), "--device", device]
@@ -227,12 +243,83 @@ def _setup_rocm(spec: AdapterSpec) -> Path:
     return python
 
 
+def cuda_pins(spec: AdapterSpec) -> list[str]:
+    """`name==version` for every locked package from the PyTorch CPU index (local version
+    label such as `+cpu` removed), to be installed from a CUDA index instead."""
+    lock = tomllib.loads((spec.path / "uv.lock").read_text(encoding="utf-8"))
+    pins = {}
+    for pkg in lock.get("package", []):
+        if pkg.get("source", {}).get("registry") == PYTORCH_CPU_INDEX:
+            pins[pkg["name"]] = pkg["version"].split("+")[0]
+    return [f"{name}=={version}" for name, version in sorted(pins.items())]
+
+
+def cuda_requirements(export: str, replace: set[str]) -> list[str]:
+    """Requirement lines from `uv export` without the packages in `replace`."""
+    reqs = []
+    for raw in export.splitlines():
+        line = raw.split(" \\")[0].strip()
+        if not line or line.startswith("#"):
+            continue
+        name = re.split(r"[=<>~!;\[ ]", line, maxsplit=1)[0].strip().lower()
+        if line.startswith("-e") or name not in replace:
+            reqs.append(line)
+    return reqs
+
+
+def _setup_cuda(spec: AdapterSpec) -> Path:
+    python = _cuda_python(spec)
+    if not python.exists():
+        _check(["uv", "venv", "--quiet", "--python", "3.12", CUDA_ENV], spec, cwd=spec.path)
+    pins = cuda_pins(spec)
+    export = _check(
+        [
+            "uv",
+            "export",
+            "--frozen",
+            "--no-hashes",
+            "--no-emit-project",
+            "--project",
+            str(spec.path),
+        ],
+        spec,
+    )
+    replace = {p.split("==")[0] for p in pins}
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+        f.write("\n".join(cuda_requirements(export, replace)) + "\n")
+    errors = []
+    for index in CUDA_INDEXES:
+        cmd = [
+            "uv",
+            "pip",
+            "install",
+            "--quiet",
+            "--python",
+            str(python),
+            "--index",
+            index,
+            "--index-strategy",
+            "unsafe-best-match",
+            "-r",
+            f.name,
+            *pins,
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=spec.path)
+        if proc.returncode == 0:
+            return python
+        errors.append(f"{index}: {proc.stderr.strip().splitlines()[-1:] or proc.returncode}")
+    raise RuntimeError(f"CUDA setup of {spec.id} failed for {pins}: " + "; ".join(errors))
+
+
 def setup_adapter(spec: AdapterSpec, device: str = "cpu") -> None:
-    """Builds the environment (cpu: uv sync, rocm: .venv-rocm) and runs setup.py if present."""
+    """Builds the environment (cpu: uv sync, rocm: .venv-rocm, cuda: .venv-cuda) and runs
+    setup.py if present."""
     if device not in SETUP_DEVICES:
         raise ValueError(f"device must be one of {SETUP_DEVICES}, not {device!r}")
     if device == "rocm":
         python = [str(_setup_rocm(spec))]
+    elif device == "cuda":
+        python = [str(_setup_cuda(spec))]
     else:
         _check(["uv", "sync", "--quiet", "--project", str(spec.path)], spec)
         python = ["uv", "run", "--quiet", "--project", str(spec.path), "python"]

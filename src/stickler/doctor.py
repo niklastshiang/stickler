@@ -21,12 +21,29 @@ class Check:
     detail: str
 
 
-def check_gpu(kfd: Path = Path("/dev/kfd"), drm: Path = Path("/sys/class/drm")) -> Check:
-    """AMD GPU for ROCm: /dev/kfd present and a DRM card with vendor 0x1002."""
+def _nvidia_name() -> str | None:
+    """First line of `nvidia-smi -L`, e.g. "GPU 0: NVIDIA GeForce RTX 4090 (UUID: …)"."""
+    try:
+        proc = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    lines = proc.stdout.strip().splitlines() if proc.returncode == 0 else []
+    return lines[0] if lines else None
+
+
+def check_gpu(
+    kfd: Path = Path("/dev/kfd"),
+    drm: Path = Path("/sys/class/drm"),
+    nvidia: Callable[[], str | None] = _nvidia_name,
+) -> Check:
+    """NVIDIA GPU for CUDA (nvidia-smi), or AMD GPU for ROCm: /dev/kfd present and a DRM card
+    with vendor 0x1002."""
+    if name := nvidia():
+        return Check("gpu", True, f"{name} (CUDA)")
     amd = [v for v in drm.glob("card*/device/vendor") if v.read_text().strip() == "0x1002"]
     if kfd.exists() and amd:
         return Check("gpu", True, f"AMD GPU ({amd[0].parent.parent.name}), /dev/kfd present")
-    return Check("gpu", False, "no AMD GPU with ROCm access (/dev/kfd) found")
+    return Check("gpu", False, "no NVIDIA GPU (nvidia-smi) and no AMD GPU with /dev/kfd found")
 
 
 def _rocm_device_name(spec: adapters.AdapterSpec) -> str | None:
@@ -60,6 +77,8 @@ def check_adapters(root: Path, probe_gpu: bool = False) -> list[Check]:
             rocm = f"ROCm: {name}" if name else "ROCm: built"
             if not cfg.prefer_gpu:
                 rocm += " (auto uses CPU)"
+        if (spec.path / adapters.CUDA_ENV).is_dir():
+            rocm += "; CUDA: built"
         detail = "; ".join(problems) if problems else "ready"
         if problems:
             detail += f" → stickler setup --adapter {adapter_id}"
