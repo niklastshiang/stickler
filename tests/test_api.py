@@ -126,3 +126,11 @@ def test_config_timeout_optional(tmp_path):
     assert api.load_benchmark_config(cfg).timeout is None
     cfg.write_text(cfg.read_text() + "timeout: 1800\n", encoding="utf-8")
     assert api.load_benchmark_config(cfg).timeout == 1800.0
+
+
+def test_config_timeout_per_stage(tmp_path):
+    cfg = _bench(tmp_path)
+    cfg.write_text(
+        cfg.read_text() + "timeout:\n  separators: 1800\n  transcribers: 300\n", encoding="utf-8"
+    )
+    assert api.load_benchmark_config(cfg).timeout == {"separators": 1800.0, "transcribers": 300.0}

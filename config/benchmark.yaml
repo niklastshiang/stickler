@@ -8,4 +8,9 @@ separators: [none, oracle, demucs, roformer]
 transcribers: [adt_str]
 device: auto          # auto | cpu | gpu
 schemes: ["5", "3"]   # aus config/classes.yaml
-timeout: 1800         # Sekunden je Adapter-Aufruf; Überschreitung zählt als Fehler "Zeitlimit"
+# Zeitlimit je Adapter-Aufruf in Sekunden (Überschreitung = Fehler "Zeitlimit").
+# Transkriber 5 min: ADT_STR dekodiert auf Jazz-Drums bis zu 28 min für 103 s Audio.
+# Separatoren 30 min: RoFormer braucht auf der CPU ~7× Echtzeit.
+timeout:
+  separators: 1800
+  transcribers: 300

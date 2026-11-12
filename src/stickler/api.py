@@ -30,7 +30,15 @@ class BenchmarkConfig:
     transcribers: list[str]
     device: str
     schemes: list[str]
-    timeout: float | None = None  # Sekunden je Adapter-Aufruf
+    timeout: runner.Timeout = None  # Sekunden je Adapter-Aufruf, gesamt oder je Stufe
+
+
+def _parse_timeout(raw: object) -> runner.Timeout:
+    if not raw:
+        return None
+    if isinstance(raw, dict):
+        return {str(stage): float(seconds) for stage, seconds in raw.items()}
+    return float(raw)
 
 
 def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
@@ -44,7 +52,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         transcribers=list(raw["transcribers"]),
         device=raw.get("device", "auto"),
         schemes=[str(s) for s in raw.get("schemes", ["5", "3"])],
-        timeout=float(raw["timeout"]) if raw.get("timeout") else None,
+        timeout=_parse_timeout(raw.get("timeout")),
     )
 
 

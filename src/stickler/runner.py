@@ -24,6 +24,14 @@ from stickler.midi import read_drum_notes
 log = logging.getLogger(__name__)
 
 BUILTIN_SEPARATORS = ("none", "oracle")
+# Zeitlimit in Sekunden: eine Zahl für alle Stufen oder je Stufe {"separators": …, ...}
+Timeout = float | dict[str, float] | None
+
+
+def _stage_timeout(timeout: Timeout, stage: str) -> float | None:
+    return timeout.get(stage) if isinstance(timeout, dict) else timeout
+
+
 Progress = Callable[[int, int, str], None]
 
 
@@ -83,7 +91,7 @@ def _cached_or_run(
     cache: Path,
     device: str,
     execute: bool,
-    timeout: float | None = None,
+    timeout: Timeout = None,
 ) -> adapters.AdapterResult:
     out_dir = cache_dir_for(cache, spec, audio, device)
     output, meta = out_dir / spec.expected_output, out_dir / "meta.json"
@@ -91,7 +99,8 @@ def _cached_or_run(
         return adapters.AdapterResult(True, output, json.loads(meta.read_text()), None)
     if not execute:
         return adapters.AdapterResult(False, None, None, f"{spec.id}: nicht berechnet")
-    return adapters.run_adapter(spec, audio, out_dir, device=device, timeout=timeout)
+    limit = _stage_timeout(timeout, spec.stage)
+    return adapters.run_adapter(spec, audio, out_dir, device=device, timeout=limit)
 
 
 def _separate(
@@ -101,7 +110,7 @@ def _separate(
     cache: Path,
     device: str,
     execute: bool,
-    timeout: float | None,
+    timeout: Timeout,
 ) -> adapters.AdapterResult:
     if separator == "none":
         return adapters.AdapterResult(True, track.mix, None, None)
@@ -129,12 +138,12 @@ def run_matrix(
     execute: bool = True,
     progress: Progress | None = None,
     cancel: threading.Event | None = None,
-    timeout: float | None = None,
+    timeout: Timeout = None,
 ) -> list[Record]:
     """Rechnet (oder liest aus dem Cache) alle Kombinationen; Fehler landen im Record.
 
     Transkriber, die nur Drum-Stems vertragen (input="stem"), laufen nicht auf `none`.
-    `timeout` begrenzt jeden einzelnen Adapter-Aufruf (Sekunden)."""
+    `timeout` begrenzt jeden einzelnen Adapter-Aufruf (Sekunden, gesamt oder je Stufe)."""
     _check_ids(separators, "separators", registry)
     _check_ids(transcribers, "transcribers", registry)
     jobs = [

@@ -170,3 +170,19 @@ def test_timeout_is_passed_to_adapter(setup, monkeypatch):
     monkeypatch.setattr(adapters, "run_adapter", fake_run_adapter)
     run(setup, timeout=42.0)
     assert seen["timeout"] == 42.0
+
+
+def test_timeout_per_stage(setup, monkeypatch):
+    seen = {}
+
+    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None):
+        seen[spec.stage] = timeout
+        if spec.stage == "separators":
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "drums.wav").write_bytes(b"x")
+            return adapters.AdapterResult(True, out_dir / "drums.wav", {}, None)
+        return adapters.AdapterResult(False, None, None, "x")
+
+    monkeypatch.setattr(adapters, "run_adapter", fake_run_adapter)
+    run(setup, separators=["copysep"], timeout={"separators": 1800.0, "transcribers": 300.0})
+    assert seen == {"separators": 1800.0, "transcribers": 300.0}
