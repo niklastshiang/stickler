@@ -66,8 +66,7 @@ data and, above all, on real music. The answer is in: see [`> RESULTS`](#-result
 **Next:** release 1 as a command line tool with a *Fast* and a *Quality* mode; after it, the
 desktop application with a GTK 4 interface, shipped as Flatpak and AppImage.
 
-Only **open-source models from actively maintained projects** are allowed. No cloud service, no
-black box; everything runs on your own machine.
+Stickler only uses open-source models from actively maintained projects. No cloud service; everything runs on your own machine.
 
 ---
 
