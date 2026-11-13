@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Protocol
 
 from stickler import adapters
+from stickler import audio as audio_mod
 from stickler.audio import duration as audio_duration
 from stickler.classes import Scheme, onsets_from_notes
 from stickler.evaluate import PRF, score
@@ -151,9 +152,11 @@ def cached_or_run(
         return adapters.AdapterResult(False, None, None, f"{spec.id}: not computed")
     try:
         limit = _stage_timeout(timeout, spec.stage, audio)
+        # the key stays with the original file; the model gets a format it can read
+        model_input = audio_mod.readable(audio, cache)
     except RuntimeError as exc:
         return adapters.AdapterResult(False, None, None, f"{spec.id}: {exc}")
-    return adapters.run_adapter(spec, audio, out_dir, device=device, timeout=limit)
+    return adapters.run_adapter(spec, model_input, out_dir, device=device, timeout=limit)
 
 
 def _separate(

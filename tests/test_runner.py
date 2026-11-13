@@ -267,3 +267,25 @@ def test_skipped_combinations_are_not_run(setup):
         setup, separators=["none", "oracle"], transcribers=["dummy"], skip={("none", "dummy")}
     )
     assert [(r.separator, r.transcriber) for r in recs] == [("oracle", "dummy")]
+
+
+def test_other_formats_reach_the_adapter_as_flac_but_keep_their_cache_key(tmp_path, monkeypatch):
+    from stickler import audio
+
+    spec = adapters.discover(FIXTURES)["dummy"]
+    song = tmp_path / "song.m4a"
+    song.write_bytes(b"aac")
+    decoded = tmp_path / "decoded.flac"
+    monkeypatch.setattr(audio, "readable", lambda path, cache: decoded)
+    seen = {}
+
+    def fake_run_adapter(spec, audio_in, out_dir, device="auto", timeout=None):
+        seen["audio"] = audio_in
+        return adapters.AdapterResult(False, None, None, "x")
+
+    monkeypatch.setattr(adapters, "run_adapter", fake_run_adapter)
+    runner.cached_or_run(spec, song, tmp_path / "cache", "cpu", True)
+    assert seen["audio"] == decoded
+    assert runner.cache_dir_for(tmp_path / "cache", spec, song).name == runner.cache_key(
+        spec, runner._sha1_file(song)
+    )

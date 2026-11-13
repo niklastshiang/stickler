@@ -107,3 +107,38 @@ def test_tags_of_unreadable_file_are_empty(tmp_path):
     bad = tmp_path / "kaputt.mp3"
     bad.write_bytes(b"x")
     assert audio.tags(bad) == {}
+
+
+def _tone(path, seconds=0.5, sr=8000):
+    import numpy as np
+
+    t = np.arange(int(seconds * sr)) / sr
+    audio.write_wav(path, 0.3 * np.sin(2 * np.pi * 440 * t), sr)
+    return path
+
+
+def test_formats_every_model_reads_are_passed_on_unchanged(tmp_path):
+    for suffix in (".wav", ".flac", ".mp3", ".ogg", ".opus", ".aiff", ".WAV"):
+        f = tmp_path / f"song{suffix}"
+        f.write_bytes(b"x")
+        assert audio.readable(f, tmp_path / "cache") == f
+
+
+def test_other_formats_are_decoded_once_to_flac(tmp_path):
+    import subprocess
+
+    wav = _tone(tmp_path / "tone.wav")
+    m4a = tmp_path / "song.m4a"
+    subprocess.run(["ffmpeg", "-v", "error", "-i", str(wav), "-c:a", "aac", str(m4a)], check=True)
+    flac = audio.readable(m4a, tmp_path / "cache")
+    assert flac.suffix == ".flac" and flac.parent == tmp_path / "cache" / "_decoded"
+    assert audio.duration(flac) == pytest.approx(audio.duration(m4a), abs=0.05)
+    mtime = flac.stat().st_mtime_ns
+    assert audio.readable(m4a, tmp_path / "cache") == flac and flac.stat().st_mtime_ns == mtime
+
+
+def test_undecodable_input_raises(tmp_path):
+    bad = tmp_path / "song.m4a"
+    bad.write_bytes(b"not audio")
+    with pytest.raises(RuntimeError, match="decode"):
+        audio.readable(bad, tmp_path / "cache")
