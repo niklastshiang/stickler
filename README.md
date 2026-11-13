@@ -8,16 +8,30 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-ff8800?style=flat-square&labelColor=0d1117" /></a>
-  <img src="https://img.shields.io/badge/python-3.12-ff8800?style=flat-square&logo=python&logoColor=ff8800&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/environments-uv-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/language-english-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/models-8%20adapters-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/tests-322%20%2B%208%20smoke-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/coverage-97%25-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/version-0-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/status-CLI%20release%201%20in%20preparation-ff8800?style=flat-square&labelColor=0d1117" />
+  <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: MIT" /></a>
+  <img src="docs/badges/facts-python.svg" alt="python 3.12" />
+  <img src="docs/badges/facts-uv.svg" alt="environments: uv" />
+  <img src="docs/badges/facts-models.svg" alt="8 model adapters" />
+  <img src="docs/badges/facts-tests.svg" alt="tests" />
+  <img src="docs/badges/facts-coverage.svg" alt="coverage" />
+  <img src="docs/badges/facts-version.svg" alt="version" />
+  <img src="docs/badges/facts-local.svg" alt="runs 100% local" />
 </p>
+
+<p align="center">
+  <img src="docs/badges/fun-cowbell.svg" alt="cowbell" />
+  <img src="docs/badges/fun-cloud.svg" alt="cloud" />
+  <img src="docs/badges/fun-subscription.svg" alt="subscription" />
+  <img src="docs/badges/fun-rocket-science.svg" alt="rocket science" />
+  <img src="docs/badges/fun-drummer.svg" alt="drummer" />
+  <img src="docs/badges/fun-timing.svg" alt="timing" />
+  <img src="docs/badges/fun-origin.svg" alt="origin" />
+  <img src="docs/badges/fun-burgers.svg" alt="burgers" />
+  <img src="docs/badges/fun-neighbours.svg" alt="neighbours" />
+  <img src="docs/badges/fun-jazz.svg" alt="jazz" />
+</p>
+
+<p align="center"><sub>Badges: <a href="scripts/badges.py">scripts/badges.py</a>, rendered with <a href="https://shieldcn.dev">shieldcn</a>.</sub></p>
 
 <br/>
 
@@ -52,8 +66,8 @@ model lives in its own adapter with its own Python environment and competes agai
 references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms), on benchmark
 data and, above all, on real music. The answer is in: see [`> RESULTS`](#-results).
 
-**Next:** release 1 as a command line tool with a *Fast* and a *Quality* mode, then a desktop
-application with a GTK 4 interface, shipped as Flatpak and AppImage.
+**Next:** release 1 as a command line tool with a *Fast* and a *Quality* mode; release 2 is the
+desktop application with a GTK 4 interface, shipped as Flatpak and AppImage.
 
 Only **open-source models from actively maintained projects** are allowed. No cloud service, no
 black box; everything runs on your own machine.
@@ -232,12 +246,12 @@ scripts/check.sh task
 - [ ] `stickler notate --mode fast|quality` from the final results
 - [ ] **Release 1:** the command line tool
 
-**Afterwards: from measurement to application**
+**Release 2: the application**
 
 - [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
 - [ ] Repeat signs for readable sheet music
 - [ ] Design the interface together, following the GNOME Human Interface Guidelines
-- [ ] Application with a GTK 4 and libadwaita interface, app icon in GNOME style, export of the separated drum track
+- [ ] Application with a GTK 4 and libadwaita interface, Fast/Quality modes, app icon in GNOME style, export of the separated drum track
 - [ ] Release pipeline: Flatpak and AppImage with every release
 - [ ] Ultrareview of the finished application
 

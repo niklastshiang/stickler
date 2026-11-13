@@ -189,6 +189,8 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
 
+- [ ] **Release plan (owner, 2026-11-13):** release 1 = the command line tool (`notate --mode fast|quality` once the 25-song results are in, docs in `docs/`); release 2 = the GTK application.
+- [x] **README badges** (owner's wish: shieldcn style, gradient, some nonsense badges): `scripts/badges.py` renders a rainbow row of facts and a shimmering row of jokes into `docs/badges/*.svg` (in the repo, so the README does not depend on the service); rerun it when test count, coverage or version change.
 - [ ] **Open-source release (owner, 2026-11-13: publish so others can use it, no commercial intent)**
   - Documentation for humans:
     - **Benchmark report**: every decision (ADRs) and every result, readable without the code: datasets, pipelines, scores per class, runtimes, what was tried and did not help (fusion, voting, bar consensus) and why.
