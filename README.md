@@ -263,7 +263,8 @@ scripts/check.sh task
 ## `> BUILD IT YOURSELF`
 
 > **Documentation:** [CLI guide](docs/cli.md) · [Requirements](docs/requirements.md) ·
-> [Benchmark report](docs/report.md)
+> [Benchmark report](docs/report.md) ·
+> [Contributing](CONTRIBUTING.md) (issues welcome, no pull requests)
 
 ### Prerequisites
 

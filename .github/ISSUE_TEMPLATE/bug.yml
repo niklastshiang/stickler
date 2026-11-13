@@ -1,0 +1,23 @@
+name: Bug
+description: Something does not work as described.
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: What you ran
+      description: The command, e.g. `uv run stickler notate song.flac --mode quality`.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What happened
+      description: Error message or wrong result, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: stickler doctor
+      description: Output of `uv run stickler doctor`.
+      render: text
+    validations:
+      required: true

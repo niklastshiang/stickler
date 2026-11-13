@@ -1,0 +1,25 @@
+name: Model suggestion
+description: An open-source model Stickler should test.
+labels: [model]
+body:
+  - type: input
+    attributes:
+      label: Model and link
+      description: Repository or model page.
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Stage
+      options: [drum separation, drum transcription, beat tracking, other]
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Licence (code and weights)
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Why it is worth testing
+      description: Results, paper, how actively it is maintained.

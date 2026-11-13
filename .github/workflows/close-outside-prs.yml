@@ -1,0 +1,23 @@
+# Stickler takes no code from outside the project (CONTRIBUTING.md): pull requests from anyone
+# who is not the owner or a collaborator are closed with a pointer to the issue forms.
+# pull_request_target runs with this repository's code only; the pull request is never checked
+# out or executed.
+name: close outside pull requests
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    if: ${{ !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) }}
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr close "$PR" --comment "Thanks for your interest! Stickler does not take code from outside the project (see CONTRIBUTING.md). Bug reports, model suggestions and results are welcome as issues."
