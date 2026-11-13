@@ -190,6 +190,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
 
 - [ ] **Release plan (owner, 2026-11-13):** release 1 = the command line tool (`notate --mode fast|quality` once the 25-song results are in, docs in `docs/`); release 2 = the GTK application (then add the GitHub topics `gtk4`, `libadwaita`, `flatpak`; 18 of 20 are set since 2026-11-13).
+- [ ] **README picture of `stickler notate`** (owner, 2026-11-13): `docs/images/how-it-works.svg` is drawn (song → Fast/Quality → notation → MusicXML/PDF/drum track); add it to the README together with `notate --mode`, and update the accuracy line in its footer from the 25-song results.
 - [x] **README badges** (owner's wish: shieldcn style, gradient, some nonsense badges): `scripts/badges.py` renders a rainbow row of facts and a shimmering row of jokes into `docs/badges/*.svg` (in the repo, so the README does not depend on the service); rerun it when test count, coverage or version change.
 - [ ] **Open-source release (owner, 2026-11-13: publish so others can use it, no commercial intent)**
   - Documentation for humans:

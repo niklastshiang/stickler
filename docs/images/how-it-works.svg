@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" font-family="'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">
+  <title>How stickler notate turns a song into drum sheet music</title>
+  <defs>
+    <linearGradient id="rainbow" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#ec7f13"/>
+      <stop offset="0.25" stop-color="#ec2a4d"/>
+      <stop offset="0.5" stop-color="#d21fd9"/>
+      <stop offset="0.75" stop-color="#4b2bec"/>
+      <stop offset="1" stop-color="#13c9ec"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8b949e"/>
+    </marker>
+    <style>
+      .card { fill: #161b22; stroke-width: 2; }
+      .title { fill: #f0f6fc; font-size: 15px; font-weight: 700; }
+      .text { fill: #c9d1d9; font-size: 12px; }
+      .dim { fill: #8b949e; font-size: 11px; }
+      .lane { font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+      .line { stroke: #8b949e; stroke-width: 1.6; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="960" height="560" rx="16" fill="#0d1117"/>
+  <rect x="0" y="0" width="960" height="5" rx="2" fill="url(#rainbow)"/>
+
+  <!-- command -->
+  <rect x="40" y="28" width="880" height="44" rx="8" fill="#010409" stroke="#30363d"/>
+  <text x="60" y="56" font-size="15" xml:space="preserve"><tspan fill="#ec7f13">$</tspan><tspan fill="#f0f6fc"> stickler notate </tspan><tspan fill="#13c9ec">"Everlong.flac"</tspan><tspan fill="#d21fd9"> --mode quality</tspan><tspan fill="#8b949e"> --drums drums.flac</tspan></text>
+
+  <!-- song -->
+  <rect class="card" x="40" y="214" width="150" height="112" rx="10" stroke="#ec7f13"/>
+  <text class="title" x="115" y="248" text-anchor="middle">Song</text>
+  <text class="text" x="115" y="272" text-anchor="middle">mp3 · flac · opus</text>
+  <text class="text" x="115" y="290" text-anchor="middle">ogg · wav · m4a …</text>
+  <text class="dim" x="115" y="312" text-anchor="middle">anything ffmpeg reads</text>
+
+  <!-- fast lane -->
+  <text class="lane" x="236" y="112" fill="#ec2a4d">FAST · ~15 s</text>
+  <rect class="card" x="236" y="122" width="300" height="66" rx="10" stroke="#ec2a4d"/>
+  <text class="title" x="256" y="150">ADTOF</text>
+  <text class="text" x="256" y="172">all five drums, straight from the mix</text>
+
+  <!-- quality lane -->
+  <text class="lane" x="236" y="226" fill="#d21fd9">QUALITY · ~14 min</text>
+  <rect class="card" x="236" y="236" width="120" height="110" rx="10" stroke="#d21fd9"/>
+  <text class="title" x="296" y="270" text-anchor="middle">Demucs</text>
+  <text class="text" x="296" y="294" text-anchor="middle">separates</text>
+  <text class="text" x="296" y="312" text-anchor="middle">the drums</text>
+  <rect class="card" x="386" y="236" width="150" height="50" rx="10" stroke="#d21fd9"/>
+  <text class="title" x="461" y="258" text-anchor="middle">MuScriptor</text>
+  <text class="dim" x="461" y="276" text-anchor="middle">kick · snare · toms</text>
+  <rect class="card" x="386" y="296" width="150" height="64" rx="10" stroke="#d21fd9"/>
+  <text class="title" x="461" y="318" text-anchor="middle">ADTOF</text>
+  <text class="dim" x="461" y="336" text-anchor="middle">hi-hat · cymbals</text>
+  <text class="dim" x="461" y="352" text-anchor="middle">from the mix</text>
+
+  <!-- beats -->
+  <text class="lane" x="236" y="392" fill="#4b2bec">ALWAYS</text>
+  <rect class="card" x="236" y="402" width="300" height="66" rx="10" stroke="#4b2bec"/>
+  <text class="title" x="256" y="430">Beat This!</text>
+  <text class="text" x="256" y="452">beats, bars and tempo of the song</text>
+
+  <!-- quantize -->
+  <rect class="card" x="584" y="214" width="150" height="112" rx="10" stroke="#4b2bec"/>
+  <text class="title" x="659" y="248" text-anchor="middle">Notation</text>
+  <text class="text" x="659" y="272" text-anchor="middle">hits snapped to</text>
+  <text class="text" x="659" y="290" text-anchor="middle">16ths &amp; triplets</text>
+  <text class="dim" x="659" y="312" text-anchor="middle">ghost notes, voices</text>
+
+  <!-- outputs -->
+  <rect class="card" x="782" y="122" width="138" height="66" rx="10" stroke="#13c9ec"/>
+  <text class="title" x="851" y="150" text-anchor="middle">MusicXML</text>
+  <text class="dim" x="851" y="172" text-anchor="middle">edit in MuseScore</text>
+  <rect class="card" x="782" y="236" width="138" height="66" rx="10" stroke="#13c9ec"/>
+  <text class="title" x="851" y="264" text-anchor="middle">PDF</text>
+  <text class="dim" x="851" y="286" text-anchor="middle">ready to play</text>
+  <rect class="card" x="782" y="350" width="138" height="66" rx="10" stroke="#13c9ec" stroke-dasharray="6 4"/>
+  <text class="title" x="851" y="378" text-anchor="middle">drums.flac</text>
+  <text class="dim" x="851" y="400" text-anchor="middle">optional: --drums</text>
+
+  <!-- arrows: song to lanes -->
+  <path class="line" d="M190 250 C214 250 214 155 234 155" marker-end="url(#arrow)"/>
+  <path class="line" d="M190 270 L234 270" marker-end="url(#arrow)"/>
+  <path class="line" d="M190 300 C214 300 214 435 234 435" marker-end="url(#arrow)"/>
+  <!-- demucs to the two transcribers -->
+  <path class="line" d="M356 261 L384 261" marker-end="url(#arrow)"/>
+  <!-- ADTOF in quality mode listens to the mix, not to the stem -->
+  <path class="line" d="M190 290 C212 290 212 374 232 374 L366 374 C378 374 372 330 384 330" marker-end="url(#arrow)"/>
+  <!-- lanes to notation -->
+  <path class="line" d="M536 155 C560 155 560 240 582 240" marker-end="url(#arrow)"/>
+  <path class="line" d="M536 261 C556 261 556 262 582 262" marker-end="url(#arrow)"/>
+  <path class="line" d="M536 328 C556 328 556 285 582 285" marker-end="url(#arrow)"/>
+  <path class="line" d="M536 435 C560 435 560 310 582 310" marker-end="url(#arrow)"/>
+  <!-- notation to outputs -->
+  <path class="line" d="M734 245 C758 245 758 155 780 155" marker-end="url(#arrow)"/>
+  <path class="line" d="M734 269 L780 269" marker-end="url(#arrow)"/>
+  <!-- demucs stem to drums.flac -->
+  <path class="line" d="M296 346 L296 388 L780 388" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+
+  <!-- footer -->
+  <text class="dim" x="40" y="512">Times for a 4-minute song on a laptop CPU (AMD Ryzen AI 5 340). Everything runs locally; every step is cached.</text>
+  <text class="dim" x="40" y="532">Accuracy, measured against real transcriptions: Fast 0.79 · Quality 0.82 macro-F1 over kick, snare, toms, hi-hat, cymbals.</text>
+</svg>
