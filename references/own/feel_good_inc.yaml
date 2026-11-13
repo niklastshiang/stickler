@@ -1,0 +1,4 @@
+title: "Gorillaz – Feel Good Inc."
+audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/feel_good_inc/Gorillaz - Feel Good Inc.flac"
+# Score: data/own/feel_good_inc/score.mid (not in the repo). Manual exclusions in audio seconds:
+exclude: []

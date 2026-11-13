@@ -1,0 +1,4 @@
+title: "AC/DC – Back In Black"
+audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/back_in_black/ACDC - Back In Black.flac"
+# Score: data/own/back_in_black/score.mid (not in the repo). Manual exclusions in audio seconds:
+exclude: []

@@ -1,0 +1,4 @@
+title: "The White Stripes – Seven Nation Army"
+audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/seven_nation_army/The White Stripes - Seven Nation Army.flac"
+# Score: data/own/seven_nation_army/score.mid (not in the repo). Manual exclusions in audio seconds:
+exclude: []

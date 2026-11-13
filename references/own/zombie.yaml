@@ -1,0 +1,4 @@
+title: "The Cranberries – Zombie"
+audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/zombie/The Cranberries - Zombie.flac"
+# Score: data/own/zombie/score.mid (not in the repo). Manual exclusions in audio seconds:
+exclude: []

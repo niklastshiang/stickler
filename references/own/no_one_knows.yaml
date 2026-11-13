@@ -1,0 +1,4 @@
+title: "Queens of the Stone Age – No One Knows"
+audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/no_one_knows/Queens of the Stone Age - No One Knows.flac"
+# Score: data/own/no_one_knows/score.mid (not in the repo). Manual exclusions in audio seconds:
+exclude: []

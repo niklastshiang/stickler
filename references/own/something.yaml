@@ -1,0 +1,6 @@
+title: "The Beatles – Something"
+audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/something/The Beatles - Something (Remastered 2009).flac"
+# Score: data/own/something/score.mid (not in the repo). Manual exclusions in audio seconds:
+# Recording: 2009 remaster (same performance as the original, different mastering).
+exclude: []
+# Alignment narrowly fails (2026-11-13): explained 0.876 < 0.9; to be checked by ear (click.wav).
