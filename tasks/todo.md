@@ -192,7 +192,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
 
 - [x] **Release 1 published on 2026-11-13** (tag v1, GitHub release, repository public; private vulnerability reporting and Dependabot alerts on, pull requests and wiki off).
-- [x] **Release plan (owner, 2026-11-13):** the repository goes public with release 1; the old music folder names in the git history may stay. Release 1 = the command line tool (`notate --mode fast|quality` once the 25-song results are in, docs in `docs/`); the GTK application is the next release after it, whatever its number is (ADR 0006: every release counts, fixes to the command line tool in between included; owner, 2026-11-13). With the application, add the GitHub topics `gtk4`, `libadwaita`, `flatpak` (18 of 20 are set since 2026-11-13).
+- [x] **Release plan (owner, 2026-11-13):** the repository goes public with release 1; the old music folder names in the git history may stay. Release 1 = the command line tool (`notate --mode fast|quality` once the 25-song results are in, docs in `docs/`); the GTK application is the next release after it, whatever its number is (ADR 0006: every release counts, fixes to the command line tool in between included; owner, 2026-11-13). With the application, add the GitHub topics `gtk4`, `libadwaita`, `flatpak` (18 of 20 are set since 2026-11-13). Owner, 2026-11-13: release 2 is another command line release; the application comes after it.
 - [ ] **README picture of `stickler notate`** (owner, 2026-11-13): `docs/images/how-it-works.svg` is drawn (song → Fast/Quality → notation → MusicXML/PDF/drum track); in the README since 2026-11-13; `notate --mode fast|quality` exists (note removed); still update the accuracy line in its footer from the 25-song results.
 - [ ] **Contributions (owner, 2026-11-13):** no outside pull requests (CONTRIBUTING.md, issue forms for bugs and model suggestions, no code of conduct). Pull requests are switched off in the repository settings (owner, 2026-11-13; GitHub setting since 2026-02). If issues become too many: restrict issue creation to collaborators (GitHub setting since 2026-06). SECURITY.md asks for private reports; owner enables private vulnerability reporting and Dependabot alerts (not security/version updates: they need pull requests, and model versions are pinned on purpose). Before every release: go through open Dependabot alerts.
 - [x] **Dependabot alerts (2026-11-13):** torch 2.15 for Demucs (the lock was held at 2.2.2 by demucs's Intel-macOS pin; now resolved for Linux only), Beat This! and ADT_STR; outputs compared before/after on three MDB songs (Beat This! identical, ADT_STR 2 of 246 notes 9 ms apart, Demucs differs as much as two runs of the same version, because of its random shift) and the cache rekeyed (snapshot `data/archive/digests-before-torch-2.15.json`, needed again for results from pods that ran the old versions). YourMT3+ removed (transformers could not be updated); its results stay in the report. New smoke test: ADTOF on a real mix (Fast mode).
@@ -235,18 +235,12 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
   - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.
 
-- [ ] **Readable sheet music: repeat signs** (owner, 2026-11-12)
-  - Today every hit is written out. Detect repeated bars and passages (identical quantized bars, 1-bar and 2-bar repeat signs, repeat barlines with voltas) and fold them, so the sheet music reads like a human transcription.
-  - Keep the unfolded version available (e.g. for the benchmark and for playback).
+- [x] **Readable sheet music: repeat signs** (owner, 2026-11-12; done 2026-11-13 for release 2)
+  - `notate` gives nearly equal bars their common pattern (`notation.simplify`, Jaccard index ≥ 0.8, groups of ≥ 3 bars; fills stay) and writes runs of equal bars or phrases (up to 8 bars) once between repeat signs, with "n×" above from three times on. `--no-simplify`, `--no-repeats` write every hit as detected.
+  - Measured as `@simple` (`simplify: true` in a config): similarity 0.6 cost 0.012 macro-F1 on the own songs and 0.022 on ENST; 0.8 is neutral on the own songs (ENST −0.003) and cuts the 25 own songs from 3354 to 2594 written bars (repeat signs alone: 3042). Owner chose 0.8.
+  - Checked in MuseScore 4 (Eye of the Tiger: 110 → 46 bars, PDF without errors; music21 expands the repeats back to 110 bars).
 
-- [ ] **Two pipeline modes for the app: "Fast" and "Quality"** (owner, 2026-11-12)
-  - Working hypothesis from the partial results: Fast = Demucs + ADT_STR (~6 min per 3.5-minute song on the laptop CPU), Quality = RoFormer + ADT_STR (~30 min).
-  - Before deciding: finish both runs, run RoFormer on the own songs (~4.5 h), and measure `htdemucs` (single model, ~4x faster than `htdemucs_ft`) as a faster Fast candidate.
-  - ADT_STR has 26 classes (ride, china, open hi-hat, tom heights) and gives richer notation than ADTOF's 5 classes; the 5-class benchmark does not show this.
-
-- [ ] **Prettier README badges** (small)
-  - Wish (2026-11-12): nicer-looking badges in the README, in the style of https://shieldcn.dev/showcase, ideally with a gradient effect.
-  - Must include a few nonsense badges as well (e.g. "drums: loud", "neighbours: annoyed").
+- [x] **Two pipeline modes for the app: "Fast" and "Quality"** (owner, 2026-11-12): decided with the 25-song results and available as `notate --mode fast|quality` since release 1 (Phase 5c).
 
 - [ ] **Ultrareview once the application is finished**
   - The user starts it themselves with `/code-review ultra`. I cannot trigger it.

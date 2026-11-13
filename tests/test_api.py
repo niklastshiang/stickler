@@ -161,12 +161,13 @@ def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
     cfg = _bench(tmp_path)
     cfg.write_text(
         cfg.read_text()
-        + "grid: [none+dummy]\nconsensus: {similarity: 0.7, add: 0.6, remove: 0.1}\n",
+        + "grid: [none+dummy]\nconsensus: {similarity: 0.7, add: 0.6, remove: 0.1}\n"
+        + "simplify: true\n",
         encoding="utf-8",
     )
     loaded = api.load_benchmark_config(cfg)
     assert loaded.grid == ["none+dummy"]
-    assert loaded.consensus == grid.Consensus(0.7, 0.6, 0.1)
+    assert loaded.consensus == grid.Consensus(0.7, 0.6, 0.1) and loaded.simplify
     asked = []
 
     def fake_beats(tracks, registry, cache_dir, device, execute):
@@ -180,6 +181,7 @@ def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
     (row,) = [r for r in summary if r["transcriber"] == "dummy@grid"]
     assert row["micro_f1"] == 1.0 and asked == [True, False]
     assert [r["transcriber"] for r in summary if r["transcriber"] == "dummy@rep"]
+    assert [r["transcriber"] for r in summary if r["transcriber"] == "dummy@simple"]
 
 
 def test_votes_are_scored_and_usable_in_combos(monkeypatch, tmp_path):
@@ -580,6 +582,16 @@ def test_notate_takes_title_and_artist_from_tags(tmp_path, monkeypatch):
         audio_path, tmp_path / "o.musicxml", cache_dir=tmp_path, title="T", artist="A"
     ).musicxml.read_text()
     assert "<work-title>T</work-title>" in xml and ">A</creator>" in xml
+
+
+def test_notate_folds_repeated_bars_by_default(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)  # two equal bars
+    monkeypatch.setattr(api.musescore, "find", lambda: None)
+    xml = api.notate(audio, cache_dir=tmp_path).musicxml.read_text()
+    assert xml.count("<measure ") == 1 and 'times="2"' in xml
+    exact = api.notate(audio, cache_dir=tmp_path, simplify=False, repeats=False)
+    xml = exact.musicxml.read_text()
+    assert xml.count("<measure ") == 2 and "<repeat" not in xml
 
 
 def test_config_skip_combinations(tmp_path):

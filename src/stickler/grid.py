@@ -18,11 +18,12 @@ from pathlib import Path
 
 import numpy as np
 
-from stickler.notation import QNote, quantize
+from stickler.notation import QNote, bar_layout, quantize, simplify
 from stickler.runner import Record
 
 SUFFIX = "@grid"
 CONSENSUS_SUFFIX = "@rep"
+SIMPLE_SUFFIX = "@simple"  # similar bars given their common pattern, as in the sheet music
 VELOCITY = 100  # transcriptions in the benchmark carry no velocities that matter here
 
 Pipeline = tuple[str, str]
@@ -79,22 +80,29 @@ def grid_records(
     beats: Mapping[tuple[str, str], BeatGrid | None],
     read_notes: Callable[[Path], list[tuple[float, int]]],
     consensus_params: Consensus | None = None,
+    simplify_bars: bool = False,
 ) -> list[Record]:
     """One snapped record per record of a configured pipeline (combos and fusions included),
-    plus one with consensus across repeated bars if `consensus_params` is given."""
+    plus one with consensus across repeated bars if `consensus_params` is given and one with
+    simplified bars (notation.simplify) if `simplify_bars`."""
     wanted = set(pipelines)
     out = []
     for r in records:
         if (r.separator, r.transcriber) not in wanted:
             continue
         bg = beats.get((r.dataset, r.track))
-        error, snapped, voted = r.error, None, None
+        error, snapped, voted, simple = r.error, None, None, None
         if error is None and not bg:
             error = "beats missing: run `stickler run` for this config"
         if error is None:
             source = r.notes if r.notes is not None else read_notes(r.midi)
             q = quantize([(t, p, VELOCITY) for t, p in source], bg.beats)
             snapped = tuple(sorted(to_times(q, bg.beats)))
+            if simplify_bars:
+                bars = bar_layout(bg.beats, bg.downbeats).bars
+                simple = tuple(
+                    sorted(to_times(simplify(q, bars, n_beats=len(bg.beats) - 1), bg.beats))
+                )
             if consensus_params:
                 c = consensus_params
                 q = consensus(
@@ -109,6 +117,8 @@ def grid_records(
         variants = [(SUFFIX, snapped)]
         if consensus_params:
             variants.append((CONSENSUS_SUFFIX, voted))
+        if simplify_bars:
+            variants.append((SIMPLE_SUFFIX, simple))
         for suffix, notes in variants:
             out.append(
                 Record(

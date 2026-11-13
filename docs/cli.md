@@ -66,6 +66,8 @@ a **PDF** next to it.
 | `--title`, `--artist` | override what is read from the file's tags |
 | `--drums drums.flac` | also save the separated drum track (in Fast mode, Demucs runs for it) |
 | `--no-pdf` | MusicXML only |
+| `--no-simplify` | write every hit as detected; by default, nearly equal bars (a missed hi-hat, a stray ghost note) get the pattern most of them share, while fills stay as they are |
+| `--no-repeats` | write every bar out; by default, runs of equal bars or phrases are written once between repeat signs |
 | `--device auto\|cpu\|gpu` | where to compute |
 
 Every step is cached in `cache/`; running `notate` again on the same song is instant.

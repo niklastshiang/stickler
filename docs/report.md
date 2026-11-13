@@ -232,6 +232,7 @@ songs were ready (ADTOF on the mix: 0.788 there).
 | Tune ADTOF's thresholds on the own songs (cross-validated) | – | 0.770 → 0.774 | ADTOF's defaults are already close to optimal; the only stable change is the cymbal threshold (0.30 → 0.44, chosen in all five folds, cymbals 0.680 → 0.710) |
 | Higher cymbal threshold for ADTOF (0.44 instead of 0.30, from the cross-validation) | – | 25 songs: cymbals +0.03 over all hits, per song ±0; ENST −0.005, MDB −0.004 | too uncertain to change the default |
 | Snap notes to the beat grid like the sheet music | – | Quality 0.776 → 0.771, Fast 0.770 → 0.768 | not an optimisation but a check: the notes on paper are as good as the detection |
+| Simplify nearly equal bars to their common pattern, for repeat signs in the sheet music | – | similarity 0.6: −0.012 (ENST −0.022); 0.8: ±0.000 (ENST −0.003) | used at 0.8 for readability: the 25 own songs need 2594 instead of 3354 bars (repeat signs alone: 3042), because model errors make most bars differ slightly |
 
 **Lessons:** what is optimal on MDB favours separated stems and jazz subtleties and does not
 transfer to rock and metal. And 10 songs were too few: effects seen on them (Quality's lead,

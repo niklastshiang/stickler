@@ -69,6 +69,7 @@ class BenchmarkConfig:
     fusions: dict = field(default_factory=dict)  # fused ADTOF activations (stickler.fusion)
     grid: list = field(default_factory=list)  # pipelines also scored on the beat grid
     consensus: grid.Consensus | None = None  # vote across repeated bars ("@rep")
+    simplify: bool = False  # similar bars given their common pattern ("@simple")
     votes: dict = field(default_factory=dict)  # k of n pipelines must agree (stickler.vote)
 
 
@@ -118,6 +119,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         votes=dict(raw.get("votes") or {}),
         grid=list(raw.get("grid") or []),
         consensus=grid.Consensus(**raw["consensus"]) if raw.get("consensus") else None,
+        simplify=bool(raw.get("simplify", False)),
     )
 
 
@@ -289,7 +291,7 @@ def evaluate_benchmark(
         )
         pipelines = grid.parse_pipelines(cfg.grid)
         records += grid.grid_records(
-            records, pipelines, beats, runner.read_drum_notes, cfg.consensus
+            records, pipelines, beats, runner.read_drum_notes, cfg.consensus, cfg.simplify
         )
     rows = runner.score_records(records, tracks, schemes)
     summary = summarize(rows)
@@ -589,12 +591,16 @@ def notate(
     title: str | None = None,
     artist: str | None = None,
     pdf: bool = True,
+    simplify: bool = True,
+    repeats: bool = True,
     device: str = "auto",
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
 ) -> Notation:
     """Song → drum sheet music as MusicXML (default: next to the song, <song>.musicxml), plus a
-    PDF next to it if MuseScore is installed. Title and artist default to the file's tags."""
+    PDF next to it if MuseScore is installed. Title and artist default to the file's tags.
+    For readability, `simplify` gives similar bars their common pattern and `repeats` writes
+    runs of equal bars once between repeat signs (notation.to_musicxml)."""
     t = transcribe_song(
         audio_path,
         pipeline,
@@ -613,6 +619,8 @@ def notate(
         t.downbeats,
         title=title or found.get("title") or audio_path.stem,
         artist=artist if artist is not None else found.get("artist", ""),
+        simplify_bars=simplify,
+        repeats=repeats,
     )
     target.write_text(xml, encoding="utf-8")
     pdf_path, pdf_error = None, None

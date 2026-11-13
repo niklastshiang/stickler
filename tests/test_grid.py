@@ -131,3 +131,28 @@ def test_consensus_never_adds_beyond_the_last_beat():
         notes, list(range(0, 24, 4)), similarity=0.0, add=0.5, remove=0.0, n_beats=22
     )
     assert max(n.beat for n in out) < 22
+
+
+def test_grid_records_add_a_simplified_variant():
+    beats = [i * 0.5 for i in range(25)]  # 24 beats, 6 bars of 4/4
+    hats = [(e * 0.25, 42) for e in range(48)]  # hi-hat eighths
+    notes = [(b * 0.5, 36) for b in range(24) if b != 13] + hats  # kick per beat, one missed
+    out = grid.grid_records(
+        [_record("a")],
+        [("none", "adtof")],
+        {("own", "a"): grid.BeatGrid(beats, [i * 2.0 for i in range(6)])},
+        read_notes=lambda p: notes,
+        simplify_bars=True,
+    )
+    assert [r.transcriber for r in out] == ["adtof@grid", "adtof@simple"]
+    assert len(out[0].notes) == 71 and len(out[1].notes) == 72
+
+
+def test_simplified_variant_of_a_failed_record_keeps_the_error():
+    out = grid.grid_records(
+        [_record("a", error="boom")], [("none", "adtof")], {}, lambda p: [], simplify_bars=True
+    )
+    assert [(r.transcriber, r.error) for r in out] == [
+        ("adtof@grid", "boom"),
+        ("adtof@simple", "boom"),
+    ]

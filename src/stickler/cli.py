@@ -154,6 +154,17 @@ def notate_cmd(
         Path | None, typer.Option("--drums", help="also save the drum track (.wav/.flac/…)")
     ] = None,
     pdf: Annotated[bool, typer.Option("--pdf/--no-pdf", help="PDF via MuseScore")] = True,
+    simplify: Annotated[
+        bool,
+        typer.Option(
+            "--simplify/--no-simplify",
+            help="give nearly equal bars their common pattern (off: every hit as detected)",
+        ),
+    ] = True,
+    repeats: Annotated[
+        bool,
+        typer.Option("--repeats/--no-repeats", help="write equal bars once with repeat signs"),
+    ] = True,
     device: Device = None,
 ) -> None:
     """Song → drum sheet music (MusicXML, PDF if MuseScore is installed)."""
@@ -167,6 +178,8 @@ def notate_cmd(
             title=title,
             artist=artist,
             pdf=pdf,
+            simplify=simplify,
+            repeats=repeats,
             device=device or "auto",
         )
         stem = result.transcription.stem

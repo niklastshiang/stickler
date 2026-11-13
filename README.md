@@ -252,13 +252,13 @@ scripts/check.sh task
 
 **Next**
 
+- [x] Readable sheet music: similar bars simplified, repeat signs (about a quarter fewer bars)
 - [ ] Error analysis on real songs: confused, missed and invented hits, reference errors
 - [ ] New candidate models: DrumSep with onset detection, MuScriptor large, models from 2026
 
 **Afterwards: the application**
 
 - [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
-- [ ] Repeat signs for readable sheet music
 - [ ] Design the interface together, following the GNOME Human Interface Guidelines
 - [ ] Application with a GTK 4 and libadwaita interface, Fast/Quality modes, app icon in GNOME style, export of the separated drum track
 - [ ] Release pipeline: Flatpak and AppImage with every release

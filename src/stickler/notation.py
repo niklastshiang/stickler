@@ -240,6 +240,184 @@ def _beat_xml(hits: list[QNote], voice: int, ghost_velocity: int) -> list[str]:
     return out
 
 
+@dataclass(frozen=True)
+class _Measure:
+    implicit: bool  # pickup bar
+    empty: bool  # no hits at all
+    meta: str  # attributes and tempo (first bar, multi-measure rests)
+    content: str  # the voices' notes and rests
+
+
+MAX_PHRASE = 8  # longest phrase (in bars) that repeat signs enclose
+
+
+def _repeat_blocks(measures: list[_Measure]) -> list[tuple[int, int, int]]:
+    """(first bar, phrase length, times) covering all bars in order: at every bar, the phrase
+    that saves the most bars when written once between repeat signs (none for empty bars,
+    the pickup bar, or bars with attributes other than the first one)."""
+    blocks, k = [], 0
+    usable = [not m.implicit and not m.empty for m in measures]
+    while k < len(measures):
+        best = (1, 1, 0)  # length, times, bars saved
+        for length in range(1, MAX_PHRASE + 1):
+            phrase = measures[k : k + length]
+            if len(phrase) < length or not all(usable[k : k + length]):
+                break
+            if any(m.meta for m in phrase[1:]):
+                break
+            times = 1
+            while True:
+                nxt = measures[k + times * length : k + (times + 1) * length]
+                ok = len(nxt) == length and all(
+                    usable[k + times * length : k + (times + 1) * length]
+                )
+                if not ok or [m.content for m in nxt] != [m.content for m in phrase]:
+                    break
+                if any(m.meta for m in nxt):
+                    break
+                times += 1
+            saved = length * (times - 1)
+            if saved > best[2]:
+                best = (length, times, saved)
+        length, times, _ = best
+        blocks.append((k, length, times))
+        k += length * times
+    return blocks
+
+
+@dataclass(frozen=True)
+class BarLayout:
+    bars: list[list[int]]  # beat indices per bar, in order
+    pickup: int  # beats of the pickup bar before the first downbeat (0: none)
+    num: int  # time signature
+    den: int
+
+
+def bar_layout(beats: list[float], downbeats: list[float]) -> BarLayout:
+    """Bars start at the downbeats; beats before the first downbeat form a pickup bar (and full
+    bars before it, if there are enough)."""
+    b = np.asarray(beats, dtype=float)
+    num, den = time_signature(beats, downbeats)
+    first = _nearest_index(b, downbeats[0]) if len(downbeats) else 0
+    n_beats = len(b) - 1
+    pickup = first % num
+    bars = ([list(range(first - pickup, first))] if pickup else []) + [
+        list(range(s, s + num)) for s in range(first, n_beats, num)
+    ]
+    if first - pickup > 0:  # full bars before the first downbeat
+        bars = [list(range(s, s + num)) for s in range(0, first - pickup, num)] + bars
+    return BarLayout(bars, pickup, num, den)
+
+
+# Simplification for readability: bars that differ in only a few hits get the pattern most of
+# them share (a missed hi-hat or a stray ghost note is mostly noise); bars that fit no group
+# (fills, crashes at section starts) stay as they are. Measured as "@simple" (stickler.grid) on
+# 2026-11-13, macro-F1 against the plain grid, and written bars of the 25 own songs (Fast mode,
+# with repeat signs; 3354 written out, 3042 with repeat signs alone):
+#   similarity 0.6: own -0.012, ENST -0.022, 2023 bars
+#   similarity 0.8: own +-0.000, ENST -0.003, 2594 bars (chosen by the owner)
+#   similarity 0.9: own +-0.000, ENST -0.001, 2889 bars
+SIMILARITY = 0.8  # Jaccard index of the hit patterns
+MIN_GROUP = 3
+
+
+def _key(n: QNote, start: int) -> tuple[int, int, int]:
+    slot, per_beat = n.position
+    return (n.beat - start, slot * DIVISIONS // per_beat, n.pitch)
+
+
+def _beat_grid(slots: set[int]) -> int | None:
+    """Slots per beat for positions given in DIVISIONS: 3 if the beat has triplet eighths,
+    4 for sixteenths, None if it mixes both."""
+    if all(s % (DIVISIONS // 3) == 0 for s in slots) and any(s for s in slots):
+        return 3
+    if all(s % (DIVISIONS // 4) == 0 for s in slots):
+        return 4
+    return None
+
+
+def _similarity(a: frozenset, b: frozenset) -> float:
+    return len(a & b) / len(a | b) if a | b else 1.0
+
+
+def simplify(
+    notes: list[QNote],
+    bars: list[list[int]],
+    *,
+    similarity: float = SIMILARITY,
+    min_group: int = MIN_GROUP,
+    n_beats: int | None = None,
+) -> list[QNote]:
+    """Groups similar bars of equal length and gives every bar of a group with at least
+    `min_group` bars the group's majority pattern (hits at least half of its bars have).
+    `n_beats`: number of beat intervals; nothing is added at or beyond it (the last bar may
+    reach past the tracked beats)."""
+    in_bar: dict[int, list[QNote]] = {k: [] for k in range(len(bars))}
+    bar_of = {beat: k for k, bar in enumerate(bars) for beat in bar}
+    outside = []
+    for n in notes:
+        (in_bar[bar_of[n.beat]] if n.beat in bar_of else outside).append(n)
+    keys = [frozenset(_key(n, bars[k][0]) for n in in_bar[k]) for k in range(len(bars))]
+
+    groups: list[list[int]] = []
+    reps: list[frozenset] = []
+
+    def majority(members: list[int]) -> frozenset:
+        counts: dict = {}
+        for k in members:
+            for key in keys[k]:
+                counts[key] = counts.get(key, 0) + 1
+        return frozenset(key for key, c in counts.items() if 2 * c >= len(members))
+
+    for _ in range(2):  # assign, then reassign against the settled patterns
+        assigned: list[list[int]] = [[] for _ in reps]
+        for k in range(len(bars)):
+            if not keys[k]:
+                continue
+            best, score = None, similarity
+            for g, rep in enumerate(reps):
+                same_length = len(bars[groups[g][0]]) == len(bars[k]) if groups[g] else True
+                s = _similarity(keys[k], rep)
+                if same_length and s >= score:
+                    best, score = g, s
+            if best is None:
+                reps.append(keys[k])
+                groups.append([k])
+                assigned.append([k])
+            else:
+                assigned[best].append(k)
+        groups = [g for g in assigned if g]
+        reps = [majority(g) for g in groups]
+
+    out = list(outside)
+    for g, rep in zip(groups, reps, strict=True):
+        velocity: dict[tuple[int, int, int], list[int]] = {}
+        for other in g:
+            for n in in_bar[other]:
+                velocity.setdefault(_key(n, bars[other][0]), []).append(n.velocity)
+        slots_of: dict[int, set[int]] = {}
+        for beat, slot, _ in rep:
+            slots_of.setdefault(beat, set()).add(slot)
+        grids = {beat: _beat_grid(slots) for beat, slots in slots_of.items()}
+        for k in g:
+            if len(g) < min_group:
+                out.extend(in_bar[k])
+                continue
+            start = bars[k][0]
+            # a beat whose majority mixes sixteenths and triplets keeps the bar's own hits
+            out.extend(n for n in in_bar[k] if grids.get(n.beat - start, 4) is None)
+            for beat, slot, pitch in sorted(rep):
+                if (grid := grids[beat]) is None or (
+                    n_beats is not None and start + beat >= n_beats
+                ):
+                    continue
+                vels = sorted(velocity[(beat, slot, pitch)])
+                unit = DIVISIONS // grid
+                out.append(QNote(start + beat, (slot // unit, grid), pitch, vels[len(vels) // 2]))
+    out.extend(n for k in range(len(bars)) if not keys[k] for n in in_bar[k])
+    return sorted(out)
+
+
 def to_musicxml(
     notes: list[tuple[float, int, int]],
     beats: list[float],
@@ -249,21 +427,19 @@ def to_musicxml(
     artist: str = "",
     min_velocity: int = 0,
     ghost_velocity: int = 0,
+    simplify_bars: bool = False,
+    repeats: bool = False,
 ) -> str:
     """MusicXML (partwise 4.0) with one percussion staff. Bars start at the downbeats;
-    beats before the first downbeat form a pickup bar."""
+    beats before the first downbeat form a pickup bar. For readability, `simplify_bars` gives
+    similar bars their common pattern (see simplify) and `repeats` writes runs of equal bars or
+    phrases once, between repeat signs."""
     q = quantize(notes, beats, min_velocity)
     b = np.asarray(beats, dtype=float)
-    num, den = time_signature(beats, downbeats)
-    first = _nearest_index(b, downbeats[0]) if len(downbeats) else 0
-    n_beats = len(b) - 1
-    starts = list(range(first, n_beats, num))
-    pickup = first % num
-    bars = ([list(range(first - pickup, first))] if pickup else []) + [
-        list(range(s, s + num)) for s in starts
-    ]
-    if first - pickup > 0:  # full bars before the first downbeat
-        bars = [list(range(s, s + num)) for s in range(0, first - pickup, num)] + bars
+    layout = bar_layout(beats, downbeats)
+    bars, pickup, num, den = layout.bars, layout.pickup, layout.num, layout.den
+    if simplify_bars:
+        q = simplify(q, bars, n_beats=len(beats) - 1)
     by_voice: dict[tuple[int, int], list[QNote]] = {}
     for n in q:
         by_voice.setdefault((STAFF.get(n.pitch, OTHER).voice, n.beat), []).append(n)
@@ -290,7 +466,6 @@ def to_musicxml(
     measures = []
     for m, bar in enumerate(bars):
         implicit = m == 0 and pickup > 0
-        number = 0 if implicit else (m if pickup else m + 1)
         body = []
         attributes = ""
         if m == 0:
@@ -312,6 +487,8 @@ def to_musicxml(
                 f'</metronome></direction-type><sound tempo="{tempo}"/></direction>'
             )
         merge = den == 4 and num % 2 == 0 and not implicit
+        meta = "".join(body)
+        body = []
         for voice in (1, 2):
             hits = {i: by_voice[(voice, i)] for i in bar if (voice, i) in by_voice}
             if voice == 2:
@@ -322,8 +499,32 @@ def to_musicxml(
                 body.append(_measure_rest_xml(len(bar), voice))
                 continue
             body.extend(_voice_xml(bar, hits, voice, ghost_velocity, merge))
-        flag = ' implicit="yes"' if implicit else ""
-        measures.append(f'<measure number="{number}"{flag}>{"".join(body)}</measure>')
+        measures.append(_Measure(implicit, empty[m], meta, "".join(body)))
+    blocks = _repeat_blocks(measures) if repeats else [(k, 1, 1) for k in range(len(measures))]
+    out = []
+    number = 0 if pickup else 1
+    for start, length, times in blocks:
+        for k in range(start, start + length):
+            ms = measures[k]
+            left = right = words = ""
+            if times > 1 and k == start:
+                left = '<barline location="left"><repeat direction="forward"/></barline>'
+            if times > 1 and k == start + length - 1:
+                right = (
+                    '<barline location="right"><bar-style>light-heavy</bar-style>'
+                    f'<repeat direction="backward" times="{times}"/></barline>'
+                )
+                if times > 2:
+                    words = (
+                        '<direction placement="above"><direction-type>'
+                        f"<words>{times}×</words></direction-type></direction>"
+                    )
+            flag = ' implicit="yes"' if ms.implicit else ""
+            out.append(
+                f'<measure number="{number}"{flag}>{left}{ms.meta}{words}{ms.content}{right}'
+                "</measure>"
+            )
+            number += 1
 
     instruments = "".join(
         f'<score-instrument id="P1-I{p}"><instrument-name>GM {p}</instrument-name>'
@@ -347,5 +548,5 @@ def to_musicxml(
         )
         + '<part-list><score-part id="P1"><part-name>Drumset</part-name>'
         f"{instruments}</score-part></part-list>"
-        f'<part id="P1">{"".join(measures)}</part></score-partwise>\n'
+        f'<part id="P1">{"".join(out)}</part></score-partwise>\n'
     )

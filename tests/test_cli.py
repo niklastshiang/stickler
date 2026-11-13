@@ -180,10 +180,9 @@ def test_notate_prints_outputs_and_exports_drums(monkeypatch, tmp_path):
     )
     seen = {}
 
-    def fake_notate(
-        audio, out=None, *, pipeline, mode, drums, title=None, artist=None, pdf=True, device="auto"
-    ):
+    def fake_notate(audio, out=None, *, pipeline, mode, drums, pdf=True, **kw):
         seen.update(audio=audio, out=out, pipeline=pipeline, mode=mode, want_drums=drums, pdf=pdf)
+        seen.update(kw)
         return Notation(tmp_path / "s.musicxml", None, "MuseScore not installed", t)
 
     monkeypatch.setattr(api, "notate", fake_notate)
@@ -205,8 +204,22 @@ def test_notate_prints_outputs_and_exports_drums(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert seen["mode"] == "quality" and seen["pipeline"] is None and seen["pdf"] is False
     assert seen["want_drums"] is True and "quality" in result.output
+    assert seen["simplify"] is True and seen["repeats"] is True
     assert seen["drums"] == (tmp_path / "drums.wav", tmp_path / "d.flac")
     assert "s.musicxml" in result.output and "MuseScore not installed" in result.output
+
+
+def test_notate_can_write_every_bar_exactly(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake_notate(audio, out=None, **kw):
+        seen.update(kw)
+        raise ValueError("stop here")
+
+    monkeypatch.setattr(api, "notate", fake_notate)
+    args = ["notate", str(tmp_path / "s.mp3"), "--no-simplify", "--no-repeats"]
+    CliRunner().invoke(cli.app, args)
+    assert seen["simplify"] is False and seen["repeats"] is False
 
 
 def test_notate_error_exits_nonzero(monkeypatch, tmp_path):

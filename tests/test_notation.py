@@ -173,3 +173,109 @@ def test_empty_half_of_a_bar_is_one_half_rest():
     (bar,) = _measures(xml)
     assert bar.count("<rest") == 2  # beat 2: quarter rest, beats 3-4: half rest
     assert "<type>half</type>" in bar and "<voice>2</voice>" not in bar
+
+
+BEATS8 = [k * 0.5 for k in range(33)]  # 8 bars of 4/4 plus closing beat
+DOWNBEATS8 = BEATS8[:-1:4]
+
+
+def _bar_keys(q, bars):
+    return [
+        frozenset(
+            (n.beat - bar[0], n.position[0] * 12 // n.position[1], n.pitch)
+            for n in q
+            if bar[0] <= n.beat <= bar[-1]
+        )
+        for bar in bars
+    ]
+
+
+def test_similar_bars_get_their_majority_pattern_and_fills_stay():
+    notes = groove(8)
+    notes.remove((2 * 2.0 + 0.25, HAT, 90))  # bar 3 misses a hi-hat (beat 1 "and")
+    notes.append((4 * 2.0 + 0.75, FLOOR, 80))  # bar 5 has an extra floor tom
+    notes = [n for n in notes if not 14.0 <= n[0] < 16.0]  # bar 8: a fill instead
+    notes += [(14.0 + k * 0.25, FLOOR, 100) for k in range(8)]
+    q = notation.quantize(notes, BEATS8)
+    layout = notation.bar_layout(BEATS8, DOWNBEATS8)
+    simple = notation.simplify(q, layout.bars)
+    keys = _bar_keys(simple, layout.bars)
+    assert len(set(keys[:7])) == 1  # bars 1-7: one groove
+    assert keys[7] == _bar_keys(q, layout.bars)[7]  # the fill is untouched
+    assert keys[0] == _bar_keys(q, layout.bars)[0]  # the majority is the plain groove
+
+
+def test_small_groups_are_left_alone():
+    notes = groove(2) + [(4.0 + k * 0.5, FLOOR, 100) for k in range(4)]
+    beats, downbeats = BEATS8[:13], DOWNBEATS8[:3]
+    q = notation.quantize(notes, beats)
+    layout = notation.bar_layout(beats, downbeats)
+    assert notation.simplify(q, layout.bars) == q  # only two similar bars
+
+
+def test_repeated_bars_are_written_once_with_repeat_signs():
+    xml = notation.to_musicxml(groove(4), BEATS, DOWNBEATS, repeats=True)
+    (bar,) = _measures(xml)
+    assert '<repeat direction="forward"/>' in bar
+    assert '<repeat direction="backward" times="4"/>' in bar and "4×" in bar
+    for m in parse(xml).parts[0].getElementsByClass("Measure"):
+        for voice in m.voices or [m]:
+            assert voice.duration.quarterLength == pytest.approx(4.0)
+
+
+def test_a_repeated_two_bar_phrase_is_written_once():
+    a, b = groove(1), [(0.0 + k * 0.5, FLOOR, 100) for k in range(4)]
+    notes = [
+        (t + 4.0 * k, p, v) for k in range(3) for t, p, v in a + [(t + 2.0, p, v) for t, p, v in b]
+    ]
+    beats = [k * 0.5 for k in range(25)]
+    xml = notation.to_musicxml(notes, beats, beats[:-1:4], repeats=True)
+    first, second = _measures(xml)
+    assert '<repeat direction="forward"/>' in first and 'times="3"' in second
+
+
+def test_without_repeats_every_bar_is_written_out():
+    assert len(_measures(notation.to_musicxml(groove(4), BEATS, DOWNBEATS))) == 4
+
+
+def _triplet_beat(t0):
+    return [(t0 + k * 0.5 / 3, SNARE, 100) for k in range(3)]
+
+
+def test_simplified_triplet_beats_stay_triplets():
+    notes = [n for n in groove(4) if not (n[0] % 2.0 >= 1.5)]  # beat 4 of every bar: empty
+    for bar in range(4):
+        notes += _triplet_beat(bar * 2.0 + 1.5)
+    q = notation.quantize(notes, BEATS)
+    layout = notation.bar_layout(BEATS, DOWNBEATS)
+    simple = notation.simplify(q, layout.bars)
+    assert sorted(simple) == sorted(q)  # identical bars: nothing changes
+    xml = notation.to_musicxml(notes, BEATS, DOWNBEATS, simplify_bars=True)
+    for m in parse(xml).parts[0].getElementsByClass("Measure"):
+        for voice in m.voices or [m]:
+            assert voice.duration.quarterLength == pytest.approx(4.0)
+
+
+def test_a_beat_mixing_sixteenths_and_triplets_keeps_each_bars_own_hits():
+    notes = [n for n in groove(4) if not (n[0] % 2.0 >= 1.5)]
+    for bar in range(4):  # beat 4: triplets in bars 1-2, sixteenths in bars 3-4
+        t0 = bar * 2.0 + 1.5
+        notes += (
+            _triplet_beat(t0)
+            if bar < 2
+            else [(t0, SNARE, 100), (t0 + 0.125, SNARE, 100), (t0 + 0.375, SNARE, 100)]
+        )
+    xml = notation.to_musicxml(notes, BEATS, DOWNBEATS, simplify_bars=True)
+    for m in parse(xml).parts[0].getElementsByClass("Measure"):
+        for voice in m.voices or [m]:
+            assert voice.duration.quarterLength == pytest.approx(4.0)
+
+
+def test_simplify_never_adds_hits_beyond_the_last_beat():
+    notes = [n for n in groove(4) if n[0] < 7.0]  # the last bar has only 2 tracked beats
+    beats = BEATS[:15]
+    q = notation.quantize(notes, beats)
+    layout = notation.bar_layout(beats, DOWNBEATS)
+    assert max(layout.bars[-1]) >= len(beats) - 1  # the last bar reaches past the beats
+    simple = notation.simplify(q, layout.bars, n_beats=len(beats) - 1)
+    assert max(n.beat for n in simple) < len(beats) - 1
