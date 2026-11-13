@@ -31,3 +31,6 @@ combos:
   toms:                          # only the toms from MuScriptor
     none+adtof: [KD, SD, HH, CY]
     demucs+muscriptor_m: [TT]
+
+# Also scored after snapping to the beat grid like the sheet music (stickler.grid).
+grid: [none+adtof, demucs+muscriptor_m, combo+quality]
