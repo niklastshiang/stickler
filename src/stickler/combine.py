@@ -93,7 +93,7 @@ def combine_records(
                 notes = tuple(
                     (time, pitch)
                     for p, r in parts.items()
-                    for time, pitch in read_notes(r.midi)
+                    for time, pitch in (r.notes if r.notes is not None else read_notes(r.midi))
                     if scheme.class_of(pitch) in combo.parts[p]
                 )
             devices = sorted({m["device"] for m in trans_metas if m.get("device")})

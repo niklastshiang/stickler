@@ -97,3 +97,10 @@ def test_one_combined_record_per_track():
         [rec("none", "adtof", "a"), rec("none", "adtof", "b", error="x")], [combo], SCHEME, read
     )
     assert [(r.track, r.ok) for r in out] == [("a", True), ("b", False)]
+
+
+def test_parts_with_notes_in_memory_are_used_directly():
+    (combo,) = combine.parse_combos({"q": {"vote+v": ["KD"]}}, SCHEME)
+    part = Record("own", "t1", "vote", "v", None, None, {}, {}, None, ((0.5, 36), (0.6, 38)))
+    (out,) = combine.combine_records([part], [combo], SCHEME, read)
+    assert list(out.notes) == [(0.5, 36)]
