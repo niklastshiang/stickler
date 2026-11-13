@@ -9,7 +9,7 @@ on rented NVIDIA GPUs. How the commands work: [CLI guide](cli.md).
 |---|---|---|
 | Linux | the only platform Stickler is built and tested on | – |
 | [`uv`](https://docs.astral.sh/uv/) | Python environments; it fetches Python 3.12 and PyTorch for each model itself | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| `ffmpeg` | decoding audio (MP3, FLAC, …) | `sudo dnf install ffmpeg-free` / `sudo apt install ffmpeg` |
+| `ffmpeg` | decoding audio; converts formats the models cannot read (M4A/AAC, WMA, …) to FLAC | `sudo dnf install ffmpeg-free` / `sudo apt install ffmpeg` |
 | `git` | cloning; MDB Drums is downloaded with git | usually present |
 | MuseScore 4 (optional) | PDF sheet music | `flatpak install flathub org.musescore.MuseScore` |
 | Hugging Face account (for MuScriptor) | its weights are gated | accept the licence, `uvx hf auth login` |

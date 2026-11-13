@@ -54,8 +54,8 @@
 
 ## `> WHAT IS THIS`
 
-**Stickler** turns a song into drum sheet music: give it an MP3 or FLAC, get the notes as MusicXML
-or PDF, and only correct them in MuseScore. Everything runs locally, with open-source models.
+**Stickler** turns a song into drum sheet music: give it an MP3, FLAC, Opus, M4A or any other audio
+file, get the notes as MusicXML or PDF, and only correct them in MuseScore. Everything runs locally, with open-source models.
 
 **It started as a test bench**, because one question cannot be settled by reading papers:
 **which combination of drum separation and transcription model produces the best notes?** Every

@@ -58,6 +58,15 @@ a **PDF** next to it.
 
 Every step is cached in `cache/`; running `notate` again on the same song is instant.
 
+**Audio formats** (tested with every model on 2026-11-13):
+
+| Format | How it is handled |
+|---|---|
+| WAV, FLAC, MP3, Ogg Vorbis, Opus, AIFF | read directly by every model |
+| M4A/AAC, WMA and anything else `ffmpeg` decodes | converted to FLAC once (`cache/_decoded/`), then read by every model |
+
+Cache entries belong to the original file's content, so the conversion never changes results.
+
 ---
 
 ## 3. Benchmark
