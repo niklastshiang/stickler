@@ -239,6 +239,9 @@ scripts/check.sh task
 
 ## `> BUILD IT YOURSELF`
 
+> **Documentation:** [CLI guide](docs/cli.md) · [Requirements](docs/requirements.md) ·
+> [Benchmark report](docs/report.md)
+
 ### Prerequisites
 
 Stickler needs **`uv`** for the Python environments and **`ffmpeg`** to decode audio. Everything

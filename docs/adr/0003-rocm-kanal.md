@@ -18,6 +18,7 @@ The machine has an integrated Radeon 840M (gfx1152, RDNA 3.5) and no CUDA GPU. A
 - Default channel: `whl-multi-arch`, ROCm 7.14.1, PyTorch 2.12.0, torchaudio 2.11.0.
 - `prefer_gpu = false` ensures that `device=auto` uses the CPU when the GPU is demonstrably slower for a model. This applies to ADT_STR. `device=gpu` still forces the GPU.
 - The cache key includes the environment (cpu/rocm). Keys for pure CPU runs remain unchanged.
+  *Superseded on 2026-11-12: cache keys no longer include the device (cache v2, see `stickler.runner.cache_dir_for`); the device is recorded in `meta.json`.*
 
 ## Consequences
 - The ROCm environment is less reproducible than the CPU environment (no lock). The Torch package versions are pinned.
