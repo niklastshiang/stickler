@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +18,7 @@ from stickler import (
     align,
     audio,
     cachemigration,
+    combine,
     doctor,
     musescore,
     notation,
@@ -53,6 +54,7 @@ class BenchmarkConfig:
     schemes: list[str]
     timeout: runner.Timeout = None  # seconds per adapter call, overall or per stage
     skip: frozenset[tuple[str, str]] = frozenset()  # (separator, transcriber) pairs not run
+    combos: dict = field(default_factory=dict)  # combined pipelines (stickler.combine)
 
 
 def _parse_skip(raw: list) -> frozenset[tuple[str, str]]:
@@ -96,6 +98,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         schemes=[str(s) for s in raw.get("schemes", ["5", "3"])],
         timeout=_parse_timeout(raw.get("timeout")),
         skip=_parse_skip(raw.get("skip") or []),
+        combos=dict(raw.get("combos") or {}),
     )
 
 
@@ -198,6 +201,9 @@ def evaluate_benchmark(
     )
     all_schemes = load_schemes(CLASSES)
     schemes = {name: all_schemes[name] for name in cfg.schemes}
+    # Combos name classes of the 5-class scheme; they are scored in every configured scheme.
+    combos = combine.parse_combos(cfg.combos, all_schemes["5"])
+    records += combine.combine_records(records, combos, all_schemes["5"], runner.read_drum_notes)
     rows = runner.score_records(records, tracks, schemes)
     summary = summarize(rows)
     write_csv(results_dir / "metrics.csv", rows)

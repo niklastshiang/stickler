@@ -16,3 +16,14 @@ schemes: ["5", "3"]
 timeout:
   separators: 1800
   transcribers: {factor: 10, min: 120}  # 10 x song length, at least 120 s
+
+# Combined pipelines (stickler.combine): each class of the 5-class scheme from the pipeline
+# that is best at it in the per-class F1 of the own songs (2026-11-13). The same combos are
+# scored on MDB as a check on data they were not chosen on.
+combos:
+  quality:                       # MuScriptor for drums and toms, ADTOF for hi-hat and cymbals
+    demucs+muscriptor_m: [KD, SD, TT]
+    none+adtof: [HH, CY]
+  toms:                          # only the toms from MuScriptor
+    none+adtof: [KD, SD, HH, CY]
+    demucs+muscriptor_m: [TT]

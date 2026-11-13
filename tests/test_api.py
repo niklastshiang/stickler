@@ -87,6 +87,20 @@ def test_run_and_evaluate_benchmark(monkeypatch, tmp_path):
     assert (tmp_path / "results" / "summary.csv").exists()
 
 
+def test_evaluate_scores_combos(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)
+    cfg = _bench(tmp_path)
+    cfg.write_text(
+        cfg.read_text() + "combos:\n  quality:\n    none+dummy: [KD, SD]\n", encoding="utf-8"
+    )
+    assert api.load_benchmark_config(cfg).combos == {"quality": {"none+dummy": ["KD", "SD"]}}
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    api.run_benchmark(cfg, **kw)
+    summary = api.evaluate_benchmark(cfg, results_dir=tmp_path / "results", **kw)
+    combo = [r for r in summary if r["separator"] == "combo"]
+    assert [r["transcriber"] for r in combo] == ["quality"] and combo[0]["micro_f1"] == 1.0
+
+
 def test_run_benchmark_device_override(monkeypatch, tmp_path):
     from stickler import runner
 

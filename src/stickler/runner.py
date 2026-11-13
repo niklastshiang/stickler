@@ -77,6 +77,8 @@ class Record:
     separator_meta: dict | None
     transcriber_meta: dict | None
     error: str | None
+    # Notes already in memory (combined pipelines); otherwise they are read from `midi`
+    notes: tuple[tuple[float, int], ...] | None = None
 
     @property
     def ok(self) -> bool:
@@ -295,7 +297,8 @@ def score_records(
             continue
         track = by_id[(rec.dataset, rec.track)]
         ref_notes = _outside(track.reference_notes(), track.excluded)
-        est_notes = _outside(read_notes(rec.midi), track.excluded)
+        notes = rec.notes if rec.notes is not None else read_notes(rec.midi)
+        est_notes = _outside(notes, track.excluded)
         for name, scheme in schemes.items():
             s = score(onsets_from_notes(ref_notes, scheme), onsets_from_notes(est_notes, scheme))
             for cls, prf in [*s.per_class.items(), ("micro", s.micro)]:
