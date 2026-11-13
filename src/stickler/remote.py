@@ -55,6 +55,8 @@ class SyncPlan:
     # own songs' recordings: (local path, song folder relative to the project root); they are
     # uploaded into the song folder, where the file-name lookup (datasets.own) finds them first
     audio: list[tuple[str, str]] = field(default_factory=list)
+    # cache entries the run needs ("<adapter>/<key>"); None uploads the whole cache
+    cache: list[str] | None = None
 
 
 def ssh_command(host: Host) -> list[str]:
@@ -100,7 +102,13 @@ def sync_plan(
 
 def remote_script(config: str, adapter_ids: list[str]) -> str:
     """Bash script run on the host; the first stdin line is the Hugging Face token."""
-    setups = "\n".join(f"uv run stickler setup --adapter {a} --device cuda" for a in adapter_ids)
+    # The environments hold copies of their packages; the uv cache (~18 GB with CUDA torch) only
+    # fills the pod's disk, so it is cleaned after every setup (cleaning once after all of them
+    # overflowed the 60 GB disk on 2026-11-13).
+    setups = "\n".join(
+        f"uv run stickler setup --adapter {a} --device cuda\nuv cache clean || true"
+        for a in adapter_ids
+    )
     return f"""set -euo pipefail
 read -r HF_TOKEN || true
 export HF_TOKEN
@@ -108,9 +116,6 @@ export PATH="$HOME/.local/bin:$PATH"
 cd ~/{REMOTE_DIR}
 uv sync --quiet
 {setups}
-# The environments hold copies of their packages; the uv cache (~18 GB with CUDA torch) would
-# only fill the pod's disk (first ENST run: 98 % of 60 GB).
-uv cache clean || true
 uv run stickler doctor || true
 uv run stickler run --config {config} --device gpu
 uv run stickler eval --config {config}
@@ -188,7 +193,20 @@ def run_remote(
         for local, song_dir in plan.audio:
             dest = f"{REMOTE_DIR}/{song_dir}/"
             run(rsync_command(host, ["--mkpath"], local, dest), "audio upload")
-        run(rsync_command(host, [], f"{root / 'cache'}/", f"{REMOTE_DIR}/cache/"), "cache upload")
+        if plan.cache is None:
+            run(
+                rsync_command(host, [], f"{root / 'cache'}/", f"{REMOTE_DIR}/cache/"),
+                "cache upload",
+            )
+        elif plan.cache:
+            listing = "\n".join(plan.cache) + "\n"
+            cmd = rsync_command(
+                host,
+                ["-r", "--mkpath", "--files-from=-"],
+                f"{root / 'cache'}/",
+                f"{REMOTE_DIR}/cache/",
+            )
+            run(cmd, "cache upload", listing)
         script = remote_script(config, adapter_ids)
         # script as argument (not secret), token as the only stdin line (read -r HF_TOKEN)
         run([*ssh_command(host), f"bash -c {shlex.quote(script)}"], "run", f"{hf_token}\n", True)

@@ -198,6 +198,16 @@ def test_votes_are_scored_and_usable_in_combos(monkeypatch, tmp_path):
     assert by[("vote", "v")] == 1.0 and by[("combo", "c")] == 1.0
 
 
+def test_cache_entries_are_the_results_a_config_uses(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)
+    cfg = _bench(tmp_path)
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    (rec,) = api.run_benchmark(cfg, **kw)
+    (tmp_path / "cache" / "other" / "unrelated").mkdir(parents=True)
+    entries = api.cache_entries(cfg, **kw)
+    assert entries == [str(rec.midi.parent.relative_to(tmp_path / "cache"))]
+
+
 def test_run_benchmark_device_override(monkeypatch, tmp_path):
     from stickler import runner
 
@@ -542,11 +552,14 @@ def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
     seen = {}
 
     def fake_run_remote(host, config, adapter_ids, plan, *, project_root, hf_token, stop, wipe):
-        seen.update(host=host, config=config, ids=adapter_ids, token=hf_token, wipe=wipe)
+        seen.update(
+            host=host, config=config, ids=adapter_ids, token=hf_token, wipe=wipe, cache=plan.cache
+        )
         stop()
 
     monkeypatch.setattr(remote, "run_remote", fake_run_remote)
     monkeypatch.setattr(remote, "stop_pod", lambda pod, key: seen.update(stopped=(pod, key)))
+    monkeypatch.setattr(api, "cache_entries", lambda config: ["adtof/abc"])
     api.run_remote(
         "root@203.0.113.7",
         22077,
@@ -554,7 +567,7 @@ def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
         pod_id="pod1",
         wipe=True,
     )
-    assert seen["wipe"] is True
+    assert seen["wipe"] is True and seen["cache"] == ["adtof/abc"]
     assert seen["host"] == remote.Host("root@203.0.113.7", 22077)
     assert seen["config"] == "config/own.yaml" and seen["token"] == "tok"
     assert seen["stopped"] == ("pod1", "key") and "demucs" in seen["ids"]

@@ -30,9 +30,13 @@ def test_script_installs_tools_sets_up_cuda_and_runs_on_gpu():
     assert "stickler eval --config config/own.yaml" in script
     assert script.index("setup --adapter") < script.index("stickler run")
     assert script.index("stickler run") < script.index("stickler eval")
-    # the CUDA environments are copies, so the uv cache (~18 GB) only fills the pod's disk
-    assert script.index("setup --adapter") < script.index("uv cache clean")
-    assert script.index("uv cache clean") < script.index("stickler run")
+    # the CUDA environments are copies, so the uv cache (~18 GB) only fills the pod's disk;
+    # it is cleaned after every single setup (all at once overflowed 60 GB on 2026-11-13)
+    lines = script.splitlines()
+    for i, line in enumerate(lines):
+        if "stickler setup" in line:
+            assert lines[i + 1].startswith("uv cache clean")
+    assert script.rindex("uv cache clean") < script.index("stickler run")
 
 
 def test_adapters_for_config_skips_builtin_separators(tmp_path):
@@ -267,3 +271,14 @@ def test_songs_from_anywhere_go_into_their_own_song_folders(tmp_path, monkeypatc
     plan = remote.sync_plan(cfg, project_root=tmp_path, references_dir=refs, data_dir=data)
     assert [d for _, d in plan.audio] == ["data/own/a", "data/own/b"]
     assert all(Path(local).exists() for local, _ in plan.audio)
+
+
+def test_only_the_listed_cache_entries_are_uploaded(tmp_path):
+    rec = Recorder()
+    plan = remote.SyncPlan(code=["pyproject.toml"], cache=["adtof/0123", "demucs/4567"])
+    remote.run_remote(HOST, "c.yaml", [], plan, project_root=tmp_path, hf_token="", execute=rec)
+    up = [(c, i) for c, i in rec.calls if c[0] == "rsync" and c[-1].endswith(":stickler/cache/")]
+    assert len(up) == 1
+    cmd, listing = up[0]
+    assert "--files-from=-" in cmd and "-r" in cmd
+    assert listing.split() == ["adtof/0123", "demucs/4567"]

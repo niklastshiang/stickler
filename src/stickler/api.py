@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import shutil
@@ -606,6 +607,38 @@ def runpod_api_key() -> str:
     return ""
 
 
+def cache_entries(
+    config_path: Path,
+    *,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> list[str]:
+    """Cache folders ("<adapter>/<key>") holding results the config uses: stems,
+    transcriptions and the tracks' beats. Only these go to a rented GPU."""
+    records = run_benchmark(
+        config_path,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
+        execute=False,
+    )
+    folders: set[Path] = set()
+    for r in records:
+        folders.update(p.parent for p in (r.stem, r.midi) if p is not None)
+    registry = adapters.discover(adapters_root)
+    if "beat_this" in registry:
+        for name in load_benchmark_config(config_path).datasets:
+            for t in load_tracks(name, data_dir):
+                folders.add(runner.cache_dir_for(cache_dir, registry["beat_this"], t.mix))
+    root = cache_dir.resolve()
+    return sorted(
+        str(f.resolve().relative_to(root))
+        for f in folders
+        if f.is_dir() and f.resolve().is_relative_to(root)
+    )
+
+
 def run_remote(
     host: str, port: int, config_path: Path, *, pod_id: str | None = None, wipe: bool = False
 ) -> None:
@@ -625,6 +658,7 @@ def run_remote(
         references_dir=REFERENCES_DIR,
         data_dir=DATA_DIR,
     )
+    plan = dataclasses.replace(plan, cache=cache_entries(config))
     remote.run_remote(
         remote.Host(host, port),
         str(config.relative_to(PROJECT_ROOT)),
