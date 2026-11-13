@@ -592,9 +592,8 @@ def notate(
     device: str = "auto",
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
-    results_dir: Path = RESULTS_DIR,
 ) -> Notation:
-    """Song → drum sheet music as MusicXML (default: results/notation/<song>.musicxml), plus a
+    """Song → drum sheet music as MusicXML (default: next to the song, <song>.musicxml), plus a
     PDF next to it if MuseScore is installed. Title and artist default to the file's tags."""
     t = transcribe_song(
         audio_path,
@@ -605,7 +604,7 @@ def notate(
         cache_dir=cache_dir,
         adapters_root=adapters_root,
     )
-    target = out or results_dir / "notation" / f"{audio_path.stem}.musicxml"
+    target = out or audio_path.with_suffix(".musicxml")
     target.parent.mkdir(parents=True, exist_ok=True)
     found = audio.tags(audio_path) if title is None or artist is None else {}
     xml = notation.to_musicxml(

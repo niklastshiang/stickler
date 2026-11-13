@@ -53,7 +53,7 @@ uv run stickler notate "Foo Fighters - Everlong.flac" --mode quality   # Quality
 ```
 
 Separates the drums (depending on the pipeline), transcribes them, finds the beats, quantises
-the hits to the beat grid and writes **MusicXML** to `results/notation/<song>.musicxml`. If
+the hits to the beat grid and writes **MusicXML** next to the song (`<song>.musicxml`). If
 MuseScore 4 is installed (e.g. `flatpak install flathub org.musescore.MuseScore`), it also writes
 a **PDF** next to it.
 

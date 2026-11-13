@@ -529,8 +529,8 @@ def test_transcribe_song_rejects_bad_pipelines(tmp_path, monkeypatch, pipeline):
 def test_notate_writes_musicxml_and_reports_missing_musescore(tmp_path, monkeypatch):
     audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
     monkeypatch.setattr(api.musescore, "find", lambda: None)
-    result = api.notate(audio, cache_dir=tmp_path, results_dir=tmp_path / "res")
-    assert result.musicxml == tmp_path / "res" / "notation" / "song.musicxml"
+    result = api.notate(audio, cache_dir=tmp_path)
+    assert result.musicxml == audio.with_suffix(".musicxml")  # next to the song
     assert "<score-partwise" in result.musicxml.read_text()
     assert result.pdf is None and "MuseScore" in result.pdf_error
 
