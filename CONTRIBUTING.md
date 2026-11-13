@@ -1,8 +1,8 @@
 # Contributing
 
-Stickler is **open source, but not open to outside code**: pull requests from people outside the
-project are closed automatically. The code is written by an AI (Claude) and every decision is the
-owner's; reviewing outside code is not part of that.
+Stickler is **open source, but not open to outside code**: pull requests are switched off. The
+code is written by an AI (Claude) and every decision is the owner's; reviewing outside code is
+not part of that.
 
 ## Welcome: issues
 
