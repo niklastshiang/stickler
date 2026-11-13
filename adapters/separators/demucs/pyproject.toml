@@ -12,6 +12,9 @@ dependencies = [
 
 [tool.uv]
 package = false
+# Stickler only runs on Linux; demucs pins torch<2.3 for Intel macOS, which held the whole lock
+# at torch 2.2.2 (critical CVE GHSA-53q9-r3pm-6pq6, found by Dependabot on 2026-11-13).
+environments = ["sys_platform == 'linux'"]
 
 [tool.uv.sources]
 stickler-adapter = { path = "../../_common", editable = true }
