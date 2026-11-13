@@ -1,4 +1,4 @@
 title: "Thirty Seconds to Mars – The Kill"
-audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/the_kill/Thirty Seconds to Mars - The Kill.flac"
+audio: "Thirty Seconds to Mars - The Kill.flac"
 # Score: data/own/the_kill/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

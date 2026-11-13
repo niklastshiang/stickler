@@ -1,8 +1,11 @@
 """Own songs: description in references/own/<id>.yaml, score and alignment in
 data/own/<id>/ (not in the repo, because notes and recordings belong to third parties).
 
-YAML: `title`, `audio` (path, `~` allowed), optional `exclude: [[from, to], ...]` in
-audio seconds. Score: data/own/<id>/score.mid. Result of `stickler align`:
+YAML: `title`, `audio`, optional `exclude: [[from, to], ...]` in audio seconds.
+`audio` is a file name, searched first in data/own/<id>/ and then anywhere below the music
+folder (STICKLER_MUSIC_DIR, else the XDG music folder, else ~/Music), so the references
+reveal nothing about how a music collection is organised. A path (absolute or with `~`) is
+used as given. Score: data/own/<id>/score.mid. Result of `stickler align`:
 data/own/<id>/aligned.json (notes in audio time, excluded regions, quality).
 Only songs whose alignment passes the quality check become benchmark tracks.
 """
@@ -10,13 +13,58 @@ Only songs whose alignment passes the quality check become benchmark tracks.
 from __future__ import annotations
 
 import json
+import logging
 import math
+import os
+import subprocess
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 
 import yaml
 
 Interval = tuple[float, float]
+
+log = logging.getLogger(__name__)
+MUSIC_DIR_ENV = "STICKLER_MUSIC_DIR"
+
+
+def _xdg_music() -> Path | None:
+    try:
+        out = subprocess.run(["xdg-user-dir", "MUSIC"], capture_output=True, text=True).stdout
+    except OSError:
+        return None
+    path = Path(out.strip()) if out.strip() else None
+    return path if path and path != Path.home() else None
+
+
+def music_dir() -> Path:
+    if os.environ.get(MUSIC_DIR_ENV):
+        return Path(os.environ[MUSIC_DIR_ENV]).expanduser()
+    return _xdg_music() or Path.home() / "Music"
+
+
+@cache
+def _index(root: Path) -> dict[str, list[Path]]:
+    """File name → paths below `root`, sorted (built once per run)."""
+    found: dict[str, list[Path]] = {}
+    for folder, _, files in os.walk(root):
+        for name in files:
+            found.setdefault(name, []).append(Path(folder) / name)
+    return {name: sorted(paths) for name, paths in found.items()}
+
+
+def _find_audio(audio: str, song_dir: Path) -> Path:
+    if "/" in audio or audio.startswith("~"):
+        return Path(audio).expanduser()
+    if (song_dir / audio).exists():
+        return song_dir / audio
+    matches = _index(music_dir()).get(audio, [])
+    if len(matches) > 1:
+        log.warning(
+            "%s found %d times below %s, using %s", audio, len(matches), music_dir(), matches[0]
+        )
+    return matches[0] if matches else song_dir / audio
 
 
 @dataclass(frozen=True)
@@ -58,7 +106,7 @@ def songs(references_dir: Path, data_dir: Path) -> list[Song]:
             Song(
                 id=path.stem,
                 title=str(raw.get("title", path.stem)),
-                audio=Path(raw["audio"]).expanduser(),
+                audio=_find_audio(str(raw["audio"]), data_dir / "own" / path.stem),
                 dir=data_dir / "own" / path.stem,
                 exclude=tuple((float(a), float(b)) for a, b in raw.get("exclude") or []),
                 approved_by_ear=raw.get("approved_by_ear"),

@@ -1,5 +1,5 @@
 title: "Tears for Fears – Everybody Wants To Rule The World"
-audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/everybody_wants_to_rule_the_world/Tears for Fears - Everybody Wants To Rule The World.flac"
+audio: "Tears for Fears - Everybody Wants To Rule The World.flac"
 # Score: data/own/everybody_wants_to_rule_the_world/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []
 # Alignment fails (2026-11-13): 12/8; the score's quarter is 0.357 s, Beat This! tracks dotted

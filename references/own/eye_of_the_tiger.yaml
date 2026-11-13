@@ -1,4 +1,4 @@
 title: "Survivor – Eye of the Tiger"
-audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/eye_of_the_tiger/Survivor - Eye of the Tiger.flac"
+audio: "Survivor - Eye of the Tiger.flac"
 # Score: data/own/eye_of_the_tiger/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

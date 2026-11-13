@@ -541,9 +541,7 @@ def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
     monkeypatch.setattr(remote, "sync_plan", lambda cfg, **kw: remote.SyncPlan(code=[]))
     seen = {}
 
-    def fake_run_remote(
-        host, config, adapter_ids, plan, *, project_root, home, hf_token, stop, wipe
-    ):
+    def fake_run_remote(host, config, adapter_ids, plan, *, project_root, hf_token, stop, wipe):
         seen.update(host=host, config=config, ids=adapter_ids, token=hf_token, wipe=wipe)
         stop()
 

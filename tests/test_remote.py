@@ -53,19 +53,8 @@ def test_sync_plan_uploads_the_enst_folder(tmp_path, monkeypatch):
         project_root=tmp_path,
         references_dir=tmp_path,
         data_dir=tmp_path / "data",
-        home=tmp_path,
     )
     assert plan.data_dirs == ["data/mdb", "data/enst"]
-
-
-def test_own_song_audio_is_mirrored_relative_to_home(tmp_path):
-    home = tmp_path / "home"
-    audio = home / "Musik" / "a.flac"
-    audio.parent.mkdir(parents=True)
-    audio.write_bytes(b"x")
-    assert remote.home_relative([audio], home) == ["Musik/a.flac"]
-    with pytest.raises(ValueError, match="home"):
-        remote.home_relative([tmp_path / "elsewhere.flac"], home)
 
 
 class Recorder:
@@ -86,7 +75,7 @@ def plan(tmp_path):
         code=["src/stickler/api.py", "pyproject.toml"],
         data_dirs=["data/mdb"],
         data_files=["data/own/x/aligned.json"],
-        home_files=["Musik/a.flac"],
+        audio=[("/music/Playlist/a.flac", "data/own/a")],
     )
 
 
@@ -99,7 +88,6 @@ def test_run_remote_order_and_secret_on_stdin(tmp_path, plan):
         ["demucs"],
         plan,
         project_root=tmp_path,
-        home=tmp_path,
         hf_token="secret-token",
         stop=lambda: stopped.append(True),
         execute=rec,
@@ -108,6 +96,8 @@ def test_run_remote_order_and_secret_on_stdin(tmp_path, plan):
     assert cmds[0][0] == "ssh" and "apt-get" in cmds[0][-1]  # bootstrap: rsync, ffmpeg
     rsyncs = [c for c in cmds if c[0] == "rsync"]
     assert any(c[-1].endswith(":stickler/cache/") for c in rsyncs)  # cache up
+    song_up = [c for c in rsyncs if c[-1].endswith(":stickler/data/own/a/")]
+    assert song_up and song_up[0][-2] == "/music/Playlist/a.flac" and "--mkpath" in song_up[0]
     cache_down = [c for c in rsyncs if c[-2].endswith(":stickler/cache/")]
     assert cache_down and cache_down[0][-1].endswith("cache/")
     results_down = rsyncs[-1]
@@ -129,7 +119,6 @@ def test_pod_is_stopped_even_if_the_run_fails(tmp_path, plan):
             ["demucs"],
             plan,
             project_root=tmp_path,
-            home=tmp_path,
             hf_token="",
             stop=lambda: stopped.append(True),
             execute=rec,
@@ -188,8 +177,7 @@ def test_stop_pod_rejected_key_raises():
 
 
 def test_sync_plan_for_own_songs(tmp_path, monkeypatch):
-    home = tmp_path / "home"
-    audio = home / "Musik" / "s.mp3"
+    audio = tmp_path / "music" / "Playlist" / "s.mp3"
     audio.parent.mkdir(parents=True)
     audio.write_bytes(b"x")
     refs, data = tmp_path / "refs", tmp_path / "data"
@@ -202,12 +190,11 @@ def test_sync_plan_for_own_songs(tmp_path, monkeypatch):
     cfg = tmp_path / "c.yaml"
     cfg.write_text("datasets: [own]\nseparators: [demucs]\ntranscribers: [adtof]\n")
     monkeypatch.setattr(remote, "tracked_files", lambda root: ["pyproject.toml"])
-    plan = remote.sync_plan(
-        cfg, project_root=tmp_path, references_dir=refs, data_dir=data, home=home
-    )
+    plan = remote.sync_plan(cfg, project_root=tmp_path, references_dir=refs, data_dir=data)
     assert plan.code == ["pyproject.toml"]
     assert plan.data_files == ["data/own/s/aligned.json"]
-    assert plan.home_files == ["Musik/s.mp3"] and plan.data_dirs == []
+    # into the song folder on the host, where the file-name lookup finds it first
+    assert plan.audio == [(str(audio), "data/own/s")] and plan.data_dirs == []
     assert Path("data/own/s/aligned.json") == Path(plan.data_files[0])
 
 
@@ -220,7 +207,6 @@ def test_wipe_deletes_uploads_after_download_and_before_stop(tmp_path, plan):
         ["demucs"],
         plan,
         project_root=tmp_path,
-        home=tmp_path,
         hf_token="",
         stop=lambda: events.append("stop"),
         execute=lambda cmd, **kw: events.append(cmd) or rec(cmd, **kw),
@@ -229,7 +215,7 @@ def test_wipe_deletes_uploads_after_download_and_before_stop(tmp_path, plan):
     wipe = [i for i, e in enumerate(events) if e != "stop" and "rm -rf" in e[-1]]
     assert len(wipe) == 1
     cmd = events[wipe[0]][-1]
-    assert "~/stickler" in cmd and "~/Musik" in cmd
+    assert cmd == "rm -rf ~/stickler"  # the songs were uploaded into the project folder
     cache_down = max(
         i for i, e in enumerate(events) if e != "stop" and e[-2].endswith(":stickler/cache/")
     )
@@ -245,7 +231,6 @@ def test_wipe_after_a_failed_run_still_tries_to_save_the_cache(tmp_path, plan):
             ["demucs"],
             plan,
             project_root=tmp_path,
-            home=tmp_path,
             hf_token="",
             execute=rec,
             wipe=True,
@@ -258,8 +243,27 @@ def test_wipe_after_a_failed_run_still_tries_to_save_the_cache(tmp_path, plan):
 
 def test_data_upload_creates_missing_parent_folders(tmp_path, plan):
     rec = Recorder()
-    remote.run_remote(
-        HOST, "c.yaml", [], plan, project_root=tmp_path, home=tmp_path, hf_token="", execute=rec
-    )
+    remote.run_remote(HOST, "c.yaml", [], plan, project_root=tmp_path, hf_token="", execute=rec)
     data_up = [c for c, _ in rec.calls if c[0] == "rsync" and c[-1].endswith(":stickler/data/mdb/")]
     assert data_up and "--mkpath" in data_up[0]  # a fresh host has no stickler/data/ yet
+
+
+def test_songs_from_anywhere_go_into_their_own_song_folders(tmp_path, monkeypatch):
+    """Recordings no longer need to be below the home folder (paths are never mirrored)."""
+    refs, data = tmp_path / "refs", tmp_path / "data"
+    refs.mkdir()
+    for sid in ("a", "b"):
+        audio = tmp_path / "anywhere" / sid / f"{sid}.flac"
+        audio.parent.mkdir(parents=True)
+        audio.write_bytes(sid.encode())
+        (refs / f"{sid}.yaml").write_text(f'title: "{sid}"\naudio: "{audio}"\n', encoding="utf-8")
+        from stickler.datasets import own
+
+        (song,) = [s for s in own.songs(refs, data) if s.id == sid]
+        own.save_alignment(song, notes=[], excluded=[], quality={}, reasons=[], shift=0.0)
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text("datasets: [own]\nseparators: [none]\ntranscribers: [adtof]\n")
+    monkeypatch.setattr(remote, "tracked_files", lambda root: [])
+    plan = remote.sync_plan(cfg, project_root=tmp_path, references_dir=refs, data_dir=data)
+    assert [d for _, d in plan.audio] == ["data/own/a", "data/own/b"]
+    assert all(Path(local).exists() for local, _ in plan.audio)

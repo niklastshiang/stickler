@@ -84,3 +84,57 @@ def test_approval_by_ear_overrides_failed_checks(layout):
     assert saved["passed"] is True and saved["reasons"] == ["explained"]
     assert saved["approved_by_ear"] == "bass bleed fools the check"
     assert "song_c" in [t.id for t in own.tracks(refs, data)]
+
+
+@pytest.fixture
+def library(tmp_path, monkeypatch):
+    """A music folder with playlists, plus a song folder in data/own/."""
+    music = tmp_path / "music"
+    (music / "Playlist X" / "Band").mkdir(parents=True)
+    (music / "Playlist X" / "Band" / "Band - Song.flac").write_bytes(b"x")
+    (music / "Other").mkdir()
+    (music / "Other" / "Twice.mp3").write_bytes(b"1")
+    (music / "Playlist X" / "Twice.mp3").write_bytes(b"2")
+    monkeypatch.setenv(own.MUSIC_DIR_ENV, str(music))
+    refs, data = tmp_path / "references", tmp_path / "data"
+    refs.mkdir()
+    (data / "own" / "local").mkdir(parents=True)
+    (data / "own" / "local" / "Local - Song.flac").write_bytes(b"y")
+    return refs, data, music
+
+
+def _song(refs, data, sid, audio):
+    (refs / f"{sid}.yaml").write_text(f'title: "{sid}"\naudio: "{audio}"\n', encoding="utf-8")
+    return {s.id: s for s in own.songs(refs, data)}[sid]
+
+
+def test_a_bare_file_name_is_found_in_the_music_folder(library):
+    refs, data, music = library
+    song = _song(refs, data, "band", "Band - Song.flac")
+    assert song.audio == music / "Playlist X" / "Band" / "Band - Song.flac"
+
+
+def test_the_song_folder_is_searched_first(library):
+    refs, data, _ = library
+    song = _song(refs, data, "local", "Local - Song.flac")
+    assert song.audio == data / "own" / "local" / "Local - Song.flac"
+
+
+def test_an_ambiguous_name_takes_the_first_path_in_sorted_order(library):
+    refs, data, music = library
+    assert _song(refs, data, "twice", "Twice.mp3").audio == music / "Other" / "Twice.mp3"
+
+
+def test_a_missing_recording_points_into_the_song_folder(library):
+    refs, data, _ = library
+    song = _song(refs, data, "gone", "Gone.flac")
+    assert song.audio == data / "own" / "gone" / "Gone.flac" and not song.audio.exists()
+
+
+def test_music_folder_defaults(monkeypatch, tmp_path):
+    monkeypatch.delenv(own.MUSIC_DIR_ENV, raising=False)
+    monkeypatch.setattr(own, "_xdg_music", lambda: tmp_path / "Musik")
+    assert own.music_dir() == tmp_path / "Musik"
+    monkeypatch.setattr(own, "_xdg_music", lambda: None)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert own.music_dir() == tmp_path / "Music"

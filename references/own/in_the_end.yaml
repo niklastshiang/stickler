@@ -1,4 +1,4 @@
 title: "Linkin Park – In the End"
-audio: "~/Musik/Sync/Pussyrock/Linkin Park - In the End (Album Version).mp3"
+audio: "Linkin Park - In the End (Album Version).mp3"
 # Score: data/own/in_the_end/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

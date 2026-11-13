@@ -1,4 +1,4 @@
 title: "OneRepublic – Counting Stars"
-audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/counting_stars/OneRepublic - Counting Stars.flac"
+audio: "OneRepublic - Counting Stars.flac"
 # Score: data/own/counting_stars/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

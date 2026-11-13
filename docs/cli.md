@@ -128,9 +128,14 @@ download).
 
    ```yaml
    title: "Foo Fighters – Everlong"
-   audio: "~/Music/Foo Fighters - Everlong.flac"
+   audio: "Foo Fighters - Everlong.flac"
    exclude: []                  # optional: [[start, end], …] in audio seconds to ignore
    ```
+
+   `audio` is just the file name. Stickler looks for it in `data/own/<song>/` first, then
+   anywhere below your music folder (`STICKLER_MUSIC_DIR`, otherwise your desktop's music
+   folder, otherwise `~/Music`), so the file reveals nothing about how your collection is
+   organised. A full path also works.
 3. Align and check:
 
    ```console

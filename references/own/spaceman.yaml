@@ -1,4 +1,4 @@
 title: "Electric Callboy feat. FiNCH – Spaceman"
-audio: "~/Musik/Sync/Eiserne Faust/Eskimo Callboy - Spaceman (feat. FiNCH).mp3"
+audio: "Eskimo Callboy - Spaceman (feat. FiNCH).mp3"
 # Score: data/own/spaceman/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

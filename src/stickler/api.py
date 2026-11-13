@@ -624,7 +624,6 @@ def run_remote(
         project_root=PROJECT_ROOT,
         references_dir=REFERENCES_DIR,
         data_dir=DATA_DIR,
-        home=Path.home(),
     )
     remote.run_remote(
         remote.Host(host, port),
@@ -632,7 +631,6 @@ def run_remote(
         remote.adapters_for(config),
         plan,
         project_root=PROJECT_ROOT,
-        home=Path.home(),
         hf_token=hf_token,
         stop=(lambda: remote.stop_pod(pod_id, api_key)) if pod_id else None,
         wipe=wipe,

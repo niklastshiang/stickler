@@ -1,4 +1,4 @@
 title: "Bullet for My Valentine – Scream Aim Fire"
-audio: "~/Musik/Sync/Eiserne Faust/Bullet For My Valentine - Scream Aim Fire.flac"
+audio: "Bullet For My Valentine - Scream Aim Fire.flac"
 # Score: data/own/scream_aim_fire/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

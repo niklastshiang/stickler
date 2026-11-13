@@ -52,7 +52,9 @@ class SyncPlan:
     code: list[str]  # git-tracked files, relative to the project root
     data_dirs: list[str] = field(default_factory=list)  # relative to the project root
     data_files: list[str] = field(default_factory=list)  # relative to the project root
-    home_files: list[str] = field(default_factory=list)  # own songs' audio, relative to ~
+    # own songs' recordings: (local path, song folder relative to the project root); they are
+    # uploaded into the song folder, where the file-name lookup (datasets.own) finds them first
+    audio: list[tuple[str, str]] = field(default_factory=list)
 
 
 def ssh_command(host: Host) -> list[str]:
@@ -74,23 +76,13 @@ def adapters_for(config: Path) -> list[str]:
     return [*seps, *raw.get("transcribers", [])]
 
 
-def home_relative(files: list[Path], home: Path) -> list[str]:
-    out = []
-    for f in files:
-        try:
-            out.append(str(f.resolve().relative_to(home.resolve())))
-        except ValueError:
-            raise ValueError(f"{f} is not below the home folder {home}") from None
-    return out
-
-
 def tracked_files(root: Path) -> list[str]:
     proc = subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=root)
     return [line for line in proc.stdout.splitlines() if line]
 
 
 def sync_plan(
-    config: Path, *, project_root: Path, references_dir: Path, data_dir: Path, home: Path
+    config: Path, *, project_root: Path, references_dir: Path, data_dir: Path
 ) -> SyncPlan:
     raw = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
     data_dirs, data_files, audio = [], [], []
@@ -101,8 +93,9 @@ def sync_plan(
             for track in own.tracks(references_dir, data_dir):
                 aligned = data_dir / "own" / track.id / "aligned.json"
                 data_files.append(str(aligned.relative_to(project_root)))
-                audio.append(track.mix)
-    return SyncPlan(tracked_files(project_root), data_dirs, data_files, home_relative(audio, home))
+                song_dir = str((data_dir / "own" / track.id).relative_to(project_root))
+                audio.append((str(track.mix), song_dir))
+    return SyncPlan(tracked_files(project_root), data_dirs, data_files, audio)
 
 
 def remote_script(config: str, adapter_ids: list[str]) -> str:
@@ -147,10 +140,8 @@ def stop_pod(pod_id: str, api_key: str, opener: Callable = urllib.request.urlope
 
 
 def wipe_command(plan: SyncPlan) -> str:
-    """Deletes the project folder and the top-level folders of the uploaded own songs."""
-    tops = sorted({Path(f).parts[0] for f in plan.home_files})
-    targets = " ".join(f"~/{shlex.quote(t)}" for t in [REMOTE_DIR, *tops])
-    return f"rm -rf {targets}"
+    """Deletes the project folder, which holds everything uploaded (code, data, songs, cache)."""
+    return f"rm -rf ~/{REMOTE_DIR}"
 
 
 def _ok(proc: subprocess.CompletedProcess, step: str) -> None:
@@ -166,7 +157,6 @@ def run_remote(
     plan: SyncPlan,
     *,
     project_root: Path,
-    home: Path,
     hf_token: str,
     stop: Callable[[], None] | None = None,
     execute: Callable = subprocess.run,
@@ -195,7 +185,9 @@ def run_remote(
         for d in plan.data_dirs:
             dest = f"{REMOTE_DIR}/{d}/"
             run(rsync_command(host, ["--mkpath"], f"{root / d}/", dest), "data upload")
-        upload(plan.home_files, home, "", "audio upload")
+        for local, song_dir in plan.audio:
+            dest = f"{REMOTE_DIR}/{song_dir}/"
+            run(rsync_command(host, ["--mkpath"], local, dest), "audio upload")
         run(rsync_command(host, [], f"{root / 'cache'}/", f"{REMOTE_DIR}/cache/"), "cache upload")
         script = remote_script(config, adapter_ids)
         # script as argument (not secret), token as the only stdin line (read -r HF_TOKEN)

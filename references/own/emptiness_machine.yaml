@@ -1,4 +1,4 @@
 title: "Linkin Park – The Emptiness Machine"
-audio: "~/Musik/Sync/Pussyrock/Linkin Park - The Emptiness Machine.flac"
+audio: "Linkin Park - The Emptiness Machine.flac"
 # Score: data/own/emptiness_machine/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

@@ -1,4 +1,4 @@
 title: "Foo Fighters – Everlong"
-audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/everlong/Foo Fighters - Everlong.flac"
+audio: "Foo Fighters - Everlong.flac"
 # Score: data/own/everlong/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []

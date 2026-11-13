@@ -1,5 +1,5 @@
 title: "Billie Eilish – Happier Than Ever"
-audio: "~/Projekte/Coding/2026-11-11_Stickler/data/own/happier_than_ever/Billie Eilish - Happier Than Ever.flac"
+audio: "Billie Eilish - Happier Than Ever.flac"
 # Score: data/own/happier_than_ever/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []
 # Alignment fails (2026-11-13): the score covers only the drum part (last 98 s), below the

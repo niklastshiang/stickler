@@ -1,5 +1,5 @@
 title: "Metallica – Nothing Else Matters"
-audio: "~/Musik/Sync/Old Skool Rulez/Metallica - Nothing Else Matters.mp3"
+audio: "Metallica - Nothing Else Matters.mp3"
 # Score: data/own/nothing_else_matters/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []
 # Approved by the owner after listening to click.wav (2026-11-12): "wirkt on point".

@@ -1,4 +1,4 @@
 title: "Avenged Sevenfold – Bat Country"
-audio: "~/Musik/Sync/Eiserne Faust/Avenged Sevenfold - Bat Country.mp3"
+audio: "Avenged Sevenfold - Bat Country.mp3"
 # Score: data/own/bat_country/score.mid (not in the repo). Manual exclusions in audio seconds:
 exclude: []
