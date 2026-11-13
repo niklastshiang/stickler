@@ -217,11 +217,11 @@ scripts/check.sh task
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
   "tests": 351,
   "smoke_tests_with_models": 8,
-  "coverage_percent": 97,
+  "coverage_percent": 96,
   "coverage_minimum": 95,
   "adrs": 6,
-  "version": 0,
-  "status": "CLI release 1 in preparation"
+  "version": 1,
+  "status": "release 1: command line tool"
 }
 ```
 
@@ -245,11 +245,16 @@ scripts/check.sh task
 - [x] Sheet music: quantization, MusicXML, PDF via MuseScore, drum track export (`stickler notate`)
 - [x] Everything in English; report, CLI guide and requirements in [`docs/`](docs/)
 
-**In progress**
+**Release 1**
 
-- [ ] ENST-Drums as a third dataset, 15 more own songs
+- [x] ENST-Drums as a third dataset, 25 own songs
 - [x] `stickler notate --mode fast|quality`
-- [ ] **Release 1:** the command line tool
+- [x] **Release 1:** the command line tool
+
+**Next**
+
+- [ ] Error analysis on real songs: confused, missed and invented hits, reference errors
+- [ ] New candidate models: DrumSep with onset detection, MuScriptor large, models from 2026
 
 **Afterwards: the application**
 

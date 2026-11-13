@@ -618,7 +618,7 @@ wheels = [
 
 [[package]]
 name = "stickler"
-version = "0"
+version = "1"
 source = { editable = "." }
 dependencies = [
     { name = "mido" },
