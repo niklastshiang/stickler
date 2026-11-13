@@ -203,16 +203,32 @@ def test_remote_delegates_to_api(monkeypatch, tmp_path):
     monkeypatch.setattr(
         api,
         "run_remote",
-        lambda host, port, config, pod_id=None: seen.update(
-            host=host, port=port, config=config, pod=pod_id
+        lambda host, port, config, pod_id=None, wipe=False: seen.update(
+            host=host, port=port, config=config, pod=pod_id, wipe=wipe
         ),
     )
     result = CliRunner().invoke(
         cli.app,
-        ["remote", "root@h", "--port", "2222", "--config", "config/own.yaml", "--pod-id", "p1"],
+        [
+            "remote",
+            "root@h",
+            "--port",
+            "2222",
+            "--config",
+            "config/own.yaml",
+            "--pod-id",
+            "p1",
+            "--wipe",
+        ],
     )
     assert result.exit_code == 0, result.output
-    assert seen == {"host": "root@h", "port": 2222, "config": Path("config/own.yaml"), "pod": "p1"}
+    assert seen == {
+        "host": "root@h",
+        "port": 2222,
+        "config": Path("config/own.yaml"),
+        "pod": "p1",
+        "wipe": True,
+    }
 
 
 def test_cache_migrate_reports(monkeypatch):

@@ -171,10 +171,18 @@ def remote_cmd(
     pod_id: Annotated[
         str | None, typer.Option("--pod-id", help="RunPod pod to stop afterwards")
     ] = None,
+    wipe: Annotated[
+        bool,
+        typer.Option(
+            "--wipe",
+            help="delete everything uploaded from the host afterwards, also on failure "
+            "(licensed data such as ENST, own songs)",
+        ),
+    ] = False,
 ) -> None:
     """Run a benchmark config on a rented GPU and fetch the results (development only)."""
     try:
-        api.run_remote(host, port, config or api.CONFIG, pod_id=pod_id)
+        api.run_remote(host, port, config or api.CONFIG, pod_id=pod_id, wipe=wipe)
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc

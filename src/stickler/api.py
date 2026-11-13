@@ -498,7 +498,9 @@ def runpod_api_key() -> str:
     return ""
 
 
-def run_remote(host: str, port: int, config_path: Path, *, pod_id: str | None = None) -> None:
+def run_remote(
+    host: str, port: int, config_path: Path, *, pod_id: str | None = None, wipe: bool = False
+) -> None:
     """Runs a benchmark config on a rented GPU over SSH and brings the new cache entries
     back (development only). Secrets come from the environment: HF_TOKEN (or the file from
     `hf auth login`) and, to stop the pod afterwards, the RunPod key (`runpod_api_key`)."""
@@ -525,6 +527,7 @@ def run_remote(host: str, port: int, config_path: Path, *, pod_id: str | None = 
         home=Path.home(),
         hf_token=hf_token,
         stop=(lambda: remote.stop_pod(pod_id, api_key)) if pod_id else None,
+        wipe=wipe,
     )
 
 

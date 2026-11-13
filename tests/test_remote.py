@@ -206,3 +206,48 @@ def test_sync_plan_for_own_songs(tmp_path, monkeypatch):
     assert plan.data_files == ["data/own/s/aligned.json"]
     assert plan.home_files == ["Musik/s.mp3"] and plan.data_dirs == []
     assert Path("data/own/s/aligned.json") == Path(plan.data_files[0])
+
+
+def test_wipe_deletes_uploads_after_download_and_before_stop(tmp_path, plan):
+    rec = Recorder()
+    events = []
+    remote.run_remote(
+        HOST,
+        "config/enst.yaml",
+        ["demucs"],
+        plan,
+        project_root=tmp_path,
+        home=tmp_path,
+        hf_token="",
+        stop=lambda: events.append("stop"),
+        execute=lambda cmd, **kw: events.append(cmd) or rec(cmd, **kw),
+        wipe=True,
+    )
+    wipe = [i for i, e in enumerate(events) if e != "stop" and "rm -rf" in e[-1]]
+    assert len(wipe) == 1
+    cmd = events[wipe[0]][-1]
+    assert "~/stickler" in cmd and "~/Musik" in cmd
+    cache_down = max(
+        i for i, e in enumerate(events) if e != "stop" and e[-2].endswith(":stickler/cache/")
+    )
+    assert cache_down < wipe[0] < events.index("stop")
+
+
+def test_wipe_after_a_failed_run_still_tries_to_save_the_cache(tmp_path, plan):
+    rec = Recorder(fail_on="bash")
+    with pytest.raises(RuntimeError, match="remote run"):
+        remote.run_remote(
+            HOST,
+            "config/enst.yaml",
+            ["demucs"],
+            plan,
+            project_root=tmp_path,
+            home=tmp_path,
+            hf_token="",
+            execute=rec,
+            wipe=True,
+        )
+    cmds = [c for c, _ in rec.calls]
+    down = [i for i, c in enumerate(cmds) if c[0] == "rsync" and c[-2].endswith(":stickler/cache/")]
+    wipe = [i for i, c in enumerate(cmds) if "rm -rf" in c[-1]]
+    assert down and wipe and down[0] < wipe[0]

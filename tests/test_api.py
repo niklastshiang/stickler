@@ -456,15 +456,22 @@ def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
     monkeypatch.setattr(remote, "sync_plan", lambda cfg, **kw: remote.SyncPlan(code=[]))
     seen = {}
 
-    def fake_run_remote(host, config, adapter_ids, plan, *, project_root, home, hf_token, stop):
-        seen.update(host=host, config=config, ids=adapter_ids, token=hf_token)
+    def fake_run_remote(
+        host, config, adapter_ids, plan, *, project_root, home, hf_token, stop, wipe
+    ):
+        seen.update(host=host, config=config, ids=adapter_ids, token=hf_token, wipe=wipe)
         stop()
 
     monkeypatch.setattr(remote, "run_remote", fake_run_remote)
     monkeypatch.setattr(remote, "stop_pod", lambda pod, key: seen.update(stopped=(pod, key)))
     api.run_remote(
-        "root@203.0.113.7", 22077, api.PROJECT_ROOT / "config" / "own.yaml", pod_id="pod1"
+        "root@203.0.113.7",
+        22077,
+        api.PROJECT_ROOT / "config" / "own.yaml",
+        pod_id="pod1",
+        wipe=True,
     )
+    assert seen["wipe"] is True
     assert seen["host"] == remote.Host("root@203.0.113.7", 22077)
     assert seen["config"] == "config/own.yaml" and seen["token"] == "tok"
     assert seen["stopped"] == ("pod1", "key") and "demucs" in seen["ids"]

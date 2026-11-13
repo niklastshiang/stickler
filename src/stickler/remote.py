@@ -4,6 +4,10 @@ Steps: bootstrap the host (rsync, ffmpeg, uv), upload code (git-tracked files), 
 config needs and the cache, build CUDA environments, run with `--device gpu`, download new
 cache entries, and stop the pod if a RunPod pod id and API key are given, also on failure.
 
+With `wipe`, everything uploaded (code, data, cache, own songs) is deleted from the host after
+the cache has been downloaded and before the pod is stopped, also on failure: for data whose
+licence forbids leaving it on third-party machines (ENST-Drums) and for the owner's music.
+
 Secrets never appear on a command line or on disk: the Hugging Face token is sent on the SSH
 session's stdin, the RunPod API key only goes into an HTTPS header.
 """
@@ -139,6 +143,13 @@ def stop_pod(pod_id: str, api_key: str, opener: Callable = urllib.request.urlope
             raise RuntimeError(f"RunPod: stopping pod {pod_id} failed ({exc.code})") from None
 
 
+def wipe_command(plan: SyncPlan) -> str:
+    """Deletes the project folder and the top-level folders of the uploaded own songs."""
+    tops = sorted({Path(f).parts[0] for f in plan.home_files})
+    targets = " ".join(f"~/{shlex.quote(t)}" for t in [REMOTE_DIR, *tops])
+    return f"rm -rf {targets}"
+
+
 def _ok(proc: subprocess.CompletedProcess, step: str) -> None:
     if proc.returncode != 0:
         tail = (proc.stderr or "see output above").strip().splitlines()[-5:]
@@ -156,8 +167,10 @@ def run_remote(
     hf_token: str,
     stop: Callable[[], None] | None = None,
     execute: Callable = subprocess.run,
+    wipe: bool = False,
 ) -> None:
-    """Upload, run and download; `stop` (e.g. stop the pod) runs in any case at the end."""
+    """Upload, run and download; `stop` (e.g. stop the pod) runs in any case at the end,
+    after the optional wipe (see module docstring)."""
 
     def run(cmd: list[str], step: str, stdin: str | None = None, live: bool = False) -> None:
         # live: show the long benchmark run in the terminal instead of buffering it
@@ -168,6 +181,10 @@ def run_remote(
             listing = "\n".join(files) + "\n"
             run(rsync_command(host, ["--files-from=-"], f"{base}/", dest), step, listing)
 
+    cache_down = rsync_command(
+        host, ["--update"], f":{REMOTE_DIR}/cache/", f"{project_root / 'cache'}/"
+    )
+    downloaded = False
     try:
         run([*ssh_command(host), BOOTSTRAP], "bootstrap")
         root = project_root
@@ -179,10 +196,8 @@ def run_remote(
         script = remote_script(config, adapter_ids)
         # script as argument (not secret), token as the only stdin line (read -r HF_TOKEN)
         run([*ssh_command(host), f"bash -c {shlex.quote(script)}"], "run", f"{hf_token}\n", True)
-        run(
-            rsync_command(host, ["--update"], f":{REMOTE_DIR}/cache/", f"{root / 'cache'}/"),
-            "cache download",
-        )
+        run(cache_down, "cache download")
+        downloaded = True
         # Scores computed on the host: GPU cache entries count as local cache hits only after
         # the device-independent cache migration (tasks: Task 20).
         stem = Path(config).stem
@@ -190,5 +205,11 @@ def run_remote(
         (root / results).mkdir(parents=True, exist_ok=True)
         run(rsync_command(host, [], f":{REMOTE_DIR}/{results}", f"{root / results}/"), "results")
     finally:
-        if stop is not None:
-            stop()
+        try:
+            if wipe:
+                if not downloaded:  # keep what the failed run computed, if anything
+                    execute(cache_down, input=None, capture_output=True, text=True)
+                run([*ssh_command(host), wipe_command(plan)], "wipe")
+        finally:
+            if stop is not None:
+                stop()
