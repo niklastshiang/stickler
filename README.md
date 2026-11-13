@@ -63,7 +63,7 @@ model lives in its own adapter with its own Python environment and competes agai
 references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms), on benchmark
 data and, above all, on real music. The answer is in: see [`> RESULTS`](#-results).
 
-**Next:** release 1 as a command line tool with a *Fast* and a *Quality* mode; release 2 is the
+**Next:** release 1 as a command line tool with a *Fast* and a *Quality* mode; after it, the
 desktop application with a GTK 4 interface, shipped as Flatpak and AppImage.
 
 Only **open-source models from actively maintained projects** are allowed. No cloud service, no
@@ -251,7 +251,7 @@ scripts/check.sh task
 - [ ] `stickler notate --mode fast|quality` from the final results
 - [ ] **Release 1:** the command line tool
 
-**Release 2: the application**
+**Afterwards: the application**
 
 - [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
 - [ ] Repeat signs for readable sheet music
