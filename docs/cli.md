@@ -51,7 +51,7 @@ a **PDF** next to it.
 | Option | Meaning |
 |---|---|
 | `--mode fast` | ADTOF on the original mix: ~15 s for a 4-minute song on a laptop CPU (default) |
-| `--mode quality` | Demucs separates the drums, MuScriptor medium transcribes kick, snare and toms, ADTOF hi-hat and cymbals from the mix: ~14 min on a laptop CPU, more accurate |
+| `--mode quality` | Demucs separates the drums, MuScriptor medium transcribes kick, snare and toms, ADTOF hi-hat and cymbals from the mix: ~14 min on a laptop CPU; slightly more accurate on average, sometimes clearly better for a particular song |
 | `--pipeline demucs+adtof` | any `separator+transcriber` instead of a mode (for experiments, see the [report](report.md)) |
 | `--out notes.musicxml` | where to write the MusicXML |
 | `--title`, `--artist` | override what is read from the file's tags |

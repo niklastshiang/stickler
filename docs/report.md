@@ -5,33 +5,33 @@ every result and every decision of the Stickler benchmark in one place, readable
 code. Raw numbers are in `results/` after `stickler eval`, the decisions in detail in
 [`docs/adr/`](adr/).
 
-> **Status (2026-11-13).** Complete: MDB Drums (23 tracks) and the first 10 own songs.
-> Still running: ENST-Drums (64 tracks) and all pipelines on 15 further own songs (25 in
-> total). Sections marked *pending* are filled in when those runs are done.
+> **Status: release 1 (2026-11-13).** Complete: 25 own songs, MDB Drums (23 tracks), ENST-Drums
+> (64 tracks).
 
 ---
 
 ## 1. In short
 
-| Mode | Pipeline | Own songs (macro-F1) | MDB (macro-F1) | Laptop time for a 4-min song |
-|---|---|---|---|---|
-| **Fast** | ADTOF on the original mix | 0.788 | 0.718 | ~15 s |
-| **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.815** | **0.785** | ~14 min |
+| Mode | Pipeline | Own songs | MDB | ENST¹ | Laptop time, 4-min song |
+|---|---|---|---|---|---|
+| **Fast** (default) | ADTOF on the original mix | 0.770 | 0.718 | **0.810** | ~15 s |
+| **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.776** | **0.785** | 0.783 | ~14 min |
 
-*Own songs: the first 10, 5 classes. Laptop: AMD Ryzen AI 5 340, CPU only.*
+*Macro-F1 over 5 classes. Own songs: 25. ¹ Drummer 3, the part of ENST no model was trained on
+(section 5.3). Laptop: AMD Ryzen AI 5 340, CPU only.*
 
 - **ADTOF is the strongest single transcriber**, and on real recordings it works best on the
   original mix. Separating the drums first helps on MDB but not on the owner's rock and metal
   recordings.
-- **MuScriptor medium is best at kick, snare and especially toms**, but weak at cymbals. ADTOF
-  is the opposite. The *Quality* combination takes each instrument from the model that is
-  best at it, and it wins on both datasets.
-- **Snapping the notes to the beat grid**, as the sheet music needs, costs almost nothing on the
-  own songs.
+- **Quality is only slightly better on the target music**: +0.006 over all hits, better on 16 and
+  worse on 2 of 25 songs, mostly through the snare, at about 56 times the computing time. It stays
+  as an option because it can be clearly better for a particular song.
+- **Small samples mislead.** On the first 10 songs Quality led by +0.027 and MuScriptor looked
+  much better at toms; with 25 songs both effects shrank to almost nothing.
+- **Snapping the notes to the beat grid**, as the sheet music needs, costs almost nothing.
 - Several ways to squeeze out more (fusing inputs, voting between models, tuning thresholds,
   consensus across repeated bars) **did not help on the target music** (section 6). ADTOF's own
-  settings are already close to optimal there; the only stable gain is a higher cymbal
-  threshold.
+  settings are already close to optimal there.
 
 ---
 
@@ -67,8 +67,8 @@ Counts are summed over all tracks of a dataset before F1 is computed.
 | Dataset | Tracks | What it is | Licence |
 |---|---|---|---|
 | **MDB Drums** (Southall et al., ISMIR 2017) | 23 | Multitrack productions from MedleyDB, many genres incl. a lot of jazz, with an isolated drum stem | CC BY-NC-SA 4.0 |
-| **Own songs** | 10 (25 *pending*) | Commercial rock, metal and pop recordings from the owner's collection, references from musescore.com transcriptions | not published |
-| **ENST-Drums** (Gillet & Richard, ISMIR 2006) | 64 *pending* | Three drummers, "minus-one" pieces in many styles, mixed 2/3 drums + 1/3 accompaniment | CC BY-NC-ND 4.0, research only (Zenodo) |
+| **Own songs** | 25 | Commercial rock, metal and pop recordings from the owner's collection, references from musescore.com transcriptions | not published |
+| **ENST-Drums** (Gillet & Richard, ISMIR 2006) | 64 | Three drummers, "minus-one" pieces in many styles, mixed 2/3 drums + 1/3 accompaniment | CC BY-NC-ND 4.0, research only (Zenodo) |
 
 **Caution with MDB:** some models may have seen MDB during training or evaluation, so MDB numbers
 can be optimistic. The own songs are the honest test, because they are the music Stickler is
@@ -128,23 +128,27 @@ version.
 
 ## 5. Results
 
-### 5.1 Own songs (10 songs, 5 classes)
-
-*Update with 25 songs pending.*
+### 5.1 Own songs (25 songs, 5 classes)
 
 | Pipeline | Macro-F1 | Kick | Snare | Toms | Hi-hat | Cymbals |
 |---|---|---|---|---|---|---|
-| **Quality** (combination) | **0.815** | 0.91 | 0.89 | 0.83 | 0.74 | 0.71 |
-| ADTOF, mix | 0.788 | 0.89 | 0.88 | 0.72 | 0.74 | 0.71 |
-| ADTOF, Demucs | 0.760 | 0.90 | 0.85 | 0.65 | 0.71 | 0.70 |
-| ADTOF, RoFormer | 0.745 | 0.88 | 0.82 | 0.65 | 0.70 | 0.67 |
-| MuScriptor medium, RoFormer | 0.734 | 0.91 | 0.87 | 0.80 | 0.67 | 0.43 |
-| MuScriptor medium, Demucs | 0.727 | 0.91 | 0.89 | 0.83 | 0.66 | 0.35 |
-| ADT_STR, Demucs | 0.637 | 0.86 | 0.75 | 0.63 | 0.55 | 0.40 |
-| ADT_STR, RoFormer | 0.618 | 0.84 | 0.74 | 0.59 | 0.55 | 0.37 |
-| YourMT3+, RoFormer | 0.604 | 0.84 | 0.72 | 0.58 | 0.53 | 0.35 |
-| YourMT3+, Demucs | 0.597 | 0.84 | 0.69 | 0.57 | 0.51 | 0.36 |
-| YourMT3+, mix | 0.542 | 0.79 | 0.73 | 0.32 | 0.47 | 0.40 |
+| **Quality** (combination) | **0.776** | 0.89 | 0.90 | 0.65 | 0.76 | 0.68 |
+| **Fast**: ADTOF, mix | 0.770 | 0.89 | 0.88 | 0.65 | 0.76 | 0.68 |
+| ADTOF, Demucs | 0.759 | 0.90 | 0.87 | 0.63 | 0.74 | 0.65 |
+| ADTOF, RoFormer | 0.751 | 0.89 | 0.86 | 0.64 | 0.74 | 0.63 |
+| MuScriptor medium, Demucs | 0.714 | 0.89 | 0.90 | 0.65 | 0.70 | 0.43 |
+| MuScriptor medium, RoFormer | 0.712 | 0.89 | 0.88 | 0.62 | 0.70 | 0.46 |
+| ADT_STR, RoFormer | 0.617 | 0.85 | 0.78 | 0.48 | 0.58 | 0.40 |
+| ADT_STR, Demucs | 0.616 | 0.85 | 0.77 | 0.47 | 0.58 | 0.41 |
+| YourMT3+, RoFormer² | 0.604 | 0.84 | 0.72 | 0.58 | 0.53 | 0.35 |
+| YourMT3+, Demucs² | 0.597 | 0.84 | 0.69 | 0.57 | 0.51 | 0.36 |
+| YourMT3+, mix² | 0.542 | 0.79 | 0.73 | 0.32 | 0.47 | 0.40 |
+
+² Measured on the first 10 songs before YourMT3+ was removed (section 7).
+
+Quality against Fast song by song: better on 16, worse on 2, the same on 7 of 25 songs; mean
++0.015 per song (95 % interval −0.001 to +0.030). The combination was chosen on the first 10
+songs, where it led by +0.028 per song; on the 15 songs added later only by +0.007.
 
 ### 5.2 MDB Drums (23 tracks, 5 classes)
 
@@ -167,7 +171,30 @@ oracle stem.
 
 ### 5.3 ENST-Drums (64 tracks)
 
-*Pending.*
+Three drummers play minus-one pieces in many styles (salsa, rock, metal, funk, bossa, big band,
+…), drummers 1 and 2 often with brushes or rods.
+
+| Pipeline | All 64 | Drummer 3 (21) | Kick | Snare | Toms | Hi-hat | Cymbals |
+|---|---|---|---|---|---|---|---|
+| ADTOF, oracle stem | 0.759 | 0.880 | 0.88 | 0.81 | 0.40 | 0.86 | 0.84 |
+| **Quality** (combination) | 0.725 | 0.783 | 0.73 | 0.72 | 0.54 | 0.84 | 0.80 |
+| ADTOF, RoFormer | 0.722 | 0.823 | 0.85 | 0.74 | 0.36 | 0.85 | 0.81 |
+| **Fast**: ADTOF, mix | 0.713 | **0.810** | 0.84 | 0.70 | 0.39 | 0.84 | 0.80 |
+| ADTOF, Demucs | 0.710 | 0.826 | 0.81 | 0.73 | 0.37 | 0.84 | 0.80 |
+| MuScriptor medium, RoFormer | 0.706 | 0.760 | 0.77 | 0.76 | 0.59 | 0.75 | 0.65 |
+| MuScriptor medium, Demucs | 0.668 | 0.718 | 0.73 | 0.72 | 0.54 | 0.74 | 0.62 |
+| ADT_STR, RoFormer | 0.624 | 0.681 | 0.87 | 0.76 | 0.40 | 0.71 | 0.38 |
+| ADT_STR, Demucs | 0.621 | 0.688 | 0.80 | 0.74 | 0.52 | 0.70 | 0.34 |
+
+*Class columns: all 64 tracks.*
+
+- **YourMT3+ is not a fair candidate here:** its paper lists ENST-Drums among its training data
+  (Table 1; its test set is 21 files of drummer 3). It scored 0.83–0.91 on all 64 tracks but only
+  0.79–0.80 on drummer 3, and 0.54–0.60 on the own songs.
+- **Drummers 1 and 2 are harder for every model** (brushes, rods, light styles); ADTOF, trained on
+  rock and pop charts from rhythm games, hardly knows these sounds.
+- On drummer 3, Fast beats Quality (0.810 vs 0.783): MuScriptor is weaker on these studio
+  recordings than on the own songs.
 
 ### 5.4 Runtime and memory
 
@@ -179,7 +206,7 @@ Real-time factor (RTF) = processing time ÷ song length; 0.5 means a 4-minute so
 | Beat This! | ~0.03 | ~0.5 GB | – |
 | ADT_STR | 0.59 | ~0.7–3.7 GB | 0.07 |
 | MuScriptor medium | 1.65 | ~2.6 GB | 0.14 |
-| YourMT3+ | 1.76 | ~2.6 GB | ~0.2 |
+| YourMT3+ (removed) | 1.76 | ~2.6 GB | ~0.2 |
 | Demucs | 1.84 | ~2.7–4.0 GB | ~0.2 |
 | BS-RoFormer | 4.17 | ~2.4–2.7 GB | 0.13 |
 
@@ -193,7 +220,8 @@ on the CPU, so Stickler computes on the CPU there ([ADR 0003](adr/0003-rocm-kana
 
 The tuning rule: **choose settings on some data, check them on other data.** Choices made on
 MDB were checked on the own songs; choices made on the own songs were cross-validated (tuned on
-20 songs, tested on the other 5, five times).
+20 songs, tested on the other 5, five times). The first three rows were measured when 10 own
+songs were ready (ADTOF on the mix: 0.788 there).
 
 | Idea | On the tuning data | On unseen own songs | Why |
 |---|---|---|---|
@@ -202,11 +230,14 @@ MDB were checked on the own songs; choices made on the own songs were cross-vali
 | Vote: a hit counts if 2 of 3 (or 3 of 5) pipelines detect it (chosen on MDB) | big gains | 0.788 → 0.773 | toms and hi-hat better, kick, snare and cymbals worse |
 | Consensus across repeated bars: fill in hits that most similar bars have | +0.002 | ±0.000 | only 31 % of the added hits were right: what one bar lacks is usually a real variation (hi-hat left out before a fill), while model errors repeat in every bar |
 | Tune ADTOF's thresholds on the own songs (cross-validated) | – | 0.770 → 0.774 | ADTOF's defaults are already close to optimal; the only stable change is the cymbal threshold (0.30 → 0.44, chosen in all five folds, cymbals 0.680 → 0.710) |
-| Snap notes to the beat grid like the sheet music | – | 0.815 → 0.812 (Quality) | not an optimisation but a check: the notes on paper are as good as the detection |
+| Higher cymbal threshold for ADTOF (0.44 instead of 0.30, from the cross-validation) | – | 25 songs: cymbals +0.03 over all hits, per song ±0; ENST −0.005, MDB −0.004 | too uncertain to change the default |
+| Snap notes to the beat grid like the sheet music | – | Quality 0.776 → 0.771, Fast 0.770 → 0.768 | not an optimisation but a check: the notes on paper are as good as the detection |
 
-**Lesson:** what is optimal on MDB favours separated stems and jazz subtleties and does not
-transfer to rock and metal. Real gains need tuning data from the target music, which is why the
-own song set was grown from 10 to 25.
+**Lessons:** what is optimal on MDB favours separated stems and jazz subtleties and does not
+transfer to rock and metal. And 10 songs were too few: effects seen on them (Quality's lead,
+MuScriptor's toms) shrank with 25. Next steps are an error analysis (which classes get confused,
+missed or invented, and where the reference itself is wrong) and new candidate models; the
+owner decided against fine-tuning.
 
 ---
 
@@ -218,7 +249,7 @@ own song set was grown from 10 to 25.
 | Demucs from the maintained fork | the original repository is archived | [ADR 0001](adr/0001-demucs-fork.md) |
 | GPU optional per adapter; CPU by default on the laptop | on the Radeon 840M every model was slower on the GPU | [ADR 0003](adr/0003-rocm-kanal.md) |
 | BS-RoFormer "SW" checkpoint | delivers a separate drum stem; origin and licence partly unclear, documented | [ADR 0004](adr/0004-roformer-checkpoint.md) |
-| YourMT3+ "PS" variant | as in the official demo | [ADR 0005](adr/0005-yourmt3-variante.md) |
+| YourMT3+ "PS" variant, later removed | as in the official demo; removed because it came last on the own songs and pins a transformers version with known vulnerabilities | [ADR 0005](adr/0005-yourmt3-variante.md) |
 | Release numbers 1, 2, 3 … instead of SemVer | a tool, not a library; owner's preference | [ADR 0006](adr/0006-versionierung.md) |
 | Each model in its own environment, called as a subprocess | the models' dependencies conflict; a new candidate is one folder | SPEC.md |
 | Cache keyed by input content and adapter code, not by device | results from a rented GPU count on the laptop; comments and translations do not invalidate results | tasks/todo.md (Task 20) |
@@ -228,6 +259,8 @@ own song set was grown from 10 to 25.
 | Own songs: quality thresholds, ≥ 2 min, missing passages no reason to reject, approval by ear | references must be good, but real transcriptions are never perfect | section 3 |
 | ENST: minus-one tracks, 2/3 drums + 1/3 accompaniment | the common evaluation set with accompaniment | `stickler.datasets.enst` |
 | Tune on the target music, with cross-validation | MDB choices did not transfer | section 6 |
+| Modes: Fast = ADTOF on the mix with its default thresholds; Quality = the combination | best and robust on all three datasets; Quality slightly better on the target music and kept because it can be clearly better for a particular song | sections 1, 5 |
+| torch 2.15 in every model, after Dependabot alerts | known vulnerabilities in older versions; outputs checked before/after (identical, or within the model's own run-to-run variation) | tasks/todo.md |
 
 ---
 
@@ -237,7 +270,8 @@ own song set was grown from 10 to 25.
   not for training.
 - **References are transcriptions by third parties**, aligned automatically; errors in them count
   against every model alike.
-- **MDB may overlap with training data** of some models; RoFormer's training data is unknown.
+- **Training overlap:** YourMT3+ was trained on ENST; MDB may overlap with the training data of
+  some models; RoFormer's training data is unknown.
 - **Compound meters** (6/8, 12/8) are not handled by the alignment yet.
 - **Five classes only.** Open vs. closed hi-hat and ride vs. crash matter on paper; ADTOF does not
   distinguish them (planned).
@@ -251,8 +285,11 @@ See the [CLI guide](cli.md) and the [requirements](requirements.md). In short:
 ```console
 uv sync
 uv run stickler fetch mdb
+uv run stickler fetch enst
 uv run stickler setup
-uv run stickler run && uv run stickler eval && uv run stickler report
+uv run stickler run --config config/enst.yaml   # and config/benchmark.yaml, config/own.yaml
+uv run stickler eval --config config/enst.yaml
+uv run stickler report
 ```
 
 Own songs need your own recordings and transcriptions (section 3); they are never part of the

@@ -89,14 +89,14 @@ A dream come true.
 
 ## `> WARNINGS`
 
-> **⚠ RESULTS ARE STILL GROWING.** Complete: MDB Drums and 10 own songs. Running: ENST-Drums and
-> 15 more own songs. The [report](docs/report.md) marks what is pending.
+> **⚠ NOT PERFECT.** About three in four hits come out right on real rock, metal and pop
+> recordings. The notes are a starting point to correct in MuseScore, not a finished score.
 
 > **⚠ MODEL LICENSES.** Stickler never ships model weights; `stickler setup` downloads them, and
 > each comes with its own license. Some are non-commercial (ADTOF, MuScriptor, presumably
 > BS-RoFormer), see [ADR 0002](docs/adr/0002-nc-lizenzen.md).
 
-> **⚠ TRAINED ON MDB?** Some models may have seen MDB Drums during training or evaluation. The
+> **⚠ TRAINING OVERLAP.** Some models may have seen MDB Drums or ENST-Drums during training. The
 > honest test is your own songs.
 
 ---
@@ -106,16 +106,18 @@ A dream come true.
 Macro-F1 over 5 classes (kick, snare, toms, hi-hat, cymbals). Time: a 4-minute song on a laptop
 CPU (AMD Ryzen AI 5 340).
 
-| Mode | Pipeline | Own songs¹ | MDB Drums | Time |
-|---|---|---|---|---|
-| **Fast** | ADTOF on the original mix | 0.788 | 0.718 | ~15 s |
-| **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.815** | **0.785** | ~14 min |
+| Mode | Pipeline | Own songs¹ | MDB Drums | ENST-Drums² | Time |
+|---|---|---|---|---|---|
+| **Fast** (default) | ADTOF on the original mix | 0.770 | 0.718 | **0.810** | ~15 s |
+| **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.776** | **0.785** | 0.783 | ~14 min |
 
-¹ 10 commercial rock, metal and pop recordings, references from musescore.com transcriptions.
+¹ 25 commercial rock, metal and pop recordings, references from musescore.com transcriptions.
+² Drummer 3, the part no model was trained on.
 
 - **ADTOF is the strongest single model**, and on real recordings it works best on the original
-  mix. **MuScriptor** is best at toms but weak at cymbals, so *Quality* takes each instrument from
-  the model that is best at it.
+  mix. **Quality** is only slightly better on real music (better on 16, worse on 2 of 25 songs,
+  mostly the snare), at about 56 times the computing time. Try it when Fast misses things in a
+  particular song.
 - **Snapping to the beat grid** for the sheet music costs almost nothing.
 - **Clever tricks did not help on real music:** fusing inputs, voting between models, tuning
   thresholds and filling in repeated bars all looked good on MDB and did not transfer to rock

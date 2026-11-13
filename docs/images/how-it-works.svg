@@ -100,5 +100,5 @@
 
   <!-- footer -->
   <text class="dim" x="40" y="512">Times for a 4-minute song on a laptop CPU (AMD Ryzen AI 5 340). Everything runs locally; every step is cached.</text>
-  <text class="dim" x="40" y="532">Accuracy, measured against real transcriptions: Fast 0.79 · Quality 0.82 macro-F1 over kick, snare, toms, hi-hat, cymbals.</text>
+  <text class="dim" x="40" y="532">Accuracy on 25 real songs, macro-F1 over kick, snare, toms, hi-hat, cymbals: Fast 0.77 · Quality 0.78.</text>
 </svg>
