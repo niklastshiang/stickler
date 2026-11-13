@@ -51,15 +51,24 @@ Device = Annotated[str | None, typer.Option(help="auto | cpu | gpu (overrides th
 ConfigOpt = Annotated[Path | None, typer.Option("--config", help="default: config/benchmark.yaml")]
 
 
+Only = Annotated[str | None, typer.Option(help="comma-separated track ids to restrict to")]
+
+
+def _only(raw: str | None) -> set[str] | None:
+    return {t for t in raw.split(",") if t} if raw else None
+
+
 @app.command("run")
-def run_cmd(device: Device = None, config: ConfigOpt = None) -> None:
+def run_cmd(device: Device = None, config: ConfigOpt = None, only: Only = None) -> None:
     """Compute the benchmark matrix (results are cached)."""
 
     def progress(done: int, total: int, label: str) -> None:
         typer.echo(f"[{done}/{total}] {label}")
 
     try:
-        records = api.run_benchmark(config or api.CONFIG, device=device, progress=progress)
+        records = api.run_benchmark(
+            config or api.CONFIG, device=device, progress=progress, only=_only(only)
+        )
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -70,11 +79,13 @@ def run_cmd(device: Device = None, config: ConfigOpt = None) -> None:
 
 
 @app.command("eval")
-def eval_cmd(config: ConfigOpt = None) -> None:
+def eval_cmd(config: ConfigOpt = None, only: Only = None) -> None:
     """Score cached results → metrics.csv and summary.csv in results/ (or results/<config>/)."""
     cfg = config or api.CONFIG
     try:
-        summary = api.evaluate_benchmark(cfg, results_dir=api.results_dir_for(cfg))
+        summary = api.evaluate_benchmark(
+            cfg, results_dir=api.results_dir_for(cfg), only=_only(only)
+        )
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -190,10 +201,13 @@ def remote_cmd(
 ) -> None:
     """Run a benchmark config on a rented GPU and fetch the results (development only)."""
     try:
-        api.run_remote(host, port, config or api.CONFIG, pod_id=pod_id, wipe=wipe)
+        done = api.run_remote(host, port, config or api.CONFIG, pod_id=pod_id, wipe=wipe)
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
+    if done == []:
+        typer.echo("Nothing to compute: every job of this config is in the cache.")
+        return
     typer.echo("Done: new results are in cache/; run `stickler eval` and `stickler report`.")
 
 

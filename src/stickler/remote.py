@@ -73,6 +73,10 @@ class SyncPlan:
     cache: list[str] | None = None
     # datasets the host downloads itself (faster from a data centre than an upload from home)
     fetch: list[str] = field(default_factory=list)
+    # uploaded before the setup starts (weights the setup would otherwise download)
+    setup_dirs: list[str] = field(default_factory=list)
+    # track ids the host computes (those with missing jobs); None: all of the config
+    only: list[str] | None = None
 
 
 def ssh_command(host: Host) -> list[str]:
@@ -115,34 +119,77 @@ def sync_plan(
                 data_files.append(str(aligned.relative_to(project_root)))
                 song_dir = str((data_dir / "own" / track.id).relative_to(project_root))
                 audio.append((str(track.mix), song_dir))
-    for adapter in adapters_for(config):
-        weights = UPLOAD_WEIGHTS.get(adapter)
-        if weights and (project_root / weights).is_dir():
-            data_dirs.append(weights)
-    return SyncPlan(tracked_files(project_root), data_dirs, data_files, audio, fetch=fetch)
+    setup_dirs = [
+        UPLOAD_WEIGHTS[a]
+        for a in adapters_for(config)
+        if a in UPLOAD_WEIGHTS and (project_root / UPLOAD_WEIGHTS[a]).is_dir()
+    ]
+    return SyncPlan(
+        tracked_files(project_root),
+        data_dirs,
+        data_files,
+        audio,
+        fetch=fetch,
+        setup_dirs=setup_dirs,
+    )
 
 
-def remote_script(config: str, adapter_ids: list[str], fetch: list[str] = ()) -> str:
-    """Bash script run on the host; the first stdin line is the Hugging Face token."""
-    # The environments hold copies of their packages; the uv cache (~18 GB with CUDA torch) only
-    # fills the pod's disk, so it is cleaned after every setup (cleaning once after all of them
-    # overflowed the 60 GB disk on 2026-11-13).
+def setup_script(adapter_ids: list[str]) -> str:
+    """Builds the harness and the CUDA environments (runs in the background, see
+    start_setup_command). The environments hold copies of their packages; the uv cache (~18 GB
+    with CUDA torch) only fills the disk, so it is cleaned after every setup (cleaning once
+    after all of them overflowed a 60 GB disk on 2026-11-13)."""
     setups = "\n".join(
         f"uv run stickler setup --adapter {a} --device cuda\nuv cache clean || true"
         for a in adapter_ids
     )
+    return f"""set -euo pipefail
+export PATH="$HOME/.local/bin:$PATH"
+cd ~/{REMOTE_DIR}
+uv sync --quiet
+{setups}
+"""
+
+
+def start_setup_command(adapter_ids: list[str]) -> str:
+    """Starts setup_script detached on the host while the data is still uploading; it writes
+    setup.log, setup.pid and, when done, its exit code to setup.exit. The first stdin line is
+    the Hugging Face token (MuScriptor's weights are gated)."""
+    inner = shlex.quote(setup_script(adapter_ids))
+    return f"""read -r HF_TOKEN || true
+export HF_TOKEN
+cd ~/{REMOTE_DIR}
+rm -f setup.exit
+setsid nohup bash -c "bash -c {inner}; echo \\$? > setup.exit" > setup.log 2>&1 < /dev/null &
+echo $! > setup.pid
+"""
+
+
+def remote_script(config: str, fetch: list[str] = (), only: list[str] | None = None) -> str:
+    """Bash script run on the host after the uploads; the first stdin line is the Hugging Face
+    token. Waits for the background setup, then computes (only the given tracks)."""
     fetches = "\n".join(f"uv run stickler fetch {name}" for name in fetch)
+    restrict = f" --only {','.join(only)}" if only else ""
     return f"""set -euo pipefail
 read -r HF_TOKEN || true
 export HF_TOKEN
 export PATH="$HOME/.local/bin:$PATH"
 cd ~/{REMOTE_DIR}
-uv sync --quiet
-{setups}
+echo "waiting for the setup (log: ~/{REMOTE_DIR}/setup.log) ..."
+while [ ! -f setup.exit ]; do
+  if ! kill -0 "$(cat setup.pid)" 2>/dev/null && [ ! -f setup.exit ]; then
+    echo "setup stopped without an exit code" >&2; tail -n 40 setup.log >&2; exit 1
+  fi
+  sleep 5
+done
+if [ "$(cat setup.exit)" != 0 ]; then
+  echo "setup failed:" >&2; tail -n 40 setup.log >&2; exit 1
+fi
+grep -E "^Set up" setup.log || true
 {fetches}
 uv run stickler doctor || true
-uv run stickler run --config {config} --device gpu
-uv run stickler eval --config {config}
+uv run stickler run --config {config} --device gpu{restrict}
+uv run stickler eval --config {config}{restrict}
 """
 
 
@@ -226,6 +273,13 @@ def run_remote(
         run([*ssh_command(host), preflight_command()], "preflight")
         root = project_root
         upload(plan.code + plan.data_files, root, f"{REMOTE_DIR}/", "code upload")
+        for d in plan.setup_dirs:
+            dest = f"{REMOTE_DIR}/{d}/"
+            run(rsync_command(host, ["--mkpath"], f"{root / d}/", dest), "weights upload")
+        # the setup downloads from the internet on the host while the data still uploads
+        token = f"{hf_token}\n"
+        start = start_setup_command(adapter_ids)
+        run([*ssh_command(host), f"bash -c {shlex.quote(start)}"], "setup start", token)
         for d in plan.data_dirs:
             dest = f"{REMOTE_DIR}/{d}/"
             run(rsync_command(host, ["--mkpath"], f"{root / d}/", dest), "data upload")
@@ -246,9 +300,9 @@ def run_remote(
                 f"{REMOTE_DIR}/cache/",
             )
             run(cmd, "cache upload", listing)
-        script = remote_script(config, adapter_ids, plan.fetch)
+        script = remote_script(config, plan.fetch, plan.only)
         # script as argument (not secret), token as the only stdin line (read -r HF_TOKEN)
-        run([*ssh_command(host), f"bash -c {shlex.quote(script)}"], "run", f"{hf_token}\n", True)
+        run([*ssh_command(host), f"bash -c {shlex.quote(script)}"], "run", token, True)
         run(cache_down, "cache download")
         downloaded = True
         # Scores computed on the host: GPU cache entries count as local cache hits only after

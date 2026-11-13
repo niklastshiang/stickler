@@ -208,6 +208,24 @@ def test_cache_entries_are_the_results_a_config_uses(monkeypatch, tmp_path):
     assert entries == [str(rec.midi.parent.relative_to(tmp_path / "cache"))]
 
 
+def test_only_restricts_run_and_eval_to_the_given_tracks(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)  # one track "t"
+    cfg = _bench(tmp_path)
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    assert api.run_benchmark(cfg, only={"other"}, **kw) == []
+    assert [r.track for r in api.run_benchmark(cfg, only={"t"}, **kw)] == ["t"]
+    assert api.evaluate_benchmark(cfg, only={"other"}, results_dir=tmp_path / "r", **kw) == []
+
+
+def test_missing_tracks_are_those_with_uncomputed_jobs(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)
+    cfg = _bench(tmp_path)
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    assert api.missing_tracks(cfg, **kw) == ["t"]
+    api.run_benchmark(cfg, **kw)
+    assert api.missing_tracks(cfg, **kw) == []
+
+
 def test_run_benchmark_device_override(monkeypatch, tmp_path):
     from stickler import runner
 
@@ -586,13 +604,20 @@ def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
 
     def fake_run_remote(host, config, adapter_ids, plan, *, project_root, hf_token, stop, wipe):
         seen.update(
-            host=host, config=config, ids=adapter_ids, token=hf_token, wipe=wipe, cache=plan.cache
+            host=host,
+            config=config,
+            ids=adapter_ids,
+            token=hf_token,
+            wipe=wipe,
+            cache=plan.cache,
+            only=plan.only,
         )
         stop()
 
     monkeypatch.setattr(remote, "run_remote", fake_run_remote)
     monkeypatch.setattr(remote, "stop_pod", lambda pod, key: seen.update(stopped=(pod, key)))
-    monkeypatch.setattr(api, "cache_entries", lambda config: ["adtof/abc"])
+    monkeypatch.setattr(api, "cache_entries", lambda config, only=None: ["adtof/abc"])
+    monkeypatch.setattr(api, "missing_tracks", lambda config: ["song_a"])
     api.run_remote(
         "root@203.0.113.7",
         22077,
@@ -600,10 +625,35 @@ def test_run_remote_reads_secrets_and_stops_the_pod(tmp_path, monkeypatch):
         pod_id="pod1",
         wipe=True,
     )
-    assert seen["wipe"] is True and seen["cache"] == ["adtof/abc"]
+    assert seen["wipe"] is True and seen["cache"] == ["adtof/abc"] and seen["only"] == ["song_a"]
     assert seen["host"] == remote.Host("root@203.0.113.7", 22077)
     assert seen["config"] == "config/own.yaml" and seen["token"] == "tok"
     assert seen["stopped"] == ("pod1", "key") and "demucs" in seen["ids"]
+
+
+def test_run_remote_with_nothing_missing_only_stops_the_pod(tmp_path, monkeypatch):
+    from stickler import remote
+
+    monkeypatch.setenv("RUNPOD_API_KEY", "key")
+    monkeypatch.setattr(api, "missing_tracks", lambda config: [])
+    monkeypatch.setattr(remote, "run_remote", lambda *a, **k: pytest.fail("nothing to upload"))
+    stopped = []
+    monkeypatch.setattr(remote, "stop_pod", lambda pod, key: stopped.append(pod))
+    done = api.run_remote("root@h", 22, api.PROJECT_ROOT / "config" / "own.yaml", pod_id="p1")
+    assert done == [] and stopped == ["p1"]
+
+
+def test_plan_is_restricted_to_the_missing_tracks():
+    from stickler import remote
+
+    plan = remote.SyncPlan(
+        code=["x"],
+        data_files=["data/own/a/aligned.json", "data/own/b/aligned.json"],
+        audio=[("/m/a.flac", "data/own/a"), ("/m/b.flac", "data/own/b")],
+    )
+    small = api.restrict_plan(plan, ["b"])
+    assert small.data_files == ["data/own/b/aligned.json"]
+    assert small.audio == [("/m/b.flac", "data/own/b")] and small.only == ["b"]
 
 
 def test_run_remote_with_pod_id_needs_an_api_key(tmp_path, monkeypatch):

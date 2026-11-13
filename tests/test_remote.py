@@ -21,22 +21,34 @@ def test_ssh_and_rsync_use_the_port_and_keepalive():
     assert rsync[-1] == "root@203.0.113.7:dst/"
 
 
-def test_script_installs_tools_sets_up_cuda_and_runs_on_gpu():
-    script = remote.remote_script("config/own.yaml", ["demucs", "adt_str"])
-    assert "read -r HF_TOKEN" in script and "export HF_TOKEN" in script
-    assert "stickler setup --adapter demucs --device cuda" in script
-    assert "stickler setup --adapter adt_str --device cuda" in script
-    assert "stickler run --config config/own.yaml --device gpu" in script
-    assert "stickler eval --config config/own.yaml" in script
-    assert script.index("setup --adapter") < script.index("stickler run")
-    assert script.index("stickler run") < script.index("stickler eval")
+def test_setup_script_sets_up_cuda_and_cleans_the_uv_cache():
+    setup = remote.setup_script(["demucs", "adt_str"])
+    assert "uv sync" in setup
+    assert "stickler setup --adapter demucs --device cuda" in setup
+    assert "stickler setup --adapter adt_str --device cuda" in setup
     # the CUDA environments are copies, so the uv cache (~18 GB) only fills the pod's disk;
     # it is cleaned after every single setup (all at once overflowed 60 GB on 2026-11-13)
-    lines = script.splitlines()
+    lines = setup.splitlines()
     for i, line in enumerate(lines):
         if "stickler setup" in line:
             assert lines[i + 1].startswith("uv cache clean")
-    assert script.rindex("uv cache clean") < script.index("stickler run")
+
+
+def test_setup_starts_in_the_background_and_reports_its_exit_code():
+    cmd = remote.start_setup_command(["demucs"])
+    assert cmd.index("read -r HF_TOKEN") < cmd.index("setsid nohup")
+    assert "setup.log" in cmd and "setup.exit" in cmd and "setup.pid" in cmd
+    assert "stickler setup --adapter demucs --device cuda" in cmd
+
+
+def test_run_script_waits_for_the_setup_then_runs_only_what_is_missing():
+    script = remote.remote_script("config/own.yaml", fetch=["enst"], only=["a", "b"])
+    assert "read -r HF_TOKEN" in script and "export HF_TOKEN" in script
+    assert script.index("setup.exit") < script.index("stickler fetch enst")
+    assert script.index("stickler fetch enst") < script.index("stickler run")
+    assert "stickler run --config config/own.yaml --device gpu --only a,b" in script
+    assert "stickler eval --config config/own.yaml --only a,b" in script
+    assert "tail -n 40 setup.log" in script  # a failed setup shows why
 
 
 def test_adapters_for_config_skips_builtin_separators(tmp_path):
@@ -59,7 +71,7 @@ def test_enst_is_downloaded_on_the_host_not_uploaded(tmp_path, monkeypatch):
         data_dir=tmp_path / "data",
     )
     assert plan.data_dirs == ["data/mdb"] and plan.fetch == ["enst"]
-    script = remote.remote_script("c.yaml", [], fetch=plan.fetch)
+    script = remote.remote_script("c.yaml", fetch=plan.fetch)
     assert script.index("stickler fetch enst") < script.index("stickler run")
     assert "command -v zstd" in remote.BOOTSTRAP and "ffmpeg zstd" in remote.BOOTSTRAP  # .tar.zst
 
@@ -230,7 +242,7 @@ def test_wipe_deletes_uploads_after_download_and_before_stop(tmp_path, plan):
 
 
 def test_wipe_after_a_failed_run_still_tries_to_save_the_cache(tmp_path, plan):
-    rec = Recorder(fail_on="bash")
+    rec = Recorder(fail_on="stickler run --config")  # the run step itself fails
     with pytest.raises(RuntimeError, match="remote run"):
         remote.run_remote(
             HOST,
@@ -297,7 +309,8 @@ def test_weights_from_github_releases_are_uploaded(tmp_path, monkeypatch):
     cfg.write_text("datasets: [mdb]\nseparators: [none, roformer, demucs]\ntranscribers: [adtof]\n")
     monkeypatch.setattr(remote, "tracked_files", lambda r: [])
     plan = remote.sync_plan(cfg, project_root=root, references_dir=root, data_dir=root / "data")
-    assert plan.data_dirs == ["data/mdb", "adapters/separators/roformer/weights"]
+    assert plan.data_dirs == ["data/mdb"]
+    assert plan.setup_dirs == ["adapters/separators/roformer/weights"]  # before the setup
 
 
 def test_preflight_runs_before_any_upload(tmp_path, plan):
@@ -316,3 +329,16 @@ def test_failed_preflight_uploads_nothing(tmp_path, plan):
     with pytest.raises(RuntimeError, match="preflight"):
         remote.run_remote(HOST, "c.yaml", [], plan, project_root=tmp_path, hf_token="", execute=rec)
     assert not [c for c, _ in rec.calls if c[0] == "rsync"]
+
+
+def test_setup_starts_after_the_code_and_before_the_big_uploads(tmp_path, plan):
+    rec = Recorder()
+    remote.run_remote(
+        HOST, "c.yaml", ["demucs"], plan, project_root=tmp_path, hf_token="tok", execute=rec
+    )
+    cmds = [c for c, _ in rec.calls]
+    start = next(i for i, c in enumerate(cmds) if c[0] == "ssh" and "setsid" in c[-1])
+    code = next(i for i, c in enumerate(cmds) if c[0] == "rsync" and c[-1].endswith(":stickler/"))
+    data = next(i for i, c in enumerate(cmds) if c[0] == "rsync" and "data/mdb" in c[-1])
+    assert code < start < data
+    assert rec.calls[start][1] == "tok\n"  # the token goes over stdin here, too

@@ -56,7 +56,9 @@ def test_run_and_eval_delegate_to_api(monkeypatch, tmp_path):
 
     rec = Record("mdb", "t", "none", "adt_str", None, None, None, None, "kaputt")
     monkeypatch.setattr(
-        api, "run_benchmark", lambda cfg, device=None, progress=None: progress(1, 1, "x") or [rec]
+        api,
+        "run_benchmark",
+        lambda cfg, device=None, progress=None, only=None: progress(1, 1, "x") or [rec],
     )
     result = CliRunner().invoke(cli.app, ["run", "--device", "cpu"])
     assert result.exit_code == 0, result.output
@@ -75,7 +77,7 @@ def test_run_and_eval_delegate_to_api(monkeypatch, tmp_path):
             "macro_f1": 0.6,
         }
     ]
-    monkeypatch.setattr(api, "evaluate_benchmark", lambda cfg, results_dir=None: summary)
+    monkeypatch.setattr(api, "evaluate_benchmark", lambda cfg, results_dir=None, only=None: summary)
     result = CliRunner().invoke(cli.app, ["eval"])
     assert result.exit_code == 0, result.output
     assert "adt_str" in result.output and "0.700" in result.output
@@ -129,16 +131,33 @@ def test_run_and_eval_accept_another_config(monkeypatch, tmp_path):
     cfg = tmp_path / "own.yaml"
     seen = {}
     monkeypatch.setattr(
-        api, "run_benchmark", lambda c, device=None, progress=None: seen.setdefault("run", c) and []
+        api,
+        "run_benchmark",
+        lambda c, device=None, progress=None, only=None: seen.setdefault("run", c) and [],
     )
     monkeypatch.setattr(
         api,
         "evaluate_benchmark",
-        lambda c, results_dir=None: seen.update(eval=c, out=results_dir) or [],
+        lambda c, results_dir=None, only=None: seen.update(eval=c, out=results_dir) or [],
     )
     assert CliRunner().invoke(cli.app, ["run", "--config", str(cfg)]).exit_code == 0
     assert CliRunner().invoke(cli.app, ["eval", "--config", str(cfg)]).exit_code == 0
     assert seen == {"run": cfg, "eval": cfg, "out": api.RESULTS_DIR / "own"}
+
+
+def test_run_and_eval_restricted_to_some_tracks(monkeypatch):
+    seen = {}
+    monkeypatch.setattr(
+        api,
+        "run_benchmark",
+        lambda c, device=None, progress=None, only=None: seen.update(run=only) or [],
+    )
+    monkeypatch.setattr(
+        api, "evaluate_benchmark", lambda c, results_dir=None, only=None: seen.update(ev=only) or []
+    )
+    assert CliRunner().invoke(cli.app, ["run", "--only", "a,b"]).exit_code == 0
+    assert CliRunner().invoke(cli.app, ["eval", "--only", "b"]).exit_code == 0
+    assert seen == {"run": {"a", "b"}, "ev": {"b"}}
 
 
 def test_report_delegates_to_api(monkeypatch, tmp_path):
@@ -253,3 +272,9 @@ def test_cache_digests_writes_snapshot(monkeypatch):
     monkeypatch.setattr(api, "save_digests", seen.append)
     result = CliRunner().invoke(cli.app, ["cache-digests", "d.json"])
     assert result.exit_code == 0 and seen == [Path("d.json")]
+
+
+def test_remote_with_nothing_missing_says_so(monkeypatch):
+    monkeypatch.setattr(api, "run_remote", lambda *a, **k: [])
+    result = CliRunner().invoke(cli.app, ["remote", "root@h", "--config", "config/own.yaml"])
+    assert result.exit_code == 0 and "Nothing to compute" in result.output

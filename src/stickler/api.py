@@ -177,10 +177,12 @@ def run_benchmark(
     execute: bool = True,
     progress: runner.Progress | None = None,
     cancel: threading.Event | None = None,
+    only: set[str] | None = None,
 ) -> list[runner.Record]:
-    """Computes the matrix from the configuration; results end up in the cache."""
+    """Computes the matrix from the configuration; results end up in the cache.
+    `only`: track ids to restrict the run to (e.g. what a rented GPU still has to compute)."""
     cfg = load_benchmark_config(config_path)
-    tracks = {name: load_tracks(name, data_dir) for name in cfg.datasets}
+    tracks = _tracks(cfg, data_dir, only)
     registry = adapters.discover(adapters_root)
     records = runner.run_matrix(
         tracks,
@@ -216,6 +218,31 @@ def _track_beats(
     return out
 
 
+def _tracks(cfg: BenchmarkConfig, data_dir: Path, only: set[str] | None) -> dict:
+    return {
+        name: [t for t in load_tracks(name, data_dir) if only is None or t.id in only]
+        for name in cfg.datasets
+    }
+
+
+def missing_tracks(
+    config_path: Path,
+    *,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> list[str]:
+    """Ids of the tracks with at least one job of the config that is not in the cache."""
+    records = run_benchmark(
+        config_path,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
+        execute=False,
+    )
+    return sorted({r.track for r in records if not r.ok})
+
+
 def results_dir_for(config_path: Path) -> Path:
     """results/ for the default config, results/<config name>/ for any other."""
     if config_path.resolve() == CONFIG.resolve():
@@ -231,10 +258,11 @@ def evaluate_benchmark(
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
     results_dir: Path = RESULTS_DIR,
+    only: set[str] | None = None,
 ) -> list[dict]:
     """Scores the cached results (computes nothing); writes metrics.csv and summary.csv."""
     cfg = load_benchmark_config(config_path)
-    tracks = {name: load_tracks(name, data_dir) for name in cfg.datasets}
+    tracks = _tracks(cfg, data_dir, only)
     records = run_benchmark(
         config_path,
         device=device,
@@ -242,6 +270,7 @@ def evaluate_benchmark(
         cache_dir=cache_dir,
         adapters_root=adapters_root,
         execute=False,
+        only=only,
     )
     all_schemes = load_schemes(CLASSES)
     schemes = {name: all_schemes[name] for name in cfg.schemes}
@@ -646,15 +675,17 @@ def cache_entries(
     data_dir: Path = DATA_DIR,
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
+    only: set[str] | None = None,
 ) -> list[str]:
     """Cache folders ("<adapter>/<key>") holding results the config uses: stems,
-    transcriptions and the tracks' beats. Only these go to a rented GPU."""
+    transcriptions and the tracks' beats (of the `only` tracks). Only these go to a rented GPU."""
     records = run_benchmark(
         config_path,
         data_dir=data_dir,
         cache_dir=cache_dir,
         adapters_root=adapters_root,
         execute=False,
+        only=only,
     )
     folders: set[Path] = set()
     for r in records:
@@ -663,7 +694,8 @@ def cache_entries(
     if "beat_this" in registry:
         for name in load_benchmark_config(config_path).datasets:
             for t in load_tracks(name, data_dir):
-                folders.add(runner.cache_dir_for(cache_dir, registry["beat_this"], t.mix))
+                if only is None or t.id in only:
+                    folders.add(runner.cache_dir_for(cache_dir, registry["beat_this"], t.mix))
     root = cache_dir.resolve()
     return sorted(
         str(f.resolve().relative_to(root))
@@ -672,12 +704,25 @@ def cache_entries(
     )
 
 
+def restrict_plan(plan: remote.SyncPlan, only: list[str]) -> remote.SyncPlan:
+    """Keeps only the own songs' files of the given tracks (song folder data/own/<id>)."""
+    keep = set(only)
+    return dataclasses.replace(
+        plan,
+        data_files=[f for f in plan.data_files if Path(f).parent.name in keep],
+        audio=[(local, d) for local, d in plan.audio if Path(d).name in keep],
+        only=list(only),
+    )
+
+
 def run_remote(
     host: str, port: int, config_path: Path, *, pod_id: str | None = None, wipe: bool = False
-) -> None:
+) -> list[str]:
     """Runs a benchmark config on a rented GPU over SSH and brings the new cache entries
-    back (development only). Secrets come from the environment: HF_TOKEN (or the file from
-    `hf auth login`) and, to stop the pod afterwards, the RunPod key (`runpod_api_key`)."""
+    back (development only); returns the tracks it computed. Only tracks with missing jobs
+    are uploaded and computed; with none, nothing is uploaded and the pod is only stopped.
+    Secrets come from the environment: HF_TOKEN (or the file from `hf auth login`) and, to
+    stop the pod afterwards, the RunPod key (`runpod_api_key`)."""
     api_key = runpod_api_key()
     if pod_id and not api_key:
         raise ValueError(f"--pod-id needs the RunPod API key (RUNPOD_API_KEY or {RUNPOD_KEY_FILE})")
@@ -685,13 +730,20 @@ def run_remote(
     if not hf_token and doctor.HF_TOKEN_FILE.exists():
         hf_token = doctor.HF_TOKEN_FILE.read_text(encoding="utf-8").strip()
     config = config_path.resolve()
+    stop = (lambda: remote.stop_pod(pod_id, api_key)) if pod_id else None
+    missing = missing_tracks(config)
+    if not missing:
+        if stop:
+            stop()
+        return []
     plan = remote.sync_plan(
         config,
         project_root=PROJECT_ROOT,
         references_dir=REFERENCES_DIR,
         data_dir=DATA_DIR,
     )
-    plan = dataclasses.replace(plan, cache=cache_entries(config))
+    plan = restrict_plan(plan, missing)
+    plan = dataclasses.replace(plan, cache=cache_entries(config, only=set(missing)))
     remote.run_remote(
         remote.Host(host, port),
         str(config.relative_to(PROJECT_ROOT)),
@@ -699,9 +751,10 @@ def run_remote(
         plan,
         project_root=PROJECT_ROOT,
         hf_token=hf_token,
-        stop=(lambda: remote.stop_pod(pod_id, api_key)) if pod_id else None,
+        stop=stop,
         wipe=wipe,
     )
+    return missing
 
 
 def migrate_cache(
