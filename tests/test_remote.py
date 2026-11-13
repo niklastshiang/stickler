@@ -282,3 +282,16 @@ def test_only_the_listed_cache_entries_are_uploaded(tmp_path):
     cmd, listing = up[0]
     assert "--files-from=-" in cmd and "-r" in cmd
     assert listing.split() == ["adtof/0123", "demucs/4567"]
+
+
+def test_weights_from_github_releases_are_uploaded(tmp_path, monkeypatch):
+    """RoFormer's weights come from GitHub releases, which a pod could not reach (2026-11-13)."""
+    root = tmp_path
+    w = root / "adapters" / "separators" / "roformer" / "weights"
+    w.mkdir(parents=True)
+    (w / "model.ckpt").write_bytes(b"x")
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text("datasets: [mdb]\nseparators: [none, roformer, demucs]\ntranscribers: [adtof]\n")
+    monkeypatch.setattr(remote, "tracked_files", lambda r: [])
+    plan = remote.sync_plan(cfg, project_root=root, references_dir=root, data_dir=root / "data")
+    assert plan.data_dirs == ["data/mdb", "adapters/separators/roformer/weights"]

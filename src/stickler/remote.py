@@ -33,6 +33,9 @@ REMOTE_DIR = "stickler"
 RUNPOD_API = "https://api.runpod.io/v2"
 # Cloudflare in front of the RunPod API rejects Python's default user agent (error 1010).
 USER_AGENT = "stickler (+https://github.com/niklastshiang/stickler)"
+# Adapters whose weights come from GitHub releases: uploaded from the local copy, because a pod
+# could not reach github.com on 2026-11-13 (Hugging Face downloads work and are faster there).
+UPLOAD_WEIGHTS = {"roformer": "adapters/separators/roformer/weights"}
 SSH_OPTIONS = ["-o", "ServerAliveInterval=30", "-o", "StrictHostKeyChecking=accept-new"]
 BOOTSTRAP = (
     "command -v rsync >/dev/null && command -v ffmpeg >/dev/null || "
@@ -97,6 +100,10 @@ def sync_plan(
                 data_files.append(str(aligned.relative_to(project_root)))
                 song_dir = str((data_dir / "own" / track.id).relative_to(project_root))
                 audio.append((str(track.mix), song_dir))
+    for adapter in adapters_for(config):
+        weights = UPLOAD_WEIGHTS.get(adapter)
+        if weights and (project_root / weights).is_dir():
+            data_dirs.append(weights)
     return SyncPlan(tracked_files(project_root), data_dirs, data_files, audio)
 
 
