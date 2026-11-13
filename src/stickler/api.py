@@ -680,10 +680,13 @@ def migrate_cache(
     rekey_from: Path | None = None,
 ) -> cachemigration.Report:
     """Moves cache entries from the old device-dependent keys to the current keys (see
-    stickler.cachemigration). Inputs: MDB mixes and stems, the own songs' recordings.
+    stickler.cachemigration). Inputs: MDB and ENST mixes and stems, the own songs' recordings;
+    a dataset missing here would have all its entries set aside as unknown.
     `rekey_from`: digest snapshot (save_digests) taken before a behaviour-neutral edit."""
     inputs: list[Path] = []
     for track in mdb.tracks(data_dir / "mdb"):
+        inputs += [track.mix, track.drums]
+    for track in enst.tracks(data_dir / "enst"):
         inputs += [track.mix, track.drums]
     inputs += [song.audio for song in own.songs(REFERENCES_DIR, data_dir)]
     previous = cachemigration.load_digests(rekey_from) if rekey_from else None

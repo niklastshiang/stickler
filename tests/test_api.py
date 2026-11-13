@@ -607,6 +607,12 @@ def test_migrate_cache_collects_inputs(tmp_path, monkeypatch):
     monkeypatch.setattr(
         own_mod, "songs", lambda r, d: [own_mod.Song("s", "S", song, tmp_path / "own" / "s")]
     )
+    from stickler.datasets import enst as enst_mod
+
+    e_mix, e_wet = tmp_path / "e.wav", tmp_path / "w.wav"
+    monkeypatch.setattr(
+        enst_mod, "tracks", lambda target: [enst_mod.Track("d1", e_mix, e_wet, tmp_path / "a.txt")]
+    )
     seen = {}
 
     def fake_migrate(cache, registry, inputs, *, dry_run, previous_digests=None):
@@ -616,7 +622,11 @@ def test_migrate_cache_collects_inputs(tmp_path, monkeypatch):
     monkeypatch.setattr(cachemigration, "migrate", fake_migrate)
     report = api.migrate_cache(dry_run=True, cache_dir=tmp_path, data_dir=tmp_path)
     assert report.moved == 2
-    assert seen == {"inputs": [mix, stem, song], "dry_run": True, "previous": None}
+    assert seen == {
+        "inputs": [mix, stem, e_mix, e_wet, song],  # ENST was missing until 2026-11-13
+        "dry_run": True,
+        "previous": None,
+    }
     snapshot = tmp_path / "digests.json"
     snapshot.write_text('{"adtof": "abc"}', encoding="utf-8")
     api.migrate_cache(cache_dir=tmp_path, data_dir=tmp_path, rekey_from=snapshot)
