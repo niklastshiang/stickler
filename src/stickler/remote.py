@@ -115,6 +115,9 @@ export PATH="$HOME/.local/bin:$PATH"
 cd ~/{REMOTE_DIR}
 uv sync --quiet
 {setups}
+# The environments hold copies of their packages; the uv cache (~18 GB with CUDA torch) would
+# only fill the pod's disk (first ENST run: 98 % of 60 GB).
+uv cache clean || true
 uv run stickler doctor || true
 uv run stickler run --config {config} --device gpu
 uv run stickler eval --config {config}

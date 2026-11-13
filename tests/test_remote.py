@@ -30,6 +30,9 @@ def test_script_installs_tools_sets_up_cuda_and_runs_on_gpu():
     assert "stickler eval --config config/own.yaml" in script
     assert script.index("setup --adapter") < script.index("stickler run")
     assert script.index("stickler run") < script.index("stickler eval")
+    # the CUDA environments are copies, so the uv cache (~18 GB) only fills the pod's disk
+    assert script.index("setup --adapter") < script.index("uv cache clean")
+    assert script.index("uv cache clean") < script.index("stickler run")
 
 
 def test_adapters_for_config_skips_builtin_separators(tmp_path):
