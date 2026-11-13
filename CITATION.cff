@@ -1,0 +1,130 @@
+cff-version: 1.2.0
+message: >-
+  If you use Stickler, please cite it as below. If you publish results on the datasets or with
+  the models it builds on, please also cite those works (listed under references); citing
+  ENST-Drums is required by its licence.
+type: software
+title: "Stickler: drum sheet music from songs, with a benchmark of open-source models"
+authors:
+  - given-names: Niklas
+    family-names: Tshiang Tshiananga
+repository-code: "https://github.com/niklastshiang/stickler"
+license: MIT
+version: "0"
+keywords:
+  - automatic drum transcription
+  - music source separation
+  - music information retrieval
+  - sheet music
+  - benchmark
+references:
+  - type: conference-paper
+    title: "MDB Drums: An annotated subset of MedleyDB for automatic drum transcription"
+    authors:
+      - family-names: Southall
+        given-names: Carl
+      - family-names: Wu
+        given-names: Chih-Wei
+      - family-names: Lerch
+        given-names: Alexander
+      - family-names: Hockman
+        given-names: Jason
+    collection-title: "Late-Breaking/Demo Session of the 18th International Society for Music Information Retrieval Conference (ISMIR)"
+    year: 2017
+  - type: conference-paper
+    title: "ENST-Drums: an extensive audio-visual database for drum signals processing"
+    authors:
+      - family-names: Gillet
+        given-names: Olivier
+      - family-names: Richard
+        given-names: Gaël
+    collection-title: "Proceedings of the 7th International Conference on Music Information Retrieval (ISMIR)"
+    conference:
+      name: "ISMIR 2006"
+      city: Victoria
+      country: CA
+    year: 2006
+  - type: article
+    title: "High-Quality and Reproducible Automatic Drum Transcription from Crowdsourced Data"
+    authors:
+      - family-names: Zehren
+        given-names: Mickaël
+      - family-names: Alunno
+        given-names: Marco
+      - family-names: Bientinesi
+        given-names: Paolo
+    journal: Signals
+    year: 2023
+  - type: conference-paper
+    title: "Beat this! Accurate beat tracking without DBN postprocessing"
+    authors:
+      - family-names: Foscarin
+        given-names: Francesco
+      - family-names: Schlüter
+        given-names: Jan
+      - family-names: Widmer
+        given-names: Gerhard
+    collection-title: "Proceedings of the 25th International Society for Music Information Retrieval Conference (ISMIR)"
+    year: 2024
+  - type: conference-paper
+    title: "Hybrid Transformers for Music Source Separation"
+    authors:
+      - family-names: Rouard
+        given-names: Simon
+      - family-names: Massa
+        given-names: Francisco
+      - family-names: Défossez
+        given-names: Alexandre
+    collection-title: "IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)"
+    year: 2023
+  - type: conference-paper
+    title: "Music Source Separation with Band-Split RoPE Transformer"
+    authors:
+      - family-names: Lu
+        given-names: Wei-Tsung
+      - family-names: Wang
+        given-names: Ju-Chiang
+      - family-names: Kong
+        given-names: Qiuqiang
+      - family-names: Hung
+        given-names: Yun-Ning
+    collection-title: "IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)"
+    year: 2024
+  - type: conference-paper
+    title: "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation"
+    authors:
+      - family-names: Chang
+        given-names: Sungkyun
+      - family-names: Benetos
+        given-names: Emmanouil
+      - family-names: Kirchhoff
+        given-names: Holger
+      - family-names: Dixon
+        given-names: Simon
+    collection-title: "IEEE International Workshop on Machine Learning for Signal Processing (MLSP)"
+    year: 2024
+  - type: software
+    title: MuScriptor
+    authors:
+      - name: "Kyutai, Mirelo and IRCAM"
+    repository-code: "https://github.com/muscriptor/muscriptor"
+    year: 2026
+  - type: software
+    title: ADT_STR
+    authors:
+      - family-names: Melucci
+      - family-names: Merialdo
+      - family-names: Akama
+    repository-code: "https://github.com/pier-maker92/ADT_STR"
+    year: 2026
+  - type: software
+    title: "python-audio-separator"
+    authors:
+      - name: "Nomad Karaoke"
+    repository-code: "https://github.com/nomadkaraoke/python-audio-separator"
+  - type: software
+    title: mir_eval
+    authors:
+      - family-names: Raffel
+        given-names: Colin
+    repository-code: "https://github.com/mir-evaluation/mir_eval"
