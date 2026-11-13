@@ -8,6 +8,7 @@ dependencies = [
     "adtof-pytorch",
     "torch>=2.1",
     "pretty_midi",
+    "numpy",  # imported directly (activations.npz)
 ]
 
 [tool.uv]

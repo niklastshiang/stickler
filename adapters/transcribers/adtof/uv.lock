@@ -512,6 +512,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "adtof-pytorch" },
+    { name = "numpy" },
     { name = "pretty-midi" },
     { name = "stickler-adapter" },
     { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
@@ -521,6 +522,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "adtof-pytorch", git = "https://github.com/xavriley/ADTOF-pytorch?rev=85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9" },
+    { name = "numpy" },
     { name = "pretty-midi" },
     { name = "stickler-adapter", editable = "../../_common" },
     { name = "torch", specifier = ">=2.1", index = "https://download.pytorch.org/whl/cpu" },
