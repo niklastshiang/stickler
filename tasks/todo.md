@@ -189,6 +189,16 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
 
+- [ ] **Open-source release (owner, 2026-11-13: publish so others can use it, no commercial intent)**
+  - Documentation for humans:
+    - **Benchmark report**: every decision (ADRs) and every result, readable without the code: datasets, pipelines, scores per class, runtimes, what was tried and did not help (fusion, voting, bar consensus) and why.
+    - **CLI guide**: install, `setup`, `fetch`, `run`/`eval`/`report`, `align` for own songs, `notate`, `remote`, `tune`, with examples.
+    - **Requirements**: CPU/RAM/disk per adapter and per mode (Fast/Quality), measured on the laptop and the GPUs: real-time factors, peak RAM, environment and weight sizes, optional GPU (CUDA/ROCm).
+  - Licences: code MIT; a third-party overview (models and weights: ADTOF CC BY-NC-SA, MuScriptor CC BY-NC, YourMT3 GPL-3.0, Demucs MIT, BS-RoFormer, Beat This! MIT, ADT_STR CC BY-SA; datasets: MDB CC BY-NC-SA, ENST on request). Weights are downloaded by `setup`, never shipped. MIT allows commercial use of the code; if the owner wants to forbid that, discuss before publishing (a non-commercial licence is not OSI open source).
+  - Never published: own recordings, musescore transcriptions, ENST, aligned.json (all gitignored). How others build their own references must not describe bypassing musescore.com's paywall.
+  - Privacy check before publishing: personal music paths and playlist names in references/own/*.yaml (use paths relative to a configurable music folder), the commit email in the history (owner's decision), a secret scan of the whole history (gitleaks).
+  - Further ideas: CONTRIBUTING.md (adding an adapter, TDD, checks), CITATION.cff (Stickler plus the datasets and models it builds on, ENST citation required), CI with the unit tests, issue templates, a "reproduce the benchmark" guide.
+
 - [ ] **Release pipeline: Flatpak and AppImage with every release**
   - Wish: A new release tag `vN` (ADR 0006) automatically builds a Flatpak and an AppImage.
   - Open points:
