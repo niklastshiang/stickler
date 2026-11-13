@@ -1,0 +1,23 @@
+# Benchmark on ENST-Drums (`stickler run --config config/enst.yaml`, results in results/enst/).
+# The 64 minus-one tracks mixed with their accompaniment (stickler.datasets.enst); the data is
+# licensed for personal scientific use only and never leaves data/enst/ except to a rented GPU
+# under the owner's control. `oracle` = the wet drum mix.
+# Note: ADT_STR reports state-of-the-art results on ENST, so its numbers here may be optimistic.
+datasets: [enst]
+separators: [none, oracle, demucs, roformer]
+transcribers: [adt_str, adtof, muscriptor_m, yourmt3]
+skip: ["none+muscriptor_m"]
+device: auto
+schemes: ["5", "3"]
+timeout:
+  separators: 1800
+  transcribers: {factor: 10, min: 120}  # 10 x song length, at least 120 s
+
+# Same combos as config/own.yaml (chosen on the own songs), scored here as a check.
+combos:
+  quality:
+    demucs+muscriptor_m: [KD, SD, TT]
+    none+adtof: [HH, CY]
+  toms:
+    none+adtof: [KD, SD, HH, CY]
+    demucs+muscriptor_m: [TT]

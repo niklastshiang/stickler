@@ -22,13 +22,13 @@ def main(verbose: Annotated[bool, typer.Option("--verbose", "-v")] = False) -> N
 
 @app.command()
 def fetch(name: str, data_dir: DataDir = Path("data")) -> None:
-    """Download a dataset (e.g. mdb)."""
+    """Download a dataset (mdb) or prepare a local one (enst: unpack the archive first)."""
     try:
         count = api.fetch_dataset(name, data_dir)
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
-    typer.echo(f"{name}: {count} Tracks in {data_dir / name}")
+    typer.echo(f"{name}: {count} tracks in {data_dir / name}")
 
 
 @app.command()

@@ -41,6 +41,20 @@ def test_adapters_for_config_skips_builtin_separators(tmp_path):
     assert remote.adapters_for(cfg) == ["demucs", "adtof"]
 
 
+def test_sync_plan_uploads_the_enst_folder(tmp_path, monkeypatch):
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text("datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n")
+    monkeypatch.setattr(remote, "tracked_files", lambda root: [])
+    plan = remote.sync_plan(
+        cfg,
+        project_root=tmp_path,
+        references_dir=tmp_path,
+        data_dir=tmp_path / "data",
+        home=tmp_path,
+    )
+    assert plan.data_dirs == ["data/mdb", "data/enst"]
+
+
 def test_own_song_audio_is_mirrored_relative_to_home(tmp_path):
     home = tmp_path / "home"
     audio = home / "Musik" / "a.flac"

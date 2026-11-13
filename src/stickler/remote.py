@@ -91,8 +91,8 @@ def sync_plan(
     raw = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
     data_dirs, data_files, audio = [], [], []
     for name in raw.get("datasets", []):
-        if name == "mdb":
-            data_dirs.append(str((data_dir / "mdb").relative_to(project_root)))
+        if name in ("mdb", "enst"):
+            data_dirs.append(str((data_dir / name).relative_to(project_root)))
         elif name == "own":
             for track in own.tracks(references_dir, data_dir):
                 aligned = data_dir / "own" / track.id / "aligned.json"

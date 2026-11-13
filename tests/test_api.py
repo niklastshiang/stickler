@@ -13,6 +13,18 @@ def test_fetch_dataset_mdb_uses_data_subfolder(monkeypatch, tmp_path):
     assert seen == [tmp_path / "mdb"]
 
 
+def test_enst_is_prepared_locally_and_loaded(monkeypatch, tmp_path):
+    from stickler.datasets import enst
+
+    seen = []
+    monkeypatch.setattr(enst, "prepare", lambda target: seen.append(target) or 64)
+    assert api.fetch_dataset("enst", tmp_path) == 64 and seen == [tmp_path / "enst"]
+    with pytest.raises(ValueError, match="stickler fetch enst"):
+        api.load_tracks("enst", tmp_path)
+    monkeypatch.setattr(enst, "tracks", lambda target: ["t"])
+    assert api.load_tracks("enst", tmp_path) == ["t"]
+
+
 def test_fetch_unknown_dataset_raises(tmp_path):
     with pytest.raises(ValueError, match="unknown"):
         api.fetch_dataset("foo", tmp_path)

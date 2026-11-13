@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from stickler import adapters, musescore
-from stickler.datasets import mdb
+from stickler.datasets import enst, mdb
 
 HF_TOKEN_FILE = Path.home() / ".cache" / "huggingface" / "token"
 
@@ -105,7 +105,11 @@ def check_musescore(flatpak_ids: Callable[[], set[str]] = musescore.flatpak_ids)
 def check_datasets(data_dir: Path) -> list[Check]:
     n = len(mdb.tracks(data_dir / "mdb"))
     detail = f"{n} tracks" if n else "missing → stickler fetch mdb"
-    return [Check("dataset mdb", n > 0, detail)]
+    checks = [Check("dataset mdb", n > 0, detail)]
+    n_enst = len(enst.tracks(data_dir / "enst"))
+    if n_enst:  # optional dataset (licence on request), only shown once it is there
+        checks.append(Check("dataset enst", True, f"{n_enst} tracks"))
+    return checks
 
 
 def run_all(adapters_root: Path, data_dir: Path) -> list[Check]:

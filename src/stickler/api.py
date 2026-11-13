@@ -28,11 +28,11 @@ from stickler import (
     runner,
 )
 from stickler.classes import load_schemes
-from stickler.datasets import mdb, own
+from stickler.datasets import enst, mdb, own
 from stickler.midi import read_drum_hits
 from stickler.results import summarize, write_csv
 
-DATASETS = ("mdb", "own")
+DATASETS = ("mdb", "enst", "own")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ADAPTERS_ROOT = PROJECT_ROOT / "adapters"
 CONFIG = PROJECT_ROOT / "config" / "benchmark.yaml"
@@ -105,6 +105,8 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
 def load_tracks(name: str, data_dir: Path) -> list[runner.Track]:
     if name == "mdb":
         found = mdb.tracks(data_dir / "mdb")
+    elif name == "enst":
+        found = enst.tracks(data_dir / "enst")
     elif name == "own":
         found = own.tracks(REFERENCES_DIR, data_dir)
         if not found:
@@ -118,9 +120,12 @@ def load_tracks(name: str, data_dir: Path) -> list[runner.Track]:
 
 
 def fetch_dataset(name: str, data_dir: Path) -> int:
-    """Downloads a dataset to `data_dir/<name>`; returns the number of tracks."""
+    """Downloads a dataset to `data_dir/<name>` (ENST: builds the mixes from the unpacked
+    archive, which cannot be downloaded automatically); returns the number of tracks."""
     if name == "mdb":
         return mdb.fetch(data_dir / "mdb")
+    if name == "enst":
+        return enst.prepare(data_dir / "enst")
     raise ValueError(f"Dataset {name!r} unknown (available: {', '.join(DATASETS)})")
 
 
