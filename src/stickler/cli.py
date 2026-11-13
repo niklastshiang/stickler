@@ -189,6 +189,34 @@ def remote_cmd(
     typer.echo("Done: new results are in cache/; run `stickler eval` and `stickler report`.")
 
 
+@app.command("tune")
+def tune_cmd(
+    configs: Annotated[
+        list[Path], typer.Option("--config", help="tuning data, e.g. config/benchmark.yaml")
+    ],
+    inputs: Annotated[str, typer.Option(help="separators to fuse, the first is the baseline")] = (
+        "none,demucs"
+    ),
+    name: Annotated[str, typer.Option(help="name of the fusion in the printed YAML")] = "fused",
+    step: Annotated[float, typer.Option(help="weight grid step")] = 0.25,
+) -> None:
+    """Tune ADTOF fusion weights and thresholds per class on cached runs; prints a `fusions`
+    entry for a benchmark config."""
+    try:
+        r = api.tune_fusion(configs, inputs.split(","), step=step)
+    except ValueError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"{r.tracks} tracks, inputs {', '.join(r.inputs)}")
+    typer.echo(f"{'class':6} {'ADTOF default':>14} {'tuned':>7}  weights / threshold")
+    for cls, t in r.tuned.items():
+        d = r.default[cls]
+        w = "/".join(f"{x:g}" for x in t.weights)
+        typer.echo(f"{cls:6} {d.f1:14.3f} {t.f1:7.3f}  {w} / {t.threshold:g}")
+    typer.echo("")
+    typer.echo(r.yaml(name))
+
+
 @app.command("cache-migrate")
 def cache_migrate_cmd(
     dry_run: Annotated[bool, typer.Option("--dry-run", help="only report")] = False,

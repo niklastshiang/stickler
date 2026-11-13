@@ -20,6 +20,7 @@ from stickler import (
     cachemigration,
     combine,
     doctor,
+    fusion,
     musescore,
     notation,
     onsets,
@@ -55,6 +56,7 @@ class BenchmarkConfig:
     timeout: runner.Timeout = None  # seconds per adapter call, overall or per stage
     skip: frozenset[tuple[str, str]] = frozenset()  # (separator, transcriber) pairs not run
     combos: dict = field(default_factory=dict)  # combined pipelines (stickler.combine)
+    fusions: dict = field(default_factory=dict)  # fused ADTOF activations (stickler.fusion)
 
 
 def _parse_skip(raw: list) -> frozenset[tuple[str, str]]:
@@ -99,6 +101,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         timeout=_parse_timeout(raw.get("timeout")),
         skip=_parse_skip(raw.get("skip") or []),
         combos=dict(raw.get("combos") or {}),
+        fusions=dict(raw.get("fusions") or {}),
     )
 
 
@@ -206,7 +209,11 @@ def evaluate_benchmark(
     )
     all_schemes = load_schemes(CLASSES)
     schemes = {name: all_schemes[name] for name in cfg.schemes}
-    # Combos name classes of the 5-class scheme; they are scored in every configured scheme.
+    # Fusions and combos name classes of the 5-class scheme; scored in every configured scheme.
+    # Fusions first, so that combos can use them ("fusion+<name>").
+    five = all_schemes["5"]
+    fusions = fusion.parse_fusions(cfg.fusions, list(five.classes))
+    records += fusion.fused_records(records, fusions, _class_of(five))
     combos = combine.parse_combos(cfg.combos, all_schemes["5"])
     records += combine.combine_records(records, combos, all_schemes["5"], runner.read_drum_notes)
     rows = runner.score_records(records, tracks, schemes)
@@ -214,6 +221,69 @@ def evaluate_benchmark(
     write_csv(results_dir / "metrics.csv", rows)
     write_csv(results_dir / "summary.csv", summary)
     return summary
+
+
+def _class_of(scheme) -> dict[int, str]:
+    """ADTOF's output pitches (LABELS_5) → classes of the scheme."""
+    return {p: scheme.class_of(p) for p in (35, 38, 47, 42, 49)}
+
+
+@dataclass
+class TuneReport:
+    inputs: list[str]
+    tracks: int
+    default: dict  # class → fusion.Tuned for ADTOF's defaults on inputs[0]
+    tuned: dict  # class → fusion.Tuned
+
+    def yaml(self, name: str) -> str:
+        lines = [
+            "fusions:",
+            f"  {name}:",
+            f"    inputs: [{', '.join(self.inputs)}]",
+            "    classes:",
+        ]
+        for cls, t in self.tuned.items():
+            weights = ", ".join(f"{w:g}" if w != int(w) else f"{w:.1f}" for w in t.weights)
+            lines.append(f"      {cls}: {{weights: [{weights}], threshold: {t.threshold:g}}}")
+        return "\n".join(lines) + "\n"
+
+
+def tune_fusion(
+    config_paths: list[Path],
+    inputs: list[str],
+    *,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+    step: float = 0.25,
+    thresholds: list[float] | None = None,
+) -> TuneReport:
+    """Tunes fusion weights and thresholds per class on the cached ADTOF runs of the given
+    configs (use tuning data only, e.g. MDB and ENST; keep the own songs for the final check)."""
+    five = load_schemes(CLASSES)["5"]
+    samples = []
+    for path in config_paths:
+        cfg = load_benchmark_config(path)
+        tracks = {name: load_tracks(name, data_dir) for name in cfg.datasets}
+        records = run_benchmark(
+            path, data_dir=data_dir, cache_dir=cache_dir, adapters_root=adapters_root, execute=False
+        )
+        samples += fusion.samples_from_records(records, tracks, inputs, five)
+    if not samples:
+        raise ValueError("no tracks with ADTOF activations for all inputs: run ADTOF first")
+    labels, class_of = [35, 38, 47, 42, 49], _class_of(five)
+    first = tuple(1.0 if i == 0 else 0.0 for i in range(len(inputs)))
+    default = fusion.score_params(
+        samples,
+        labels,
+        class_of,
+        {c: fusion.ClassParams(first, t) for c, t in fusion.ADTOF_THRESHOLDS.items()},
+    )
+    grid = thresholds or [round(0.06 + 0.02 * i, 2) for i in range(28)]  # 0.06 … 0.60
+    tuned = fusion.tune(
+        samples, labels, class_of, weights=fusion.weight_grid(len(inputs), step), thresholds=grid
+    )
+    return TuneReport(list(inputs), len(samples), default, tuned)
 
 
 def write_report(config_paths: list[Path] | None = None, results_dir: Path = RESULTS_DIR) -> Path:

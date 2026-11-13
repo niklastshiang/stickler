@@ -42,7 +42,8 @@ class Scores:
     macro_f1: float | None
 
 
-def _match(ref: np.ndarray, est: np.ndarray, window: float) -> PRF:
+def match(ref: np.ndarray, est: np.ndarray, window: float = WINDOW) -> PRF:
+    """Counts for one class; each estimate hits at most one reference within `window`."""
     tp = len(mir_eval.util.match_events(ref, est, window)) if ref.size and est.size else 0
     return PRF(tp=tp, fp=int(est.size) - tp, fn=int(ref.size) - tp)
 
@@ -51,7 +52,7 @@ def score(ref: Onsets, est: Onsets, window: float = WINDOW) -> Scores:
     """Compares estimated with reference onsets; each estimate hits at most one reference."""
     classes = list(ref.by_class) + [c for c in est.by_class if c not in ref.by_class]
     per_class = {
-        c: _match(ref.by_class.get(c, _EMPTY), est.by_class.get(c, _EMPTY), window) for c in classes
+        c: match(ref.by_class.get(c, _EMPTY), est.by_class.get(c, _EMPTY), window) for c in classes
     }
     micro = PRF(
         tp=sum(p.tp for p in per_class.values()),

@@ -113,6 +113,47 @@ def test_evaluate_scores_combos(monkeypatch, tmp_path):
     assert [r["transcriber"] for r in combo] == ["quality"] and combo[0]["micro_f1"] == 1.0
 
 
+def test_fusions_are_scored_and_tuned_from_cached_activations(monkeypatch, tmp_path):
+    import numpy as np
+
+    from stickler import adapters, fusion
+    from stickler.runner import Record
+
+    fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference: KD at 0.5 s, SD at 1.0 s
+    act = np.zeros((200, 5), dtype=np.float32)
+    act[50, 0] = act[100, 1] = 0.9
+    entry = tmp_path / "adtof-entry"
+    entry.mkdir()
+    np.savez(entry / "activations.npz", activations=act, fps=100, labels=[35, 38, 47, 42, 49])
+    import mido
+
+    mido.MidiFile().save(str(entry / "drums.mid"))
+    rec = Record("mdb", "t", "none", "adtof", None, entry / "drums.mid", {}, {}, None)
+    monkeypatch.setattr(api, "run_benchmark", lambda *a, **kw: [rec])
+    monkeypatch.setattr(adapters, "discover", lambda root: {})
+    classes = {c: {"weights": [1], "threshold": 0.3} for c in ("KD", "SD", "TT", "HH", "CY")}
+    cfg = _bench(tmp_path)
+    cfg.write_text(
+        cfg.read_text() + "fusions:\n  f:\n    inputs: [none]\n    classes: " + str(classes) + "\n",
+        encoding="utf-8",
+    )
+    summary = api.evaluate_benchmark(
+        cfg,
+        results_dir=tmp_path / "r",
+        data_dir=tmp_path,
+        cache_dir=tmp_path,
+        adapters_root=fixtures,
+    )
+    (row,) = [r for r in summary if r["separator"] == "fusion"]
+    assert row["transcriber"] == "f" and row["micro_f1"] == 1.0
+    report = api.tune_fusion([cfg], ["none"], data_dir=tmp_path, step=1.0, thresholds=[0.3, 0.95])
+    assert report.tuned["KD"].f1 == 1.0 and report.tuned["KD"].threshold == 0.3
+    assert report.default["KD"].threshold == fusion.ADTOF_THRESHOLDS["KD"]
+    assert "fusions:" in report.yaml(
+        "tuned"
+    ) and "KD: {weights: [1.0], threshold: 0.3}" in report.yaml("tuned")
+
+
 def test_run_benchmark_device_override(monkeypatch, tmp_path):
     from stickler import runner
 
