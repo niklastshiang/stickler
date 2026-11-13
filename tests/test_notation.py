@@ -144,3 +144,32 @@ def test_artist_is_written_as_composer():
 
 def test_no_artist_no_creator():
     assert "<creator" not in notation.to_musicxml(groove(), BEATS, DOWNBEATS)
+
+
+def _measures(xml: str) -> list[str]:
+    return xml.split("<measure ")[1:]
+
+
+def test_empty_bars_become_one_multi_measure_rest():
+    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2 empty
+    xml = notation.to_musicxml(notes, BEATS, DOWNBEATS)
+    first, second = _measures(xml)[:2]
+    for m in (first, second):
+        assert m.count("<note>") == 1 and '<rest measure="yes"/>' in m
+    assert "<multiple-rest>2</multiple-rest>" in first and "multiple-rest" not in second
+    for m in parse(xml).parts[0].getElementsByClass("Measure"):
+        for voice in m.voices or [m]:
+            assert voice.duration.quarterLength == pytest.approx(4.0)
+
+
+def test_a_single_empty_bar_is_a_whole_bar_rest_without_multi_rest():
+    notes = [n for n in groove(4) if not 2.0 <= n[0] < 4.0]  # only bar 2 empty
+    second = _measures(notation.to_musicxml(notes, BEATS, DOWNBEATS))[1]
+    assert second.count("<note>") == 1 and "multiple-rest" not in second
+
+
+def test_empty_half_of_a_bar_is_one_half_rest():
+    xml = notation.to_musicxml([(0.0, SNARE, 100)], BEATS[:5], DOWNBEATS[:1])
+    (bar,) = _measures(xml)
+    assert bar.count("<rest") == 2  # beat 2: quarter rest, beats 3-4: half rest
+    assert "<type>half</type>" in bar and "<voice>2</voice>" not in bar

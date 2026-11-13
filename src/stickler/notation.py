@@ -119,7 +119,15 @@ def time_signature(beats: list[float], downbeats: list[float]) -> tuple[int, int
     return (Counter(gaps).most_common(1)[0][0] if gaps else 4), 4
 
 
-_TYPES = {3: ("16th", 0), 6: ("eighth", 0), 9: ("eighth", 1), 12: ("quarter", 0)}
+_TYPES = {
+    3: ("16th", 0),
+    6: ("eighth", 0),
+    9: ("eighth", 1),
+    12: ("quarter", 0),
+    24: ("half", 0),
+    36: ("half", 1),
+    48: ("whole", 0),
+}
 _TRIPLET_TYPES = {4: "eighth", 8: "quarter"}
 
 
@@ -165,6 +173,31 @@ def _note_xml(
         parts.append(f'<notations><tuplet type="{tuplet}"/></notations>')
     parts.append("</note>")
     return "".join(parts)
+
+
+def _measure_rest_xml(beats: int, voice: int = 1) -> str:
+    return (
+        f'<note><rest measure="yes"/><duration>{beats * DIVISIONS}</duration>'
+        f"<voice>{voice}</voice></note>"
+    )
+
+
+def _voice_xml(
+    bar: list[int], hits: dict[int, list[QNote]], voice: int, ghost: int, merge_halves: bool
+) -> list[str]:
+    """One voice of one bar. Two empty beats that form half of a bar (beats 1-2 or 3-4 of an
+    even meter) become one half rest instead of two quarter rests."""
+    out: list[str] = []
+    k = 0
+    while k < len(bar):
+        pair = merge_halves and k % 2 == 0 and k + 1 < len(bar)
+        if pair and not hits.get(bar[k]) and not hits.get(bar[k + 1]):
+            out.append(_note_xml(None, 2 * DIVISIONS, False, voice=voice))
+            k += 2
+            continue
+        out.extend(_beat_xml(hits.get(bar[k], []), voice, ghost))
+        k += 1
+    return out
 
 
 def _beat_xml(hits: list[QNote], voice: int, ghost_velocity: int) -> list[str]:
@@ -238,27 +271,57 @@ def to_musicxml(
     tempo = round(60.0 * (len(b) - 1) / float(b[-1] - b[0])) if len(b) > 1 else 120
     used = sorted({n.pitch for n in q})
 
+    # Readability: an empty bar is one whole-bar rest, a run of them one multi-measure rest
+    implicit_first = pickup > 0
+    empty = [
+        not (m == 0 and implicit_first) and not any((v, i) in by_voice for v in (1, 2) for i in bar)
+        for m, bar in enumerate(bars)
+    ]
+    multi_rest: dict[int, int] = {}
+    m = 0
+    while m < len(bars):
+        run = 0
+        while m + run < len(bars) and empty[m + run]:
+            run += 1
+        if run >= 2:
+            multi_rest[m] = run
+        m += max(run, 1)
+
     measures = []
     for m, bar in enumerate(bars):
         implicit = m == 0 and pickup > 0
         number = 0 if implicit else (m if pickup else m + 1)
         body = []
+        attributes = ""
+        if m == 0:
+            attributes += (
+                f"<divisions>{DIVISIONS}</divisions><key><fifths>0</fifths></key>"
+                f"<time><beats>{num}</beats><beat-type>{den}</beat-type></time>"
+                "<clef><sign>percussion</sign><line>2</line></clef>"
+            )
+        if m in multi_rest:
+            attributes += (
+                f"<measure-style><multiple-rest>{multi_rest[m]}</multiple-rest></measure-style>"
+            )
+        if attributes:
+            body.append(f"<attributes>{attributes}</attributes>")
         if m == 0:
             body.append(
-                f"<attributes><divisions>{DIVISIONS}</divisions><key><fifths>0</fifths></key>"
-                f"<time><beats>{num}</beats><beat-type>{den}</beat-type></time>"
-                "<clef><sign>percussion</sign><line>2</line></clef></attributes>"
                 '<direction placement="above"><direction-type><metronome>'
                 f"<beat-unit>quarter</beat-unit><per-minute>{tempo}</per-minute>"
                 f'</metronome></direction-type><sound tempo="{tempo}"/></direction>'
             )
+        merge = den == 4 and num % 2 == 0 and not implicit
         for voice in (1, 2):
+            hits = {i: by_voice[(voice, i)] for i in bar if (voice, i) in by_voice}
             if voice == 2:
-                if not any((2, i) in by_voice for i in bar):
+                if not hits:
                     continue
                 body.append(f"<backup><duration>{len(bar) * DIVISIONS}</duration></backup>")
-            for i in bar:
-                body.extend(_beat_xml(by_voice.get((voice, i), []), voice, ghost_velocity))
+            if not hits and not implicit:
+                body.append(_measure_rest_xml(len(bar), voice))
+                continue
+            body.extend(_voice_xml(bar, hits, voice, ghost_velocity, merge))
         flag = ' implicit="yes"' if implicit else ""
         measures.append(f'<measure number="{number}"{flag}>{"".join(body)}</measure>')
 
