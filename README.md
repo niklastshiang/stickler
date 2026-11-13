@@ -19,13 +19,10 @@
 </p>
 
 <p align="center">
-  <img src="docs/badges/fun-cowbell.svg" alt="cowbell" />
   <img src="docs/badges/fun-cloud.svg" alt="cloud" />
   <img src="docs/badges/fun-subscription.svg" alt="subscription" />
   <img src="docs/badges/fun-rocket-science.svg" alt="rocket science" />
   <img src="docs/badges/fun-drummer.svg" alt="drummer" />
-  <img src="docs/badges/fun-timing.svg" alt="timing" />
-  <img src="docs/badges/fun-origin.svg" alt="origin" />
   <img src="docs/badges/fun-burgers.svg" alt="burgers" />
   <img src="docs/badges/fun-neighbours.svg" alt="neighbours" />
   <img src="docs/badges/fun-jazz.svg" alt="jazz" />
@@ -210,7 +207,7 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 5, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 322,
+  "tests": 327,
   "smoke_tests_with_models": 8,
   "coverage_percent": 97,
   "coverage_minimum": 95,
@@ -311,8 +308,11 @@ uv run stickler report   # results/report.html
 
 ## `> ORIGIN`
 
-<img src="https://img.shields.io/badge/code-Claude%20Code-ff8800?style=flat-square&labelColor=0d1117" />
-<img src="https://img.shields.io/badge/decisions-human-ff8800?style=flat-square&labelColor=0d1117" />
+<p align="center">
+  <img src="docs/badges/origin-built-with.svg" alt="built with Claude Code" />
+  <img src="docs/badges/origin-code.svg" alt="code: 100% AI" />
+  <img src="docs/badges/origin-decisions.svg" alt="decisions: 100% human" />
+</p>
 
 **The code of this project comes from an AI.** It was programmed, tested and documented by Claude
 (Anthropic) in Claude Code.

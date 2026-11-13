@@ -56,7 +56,7 @@ def facts() -> dict[str, str]:
 
 
 def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
-    """(file name, label, message) per row; the second row shimmers."""
+    """(file name, label, message) per row; the joke row shimmers."""
     return {
         "facts": [
             ("license", "license", "MIT"),
@@ -69,16 +69,18 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
             ("local", "runs", "100% local"),
         ],
         "fun": [
-            ("cowbell", "cowbell", "needs more"),
             ("cloud", "cloud", "0 bytes"),
             ("subscription", "subscription", "€0"),
             ("rocket-science", "rocket science", "no"),
             ("drummer", "drummer", "beginner"),
-            ("timing", "timing", "±50 ms"),
-            ("origin", "code 100% AI", "decisions 100% human"),
             ("burgers", "burgers received", "0"),
             ("neighbours", "neighbours", "annoyed"),
             ("jazz", "jazz", "it's complicated"),
+        ],
+        "origin": [
+            ("built-with", "built with", "Claude Code"),
+            ("code", "code", "100% AI"),
+            ("decisions", "decisions", "100% human"),
         ],
     }
 
