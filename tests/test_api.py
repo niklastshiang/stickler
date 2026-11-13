@@ -17,7 +17,7 @@ def test_enst_is_prepared_locally_and_loaded(monkeypatch, tmp_path):
     from stickler.datasets import enst
 
     seen = []
-    monkeypatch.setattr(enst, "prepare", lambda target: seen.append(target) or 64)
+    monkeypatch.setattr(enst, "fetch", lambda target: seen.append(target) or 64)
     assert api.fetch_dataset("enst", tmp_path) == 64 and seen == [tmp_path / "enst"]
     with pytest.raises(ValueError, match="stickler fetch enst"):
         api.load_tracks("enst", tmp_path)

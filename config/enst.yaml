@@ -1,8 +1,8 @@
 # Benchmark on ENST-Drums (`stickler run --config config/enst.yaml`, results in results/enst/).
-# The 64 minus-one tracks mixed with their accompaniment (stickler.datasets.enst); the data is
-# licensed for personal scientific use only and never leaves data/enst/ except to a rented GPU
-# under the owner's control. `oracle` = the wet drum mix.
-# Note: ADT_STR reports state-of-the-art results on ENST, so its numbers here may be optimistic.
+# The 64 minus-one tracks mixed with their accompaniment (stickler.datasets.enst), from Zenodo
+# under CC BY-NC-ND 4.0 (research only). `oracle` = the wet drum mix.
+# Note: YourMT3+ was trained on ENST-Drums (its paper, Table 1; test set: 21 files of drummer 3),
+# so its numbers here are not a fair test. ADT_STR reports state-of-the-art results on ENST.
 datasets: [enst]
 separators: [none, oracle, demucs, roformer]
 transcribers: [adt_str, adtof, muscriptor_m, yourmt3]

@@ -371,8 +371,8 @@ are not in the repository and come with their own licenses, see
 ([ADR 0002](docs/adr/0002-nc-lizenzen.md)): whoever downloads them is bound by those terms, and a
 package that bundles them must respect them too.
 
-**Data:** MDB Drums is under CC BY-NC-SA 4.0. ENST-Drums is only available on request and never
-leaves your machine. Sheet music and recordings of your own songs belong to their authors and are
+**Data:** MDB Drums is under CC BY-NC-SA 4.0, ENST-Drums under CC BY-NC-ND 4.0 (research only;
+`stickler fetch` downloads both). Sheet music and recordings of your own songs belong to their authors and are
 therefore not in the repository.
 
 ---

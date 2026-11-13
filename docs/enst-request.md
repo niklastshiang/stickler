@@ -1,3 +1,8 @@
+> **Superseded on 2026-11-13.** The authors now publish ENST-Drums openly on Zenodo
+> (record 21506051, v2, CC BY-NC-ND 4.0: research only, no commercial use, no redistribution of
+> adapted material, cite Gillet & Richard, ISMIR 2006). `stickler fetch enst` downloads it. The
+> text below describes the earlier request procedure and is kept for the record.
+
 # Requesting ENST-Drums
 
 ENST-Drums (Gillet & Richard, ISMIR 2006) is a drum dataset from Telecom Paris: three drummers, eight

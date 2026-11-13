@@ -68,7 +68,7 @@ Counts are summed over all tracks of a dataset before F1 is computed.
 |---|---|---|---|
 | **MDB Drums** (Southall et al., ISMIR 2017) | 23 | Multitrack productions from MedleyDB, many genres incl. a lot of jazz, with an isolated drum stem | CC BY-NC-SA 4.0 |
 | **Own songs** | 10 (25 *pending*) | Commercial rock, metal and pop recordings from the owner's collection, references from musescore.com transcriptions | not published |
-| **ENST-Drums** (Gillet & Richard, ISMIR 2006) | 64 *pending* | Three drummers, "minus-one" pieces in many styles, mixed 2/3 drums + 1/3 accompaniment | on request, personal scientific use only |
+| **ENST-Drums** (Gillet & Richard, ISMIR 2006) | 64 *pending* | Three drummers, "minus-one" pieces in many styles, mixed 2/3 drums + 1/3 accompaniment | CC BY-NC-ND 4.0, research only (Zenodo) |
 
 **Caution with MDB:** some models may have seen MDB during training or evaluation, so MDB numbers
 can be optimistic. The own songs are the honest test, because they are the music Stickler is

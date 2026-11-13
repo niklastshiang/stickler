@@ -139,12 +139,12 @@ def load_tracks(name: str, data_dir: Path) -> list[runner.Track]:
 
 
 def fetch_dataset(name: str, data_dir: Path) -> int:
-    """Downloads a dataset to `data_dir/<name>` (ENST: builds the mixes from the unpacked
-    archive, which cannot be downloaded automatically); returns the number of tracks."""
+    """Downloads a dataset to `data_dir/<name>` (ENST: from Zenodo, then builds the
+    evaluation mixes); returns the number of tracks."""
     if name == "mdb":
         return mdb.fetch(data_dir / "mdb")
     if name == "enst":
-        return enst.prepare(data_dir / "enst")
+        return enst.fetch(data_dir / "enst")
     raise ValueError(f"Dataset {name!r} unknown (available: {', '.join(DATASETS)})")
 
 

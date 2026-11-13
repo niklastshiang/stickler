@@ -81,10 +81,10 @@ uv run stickler fetch mdb                # MDB Drums from GitHub (CC BY-NC-SA)
 uv run stickler fetch enst               # ENST-Drums: builds the evaluation mixes
 ```
 
-**ENST-Drums** is only available on request (personal scientific use, see
-[`enst-request.md`](enst-request.md)). Unpack the archive so that `data/enst/drummer_<n>/`
-contains `annotation/`, `audio/wet_mix/` and `audio/accompaniment/`, then run `fetch enst`.
-ENST data never leaves `data/enst/` (gitignored).
+**ENST-Drums** comes from Zenodo (record 21506051, CC BY-NC-ND 4.0: research only, cite Gillet &
+Richard, ISMIR 2006). `fetch enst` downloads the 9.6 GB archive, checks it, keeps only the
+annotations and the minus-one audio (~1.9 GB in `data/enst/`, gitignored) and builds the
+evaluation mixes. On a rented GPU, `remote` lets the machine download it itself.
 
 ### 3.2 Compute, score, report
 

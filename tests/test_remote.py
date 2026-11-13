@@ -48,7 +48,7 @@ def test_adapters_for_config_skips_builtin_separators(tmp_path):
     assert remote.adapters_for(cfg) == ["demucs", "adtof"]
 
 
-def test_sync_plan_uploads_the_enst_folder(tmp_path, monkeypatch):
+def test_enst_is_downloaded_on_the_host_not_uploaded(tmp_path, monkeypatch):
     cfg = tmp_path / "c.yaml"
     cfg.write_text("datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n")
     monkeypatch.setattr(remote, "tracked_files", lambda root: [])
@@ -58,7 +58,10 @@ def test_sync_plan_uploads_the_enst_folder(tmp_path, monkeypatch):
         references_dir=tmp_path,
         data_dir=tmp_path / "data",
     )
-    assert plan.data_dirs == ["data/mdb", "data/enst"]
+    assert plan.data_dirs == ["data/mdb"] and plan.fetch == ["enst"]
+    script = remote.remote_script("c.yaml", [], fetch=plan.fetch)
+    assert script.index("stickler fetch enst") < script.index("stickler run")
+    assert "command -v zstd" in remote.BOOTSTRAP and "ffmpeg zstd" in remote.BOOTSTRAP  # .tar.zst
 
 
 class Recorder:

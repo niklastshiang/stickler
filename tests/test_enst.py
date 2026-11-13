@@ -56,5 +56,50 @@ def test_mix_is_two_thirds_drums_one_third_accompaniment(root):
 
 
 def test_prepare_without_data_explains_how_to_get_it(tmp_path):
-    with pytest.raises(RuntimeError, match="enst-request"):
+    with pytest.raises(RuntimeError, match="stickler fetch enst"):
         enst.prepare(tmp_path / "missing")
+
+
+def _archive(tmp_path, root):
+    """The fake ENST tree packed like the Zenodo archive (top folder enst_drums_public/)."""
+    import hashlib
+    import shutil
+    import subprocess
+
+    src = tmp_path / "pack" / "enst_drums_public"
+    shutil.copytree(root, src)
+    (src / "drummer_1" / "video").mkdir()
+    (src / "drummer_1" / "video" / "big.mp4").write_bytes(b"not needed")
+    archive = tmp_path / "enst.tar.zst"
+    subprocess.run(
+        ["tar", "--zstd", "-cf", str(archive), "-C", str(tmp_path / "pack"), "enst_drums_public"],
+        check=True,
+    )
+    return archive, hashlib.md5(archive.read_bytes()).hexdigest()
+
+
+def test_fetch_downloads_checks_and_unpacks_only_what_is_needed(tmp_path, root, monkeypatch):
+    archive, md5 = _archive(tmp_path, root)
+    monkeypatch.setattr(enst, "MD5", md5)
+    calls = []
+
+    def fake_download(url, dest):
+        calls.append(url)
+        dest.write_bytes(archive.read_bytes())
+
+    monkeypatch.setattr(enst, "_download", fake_download)
+    target = tmp_path / "data" / "enst"
+    assert enst.fetch(target) == 1
+    assert calls == [enst.URL]
+    assert not list(target.rglob("*.mp4")) and not list(target.glob("*.tar.zst"))
+    (track,) = enst.tracks(target)
+    assert track.mix.exists()
+    assert enst.fetch(target) == 1 and len(calls) == 1  # already there: no second download
+
+
+def test_fetch_rejects_a_damaged_download(tmp_path, root, monkeypatch):
+    archive, _ = _archive(tmp_path, root)
+    monkeypatch.setattr(enst, "MD5", "0" * 32)
+    monkeypatch.setattr(enst, "_download", lambda url, dest: dest.write_bytes(archive.read_bytes()))
+    with pytest.raises(RuntimeError, match="checksum"):
+        enst.fetch(tmp_path / "data" / "enst")

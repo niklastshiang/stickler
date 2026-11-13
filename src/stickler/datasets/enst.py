@@ -1,9 +1,10 @@
 """ENST-Drums (Gillet & Richard, ISMIR 2006): the 64 "minus-one" tracks with accompaniment.
 
-The licence only allows personal, scientific use and forbids passing the data on
-(docs/enst-request.md): it lives in `data/enst/` (gitignored) and is unpacked there by hand from
-the archive the owner received (`drummer_<n>/annotation`, `audio/wet_mix`,
-`audio/accompaniment`). `prepare` builds the evaluation mixes next to it.
+Since July 2026 the authors publish ENST-Drums openly on Zenodo (record 21506051, v2) under
+CC BY-NC-ND 4.0: research only, no commercial use, no redistribution of adapted material.
+`fetch` downloads the archive (9.6 GB incl. videos), checks its MD5, unpacks only the
+annotations and the minus-one audio into `data/enst/` (gitignored) and deletes the archive;
+`prepare` builds the evaluation mixes next to it.
 
 Mix: 2/3 drums (wet mix) + 1/3 accompaniment, a ratio used throughout the drum transcription
 literature for ENST. The wet mix serves as the oracle drum stem. Track ids carry the drummer
@@ -15,10 +16,21 @@ audio-visual database for drum signals processing", Proc. ISMIR 2006.
 
 from __future__ import annotations
 
+import hashlib
+import logging
 import re
 import subprocess
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+
+log = logging.getLogger(__name__)
+
+URL = "https://zenodo.org/records/21506051/files/enst_drums_v1_1.tar.zst?download=1"
+MD5 = "a134f0a34d12eb5317ff3ddd7d07b6db"  # as published on Zenodo
+ARCHIVE = "enst_drums_v1_1.tar.zst"
+USER_AGENT = "stickler (+https://github.com/niklastshiang/stickler)"
+NEEDED = ("*/annotation/*", "*/audio/wet_mix/*minus-one*", "*/audio/accompaniment/*minus-one*")
 
 DRUM_GAIN = 2 / 3
 ACCOMPANIMENT_GAIN = 1 / 3
@@ -103,10 +115,7 @@ def prepare(target: Path) -> int:
     """Builds the missing evaluation mixes (idempotent); returns the number of tracks."""
     sources = _sources(target)
     if not sources:
-        raise RuntimeError(
-            f"no ENST-Drums minus-one tracks in {target}: request and unpack the data first "
-            "(docs/enst-request.md)"
-        )
+        raise RuntimeError(f"no ENST-Drums minus-one tracks in {target}: run `stickler fetch enst`")
     (target / MIX_DIR).mkdir(exist_ok=True)
     for track_id, _, wet, acc in sources:
         out = target / MIX_DIR / f"{track_id}.wav"
@@ -125,3 +134,47 @@ def prepare(target: Path) -> int:
         )
         tmp.rename(out)
     return len(sources)
+
+
+def _download(url: str, dest: Path) -> None:
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    done, step = 0, 1 << 30
+    with urllib.request.urlopen(request, timeout=60) as response, dest.open("wb") as f:
+        while chunk := response.read(1 << 20):
+            f.write(chunk)
+            done += len(chunk)
+            if done % step < len(chunk):
+                log.info("ENST download: %d GB", done // step)
+
+
+def fetch(target: Path) -> int:
+    """Downloads ENST-Drums from Zenodo unless it is already there; returns the track count."""
+    if _sources(target):
+        return prepare(target)
+    target.mkdir(parents=True, exist_ok=True)
+    archive = target / ARCHIVE
+    part = archive.with_name(ARCHIVE + ".part")
+    _download(URL, part)
+    with part.open("rb") as f:
+        digest = hashlib.file_digest(f, "md5").hexdigest()
+    if digest != MD5:
+        part.unlink()
+        raise RuntimeError(f"ENST download damaged: checksum {digest}, expected {MD5}")
+    part.rename(archive)
+    subprocess.run(
+        [
+            "tar",
+            "--zstd",
+            "-xf",
+            str(archive),
+            "-C",
+            str(target),
+            "--strip-components=1",
+            "--wildcards",
+            *NEEDED,
+        ],
+        check=True,
+        capture_output=True,
+    )
+    archive.unlink()
+    return prepare(target)

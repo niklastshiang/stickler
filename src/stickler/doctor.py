@@ -107,7 +107,7 @@ def check_datasets(data_dir: Path) -> list[Check]:
     detail = f"{n} tracks" if n else "missing → stickler fetch mdb"
     checks = [Check("dataset mdb", n > 0, detail)]
     n_enst = len(enst.tracks(data_dir / "enst"))
-    if n_enst:  # optional dataset (licence on request), only shown once it is there
+    if n_enst:  # optional dataset (`stickler fetch enst`), only shown once it is there
         checks.append(Check("dataset enst", True, f"{n_enst} tracks"))
     return checks
 

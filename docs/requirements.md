@@ -54,5 +54,5 @@ Peak RAM is per model; models run one after another, so the largest one counts.
 | Dataset | Size on disk | How to get it |
 |---|---|---|
 | MDB Drums | ~0.6 GB | `stickler fetch mdb` (CC BY-NC-SA) |
-| ENST-Drums (minus-one) | ~1.9 GB unpacked plus the archive | on request from Télécom Paris, see [`enst-request.md`](enst-request.md) |
+| ENST-Drums (minus-one) | 9.6 GB download, ~1.9 GB kept | `stickler fetch enst` from Zenodo (CC BY-NC-ND 4.0, research only) |
 | Own songs | your recordings | see the [CLI guide](cli.md#34-your-own-songs-align) |

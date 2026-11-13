@@ -48,8 +48,9 @@ PREFLIGHT_URLS = (
 UPLOAD_WEIGHTS = {"roformer": "adapters/separators/roformer/weights"}
 SSH_OPTIONS = ["-o", "ServerAliveInterval=30", "-o", "StrictHostKeyChecking=accept-new"]
 BOOTSTRAP = (
-    "command -v rsync >/dev/null && command -v ffmpeg >/dev/null || "
-    "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rsync ffmpeg)"
+    "command -v rsync >/dev/null && command -v ffmpeg >/dev/null && command -v zstd >/dev/null || "
+    "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive "
+    "apt-get install -y -qq rsync ffmpeg zstd)"
     " && (command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh)"
 )
 
@@ -70,6 +71,8 @@ class SyncPlan:
     audio: list[tuple[str, str]] = field(default_factory=list)
     # cache entries the run needs ("<adapter>/<key>"); None uploads the whole cache
     cache: list[str] | None = None
+    # datasets the host downloads itself (faster from a data centre than an upload from home)
+    fetch: list[str] = field(default_factory=list)
 
 
 def ssh_command(host: Host) -> list[str]:
@@ -100,10 +103,12 @@ def sync_plan(
     config: Path, *, project_root: Path, references_dir: Path, data_dir: Path
 ) -> SyncPlan:
     raw = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
-    data_dirs, data_files, audio = [], [], []
+    data_dirs, data_files, audio, fetch = [], [], [], []
     for name in raw.get("datasets", []):
-        if name in ("mdb", "enst"):
+        if name == "mdb":
             data_dirs.append(str((data_dir / name).relative_to(project_root)))
+        elif name == "enst":
+            fetch.append(name)
         elif name == "own":
             for track in own.tracks(references_dir, data_dir):
                 aligned = data_dir / "own" / track.id / "aligned.json"
@@ -114,10 +119,10 @@ def sync_plan(
         weights = UPLOAD_WEIGHTS.get(adapter)
         if weights and (project_root / weights).is_dir():
             data_dirs.append(weights)
-    return SyncPlan(tracked_files(project_root), data_dirs, data_files, audio)
+    return SyncPlan(tracked_files(project_root), data_dirs, data_files, audio, fetch=fetch)
 
 
-def remote_script(config: str, adapter_ids: list[str]) -> str:
+def remote_script(config: str, adapter_ids: list[str], fetch: list[str] = ()) -> str:
     """Bash script run on the host; the first stdin line is the Hugging Face token."""
     # The environments hold copies of their packages; the uv cache (~18 GB with CUDA torch) only
     # fills the pod's disk, so it is cleaned after every setup (cleaning once after all of them
@@ -126,6 +131,7 @@ def remote_script(config: str, adapter_ids: list[str]) -> str:
         f"uv run stickler setup --adapter {a} --device cuda\nuv cache clean || true"
         for a in adapter_ids
     )
+    fetches = "\n".join(f"uv run stickler fetch {name}" for name in fetch)
     return f"""set -euo pipefail
 read -r HF_TOKEN || true
 export HF_TOKEN
@@ -133,6 +139,7 @@ export PATH="$HOME/.local/bin:$PATH"
 cd ~/{REMOTE_DIR}
 uv sync --quiet
 {setups}
+{fetches}
 uv run stickler doctor || true
 uv run stickler run --config {config} --device gpu
 uv run stickler eval --config {config}
@@ -239,7 +246,7 @@ def run_remote(
                 f"{REMOTE_DIR}/cache/",
             )
             run(cmd, "cache upload", listing)
-        script = remote_script(config, adapter_ids)
+        script = remote_script(config, adapter_ids, plan.fetch)
         # script as argument (not secret), token as the only stdin line (read -r HF_TOKEN)
         run([*ssh_command(host), f"bash -c {shlex.quote(script)}"], "run", f"{hf_token}\n", True)
         run(cache_down, "cache download")
