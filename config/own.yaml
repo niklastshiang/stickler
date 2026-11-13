@@ -4,7 +4,7 @@
 # RoFormer joined on 2026-11-13 (before: config/own-roformer.yaml, computed on a rented GPU).
 datasets: [own]
 separators: [none, demucs, roformer]
-transcribers: [adt_str, adtof, muscriptor_m, yourmt3]
+transcribers: [adt_str, adtof, muscriptor_m]
 # Dropped on 2026-11-12 (owner's decision, cached results are kept): MuScriptor small was last
 # in every measurement (MDB Punk, first 7 MDB songs: macro-F1 0.51-0.58, first own song 0.47);
 # MuScriptor medium on the full mix is the most expensive job (~7x real time) and ranked below

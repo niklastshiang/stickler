@@ -121,7 +121,7 @@ version.
 | Transcription | `adtof` | ADTOF Frame_RNN (Zehren et al. 2023), PyTorch port | CC BY-NC-SA |
 | Transcription | `adt_str` | ADT_STR (2026), stems only | CC BY-SA |
 | Transcription | `muscriptor_m` (`_s`) | MuScriptor medium (small) (Kyutai/IRCAM, 2026) | code MIT, weights CC BY-NC |
-| Transcription | `yourmt3` | YourMT3+ YPTF.MoE+Multi (PS) | Apache-2.0 / GPL-3.0 |
+| Transcription | `yourmt3` | YourMT3+ YPTF.MoE+Multi (PS); **removed on 2026-11-13** (last on the own songs, its pinned transformers version has known vulnerabilities), results kept here | Apache-2.0 / GPL-3.0 |
 | Beats | `beat_this` | Beat This! (CPJKU, ISMIR 2024) | MIT |
 
 ---

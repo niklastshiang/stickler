@@ -11,7 +11,7 @@
   <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: MIT" /></a>
   <img src="docs/badges/facts-python.svg" alt="python 3.12" />
   <img src="docs/badges/facts-uv.svg" alt="environments: uv" />
-  <img src="docs/badges/facts-models.svg" alt="8 model adapters" />
+  <img src="docs/badges/facts-models.svg" alt="7 model adapters" />
   <img src="docs/badges/facts-tests.svg" alt="tests" />
   <img src="docs/badges/facts-coverage.svg" alt="coverage" />
   <img src="docs/badges/facts-version.svg" alt="version" />
@@ -137,7 +137,7 @@ On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
 ```
   Song ──┬──► Separation ─────► Drum stem ───► Transcription ────► drums.mid
          │    none · demucs     (or mix)       adtof · adt_str              │
-         │    roformer · oracle                muscriptor · yourmt3         │
+         │    roformer · oracle                muscriptor                   │
          │                                                                  ▼
          └──► Beat tracking ──► beats.json ──────────────────────► Scoring against
               beat_this                                            the reference
@@ -164,7 +164,7 @@ On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
 | Transcription | `adtof` | [ADTOF-pytorch](https://github.com/xavriley/ADTOF-pytorch) (Zehren et al.) | CC BY-NC-SA |
 | Transcription | `adt_str` | [ADT_STR](https://huggingface.co/Pierfrancesco/adt-str) (2026), τ = 0.8 | CC BY-SA |
 | Transcription | `muscriptor_s`, `muscriptor_m` | [MuScriptor](https://github.com/muscriptor/muscriptor) (Kyutai/IRCAM, 2026) | MIT / weights CC BY-NC |
-| Transcription | `yourmt3` | [YourMT3+](https://huggingface.co/spaces/mimbres/YourMT3) YPTF.MoE+Multi (PS) | Apache-2.0 / GPL-3.0 |
+| ~~Transcription~~ | ~~`yourmt3`~~ | YourMT3+, removed 2026-11-13: last on the own songs, outdated dependencies with known vulnerabilities; results stay in the [report](docs/report.md) | – |
 | Beats | `beat_this` | [Beat This!](https://github.com/CPJKU/beat_this) (CPJKU, 2024) | MIT |
 
 Every model decision that was not obvious is recorded as an ADR in [`docs/adr/`](docs/adr/).
@@ -211,9 +211,9 @@ scripts/check.sh task
 
 ```json
 {
-  "adapter": { "separation": 2, "transcription": 5, "beats": 1 },
+  "adapter": { "separation": 2, "transcription": 4, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 327,
+  "tests": 351,
   "smoke_tests_with_models": 8,
   "coverage_percent": 97,
   "coverage_minimum": 95,
@@ -236,7 +236,7 @@ scripts/check.sh task
 **Done**
 
 - [x] Scoring by class, cache, time limits, error log, HTML report
-- [x] Separators Demucs and BS-RoFormer; transcribers ADTOF, ADT_STR, MuScriptor, YourMT3+
+- [x] Separators Demucs and BS-RoFormer; transcribers ADTOF, ADT_STR, MuScriptor (YourMT3+ measured, then removed)
 - [x] Beat tracking with Beat This!, alignment and quality criteria for own songs
 - [x] Full runs over MDB Drums and the own songs; GPU runs on rented hardware
 - [x] Combinations, fusion, voting, tuning and bar consensus measured (section 6 of the report)
@@ -347,7 +347,7 @@ stickler/
 ├── adapters/            # one folder per model, each with its own uv environment
 │   ├── _common/         # shared helpers: device selection, meta.json, drum MIDI
 │   ├── separators/      # demucs, roformer
-│   ├── transcribers/    # adtof, adt_str, muscriptor_s, muscriptor_m, yourmt3
+│   ├── transcribers/    # adtof, adt_str, muscriptor_s, muscriptor_m
 │   └── beats/           # beat_this
 ├── config/              # benchmark, own and enst configs; classes.yaml (GM pitch → class)
 ├── references/own/      # own songs: title, recording, manual exclusions

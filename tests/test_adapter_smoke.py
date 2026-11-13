@@ -75,13 +75,13 @@ def mdb_clip(tmp_path_factory) -> Path:
     return path
 
 
-def test_yourmt3_produces_midi_on_real_mix(mdb_clip, tmp_path):
-    """YourMT3+ detects nothing at all in the synthetic clip, not even other instruments."""
-    spec = adapters.discover(ROOT / "adapters")["yourmt3"]
-    result = adapters.run_adapter(spec, mdb_clip, tmp_path / "yourmt3", device="cpu")
+def test_fast_mode_model_finds_kick_and_snare_on_a_real_mix(mdb_clip, tmp_path):
+    """Fast mode: ADTOF on the original mix of a real song (MDB Punk), no separation."""
+    spec = adapters.discover(ROOT / "adapters")["adtof"]
+    result = adapters.run_adapter(spec, mdb_clip, tmp_path / "adtof_mix", device="cpu")
     assert result.ok, result.error
     pitches = {pitch for _, pitch in read_drum_notes(result.output)}
-    assert {36, 38} <= pitches, f"kick and snare missing: {sorted(pitches)}"
+    assert {35, 38} <= pitches, f"kick and snare missing: {sorted(pitches)}"
     assert all(35 <= p <= 81 for p in pitches), "pitches outside the GM drum range"
 
 

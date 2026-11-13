@@ -1,6 +1,6 @@
 # ADR 0005: YourMT3+ with the variant "YPTF.MoE+Multi (PS)" instead of the Space default
 
-- Status: accepted
+- Status: superseded on 2026-11-13: the adapter was removed. YourMT3+ came last on the own songs and pins a transformers version with known vulnerabilities (Dependabot), which its code cannot leave without porting. Its results stay in docs/report.md.
 - Date: 2026-11-12
 
 ## Context

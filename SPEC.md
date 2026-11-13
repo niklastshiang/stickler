@@ -29,7 +29,7 @@ User stories:
 | Transcription | `adtof` | ADTOF-pytorch (Zehren), 5 classes | CC BY-NC-SA |
 | Transcription | `adt_str` | pier-maker92/ADT_STR (2026), `setting-tau-0.8`, 26 classes | CC BY-SA |
 | Transcription | `muscriptor_s`, `muscriptor_m` | muscriptor/muscriptor (2026), small/medium | MIT / weights CC BY-NC |
-| Transcription | `yourmt3` | mimbres/YourMT3 (YourMT3+ YPTF.MoE+Multi) | GPL-3.0 |
+| ~~Transcription~~ | ~~`yourmt3`~~ | YourMT3+, removed 2026-11-13 (last on the own songs; transformers with known vulnerabilities could not be updated) | – |
 | Transcription | `drumsep_onset` | DrumSep MDX23C 6-stem + librosa onsets per stem | Community |
 | Beats | `beat_this` | CPJKU/beat_this | MIT |
 
