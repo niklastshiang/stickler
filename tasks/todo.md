@@ -171,6 +171,17 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Acceptance: rsync code, required audio (MDB, own songs under the same `~`-relative paths) and cache to an SSH host; remote setup (uv, CUDA envs, HF token from env); run a config with `--device gpu`; rsync new cache entries back; optional pod stop via RunPod API (`RUNPOD_API_KEY`).
   - Verify: unit tests for command construction; first real run: RoFormer on the own songs (Secure Cloud, EU).
 
+## Phase 5c: Getting the most out of the existing models (decided 2026-11-13)
+
+Method: tune on MDB and ENST, keep the own songs (the target music) for the final check only.
+
+- [x] **Quality combo** (`combos` in configs, stickler.combine): MuScriptor medium on the Demucs stem for KD/SD/TT + ADTOF on the mix for HH/CY. Macro-F1 (5 classes) own 0.815 (best single 0.788), MDB 0.784 (best single 0.778). Chosen on the own songs, confirmed on MDB.
+- [x] **ADTOF activations, fusion and per-class thresholds** (stickler.peaks, stickler.fusion, `stickler tune`, `fusions` in configs). The harness peak picking reproduces ADTOF's MIDI exactly. Result: no gain on the target music. Tuned on MDB (thresholds and weights): MDB 5-class F1 rises a lot (TT 0.35 → 0.54, SD 0.71 → 0.79), but the own songs drop from 0.788 to 0.729 (SD threshold 0.04 fits MDB's jazz ghost notes and adds false snares in rock/metal; TT threshold 0.46 misses toms). Weights only, ADTOF thresholds: own 0.788 → 0.771. ADTOF's default thresholds and the plain mix transfer best. Re-check once ENST is in (tuning on MDB + ENST).
+- [ ] **Voting per class** (several pipelines must agree), from the cache.
+- [ ] **Measure the end product**: score quantised notes, consensus across repeated bars (ties in with repeat signs).
+- [ ] **More reference songs in the owner's genres** (rock/metal): with 10 songs, tuning on them is not possible without overfitting; with ~30 they could be split for tuning and testing.
+- [ ] **Finer classes for notation** (owner, 2026-11-13: later): open/closed hi-hat, ride/crash; ADTOF does not distinguish them, MuScriptor does.
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.

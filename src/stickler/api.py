@@ -279,7 +279,7 @@ def tune_fusion(
         class_of,
         {c: fusion.ClassParams(first, t) for c, t in fusion.ADTOF_THRESHOLDS.items()},
     )
-    grid = thresholds or [round(0.06 + 0.02 * i, 2) for i in range(28)]  # 0.06 … 0.60
+    grid = thresholds or [round(0.02 + 0.02 * i, 2) for i in range(30)]  # 0.02 … 0.60
     tuned = fusion.tune(
         samples, labels, class_of, weights=fusion.weight_grid(len(inputs), step), thresholds=grid
     )
