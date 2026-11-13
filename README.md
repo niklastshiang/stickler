@@ -378,5 +378,5 @@ burger. 🍔
 ---
 
 <p align="center">
-  <strong><code>> COUNT ALONG. THE STICKLER DOES ANYWAY._</code></strong>
+  <strong><code>> ONE, TWO, THREE, FOUR. THE STICKLER IS COUNTING._</code></strong>
 </p>
