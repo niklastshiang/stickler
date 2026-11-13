@@ -155,15 +155,23 @@ def test_fusions_are_scored_and_tuned_from_cached_activations(monkeypatch, tmp_p
 
 
 def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
+    from stickler import grid
+
     fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0; dummy echoes it
     cfg = _bench(tmp_path)
-    cfg.write_text(cfg.read_text() + "grid: [none+dummy]\n", encoding="utf-8")
-    assert api.load_benchmark_config(cfg).grid == ["none+dummy"]
+    cfg.write_text(
+        cfg.read_text()
+        + "grid: [none+dummy]\nconsensus: {similarity: 0.7, add: 0.6, remove: 0.1}\n",
+        encoding="utf-8",
+    )
+    loaded = api.load_benchmark_config(cfg)
+    assert loaded.grid == ["none+dummy"]
+    assert loaded.consensus == grid.Consensus(0.7, 0.6, 0.1)
     asked = []
 
     def fake_beats(tracks, registry, cache_dir, device, execute):
         asked.append(execute)
-        return {("mdb", "t"): [0.0, 0.5, 1.0, 1.5]}
+        return {("mdb", "t"): grid.BeatGrid([0.0, 0.5, 1.0, 1.5], [0.0])}
 
     monkeypatch.setattr(api, "_track_beats", fake_beats)
     kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
@@ -171,6 +179,7 @@ def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
     summary = api.evaluate_benchmark(cfg, results_dir=tmp_path / "results", **kw)
     (row,) = [r for r in summary if r["transcriber"] == "dummy@grid"]
     assert row["micro_f1"] == 1.0 and asked == [True, False]
+    assert [r["transcriber"] for r in summary if r["transcriber"] == "dummy@rep"]
 
 
 def test_run_benchmark_device_override(monkeypatch, tmp_path):

@@ -59,6 +59,7 @@ class BenchmarkConfig:
     combos: dict = field(default_factory=dict)  # combined pipelines (stickler.combine)
     fusions: dict = field(default_factory=dict)  # fused ADTOF activations (stickler.fusion)
     grid: list = field(default_factory=list)  # pipelines also scored on the beat grid
+    consensus: grid.Consensus | None = None  # vote across repeated bars ("@rep")
 
 
 def _parse_skip(raw: list) -> frozenset[tuple[str, str]]:
@@ -105,6 +106,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         combos=dict(raw.get("combos") or {}),
         fusions=dict(raw.get("fusions") or {}),
         grid=list(raw.get("grid") or []),
+        consensus=grid.Consensus(**raw["consensus"]) if raw.get("consensus") else None,
     )
 
 
@@ -189,14 +191,17 @@ def run_benchmark(
 
 def _track_beats(
     tracks: dict[str, list], registry: dict, cache_dir: Path, device: str, execute: bool
-) -> dict[tuple[str, str], list[float] | None]:
+) -> dict[tuple[str, str], grid.BeatGrid | None]:
     """Beat This! beats of every track's mix (None where they are missing or failed)."""
-    out: dict[tuple[str, str], list[float] | None] = {}
+    out: dict[tuple[str, str], grid.BeatGrid | None] = {}
     for name, ts in tracks.items():
         for t in ts:
             res = runner.cached_or_run(registry["beat_this"], t.mix, cache_dir, device, execute)
-            beats = json.loads(res.output.read_text(encoding="utf-8"))["beats"] if res.ok else None
-            out[(name, t.id)] = beats
+            if res.ok:
+                raw = json.loads(res.output.read_text(encoding="utf-8"))
+                out[(name, t.id)] = grid.BeatGrid(list(raw["beats"]), list(raw["downbeats"]))
+            else:
+                out[(name, t.id)] = None
     return out
 
 
@@ -241,7 +246,9 @@ def evaluate_benchmark(
             tracks, adapters.discover(adapters_root), cache_dir, cfg.device, execute=False
         )
         pipelines = grid.parse_pipelines(cfg.grid)
-        records += grid.grid_records(records, pipelines, beats, runner.read_drum_notes)
+        records += grid.grid_records(
+            records, pipelines, beats, runner.read_drum_notes, cfg.consensus
+        )
     rows = runner.score_records(records, tracks, schemes)
     summary = summarize(rows)
     write_csv(results_dir / "metrics.csv", rows)
