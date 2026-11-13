@@ -128,6 +128,14 @@ On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
 
 ## `> HOW IT WORKS`
 
+<p align="center">
+  <img src="docs/images/how-it-works.svg" alt="stickler notate: song → Fast (ADTOF on the mix) or Quality (Demucs, MuScriptor for kick, snare and toms, ADTOF for hi-hat and cymbals) plus Beat This! → notation → MusicXML, PDF and optionally the drum track" width="100%" />
+</p>
+
+<p align="center"><sub>The <code>--mode</code> option arrives with release 1; until then <code>notate</code> takes <code>--pipeline separator+transcriber</code>.</sub></p>
+
+**Behind it, the benchmark** that picked these models:
+
 ```
   Song ──┬──► Separation ─────► Drum stem ───► Transcription ────► drums.mid
          │    none · demucs     (or mix)       adtof · adt_str              │
