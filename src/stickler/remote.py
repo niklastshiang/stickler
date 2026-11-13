@@ -33,6 +33,16 @@ REMOTE_DIR = "stickler"
 RUNPOD_API = "https://api.runpod.io/v2"
 # Cloudflare in front of the RunPod API rejects Python's default user agent (error 1010).
 USER_AGENT = "stickler (+https://github.com/niklastshiang/stickler)"
+# Checked before anything is uploaded (lessons of 2026-11-13: one pod ran out of disk during
+# setup, another could not reach github.com; both failed only after a long upload).
+MIN_FREE_GB = 45  # CUDA environments of all models ~38 GB, plus data and cache
+PREFLIGHT_URLS = (
+    "https://pypi.org",  # packages
+    "https://files.pythonhosted.org",
+    "https://download.pytorch.org",  # CUDA builds of torch
+    "https://huggingface.co",  # weights
+    "https://github.com",  # uv installer, some packages
+)
 # Adapters whose weights come from GitHub releases: uploaded from the local copy, because a pod
 # could not reach github.com on 2026-11-13 (Hugging Face downloads work and are faster there).
 UPLOAD_WEIGHTS = {"roformer": "adapters/separators/roformer/weights"}
@@ -151,6 +161,20 @@ def stop_pod(pod_id: str, api_key: str, opener: Callable = urllib.request.urlope
             raise RuntimeError(f"RunPod: stopping pod {pod_id} failed ({exc.code})") from None
 
 
+def preflight_command() -> str:
+    """Fails with a readable message if the host lacks disk space or cannot reach a source."""
+    checks = [
+        f'free=$(df -BG --output=avail ~ | tail -1 | tr -dc 0-9); [ "$free" -ge {MIN_FREE_GB} ] '
+        f'|| {{ echo "only ${{free}} GB free, need {MIN_FREE_GB} GB" >&2; exit 1; }}'
+    ]
+    checks += [
+        f"curl -sS -o /dev/null --max-time 20 -I {url} "
+        f'|| {{ echo "cannot reach {url}" >&2; exit 1; }}'
+        for url in PREFLIGHT_URLS
+    ]
+    return " && ".join(checks)
+
+
 def wipe_command(plan: SyncPlan) -> str:
     """Deletes the project folder, which holds everything uploaded (code, data, songs, cache)."""
     return f"rm -rf ~/{REMOTE_DIR}"
@@ -192,6 +216,7 @@ def run_remote(
     downloaded = False
     try:
         run([*ssh_command(host), BOOTSTRAP], "bootstrap")
+        run([*ssh_command(host), preflight_command()], "preflight")
         root = project_root
         upload(plan.code + plan.data_files, root, f"{REMOTE_DIR}/", "code upload")
         for d in plan.data_dirs:

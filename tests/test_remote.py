@@ -295,3 +295,21 @@ def test_weights_from_github_releases_are_uploaded(tmp_path, monkeypatch):
     monkeypatch.setattr(remote, "tracked_files", lambda r: [])
     plan = remote.sync_plan(cfg, project_root=root, references_dir=root, data_dir=root / "data")
     assert plan.data_dirs == ["data/mdb", "adapters/separators/roformer/weights"]
+
+
+def test_preflight_runs_before_any_upload(tmp_path, plan):
+    rec = Recorder()
+    remote.run_remote(HOST, "c.yaml", [], plan, project_root=tmp_path, hf_token="", execute=rec)
+    cmds = [c for c, _ in rec.calls]
+    pre = next(i for i, c in enumerate(cmds) if c[0] == "ssh" and "df " in c[-1])
+    first_upload = next(i for i, c in enumerate(cmds) if c[0] == "rsync")
+    assert 0 < pre < first_upload
+    for host in ("huggingface.co", "github.com", "pypi.org", "download.pytorch.org"):
+        assert host in cmds[pre][-1]
+
+
+def test_failed_preflight_uploads_nothing(tmp_path, plan):
+    rec = Recorder(fail_on="df ")
+    with pytest.raises(RuntimeError, match="preflight"):
+        remote.run_remote(HOST, "c.yaml", [], plan, project_root=tmp_path, hf_token="", execute=rec)
+    assert not [c for c, _ in rec.calls if c[0] == "rsync"]
