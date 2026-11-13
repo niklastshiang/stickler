@@ -28,9 +28,25 @@ combos:
   quality:                       # MuScriptor for drums and toms, ADTOF for hi-hat and cymbals
     demucs+muscriptor_m: [KD, SD, TT]
     none+adtof: [HH, CY]
+  quality_cy:                    # as quality, cymbals with the higher threshold
+    demucs+muscriptor_m: [KD, SD, TT]
+    fusion+adtof_cy: [HH, CY]
   toms:                          # only the toms from MuScriptor
     none+adtof: [KD, SD, HH, CY]
     demucs+muscriptor_m: [TT]
 
 # Also scored after snapping to the beat grid like the sheet music (stickler.grid).
 grid: [none+adtof, demucs+muscriptor_m, combo+quality]
+
+# ADTOF with a higher cymbal threshold (0.44 instead of 0.30): chosen identically in all five
+# folds of a cross-validation on the 25 own songs (2026-11-13), cymbal F1 on unseen songs
+# 0.680 -> 0.710; the other classes stay at ADTOF's defaults (tuning them gave nothing).
+fusions:
+  adtof_cy:
+    inputs: [none]
+    classes:
+      KD: {weights: [1.0], threshold: 0.22}
+      SD: {weights: [1.0], threshold: 0.24}
+      TT: {weights: [1.0], threshold: 0.32}
+      HH: {weights: [1.0], threshold: 0.22}
+      CY: {weights: [1.0], threshold: 0.44}
