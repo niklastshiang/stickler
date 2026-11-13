@@ -131,7 +131,12 @@ def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
 def notate_cmd(
     audio: Annotated[Path, typer.Argument(help="song (MP3, FLAC, WAV, …)")],
     out: Annotated[Path | None, typer.Option("--out", help="MusicXML file")] = None,
-    pipeline: Annotated[str, typer.Option(help="separator+transcriber")] = api.DEFAULT_PIPELINE,
+    mode: Annotated[
+        str, typer.Option(help="fast (ADTOF on the mix, seconds) or quality (minutes)")
+    ] = api.DEFAULT_MODE,
+    pipeline: Annotated[
+        str | None, typer.Option(help="separator+transcriber instead of a mode (experts)")
+    ] = None,
     title: Annotated[str | None, typer.Option(help="default: from the file's tags")] = None,
     artist: Annotated[str | None, typer.Option(help="default: from the file's tags")] = None,
     drums: Annotated[
@@ -146,17 +151,20 @@ def notate_cmd(
             audio,
             out,
             pipeline=pipeline,
+            mode=mode,
+            drums=drums is not None,
             title=title,
             artist=artist,
             pdf=pdf,
             device=device or "auto",
         )
-        exported = api.export_drum_track(result.transcription.stem, drums) if drums else None
+        stem = result.transcription.stem
+        exported = api.export_drum_track(stem, drums) if drums and stem else None
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
     t = result.transcription
-    typer.echo(f"Pipeline: {t.separator} + {t.transcriber}, {len(t.hits)} hits")
+    typer.echo(f"Mode: {t.pipeline}, {len(t.hits)} hits")
     typer.echo(f"MusicXML: {result.musicxml}")
     typer.echo(f"PDF: {result.pdf}" if result.pdf else f"PDF: – ({result.pdf_error or 'off'})")
     if exported:

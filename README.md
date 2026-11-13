@@ -132,8 +132,6 @@ On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
   <img src="docs/images/how-it-works.svg" alt="stickler notate: song → Fast (ADTOF on the mix) or Quality (Demucs, MuScriptor for kick, snare and toms, ADTOF for hi-hat and cymbals) plus Beat This! → notation → MusicXML, PDF and optionally the drum track" width="100%" />
 </p>
 
-<p align="center"><sub>The <code>--mode</code> option arrives with release 1; until then <code>notate</code> takes <code>--pipeline separator+transcriber</code>.</sub></p>
-
 **Behind it, the benchmark** that picked these models:
 
 ```
@@ -248,7 +246,7 @@ scripts/check.sh task
 **In progress**
 
 - [ ] ENST-Drums as a third dataset, 15 more own songs
-- [ ] `stickler notate --mode fast|quality` from the final results
+- [x] `stickler notate --mode fast|quality`
 - [ ] **Release 1:** the command line tool
 
 **Afterwards: the application**
@@ -308,7 +306,8 @@ uv run stickler doctor                 # what's still missing?
 uv run stickler run      # computes the matrix from config/benchmark.yaml (overnight)
 uv run stickler eval     # results/metrics.csv and results/summary.csv
 uv run stickler align    # align own songs, check them and write click.wav
-uv run stickler notate song.mp3 --drums drums.flac   # sheet music (MusicXML, PDF) and drum track
+uv run stickler notate song.mp3                  # sheet music (MusicXML, PDF), Fast mode
+uv run stickler notate song.mp3 --mode quality --drums drums.flac   # more accurate, plus drum track
 uv run stickler report   # results/report.html
 ```
 

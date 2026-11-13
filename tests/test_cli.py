@@ -153,18 +153,18 @@ def test_notate_prints_outputs_and_exports_drums(monkeypatch, tmp_path):
 
     t = SongTranscription(
         tmp_path / "s.mp3",
-        "demucs",
-        "adtof",
+        "quality",
         tmp_path / "drums.wav",
-        tmp_path / "d.mid",
         [0.0, 0.5],
         [0.0],
         [(0.0, 36, 100)],
     )
     seen = {}
 
-    def fake_notate(audio, out=None, *, pipeline, title=None, artist=None, pdf=True, device="auto"):
-        seen.update(audio=audio, out=out, pipeline=pipeline, pdf=pdf)
+    def fake_notate(
+        audio, out=None, *, pipeline, mode, drums, title=None, artist=None, pdf=True, device="auto"
+    ):
+        seen.update(audio=audio, out=out, pipeline=pipeline, mode=mode, want_drums=drums, pdf=pdf)
         return Notation(tmp_path / "s.musicxml", None, "MuseScore not installed", t)
 
     monkeypatch.setattr(api, "notate", fake_notate)
@@ -176,15 +176,16 @@ def test_notate_prints_outputs_and_exports_drums(monkeypatch, tmp_path):
         [
             "notate",
             str(tmp_path / "s.mp3"),
-            "--pipeline",
-            "none+adtof",
+            "--mode",
+            "quality",
             "--drums",
             str(tmp_path / "d.flac"),
             "--no-pdf",
         ],
     )
     assert result.exit_code == 0, result.output
-    assert seen["pipeline"] == "none+adtof" and seen["pdf"] is False
+    assert seen["mode"] == "quality" and seen["pipeline"] is None and seen["pdf"] is False
+    assert seen["want_drums"] is True and "quality" in result.output
     assert seen["drums"] == (tmp_path / "drums.wav", tmp_path / "d.flac")
     assert "s.musicxml" in result.output and "MuseScore not installed" in result.output
 

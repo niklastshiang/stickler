@@ -447,6 +447,7 @@ def _fake_pipeline(tmp_path, monkeypatch):
     registry = {
         "demucs": ad.AdapterSpec("demucs", "separators", tmp_path),
         "adtof": ad.AdapterSpec("adtof", "transcribers", tmp_path),
+        "muscriptor_m": ad.AdapterSpec("muscriptor_m", "transcribers", tmp_path),
         "beat_this": ad.AdapterSpec("beat_this", "beats", tmp_path),
     }
     monkeypatch.setattr(runner, "cached_or_run", fake)
@@ -465,7 +466,39 @@ def test_transcribe_song_runs_the_pipeline(tmp_path, monkeypatch):
 def test_transcribe_song_without_separation_uses_the_mix(tmp_path, monkeypatch):
     audio, _, calls = _fake_pipeline(tmp_path, monkeypatch)
     t = api.transcribe_song(audio, "none+adtof", cache_dir=tmp_path)
-    assert calls[0] == ("adtof", audio) and t.stem == audio
+    assert calls[0] == ("adtof", audio) and t.stem is None  # no drum track without separation
+
+
+def test_fast_mode_is_adtof_on_the_mix(tmp_path, monkeypatch):
+    audio, _, calls = _fake_pipeline(tmp_path, monkeypatch)
+    t = api.transcribe_song(audio, cache_dir=tmp_path)
+    assert calls == [("adtof", audio), ("beat_this", audio)]
+    assert t.pipeline == "fast" and len(t.hits) == 8
+
+
+def test_quality_mode_takes_each_class_from_its_model(tmp_path, monkeypatch):
+    audio, stem, calls = _fake_pipeline(tmp_path, monkeypatch)
+    t = api.transcribe_song(audio, mode="quality", cache_dir=tmp_path)
+    assert calls == [
+        ("demucs", audio),
+        ("muscriptor_m", stem),
+        ("adtof", audio),
+        ("beat_this", audio),
+    ]
+    # the fake MIDI has only kick and snare: they come from MuScriptor, ADTOF adds no hi-hat
+    assert t.pipeline == "quality" and len(t.hits) == 8 and t.stem == stem
+
+
+def test_drum_track_in_fast_mode_runs_a_separator(tmp_path, monkeypatch):
+    audio, stem, calls = _fake_pipeline(tmp_path, monkeypatch)
+    t = api.transcribe_song(audio, cache_dir=tmp_path, drums=True)
+    assert ("demucs", audio) in calls and t.stem == stem
+
+
+def test_unknown_mode_raises(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match="mode"):
+        api.transcribe_song(audio, mode="turbo", cache_dir=tmp_path)
 
 
 @pytest.mark.parametrize("pipeline", ["adtof", "demucs+nix", "nix+adtof", "adtof+demucs"])

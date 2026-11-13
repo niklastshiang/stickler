@@ -45,8 +45,15 @@ DATA_DIR = PROJECT_ROOT / "data"
 CACHE_DIR = PROJECT_ROOT / "cache"
 RESULTS_DIR = PROJECT_ROOT / "results"
 REFERENCES_DIR = PROJECT_ROOT / "references" / "own"
-# Best pipeline in the first sample (MDB Punk); revisit once the benchmark has finished.
-DEFAULT_PIPELINE = "demucs+adtof"
+# Modes of `notate` (docs/report.md): which pipeline provides which class of the 5-class scheme.
+# Fast: ADTOF on the mix. Quality: the benchmark's best combination (own songs and MDB).
+ALL_CLASSES = ("KD", "SD", "TT", "HH", "CY")
+MODES: dict[str, dict[str, tuple[str, ...]]] = {
+    "fast": {"none+adtof": ALL_CLASSES},
+    "quality": {"demucs+muscriptor_m": ("KD", "SD", "TT"), "none+adtof": ("HH", "CY")},
+}
+DEFAULT_MODE = "fast"
+DRUM_TRACK_SEPARATOR = "demucs"  # for --drums when the mode itself separates nothing
 
 
 @dataclass(frozen=True)
@@ -457,10 +464,8 @@ def align_songs(
 @dataclass(frozen=True)
 class SongTranscription:
     audio: Path
-    separator: str
-    transcriber: str
-    stem: Path  # separated drum track (the mix itself for separator "none")
-    midi: Path
+    pipeline: str  # the mode ("fast", "quality") or "separator+transcriber"
+    stem: Path | None  # separated drum track; None if nothing was separated
     beats: list[float]
     downbeats: list[float]
     hits: list[tuple[float, int, int]]  # (seconds, GM pitch, velocity)
@@ -496,32 +501,52 @@ def _result(step: adapters.AdapterResult) -> Path:
 
 def transcribe_song(
     audio_path: Path,
-    pipeline: str = DEFAULT_PIPELINE,
+    pipeline: str | None = None,
     *,
+    mode: str = DEFAULT_MODE,
+    drums: bool = False,
     device: str = "auto",
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
 ) -> SongTranscription:
-    """Separation, transcription and beat tracking for one song (cached like the benchmark)."""
+    """Separation, transcription and beat tracking for one song (cached like the benchmark).
+    `pipeline` ("separator+transcriber") overrides `mode`. In a mode with several parts, each
+    part provides its classes; hits outside the five classes come from the first part.
+    `drums`: also separate the drums if the mode itself does not (for the drum track export)."""
     registry = adapters.discover(adapters_root)
-    sep, tr = _parse_pipeline(pipeline, registry)
-    stem = audio_path
-    if sep != "none":
-        stem = _result(runner.cached_or_run(registry[sep], audio_path, cache_dir, device, True))
-    midi = _result(runner.cached_or_run(registry[tr], stem, cache_dir, device, True))
-    beats_file = _result(
-        runner.cached_or_run(registry["beat_this"], audio_path, cache_dir, device, True)
-    )
-    beats = json.loads(beats_file.read_text(encoding="utf-8"))
+    if pipeline is not None:
+        parts = {pipeline: ALL_CLASSES}
+    elif mode in MODES:
+        parts = MODES[mode]
+    else:
+        raise ValueError(f"unknown mode {mode!r} (available: {', '.join(MODES)})")
+    pairs = {label: _parse_pipeline(label, registry) for label in parts}
+
+    def run(adapter: str, source: Path) -> Path:
+        return _result(runner.cached_or_run(registry[adapter], source, cache_dir, device, True))
+
+    stems: dict[str, Path] = {}
+    for sep, _ in pairs.values():
+        if sep != "none" and sep not in stems:
+            stems[sep] = run(sep, audio_path)
+    five = load_schemes(CLASSES)["5"]
+    hits: list[tuple[float, int, int]] = []
+    for i, (label, (sep, tr)) in enumerate(pairs.items()):
+        wanted = set(parts[label])
+        for hit in read_drum_hits(run(tr, stems.get(sep, audio_path))):
+            cls = five.class_of(hit[1])
+            if cls in wanted or (cls is None and i == 0):
+                hits.append(hit)
+    if drums and not stems:
+        stems[DRUM_TRACK_SEPARATOR] = run(DRUM_TRACK_SEPARATOR, audio_path)
+    beats = json.loads(run("beat_this", audio_path).read_text(encoding="utf-8"))
     return SongTranscription(
         audio=audio_path,
-        separator=sep,
-        transcriber=tr,
-        stem=stem,
-        midi=midi,
+        pipeline=pipeline or mode,
+        stem=next(iter(stems.values()), None),
         beats=list(beats["beats"]),
         downbeats=list(beats["downbeats"]),
-        hits=read_drum_hits(midi),
+        hits=sorted(hits),
     )
 
 
@@ -529,7 +554,9 @@ def notate(
     audio_path: Path,
     out: Path | None = None,
     *,
-    pipeline: str = DEFAULT_PIPELINE,
+    pipeline: str | None = None,
+    mode: str = DEFAULT_MODE,
+    drums: bool = False,
     title: str | None = None,
     artist: str | None = None,
     pdf: bool = True,
@@ -541,7 +568,13 @@ def notate(
     """Song → drum sheet music as MusicXML (default: results/notation/<song>.musicxml), plus a
     PDF next to it if MuseScore is installed. Title and artist default to the file's tags."""
     t = transcribe_song(
-        audio_path, pipeline, device=device, cache_dir=cache_dir, adapters_root=adapters_root
+        audio_path,
+        pipeline,
+        mode=mode,
+        drums=drums,
+        device=device,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
     )
     target = out or results_dir / "notation" / f"{audio_path.stem}.musicxml"
     target.parent.mkdir(parents=True, exist_ok=True)

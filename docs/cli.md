@@ -39,7 +39,8 @@ MuseScore and the datasets, and says how to fix what is missing.
 ## 2. Sheet music from a song: `notate`
 
 ```console
-uv run stickler notate "Foo Fighters - Everlong.flac"
+uv run stickler notate "Foo Fighters - Everlong.flac"                  # Fast: seconds
+uv run stickler notate "Foo Fighters - Everlong.flac" --mode quality   # Quality: minutes
 ```
 
 Separates the drums (depending on the pipeline), transcribes them, finds the beats, quantises
@@ -49,10 +50,12 @@ a **PDF** next to it.
 
 | Option | Meaning |
 |---|---|
+| `--mode fast` | ADTOF on the original mix: ~15 s for a 4-minute song on a laptop CPU (default) |
+| `--mode quality` | Demucs separates the drums, MuScriptor medium transcribes kick, snare and toms, ADTOF hi-hat and cymbals from the mix: ~14 min on a laptop CPU, more accurate |
+| `--pipeline demucs+adtof` | any `separator+transcriber` instead of a mode (for experiments, see the [report](report.md)) |
 | `--out notes.musicxml` | where to write the MusicXML |
-| `--pipeline none+adtof` | `separator+transcriber`, see the [report](report.md) for the choices |
 | `--title`, `--artist` | override what is read from the file's tags |
-| `--drums drums.flac` | also save the separated drum track (needs a separator in the pipeline) |
+| `--drums drums.flac` | also save the separated drum track (in Fast mode, Demucs runs for it) |
 | `--no-pdf` | MusicXML only |
 | `--device auto\|cpu\|gpu` | where to compute |
 
