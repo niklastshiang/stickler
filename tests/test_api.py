@@ -154,6 +154,25 @@ def test_fusions_are_scored_and_tuned_from_cached_activations(monkeypatch, tmp_p
     ) and "KD: {weights: [1.0], threshold: 0.3}" in report.yaml("tuned")
 
 
+def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0; dummy echoes it
+    cfg = _bench(tmp_path)
+    cfg.write_text(cfg.read_text() + "grid: [none+dummy]\n", encoding="utf-8")
+    assert api.load_benchmark_config(cfg).grid == ["none+dummy"]
+    asked = []
+
+    def fake_beats(tracks, registry, cache_dir, device, execute):
+        asked.append(execute)
+        return {("mdb", "t"): [0.0, 0.5, 1.0, 1.5]}
+
+    monkeypatch.setattr(api, "_track_beats", fake_beats)
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    api.run_benchmark(cfg, **kw)
+    summary = api.evaluate_benchmark(cfg, results_dir=tmp_path / "results", **kw)
+    (row,) = [r for r in summary if r["transcriber"] == "dummy@grid"]
+    assert row["micro_f1"] == 1.0 and asked == [True, False]
+
+
 def test_run_benchmark_device_override(monkeypatch, tmp_path):
     from stickler import runner
 

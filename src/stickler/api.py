@@ -21,6 +21,7 @@ from stickler import (
     combine,
     doctor,
     fusion,
+    grid,
     musescore,
     notation,
     onsets,
@@ -57,6 +58,7 @@ class BenchmarkConfig:
     skip: frozenset[tuple[str, str]] = frozenset()  # (separator, transcriber) pairs not run
     combos: dict = field(default_factory=dict)  # combined pipelines (stickler.combine)
     fusions: dict = field(default_factory=dict)  # fused ADTOF activations (stickler.fusion)
+    grid: list = field(default_factory=list)  # pipelines also scored on the beat grid
 
 
 def _parse_skip(raw: list) -> frozenset[tuple[str, str]]:
@@ -102,6 +104,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         skip=_parse_skip(raw.get("skip") or []),
         combos=dict(raw.get("combos") or {}),
         fusions=dict(raw.get("fusions") or {}),
+        grid=list(raw.get("grid") or []),
     )
 
 
@@ -165,11 +168,12 @@ def run_benchmark(
     """Computes the matrix from the configuration; results end up in the cache."""
     cfg = load_benchmark_config(config_path)
     tracks = {name: load_tracks(name, data_dir) for name in cfg.datasets}
-    return runner.run_matrix(
+    registry = adapters.discover(adapters_root)
+    records = runner.run_matrix(
         tracks,
         cfg.separators,
         cfg.transcribers,
-        adapters.discover(adapters_root),
+        registry,
         cache_dir,
         device=device or cfg.device,
         execute=execute,
@@ -178,6 +182,22 @@ def run_benchmark(
         timeout=cfg.timeout,
         skip=cfg.skip,
     )
+    if cfg.grid and execute:
+        _track_beats(tracks, registry, cache_dir, device or cfg.device, execute=True)
+    return records
+
+
+def _track_beats(
+    tracks: dict[str, list], registry: dict, cache_dir: Path, device: str, execute: bool
+) -> dict[tuple[str, str], list[float] | None]:
+    """Beat This! beats of every track's mix (None where they are missing or failed)."""
+    out: dict[tuple[str, str], list[float] | None] = {}
+    for name, ts in tracks.items():
+        for t in ts:
+            res = runner.cached_or_run(registry["beat_this"], t.mix, cache_dir, device, execute)
+            beats = json.loads(res.output.read_text(encoding="utf-8"))["beats"] if res.ok else None
+            out[(name, t.id)] = beats
+    return out
 
 
 def results_dir_for(config_path: Path) -> Path:
@@ -216,6 +236,12 @@ def evaluate_benchmark(
     records += fusion.fused_records(records, fusions, _class_of(five))
     combos = combine.parse_combos(cfg.combos, all_schemes["5"])
     records += combine.combine_records(records, combos, all_schemes["5"], runner.read_drum_notes)
+    if cfg.grid:
+        beats = _track_beats(
+            tracks, adapters.discover(adapters_root), cache_dir, cfg.device, execute=False
+        )
+        pipelines = grid.parse_pipelines(cfg.grid)
+        records += grid.grid_records(records, pipelines, beats, runner.read_drum_notes)
     rows = runner.score_records(records, tracks, schemes)
     summary = summarize(rows)
     write_csv(results_dir / "metrics.csv", rows)
