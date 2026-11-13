@@ -4,8 +4,17 @@
 covers every command; what you need on your machine is listed in the
 [requirements](requirements.md), the results in the [report](report.md).
 
-All commands run inside the project with `uv run stickler …`. `uv run stickler --help` and
-`uv run stickler <command> --help` show the options. `-v` before the command prints debug output.
+Inside the project folder, commands run as `uv run stickler …`. To use `stickler` from any folder,
+install it once as a tool (`--editable`: later changes to the code apply right away):
+
+```console
+uv tool install --editable ~/path/to/stickler
+stickler notate ~/Downloads/song.flac
+```
+
+`stickler --help` and `stickler <command> --help` show the options; `-v` before the command
+prints debug output. The examples below use `uv run stickler`; with the tool installed, plain
+`stickler` does the same.
 
 ---
 

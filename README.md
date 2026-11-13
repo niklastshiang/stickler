@@ -302,6 +302,7 @@ git config core.hooksPath .githooks    # checks before every commit
 uv run stickler fetch mdb              # download MDB Drums (CC BY-NC-SA)
 uv run stickler setup                  # all adapter environments and weights
 uv run stickler doctor                 # what's still missing?
+uv tool install --editable .           # optional: `stickler` in every folder
 ```
 
 > MuScriptor weights are gated: accept the license on Hugging Face, then run `uvx hf auth login`.
