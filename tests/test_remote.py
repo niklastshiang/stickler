@@ -251,3 +251,12 @@ def test_wipe_after_a_failed_run_still_tries_to_save_the_cache(tmp_path, plan):
     down = [i for i, c in enumerate(cmds) if c[0] == "rsync" and c[-2].endswith(":stickler/cache/")]
     wipe = [i for i, c in enumerate(cmds) if "rm -rf" in c[-1]]
     assert down and wipe and down[0] < wipe[0]
+
+
+def test_data_upload_creates_missing_parent_folders(tmp_path, plan):
+    rec = Recorder()
+    remote.run_remote(
+        HOST, "c.yaml", [], plan, project_root=tmp_path, home=tmp_path, hf_token="", execute=rec
+    )
+    data_up = [c for c, _ in rec.calls if c[0] == "rsync" and c[-1].endswith(":stickler/data/mdb/")]
+    assert data_up and "--mkpath" in data_up[0]  # a fresh host has no stickler/data/ yet

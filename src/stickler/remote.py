@@ -190,7 +190,8 @@ def run_remote(
         root = project_root
         upload(plan.code + plan.data_files, root, f"{REMOTE_DIR}/", "code upload")
         for d in plan.data_dirs:
-            run(rsync_command(host, [], f"{root / d}/", f"{REMOTE_DIR}/{d}/"), "data upload")
+            dest = f"{REMOTE_DIR}/{d}/"
+            run(rsync_command(host, ["--mkpath"], f"{root / d}/", dest), "data upload")
         upload(plan.home_files, home, "", "audio upload")
         run(rsync_command(host, [], f"{root / 'cache'}/", f"{REMOTE_DIR}/cache/"), "cache upload")
         script = remote_script(config, adapter_ids)
