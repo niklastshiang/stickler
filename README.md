@@ -13,10 +13,10 @@
   <img src="https://img.shields.io/badge/environments-uv-ff8800?style=flat-square&labelColor=0d1117" />
   <img src="https://img.shields.io/badge/language-english-ff8800?style=flat-square&labelColor=0d1117" />
   <img src="https://img.shields.io/badge/models-8%20adapters-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/tests-154%20%2B%208%20smoke-ff8800?style=flat-square&labelColor=0d1117" />
+  <img src="https://img.shields.io/badge/tests-322%20%2B%208%20smoke-ff8800?style=flat-square&labelColor=0d1117" />
   <img src="https://img.shields.io/badge/coverage-97%25-ff8800?style=flat-square&labelColor=0d1117" />
   <img src="https://img.shields.io/badge/version-0-ff8800?style=flat-square&labelColor=0d1117" />
-  <img src="https://img.shields.io/badge/status-benchmark%20running-ff8800?style=flat-square&labelColor=0d1117" />
+  <img src="https://img.shields.io/badge/status-CLI%20release%201%20in%20preparation-ff8800?style=flat-square&labelColor=0d1117" />
 </p>
 
 <br/>
@@ -43,19 +43,20 @@
 
 ## `> WHAT IS THIS`
 
-**Stickler** is becoming a desktop application that turns a song into drum sheet music: drag in
-an MP3 or FLAC, get the notes as MusicXML or PDF, and only correct them in MuseScore. It has a
-GTK 4 interface and ships as a Flatpak and an AppImage.
+**Stickler** turns a song into drum sheet music: give it an MP3 or FLAC, get the notes as MusicXML
+or PDF, and only correct them in MuseScore. Everything runs locally, with open-source models.
 
-**Right now Stickler is a test bench.** Before the application can be built, one question must
-be answered that reading papers cannot settle: **Which combination of drum separation and
-transcription model produces the best notes?** Measurement uses benchmark data and, above all,
-real music. Each model lives in its own adapter with its own Python environment and competes
-against the same references: kick, snare, toms, hi-hat and cymbals, with every hit accurate to
-±50 ms. The winning pipeline becomes the core of the application.
+**It started as a test bench**, because one question cannot be settled by reading papers:
+**which combination of drum separation and transcription model produces the best notes?** Every
+model lives in its own adapter with its own Python environment and competes against the same
+references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms), on benchmark
+data and, above all, on real music. The answer is in: see [`> RESULTS`](#-results).
+
+**Next:** release 1 as a command line tool with a *Fast* and a *Quality* mode, then a desktop
+application with a GTK 4 interface, shipped as Flatpak and AppImage.
 
 Only **open-source models from actively maintained projects** are allowed. No cloud service, no
-black box; everything runs locally on your own machine.
+black box; everything runs on your own machine.
 
 ---
 
@@ -77,35 +78,40 @@ A dream come true.
 
 ## `> WARNINGS`
 
-> **⚠ FIGURES ARE PRELIMINARY.** The first complete run over MDB Drums is still in progress. The
-> table below is a sample from a single song.
+> **⚠ RESULTS ARE STILL GROWING.** Complete: MDB Drums and 10 own songs. Running: ENST-Drums and
+> 15 more own songs. The [report](docs/report.md) marks what is pending.
 
-> **⚠ FOR PRIVATE USE ONLY.** Some weights are under non-commercial licenses (ADTOF, MuScriptor,
-> presumably BS-RoFormer). For publication they would have to be replaced, see
-> [ADR 0002](docs/adr/0002-nc-lizenzen.md).
+> **⚠ MODEL LICENSES.** Stickler never ships model weights; `stickler setup` downloads them, and
+> each comes with its own license. Some are non-commercial (ADTOF, MuScriptor, presumably
+> BS-RoFormer), see [ADR 0002](docs/adr/0002-nc-lizenzen.md).
 
-> **⚠ TRAINED ON MDB?** Some models have seen MDB Drums during training or evaluation. The honest
-> test is your own songs.
+> **⚠ TRAINED ON MDB?** Some models may have seen MDB Drums during training or evaluation. The
+> honest test is your own songs.
 
 ---
 
-## `> SAMPLE`
+## `> RESULTS`
 
-Macro-F1 over 5 classes on MDB `MusicDelta_Punk` (29 s), CPU. **One song, no verdict.**
+Macro-F1 over 5 classes (kick, snare, toms, hi-hat, cymbals). Time: a 4-minute song on a laptop
+CPU (AMD Ryzen AI 5 340).
 
-| Transcriber | Original mix | Demucs stem | Oracle stem¹ |
-|---|---|---|---|
-| **ADTOF** | 0.803 | **0.854** | 0.871 |
-| **MuScriptor medium** | **0.825** | 0.813 | – |
-| **MuScriptor small** | 0.793 | 0.726 | – |
-| **ADT_STR** | –² | 0.790 | 0.811 |
-| **YourMT3+** (PS) | 0.588 | – | 0.670 |
+| Mode | Pipeline | Own songs¹ | MDB Drums | Time |
+|---|---|---|---|---|
+| **Fast** | ADTOF on the original mix | 0.788 | 0.718 | ~15 s |
+| **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.815** | **0.785** | ~14 min |
 
-¹ The isolated drum stem from the dataset, i.e. perfect separation as an upper bound.<br/>
-² ADT_STR only accepts separated drum tracks and takes forever on the mix.
+¹ 10 commercial rock, metal and pop recordings, references from musescore.com transcriptions.
 
-On the Radeon 840M the GPU was slower than the CPU for **every** model. The benchmark runs
-therefore compute on the CPU ([ADR 0003](docs/adr/0003-rocm-kanal.md)).
+- **ADTOF is the strongest single model**, and on real recordings it works best on the original
+  mix. **MuScriptor** is best at toms but weak at cymbals, so *Quality* takes each instrument from
+  the model that is best at it.
+- **Snapping to the beat grid** for the sheet music costs almost nothing.
+- **Clever tricks did not help on real music:** fusing inputs, voting between models, tuning
+  thresholds and filling in repeated bars all looked good on MDB and did not transfer to rock
+  and metal. Details, per-instrument tables and every decision: [**benchmark report**](docs/report.md).
+
+On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
+([ADR 0003](docs/adr/0003-rocm-kanal.md)); NVIDIA GPUs speed up the slow models 10–30×.
 
 ---
 
@@ -124,8 +130,9 @@ therefore compute on the CPU ([ADR 0003](docs/adr/0003-rocm-kanal.md)).
 - **One adapter per model.** Each model gets a folder with its own `pyproject.toml` and its own
   `uv` environment. The harness calls it as a subprocess and never imports model code. A new
   candidate only needs a folder and a config entry.
-- **Everything is cached.** The key made from input, adapter code and device determines whether a
-  result is reused. An interrupted run resumes where it stopped.
+- **Everything is cached.** The key made from the input's content and the adapter's code
+  determines whether a result is reused, on any device. An interrupted run resumes where it
+  stopped.
 - **Failures don't block anything.** An adapter that crashes or hits its time limit is logged. All
   others keep computing.
 
@@ -188,14 +195,14 @@ scripts/check.sh task
 ```json
 {
   "adapter": { "separation": 2, "transcription": 5, "beats": 1 },
-  "datasets": { "mdb_drums": 23, "own_songs": 10 },
-  "tests": 154,
+  "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
+  "tests": 322,
   "smoke_tests_with_models": 8,
-  "coverage_percent": 97.5,
+  "coverage_percent": 97,
   "coverage_minimum": 95,
   "adrs": 6,
   "version": 0,
-  "status": "benchmark running"
+  "status": "CLI release 1 in preparation"
 }
 ```
 
@@ -211,29 +218,28 @@ scripts/check.sh task
 
 **Done**
 
-- [x] Scoring by class, cache, time limits, error log
-- [x] Separators Demucs and BS-RoFormer
-- [x] Transcribers ADTOF, ADT_STR, MuScriptor small and medium, YourMT3+
-- [x] GPU path via ROCm evaluated (slower than the CPU, stays optional)
-- [x] Beat tracking with Beat This!
-- [x] Alignment and quality criteria for own songs
+- [x] Scoring by class, cache, time limits, error log, HTML report
+- [x] Separators Demucs and BS-RoFormer; transcribers ADTOF, ADT_STR, MuScriptor, YourMT3+
+- [x] Beat tracking with Beat This!, alignment and quality criteria for own songs
+- [x] Full runs over MDB Drums and the own songs; GPU runs on rented hardware
+- [x] Combinations, fusion, voting, tuning and bar consensus measured (section 6 of the report)
+- [x] Sheet music: quantization, MusicXML, PDF via MuseScore, drum track export (`stickler notate`)
+- [x] Everything in English; report, CLI guide and requirements in [`docs/`](docs/)
 
 **In progress**
 
-- [ ] Full run over MDB Drums
-- [ ] Align and check own songs
-- [ ] Transcriber `drumsep_onset` (DrumSep plus onset detection per drum)
+- [ ] ENST-Drums as a third dataset, 15 more own songs
+- [ ] `stickler notate --mode fast|quality` from the final results
+- [ ] **Release 1:** the command line tool
 
 **Afterwards: from measurement to application**
 
-- [x] HTML report with ranking, classes, runtime and memory (`stickler report`)
-- [ ] ENST-Drums as a third dataset
-- [x] Sheet music: quantization, MusicXML, `stickler notate` (PDF via MuseScore, drum track export)
+- [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
+- [ ] Repeat signs for readable sheet music
 - [ ] Design the interface together, following the GNOME Human Interface Guidelines
 - [ ] Application with a GTK 4 and libadwaita interface, app icon in GNOME style, export of the separated drum track
-- [ ] Ultrareview of the finished application
 - [ ] Release pipeline: Flatpak and AppImage with every release
-- [ ] Everything in English: code, output and documentation
+- [ ] Ultrareview of the finished application
 
 ---
 
@@ -274,7 +280,8 @@ uv run stickler doctor                 # what's still missing?
 ```
 
 > MuScriptor weights are gated: accept the license on Hugging Face, then run `uvx hf auth login`.
-> The GPU setup is optional: `stickler setup --device rocm`.
+> The GPU setup is optional: `stickler setup --device cuda` (NVIDIA) or `--device rocm` (AMD).
+> Disk, memory and time per mode: [requirements](docs/requirements.md).
 
 ### Benchmark
 
@@ -320,11 +327,11 @@ stickler/
 │   ├── separators/      # demucs, roformer
 │   ├── transcribers/    # adtof, adt_str, muscriptor_s, muscriptor_m, yourmt3
 │   └── beats/           # beat_this
-├── config/              # benchmark.yaml (matrix), classes.yaml (GM pitch → class)
+├── config/              # benchmark, own and enst configs; classes.yaml (GM pitch → class)
 ├── references/own/      # own songs: title, recording, manual exclusions
 ├── tests/               # pytest; smoke tests with real models under -m adapters
 ├── scripts/             # check.sh, floor_guard.py
-├── docs/adr/            # Architecture Decision Records
+├── docs/                # report, CLI guide, requirements; adr/: decision records
 ├── tasks/               # plan and task list
 └── data/ cache/ results/   # datasets, intermediate results, evaluation (not in the repo)
 ```
@@ -339,12 +346,13 @@ the copyright notice stays intact.
 
 **The models** are not affected by this. Stickler only downloads them on `stickler setup`; they
 are not in the repository and come with their own licenses, see
-[`> CANDIDATES`](#-candidates). Weights under non-commercial licenses are only permitted for
-private use ([ADR 0002](docs/adr/0002-nc-lizenzen.md)). Anyone distributing Stickler must omit or
-replace them.
+[`> CANDIDATES`](#-candidates). Some weights are non-commercial
+([ADR 0002](docs/adr/0002-nc-lizenzen.md)): whoever downloads them is bound by those terms, and a
+package that bundles them must respect them too.
 
-**Data:** MDB Drums is under CC BY-NC-SA 4.0. Sheet music and recordings of your own songs belong
-to their authors and are therefore not in the repository.
+**Data:** MDB Drums is under CC BY-NC-SA 4.0. ENST-Drums is only available on request and never
+leaves your machine. Sheet music and recordings of your own songs belong to their authors and are
+therefore not in the repository.
 
 ---
 
