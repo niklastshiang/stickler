@@ -182,6 +182,22 @@ def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
     assert [r["transcriber"] for r in summary if r["transcriber"] == "dummy@rep"]
 
 
+def test_votes_are_scored_and_usable_in_combos(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)
+    cfg = _bench(tmp_path)
+    cfg.write_text(
+        cfg.read_text()
+        + "votes:\n  v:\n    pipelines: [none+dummy, none+dummy]\n    min_agree: 2\n"
+        + "combos:\n  c:\n    vote+v: [KD, SD]\n",
+        encoding="utf-8",
+    )
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    api.run_benchmark(cfg, **kw)
+    summary = api.evaluate_benchmark(cfg, results_dir=tmp_path / "results", **kw)
+    by = {(r["separator"], r["transcriber"]): r["micro_f1"] for r in summary}
+    assert by[("vote", "v")] == 1.0 and by[("combo", "c")] == 1.0
+
+
 def test_run_benchmark_device_override(monkeypatch, tmp_path):
     from stickler import runner
 

@@ -28,6 +28,7 @@ from stickler import (
     remote,
     report,
     runner,
+    vote,
 )
 from stickler.classes import load_schemes
 from stickler.datasets import enst, mdb, own
@@ -60,6 +61,7 @@ class BenchmarkConfig:
     fusions: dict = field(default_factory=dict)  # fused ADTOF activations (stickler.fusion)
     grid: list = field(default_factory=list)  # pipelines also scored on the beat grid
     consensus: grid.Consensus | None = None  # vote across repeated bars ("@rep")
+    votes: dict = field(default_factory=dict)  # k of n pipelines must agree (stickler.vote)
 
 
 def _parse_skip(raw: list) -> frozenset[tuple[str, str]]:
@@ -105,6 +107,7 @@ def load_benchmark_config(path: Path = CONFIG) -> BenchmarkConfig:
         skip=_parse_skip(raw.get("skip") or []),
         combos=dict(raw.get("combos") or {}),
         fusions=dict(raw.get("fusions") or {}),
+        votes=dict(raw.get("votes") or {}),
         grid=list(raw.get("grid") or []),
         consensus=grid.Consensus(**raw["consensus"]) if raw.get("consensus") else None,
     )
@@ -239,6 +242,8 @@ def evaluate_benchmark(
     five = all_schemes["5"]
     fusions = fusion.parse_fusions(cfg.fusions, list(five.classes))
     records += fusion.fused_records(records, fusions, _class_of(five))
+    votes = vote.parse_votes(cfg.votes)
+    records += vote.vote_records(records, votes, five, runner.read_drum_notes)
     combos = combine.parse_combos(cfg.combos, all_schemes["5"])
     records += combine.combine_records(records, combos, all_schemes["5"], runner.read_drum_notes)
     if cfg.grid:
