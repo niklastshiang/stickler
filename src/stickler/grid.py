@@ -103,6 +103,7 @@ def grid_records(
                     similarity=c.similarity,
                     add=c.add,
                     remove=c.remove,
+                    n_beats=len(bg.beats) - 1,
                 )
                 voted = tuple(sorted(to_times(q, bg.beats)))
         variants = [(SUFFIX, snapped)]
@@ -172,10 +173,12 @@ def consensus(
     similarity: float,
     add: float,
     remove: float,
+    n_beats: int | None = None,
 ) -> list[QNote]:
     """`downbeats`: beat indices where bars start. A hit is added to a bar if at least `add` of
     its group of similar bars (similarity = Jaccard index of the hit sets, bars of equal length)
-    have it, and removed if at most `remove` of them have it."""
+    have it, and removed if at most `remove` of them have it. `n_beats`: number of beat
+    intervals; nothing is added at or beyond it (the last bar's length is only estimated)."""
     if not notes:
         return []
     bars = _bars(downbeats, max(n.beat for n in notes))
@@ -203,6 +206,6 @@ def consensus(
         out += [
             QNote(start + beat, _position(slot), pitch, VELOCITY)
             for beat, slot, pitch in sorted(union - content[i])
-            if share[(beat, slot, pitch)] >= add
+            if share[(beat, slot, pitch)] >= add and (n_beats is None or start + beat < n_beats)
         ]
     return sorted(out)

@@ -122,3 +122,12 @@ def test_grid_records_add_a_consensus_variant():
 
 def test_downbeat_times_become_beat_indices():
     assert grid.downbeat_indices([0.0, 0.5, 1.0, 1.5, 2.0], [0.02, 0.98]) == [0, 2]
+
+
+def test_consensus_never_adds_beyond_the_last_beat():
+    # 5 full bars plus a last bar with only 2 of its 4 beats tracked
+    notes = [n for bar in range(5) for n in _groove_bar(bar)] + _groove_bar(5)[:6]
+    out = grid.consensus(
+        notes, list(range(0, 24, 4)), similarity=0.0, add=0.5, remove=0.0, n_beats=22
+    )
+    assert max(n.beat for n in out) < 22
