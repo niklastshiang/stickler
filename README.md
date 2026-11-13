@@ -63,8 +63,8 @@ model lives in its own adapter with its own Python environment and competes agai
 references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms), on benchmark
 data and, above all, on real music. The answer is in: see [`> RESULTS`](#-results).
 
-**Next:** release 1 as a command line tool with a *Fast* and a *Quality* mode; after it, the
-desktop application with a GTK 4 interface, shipped as Flatpak and AppImage.
+**Next:** release 3 with an error analysis on real songs; after it, the desktop application
+with a GTK 4 interface, shipped as Flatpak and AppImage.
 
 Stickler only uses open-source models from actively maintained projects. No cloud service; everything runs on your own machine.
 
@@ -214,13 +214,13 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 4, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 351,
+  "tests": 366,
   "smoke_tests_with_models": 8,
   "coverage_percent": 96,
   "coverage_minimum": 95,
   "adrs": 6,
-  "version": 1,
-  "status": "release 1: command line tool"
+  "version": 2,
+  "status": "release 2: readable sheet music"
 }
 ```
 
@@ -250,10 +250,17 @@ scripts/check.sh task
 - [x] `stickler notate --mode fast|quality`
 - [x] **Release 1:** the command line tool
 
-**Next**
+**Release 2**
 
 - [x] Readable sheet music: similar bars simplified, repeat signs (about a quarter fewer bars)
+- [x] **Release 2:** readable sheet music
+
+**Release 3**
+
 - [ ] Error analysis on real songs: confused, missed and invented hits, reference errors
+
+**Next**
+
 - [ ] New candidate models: DrumSep with onset detection, MuScriptor large, models from 2026
 
 **Afterwards: the application**

@@ -5,7 +5,7 @@ every result and every decision of the Stickler benchmark in one place, readable
 code. Raw numbers are in `results/` after `stickler eval`, the decisions in detail in
 [`docs/adr/`](adr/).
 
-> **Status: release 1 (2026-11-13).** Complete: 25 own songs, MDB Drums (23 tracks), ENST-Drums
+> **Status: release 2 (2026-11-13).** Complete: 25 own songs, MDB Drums (23 tracks), ENST-Drums
 > (64 tracks).
 
 ---
