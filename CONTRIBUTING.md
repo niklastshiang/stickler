@@ -11,7 +11,8 @@ not part of that.
   with a link, its licence and how actively it is maintained.
 - **Results on your music:** how Fast or Quality did on songs you know, what went wrong.
 
-Use the [issue forms](../../issues/new/choose). This is a hobby project: there are no guaranteed
+Use the [issue forms](../../issues/new/choose); security problems go privately, see
+[`SECURITY.md`](SECURITY.md). This is a hobby project: there are no guaranteed
 response times.
 
 ## Not taken

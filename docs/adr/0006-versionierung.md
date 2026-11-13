@@ -10,6 +10,7 @@ Distinguishing major, minor and patch brings no benefit here. The project owner 
 ## Decision
 - **Format:** The version is an integer. `0` stands for the state before the first release; then `1`, `2`, `3` and so on follow.
 - **Release steps:**
+  0. Go through the open Dependabot alerts (added 2026-11-13; an alert in a local tool is often not exploitable, but it needs a decision).
   1. Increase the version in `pyproject.toml` and `src/stickler/__init__.py` by one.
   2. Create the commit "Release N".
   3. Set the Git tag `vN` and upload it with `git push --tags`.
