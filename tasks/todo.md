@@ -209,6 +209,7 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Privacy check before publishing: personal music paths and playlist names in references/own/*.yaml (use paths relative to a configurable music folder) (the commit email may stay public, owner 2026-11-13), a secret scan of the whole history (gitleaks).
   - Further ideas: CONTRIBUTING.md (adding an adapter, TDD, checks), CITATION.cff (Stickler plus the datasets and models it builds on, ENST citation required), CI with the unit tests, issue templates, a "reproduce the benchmark" guide.
 
+- [ ] **Flathub (owner, 2026-11-13: maybe later):** only the GTK application (no console apps on Flathub). Rules as of 2026-10: AI-generated code allowed with disclosure, reviewers may still reject by its extent; the Flatpak manifest, the submission pull request, commit messages and replies must not be AI-generated, so the owner writes them himself. Technical: no network during the build (every dependency incl. PyTorch as a manifest source), no complicated post-install setup (today's `stickler setup`). First step instead: our own Flatpak via GitHub releases.
 - [ ] **Release pipeline: Flatpak and AppImage with every release**
   - Wish: A new release tag `vN` (ADR 0006) automatically builds a Flatpak and an AppImage.
   - Open points:
