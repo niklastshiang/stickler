@@ -810,3 +810,17 @@ def test_listening_snippet_never_runs_a_model(monkeypatch, tmp_path):
         api.listening_snippet("song", 3.0, tmp_path / "spot.wav", cache_dir=tmp_path)
     with pytest.raises(ValueError, match="nope"):
         api.listening_snippet("nope", 3.0, tmp_path / "spot.wav", cache_dir=tmp_path)
+
+
+def test_listening_sample_is_drawn_once_and_kept(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0
+    cfg = _bench(tmp_path)
+    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    api.run_benchmark(cfg, **kw)
+    where = tmp_path / "listening"
+    sample = api.draw_listening_sample(cfg, ["combo+kick"], listening_dir=where, **kw)
+    assert [(s.song, s.time, s.cls, s.side) for s in sample] == [("t", 1.0, "SD", "ref")]
+    assert api.load_listening_sample(where) == sample
+    with pytest.raises(RuntimeError, match="already drawn"):
+        api.draw_listening_sample(cfg, ["combo+kick"], listening_dir=where, **kw)

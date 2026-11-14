@@ -86,3 +86,58 @@ def test_count_rows_split_confusions_by_the_drum_written_instead():
     (hh,) = [r for r in errors.count_rows(b, ["KD", "SD", "HH", "CY"]) if r["class"] == "HH"]
     assert hh["confused_ref"] == 3 and hh["ref_as_CY"] == 2 and hh["ref_as_SD"] == 1
     assert hh["ref_as_KD"] == 0 and hh["ref_as_HH"] == 0
+
+
+def test_every_error_becomes_a_spot_with_the_side_that_claims_the_hit():
+    b = errors.categorise(onsets(SD=[1.0, 5.0], HH=[3.0]), onsets(SD=[5.07, 7.0], CY=[3.0]))
+    spots = errors.spots({("own", "song", "none+adtof"): b})
+    got = sorted((s.time, s.cls, s.side) for s in spots)
+    assert got == [
+        (1.0, "SD", "ref"),  # missed
+        (3.0, "CY", "est"),  # confused: the model wrote a cymbal ...
+        (3.0, "HH", "ref"),  # ... where the reference has a hi-hat
+        (5.0, "SD", "ref"),  # off time: both sides
+        (5.07, "SD", "est"),
+        (7.0, "SD", "est"),  # invented
+    ]
+    assert all(s.song == "song" and s.pipelines == frozenset({"none+adtof"}) for s in spots)
+
+
+def test_spots_of_several_pipelines_are_merged():
+    ref = onsets(KD=[1.0])
+    fast = errors.categorise(ref, onsets(KD=[], HH=[2.0]))
+    quality = errors.categorise(ref, onsets(KD=[], HH=[2.0], TT=[4.0]))
+    spots = errors.spots({("own", "s", "fast"): fast, ("own", "s", "quality"): quality})
+    by = {(s.time, s.cls): s.pipelines for s in spots}
+    assert by[(1.0, "KD")] == by[(2.0, "HH")] == frozenset({"fast", "quality"})
+    assert by[(4.0, "TT")] == frozenset({"quality"})
+
+
+def _many_spots():
+    return [
+        errors.Spot(f"song{k % 3}", float(k), cls, side, frozenset({"p"}))
+        for cls in ("KD", "SD", "TT", "HH", "CY")
+        for side in ("ref", "est")
+        for k in range(30)
+    ] + [errors.Spot("song0", 99.0, "TT", "est", frozenset({"p"}))]
+
+
+def test_the_sample_has_the_same_number_of_spots_per_class_and_side():
+    sample = errors.draw_sample(_many_spots(), per_class_side=10, seed=1)
+    assert len(sample) == 100 and len(set(sample)) == 100
+    for cls in ("KD", "SD", "TT", "HH", "CY"):
+        for side in ("ref", "est"):
+            assert sum(s.cls == cls and s.side == side for s in sample) == 10
+
+
+def test_the_sample_is_reproducible_and_shuffled():
+    spots = _many_spots()
+    first = errors.draw_sample(spots, per_class_side=10, seed=1)
+    assert errors.draw_sample(list(reversed(spots)), per_class_side=10, seed=1) == first
+    assert errors.draw_sample(spots, per_class_side=10, seed=2) != first
+    assert [s.cls for s in first[:10]] != ["KD"] * 10  # classes are mixed, not in blocks
+
+
+def test_a_small_group_is_taken_whole():
+    spots = [errors.Spot("s", 1.0, "TT", "ref", frozenset({"p"}))]
+    assert errors.draw_sample(spots, per_class_side=10, seed=1) == spots

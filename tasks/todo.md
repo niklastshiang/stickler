@@ -214,7 +214,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests on a generated WAV (length, marker position, levels); owner listens to 3 snippets and confirms the marker is clear and does not hide the hit
   - Dependencies: 22 · Files: `src/stickler/listen.py`, `src/stickler/api.py`, `tests/test_listen.py`
 
-- [ ] **Task 25: Draw the sample** (S)
+- [x] **Task 25: Draw the sample** (S)
   - Acceptance:
     - `errors.draw_sample(spots, per_class_side=10, seed)`: 10 `ref` and 10 `est` spots per class from the union of the pipelines' error spots, each spot listing the pipelines it belongs to; random order; same seed → same sample.
     - `data/own/_listening/sample.csv` is written once; drawing again refuses.

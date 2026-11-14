@@ -14,7 +14,10 @@ So the categories add up exactly to the fn and fp of `evaluate.score`.
 from __future__ import annotations
 
 import bisect
+import random
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Literal
 
 import mir_eval
 import numpy as np
@@ -23,6 +26,7 @@ from stickler.classes import Onsets
 from stickler.evaluate import WINDOW
 
 OFF_TIME = 0.1  # same drum up to 100 ms away: a timing error, not a missed hit
+SEED = 20261114  # the listening sample is drawn once with this seed (SPEC.md, "Release 3")
 
 
 @dataclass(frozen=True)
@@ -161,3 +165,62 @@ def pool(rows: list[dict], keys: tuple[str, ...] = ("pipeline", "class")) -> lis
             if k not in keys and isinstance(v, int):
                 group[k] = group.get(k, 0) + v
     return list(out.values())
+
+
+Side = Literal["ref", "est"]
+
+
+@dataclass(frozen=True)
+class Spot:
+    """One error spot to judge by ear: does `cls` have a hit at `time` in `song`?"""
+
+    song: str
+    time: float
+    cls: str
+    side: Side  # who claims the hit: the reference or a pipeline
+    pipelines: frozenset[str]  # pipelines whose error set contains this spot
+
+
+def _claims(b: Breakdown) -> list[tuple[float, str, Side]]:
+    out: list[tuple[float, str, Side]] = []
+    for cls, e in b.per_class.items():
+        out += [(t, cls, "ref") for t in e.missed]
+        out += [(t, cls, "est") for t in e.invented]
+        for r, x in e.off_time:
+            out += [(r, cls, "ref"), (x, cls, "est")]
+    for c in b.confused:
+        out += [(c.ref_time, c.ref_cls, "ref"), (c.est_time, c.est_cls, "est")]
+    return out
+
+
+def spots(breakdowns: Mapping[tuple[str, str, str], Breakdown]) -> list[Spot]:
+    """Every error of every (dataset, song, pipeline) as a spot; the same claim in several
+    pipelines is one spot that lists them all."""
+    found: dict[tuple[str, float, str, str], set[str]] = {}
+    for (_, song, pipeline), b in breakdowns.items():
+        for time, cls, side in _claims(b):
+            found.setdefault((song, round(time, 4), cls, side), set()).add(pipeline)
+    return [
+        Spot(song, time, cls, side, frozenset(pipes))
+        for (song, time, cls, side), pipes in sorted(found.items())
+    ]
+
+
+def _order(s: Spot) -> tuple:
+    return (s.cls, s.side, s.song, s.time)
+
+
+def draw_sample(all_spots: list[Spot], per_class_side: int, seed: int = SEED) -> list[Spot]:
+    """`per_class_side` spots per class and side, uniformly at random (all of a smaller group),
+    in random order. The same spots and seed give the same sample in any input order."""
+    rng = random.Random(seed)
+    groups: dict[tuple[str, str], list[Spot]] = {}
+    for s in sorted(all_spots, key=_order):
+        groups.setdefault((s.cls, s.side), []).append(s)
+    sample = [
+        s
+        for key in sorted(groups)
+        for s in rng.sample(groups[key], min(per_class_side, len(groups[key])))
+    ]
+    rng.shuffle(sample)
+    return sample

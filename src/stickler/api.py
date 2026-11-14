@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import dataclasses
 import json
 import os
@@ -364,6 +365,73 @@ def error_breakdowns(
     if unknown := [p for p in pipelines if p not in found]:
         raise ValueError(f"not in {config_path.name}: {', '.join(unknown)}")
     return out
+
+
+LISTENING_DIR = DATA_DIR / "own" / "_listening"  # sample, verdicts, snippets: never in git
+OWN_CONFIG = PROJECT_ROOT / "config" / "own.yaml"
+SAMPLE_PER_CLASS_SIDE = 10  # 5 classes x 2 sides x 10 = 100 spots (SPEC.md, "Release 3")
+_SAMPLE_FIELDS = ["n", "song", "time", "class", "side", "pipelines"]
+
+
+def draw_listening_sample(
+    config_path: Path = OWN_CONFIG,
+    pipelines: tuple[str, ...] | list[str] = ERROR_PIPELINES,
+    *,
+    listening_dir: Path = LISTENING_DIR,
+    per_class_side: int = SAMPLE_PER_CLASS_SIDE,
+    seed: int = errors.SEED,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> list[errors.Spot]:
+    """Draws the spots to judge by ear from the errors of the pipelines and writes sample.csv.
+    Drawn once: a second call refuses, so the sample can never be redrawn after listening."""
+    path = listening_dir / "sample.csv"
+    if path.exists():
+        raise RuntimeError(f"the sample is already drawn ({path}); it is never redrawn")
+    found = error_breakdowns(
+        config_path,
+        pipelines,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
+    )
+    sample = errors.draw_sample(errors.spots(found), per_class_side, seed)
+    rows = [
+        {
+            "n": n,
+            "song": s.song,
+            "time": s.time,
+            "class": s.cls,
+            "side": s.side,
+            "pipelines": "|".join(sorted(s.pipelines)),
+        }
+        for n, s in enumerate(sample, 1)
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=_SAMPLE_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+    return sample
+
+
+def load_listening_sample(listening_dir: Path = LISTENING_DIR) -> list[errors.Spot]:
+    """The drawn sample in its order (empty if none is drawn yet)."""
+    path = listening_dir / "sample.csv"
+    if not path.exists():
+        return []
+    with path.open(newline="", encoding="utf-8") as f:
+        return [
+            errors.Spot(
+                r["song"],
+                float(r["time"]),
+                r["class"],
+                r["side"],
+                frozenset(r["pipelines"].split("|")),
+            )
+            for r in csv.DictReader(f)
+        ]
 
 
 def listening_snippet(
