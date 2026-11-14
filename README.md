@@ -64,8 +64,8 @@ model lives in its own adapter with its own Python environment and competes agai
 references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms), on benchmark
 data and, above all, on real music. The answer is in: see [`> RESULTS`](#-results).
 
-**Next:** release 3 with an error analysis on real songs; after it, the desktop application
-with a GTK 4 interface, shipped as Flatpak and AppImage.
+**Next:** new candidate models; after them, the desktop application with a GTK 4 interface,
+shipped as Flatpak and AppImage.
 
 Stickler only uses open-source models from actively maintained projects. No cloud service; everything runs on your own machine.
 
@@ -112,12 +112,16 @@ CPU (AMD Ryzen AI 5 340).
 | **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.776** | **0.785** | 0.783 | ~14 min |
 
 ¹ 25 commercial rock, metal and pop recordings, references from musescore.com transcriptions.
+Corrected for errors in these references (release 3, 100 spots judged blind by ear): Fast 0.867,
+Quality 0.842.
 ² Drummer 3, the part no model was trained on.
 
 - **ADTOF is the strongest single model**, and on real recordings it works best on the original
-  mix. **Quality** is only slightly better on real music (better on 16, worse on 2 of 25 songs,
-  mostly the snare), at about 56 times the computing time. Try it when Fast misses things in a
-  particular song.
+  mix. **Quality** is only slightly better against the references (better on 16, worse on 2 of
+  25 songs, mostly the snare), at about 56 times the computing time; corrected for reference
+  errors, Fast is ahead. Try Quality when Fast misses things in a particular song.
+- **The references are the weak spot:** about half of the disagreements judged by ear were errors
+  of the transcriptions. Fast gets about 87 % of the hits right on real music, not 77 %.
 - **Snapping to the beat grid** for the sheet music costs almost nothing.
 - **Clever tricks did not help on real music:** fusing inputs, voting between models, tuning
   thresholds and filling in repeated bars all looked good on MDB and did not transfer to rock
@@ -258,7 +262,8 @@ scripts/check.sh task
 
 **Release 3**
 
-- [ ] Error analysis on real songs: confused, missed and invented hits, reference errors
+- [x] Error analysis on real songs: confused, missed and invented hits, reference errors judged blind by ear (`stickler errors`, `stickler listen`, with badges)
+- [x] **Release 3:** honest numbers
 
 **Next**
 

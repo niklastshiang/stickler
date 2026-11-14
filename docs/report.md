@@ -5,27 +5,33 @@ every result and every decision of the Stickler benchmark in one place, readable
 code. Raw numbers are in `results/` after `stickler eval`, the decisions in detail in
 [`docs/adr/`](adr/).
 
-> **Status: release 2 (2026-11-13).** Complete: 25 own songs, MDB Drums (23 tracks), ENST-Drums
-> (64 tracks).
+> **Status: release 3 (2026-11-14).** Complete: 25 own songs, MDB Drums (23 tracks), ENST-Drums
+> (64 tracks); errors of the own songs' references estimated by ear (section 5.5).
 
 ---
 
 ## 1. In short
 
-| Mode | Pipeline | Own songs | MDB | ENST¹ | Laptop time, 4-min song |
-|---|---|---|---|---|---|
-| **Fast** (default) | ADTOF on the original mix | 0.770 | 0.718 | **0.810** | ~15 s |
-| **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.776** | **0.785** | 0.783 | ~14 min |
+| Mode | Pipeline | Own songs | Own songs, corrected² | MDB | ENST¹ | Laptop time, 4-min song |
+|---|---|---|---|---|---|---|
+| **Fast** (default) | ADTOF on the original mix | 0.770 | **0.867** (0.84–0.90) | 0.718 | **0.810** | ~15 s |
+| **Quality** | MuScriptor medium on the Demucs stem for kick, snare and toms, ADTOF on the mix for hi-hat and cymbals | **0.776** | 0.842 (0.82–0.87) | **0.785** | 0.783 | ~14 min |
 
 *Macro-F1 over 5 classes. Own songs: 25. ¹ Drummer 3, the part of ENST no model was trained on
-(section 5.3). Laptop: AMD Ryzen AI 5 340, CPU only.*
+(section 5.3). ² With the errors of the references taken out, estimated from 100 error spots
+judged blind by ear, 95 % interval in brackets (section 5.5). Laptop: AMD Ryzen AI 5 340, CPU
+only.*
 
 - **ADTOF is the strongest single transcriber**, and on real recordings it works best on the
   original mix. Separating the drums first helps on MDB but not on the owner's rock and metal
   recordings.
-- **Quality is only slightly better on the target music**: +0.006 over all hits, better on 16 and
-  worse on 2 of 25 songs, mostly through the snare, at about 56 times the computing time. It stays
-  as an option because it can be clearly better for a particular song.
+- **The references are the weak spot.** About half of the disagreements judged by ear were errors
+  of the musescore.com transcriptions, not of the models. Taken out, Fast gets about 87 % of the
+  hits right on the owner's music instead of 77 %.
+- **Against the references, Quality is slightly better** (+0.006, better on 16 and worse on 2 of
+  25 songs); **after correcting them, Fast is ahead** (0.867 vs 0.842), above all at the toms.
+  The intervals overlap, so the order is likely but not certain. Quality costs about 56 times the
+  computing time; whether it stays as a mode is open.
 - **Small samples mislead.** On the first 10 songs Quality led by +0.027 and MuScriptor looked
   much better at toms; with 25 songs both effects shrank to almost nothing.
 - **Snapping the notes to the beat grid**, as the sheet music needs, costs almost nothing.
@@ -214,6 +220,63 @@ Real-time factor (RTF) = processing time ÷ song length; 0.5 means a 4-minute so
 ENST (incl. model loading). On the laptop's Radeon 840M (ROCm), every model was slower than
 on the CPU, so Stickler computes on the CPU there ([ADR 0003](adr/0003-rocm-kanal.md)).
 
+### 5.5 What the errors are, and how many are the reference's
+
+The scores above count every disagreement with the reference as a model error. But the own
+songs' references are third-party transcriptions from musescore.com, aligned automatically.
+Release 3 looked at the errors of Fast and Quality on the 25 own songs (`stickler errors`,
+`stickler listen`).
+
+**Kinds of error.** Every unmatched hit gets one kind: *confused* (another drum within 50 ms),
+*off time* (the same drum 50–100 ms away), *missed* or *invented*.
+
+| | Errors (missed + invented hits) | Invented | Confused | Missed | Off time |
+|---|---|---|---|---|---|
+| Fast | 13 710 | 37 % | 36 % | 22 % | 4 % |
+| Quality | 12 968 | 34 % | 38 % | 26 % | 3 % |
+
+- The most frequent confusion is **hi-hat written as cymbal** (1014 times in both modes, which
+  share ADTOF for hi-hat and cymbals). Open hi-hats are hit hardest: 19 % of them become cymbals,
+  7 % of the closed ones.
+- **Toms written as hi-hat** (359 / 370) is partly coincidence: in fills the model misses a tom
+  and adds a hi-hat that the transcription leaves out.
+- **Timing is rarely the problem** (3–4 %): the automatic alignment of the references works.
+- Quality invents far fewer toms than Fast (124 vs 553) but misses more (591 vs 312).
+
+**Judged by ear.** A fixed sample of 100 error spots (10 per drum where the reference claims a
+hit the model did not find, 10 where the model claims one the reference does not have; drawn
+once before listening, never redrawn) was judged by the owner, blind: each spot looped at half
+speed with a click at the moment in question, and the only question was "is there a <drum> hit
+at the click?", never who claims it. Badges kept the owner going; they depended only on *that*
+spots were judged, never on the answers.
+
+- Where only the reference has a hit, it was **not there in 48 %** (19 of 40 clear answers).
+- Where only the model has a hit, it **was there in 44 %** (18 of 41).
+- 19 of 100 answers were *unclear*; the owner found many spots very hard to judge.
+
+**Corrected scores.** Per drum, these shares take reference errors out of the counts:
+fn' = fn · (1 − r_ref), tp' = tp + fp · r_est, fp' = fp · (1 − r_est), each mode from the spots
+in its own error set (Fast 90, Quality 72). The scoring itself is unchanged.
+
+| | Kick | Snare | Toms | Hi-hat | Cymbals | Macro-F1 (95 % interval) |
+|---|---|---|---|---|---|---|
+| Fast, measured | 0.887 | 0.878 | 0.647 | 0.758 | 0.680 | 0.770 |
+| **Fast, corrected** | 0.915 | **0.957** | **0.798** | 0.872 | 0.795 | **0.867** (0.841–0.896) |
+| Quality, measured | 0.895 | 0.896 | 0.650 | 0.758 | 0.680 | 0.776 |
+| **Quality, corrected** | **0.949** | 0.921 | 0.675 | 0.872 | 0.795 | 0.842 (0.818–0.868) |
+
+Counting every *unclear* as a model error or as a reference error moves the corrected macro-F1
+between 0.851 and 0.895 (Fast) and 0.833 and 0.866 (Quality).
+
+**How far this carries.**
+- With 8–10 spots per drum and side, the per-drum values are rough; for some groups there were
+  fewer (Quality's own snare hits: 1 spot; its own invented toms: none, so they are not corrected;
+  if they were as often real as Fast's, Quality's toms would reach about 0.70).
+- The interval covers the luck of the sample, not mistakes of the listener, and the owner found
+  many spots very hard.
+- Hits where the reference and the model are wrong in the same way cannot be found this way.
+- The two modes' intervals overlap: Fast ahead is likely, not certain.
+
 ---
 
 ## 6. What was tried and did not help
@@ -261,6 +324,7 @@ owner decided against fine-tuning.
 | ENST: minus-one tracks, 2/3 drums + 1/3 accompaniment | the common evaluation set with accompaniment | `stickler.datasets.enst` |
 | Tune on the target music, with cross-validation | MDB choices did not transfer | section 6 |
 | Modes: Fast = ADTOF on the mix with its default thresholds; Quality = the combination | best and robust on all three datasets; Quality slightly better on the target music and kept because it can be clearly better for a particular song | sections 1, 5 |
+| Estimate reference errors by ear: 100 error spots, drawn once, judged blind; scoring unchanged | the references are third-party transcriptions; honest numbers without changing the benchmark | section 5.5, SPEC.md "Release 3" |
 | torch 2.15 in every model, after Dependabot alerts | known vulnerabilities in older versions; outputs checked before/after (identical, or within the model's own run-to-run variation) | tasks/todo.md |
 
 ---
@@ -270,7 +334,8 @@ owner decided against fine-tuning.
 - **Small target set.** 25 own songs are enough for cross-validated tuning of a few parameters,
   not for training.
 - **References are transcriptions by third parties**, aligned automatically; errors in them count
-  against every model alike.
+  against every model alike. About half of the disagreements judged by ear were the reference's
+  (section 5.5); the corrected values rest on 100 spots and the owner's ears.
 - **Training overlap:** YourMT3+ was trained on ENST; MDB may overlap with the training data of
   some models; RoFormer's training data is unknown.
 - **Compound meters** (6/8, 12/8) are not handled by the alignment yet.
