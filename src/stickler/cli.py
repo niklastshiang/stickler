@@ -225,6 +225,15 @@ def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
         typer.echo(f"    Check: {r.click}")
 
 
+def _print_step(step: api.Step) -> None:
+    """`[2/4] transcribe (adtof) … done` as the step starts and ends."""
+    if step.state == "started":
+        model = f" ({step.adapter})" if step.adapter else ""
+        typer.echo(f"[{step.index}/{step.total}] {step.id}{model} …", nl=False)
+    else:
+        typer.echo(" cached" if step.cached else " done")
+
+
 @app.command("notate")
 def notate_cmd(
     audio: Annotated[Path, typer.Argument(help="song (MP3, FLAC, WAV, …)")],
@@ -268,6 +277,7 @@ def notate_cmd(
             simplify=simplify,
             repeats=repeats,
             device=device or "auto",
+            progress=_print_step,
         )
         stem = result.transcription.stem
         exported = api.export_drum_track(stem, drums) if drums and stem else None

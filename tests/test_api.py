@@ -1,5 +1,7 @@
 """Tests for the public API."""
 
+from pathlib import Path
+
 import pytest
 
 from stickler import api, runner
@@ -555,6 +557,96 @@ def test_drum_track_in_fast_mode_runs_a_separator(tmp_path, monkeypatch):
     audio, stem, calls = _fake_pipeline(tmp_path, monkeypatch)
     t = api.transcribe_song(audio, cache_dir=tmp_path, drums=True)
     assert ("demucs", audio) in calls and t.stem == stem
+
+
+def _trace(steps):
+    return [(s.id, s.adapter, s.state, s.index, s.total) for s in steps]
+
+
+def test_fast_mode_reports_its_steps_in_order(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    steps = []
+    api.transcribe_song(audio, cache_dir=tmp_path, progress=steps.append)
+    assert _trace(steps) == [
+        ("transcribe", "adtof", "started", 1, 2),
+        ("transcribe", "adtof", "done", 1, 2),
+        ("beats", "beat_this", "started", 2, 2),
+        ("beats", "beat_this", "done", 2, 2),
+    ]
+    assert not any(s.cached for s in steps)
+
+
+def test_notate_announces_every_step_before_the_first_starts(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    monkeypatch.setattr(api.musescore, "find", lambda: ["mscore"])
+    monkeypatch.setattr(api.musescore, "export_pdf", lambda xml, pdf, cmd: pdf)
+    steps = []
+    api.notate(
+        audio,
+        tmp_path / "o.musicxml",
+        pipeline="demucs+adtof",
+        cache_dir=tmp_path,
+        progress=steps.append,
+    )
+    done = [(s.id, s.adapter, s.index) for s in steps if s.state == "done"]
+    assert done == [
+        ("separate", "demucs", 1),
+        ("transcribe", "adtof", 2),
+        ("beats", "beat_this", 3),
+        ("engrave", None, 4),
+        ("pdf", None, 5),
+    ]
+    assert {s.total for s in steps} == {5}
+    assert [s.state for s in steps] == ["started", "done"] * 5
+
+
+def test_quality_mode_and_drum_track_steps(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    steps = []
+    api.transcribe_song(audio, mode="quality", cache_dir=tmp_path, progress=steps.append)
+    assert [(s.id, s.adapter) for s in steps if s.state == "done"] == [
+        ("separate", "demucs"),
+        ("transcribe", "muscriptor_m"),
+        ("transcribe", "adtof"),
+        ("beats", "beat_this"),
+    ]
+    steps.clear()
+    api.transcribe_song(audio, cache_dir=tmp_path, drums=True, progress=steps.append)
+    assert [(s.id, s.adapter) for s in steps if s.state == "done"] == [
+        ("transcribe", "adtof"),
+        ("separate", "demucs"),
+        ("beats", "beat_this"),
+    ]
+
+
+def test_cached_steps_are_marked_and_no_pdf_step_without_pdf(tmp_path, monkeypatch):
+    from stickler import adapters as ad
+
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    computed = runner.cached_or_run
+
+    def cached(*a, **kw):
+        r = computed(*a, **kw)
+        return ad.AdapterResult(r.ok, r.output, r.meta, r.error, cached=True)
+
+    monkeypatch.setattr(runner, "cached_or_run", cached)
+    steps = []
+    api.notate(audio, tmp_path / "o.musicxml", pdf=False, cache_dir=tmp_path, progress=steps.append)
+    done = [(s.id, s.cached) for s in steps if s.state == "done"]
+    assert done == [("transcribe", True), ("beats", True), ("engrave", False)]
+
+
+def test_runner_says_when_a_result_comes_from_the_cache(tmp_path):
+    from stickler import adapters as ad
+
+    fixtures = Path(__file__).parent / "fixtures" / "adapters"
+    spec = ad.discover(fixtures)["dummy"]
+    audio = tmp_path / "in.wav"
+    audio.write_bytes(b"x")
+    first = runner.cached_or_run(spec, audio, tmp_path / "cache", "cpu", True)
+    again = runner.cached_or_run(spec, audio, tmp_path / "cache", "cpu", True)
+    assert first.ok and not first.cached
+    assert again.ok and again.cached
 
 
 def test_unknown_mode_raises(tmp_path, monkeypatch):

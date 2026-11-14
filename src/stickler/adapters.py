@@ -126,6 +126,7 @@ class AdapterResult:
     output: Path | None
     meta: dict | None
     error: str | None
+    cached: bool = False  # taken from the cache, nothing was computed
 
 
 def discover(root: Path) -> dict[str, AdapterSpec]:

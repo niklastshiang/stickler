@@ -280,7 +280,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: the numbers in SPEC.md; the real adapter folders and the cache are unchanged (`git status`, `stickler cache-digests`)
   - Dependencies: none · Files: `SPEC.md`
 
-- [ ] **Task 33: Progress for `transcribe_song` and `notate`** (M)
+- [x] **Task 33: Progress for `transcribe_song` and `notate`** (M): done 2026-11-14. `Step` also names the model (`adapter`); a step is `cached` when `runner.cached_or_run` took it from the cache (new field `AdapterResult.cached`). On Eye of the Tiger: four steps, MusicXML identical to before.
   - Acceptance:
     - `api.Step` (id, index, total, state `started`/`done`, `cached`) and a `progress` parameter on both functions; the steps are known before the first one starts.
     - Step ids `separate`, `transcribe`, `beats`, `engrave`, `pdf`; a cached step reports `done` with `cached`.

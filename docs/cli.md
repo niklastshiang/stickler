@@ -70,7 +70,8 @@ a **PDF** next to it.
 | `--no-repeats` | write every bar out; by default, runs of equal bars or phrases are written once between repeat signs |
 | `--device auto\|cpu\|gpu` | where to compute |
 
-Every step is cached in `cache/`; running `notate` again on the same song is instant.
+Every step is cached in `cache/`; running `notate` again on the same song is instant. Each step
+is printed as it runs, e.g. `[2/4] beats (beat_this) … cached`.
 
 **Audio formats** (tested with every model on 2026-11-13):
 

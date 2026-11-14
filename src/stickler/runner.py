@@ -147,7 +147,7 @@ def cached_or_run(
     out_dir = cache_dir_for(cache, spec, audio)
     output, meta = out_dir / spec.expected_output, out_dir / "meta.json"
     if output.exists() and meta.exists():
-        return adapters.AdapterResult(True, output, json.loads(meta.read_text()), None)
+        return adapters.AdapterResult(True, output, json.loads(meta.read_text()), None, cached=True)
     if not execute:
         return adapters.AdapterResult(False, None, None, f"{spec.id}: not computed")
     try:

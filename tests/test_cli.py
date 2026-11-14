@@ -238,6 +238,25 @@ def test_notate_prints_outputs_and_exports_drums(monkeypatch, tmp_path):
     assert "s.musicxml" in result.output and "MuseScore not installed" in result.output
 
 
+def test_notate_prints_each_step(monkeypatch, tmp_path):
+    from stickler.api import Notation, SongTranscription, Step
+
+    t = SongTranscription(tmp_path / "s.mp3", "fast", None, [0.0, 0.5], [0.0], [])
+
+    def fake_notate(audio, out=None, *, progress, **kw):
+        progress(Step("transcribe", 1, 2, "started", adapter="adtof"))
+        progress(Step("transcribe", 1, 2, "done", cached=True, adapter="adtof"))
+        progress(Step("engrave", 2, 2, "started"))
+        progress(Step("engrave", 2, 2, "done"))
+        return Notation(tmp_path / "s.musicxml", None, None, t)
+
+    monkeypatch.setattr(api, "notate", fake_notate)
+    result = CliRunner().invoke(cli.app, ["notate", str(tmp_path / "s.mp3"), "--no-pdf"])
+    assert result.exit_code == 0, result.output
+    assert "[1/2] transcribe (adtof) … cached" in result.output
+    assert "[2/2] engrave … done" in result.output
+
+
 def test_notate_can_write_every_bar_exactly(monkeypatch, tmp_path):
     seen = {}
 
