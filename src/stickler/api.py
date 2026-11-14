@@ -434,6 +434,22 @@ def load_listening_sample(listening_dir: Path = LISTENING_DIR) -> list[errors.Sp
         ]
 
 
+def _song_audio(
+    song: str, data_dir: Path, cache_dir: Path, adapters_root: Path
+) -> tuple[np.ndarray, np.ndarray]:
+    """Mix and cached Demucs drum stem of an own song, mono at listen.SR."""
+    track = next((t for t in load_tracks("own", data_dir) if t.id == song), None)
+    if track is None:
+        raise ValueError(f"unknown own song {song!r}")
+    spec = adapters.discover(adapters_root)[DRUM_TRACK_SEPARATOR]
+    res = runner.cached_or_run(spec, track.mix, cache_dir, "auto", False)
+    if not res.ok:
+        raise RuntimeError(
+            f"{song}: no cached drum stem, run `stickler run --config config/own.yaml` first"
+        )
+    return audio.load_mono(track.mix, listen.SR), audio.load_mono(res.output, listen.SR)
+
+
 def listening_snippet(
     song: str,
     time: float,
@@ -447,20 +463,81 @@ def listening_snippet(
     """Writes the snippet for judging the spot at `time` seconds of an own song by ear (see
     stickler.listen), or with `loop` only the spot, to be played in a loop. Uses the cached
     Demucs drum stem; never runs a model."""
-    track = next((t for t in load_tracks("own", data_dir) if t.id == song), None)
-    if track is None:
-        raise ValueError(f"unknown own song {song!r}")
-    spec = adapters.discover(adapters_root)[DRUM_TRACK_SEPARATOR]
-    res = runner.cached_or_run(spec, track.mix, cache_dir, "auto", False)
-    if not res.ok:
-        raise RuntimeError(
-            f"{song}: no cached drum stem, run `stickler run --config config/own.yaml` first"
-        )
+    mix, stem = _song_audio(song, data_dir, cache_dir, adapters_root)
     render = listen.render_loop if loop else listen.render
-    snippet = render(
-        audio.load_mono(track.mix, listen.SR), audio.load_mono(res.output, listen.SR), time
+    return listen.write(out, render(mix, stem, time))
+
+
+@dataclass(frozen=True)
+class ListeningSpot:
+    n: int  # 1-based position in the sample
+    total: int
+    spot: errors.Spot
+    question: str  # blind: names the drum, never who claims the hit
+    snippet: Path  # the passage, plain then with the click
+    loop: Path  # just the spot, with the click, for a loop
+
+
+def load_verdicts(listening_dir: Path = LISTENING_DIR) -> dict[int, str]:
+    """Spot number → "yes" / "no" / "unclear", as judged so far."""
+    path = listening_dir / "verdicts.csv"
+    if not path.exists():
+        return {}
+    with path.open(newline="", encoding="utf-8") as f:
+        return {int(r["n"]): r["verdict"] for r in csv.DictReader(f)}
+
+
+def record_verdict(n: int, verdict: str, *, listening_dir: Path = LISTENING_DIR) -> None:
+    """Appends the owner's answer for spot `n` to verdicts.csv."""
+    if verdict not in listen.VERDICTS:
+        raise ValueError(f"verdict must be one of {', '.join(listen.VERDICTS)}, got {verdict!r}")
+    path = listening_dir / "verdicts.csv"
+    new = not path.exists()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if new:
+            writer.writerow(["n", "verdict"])
+        writer.writerow([n, verdict])
+
+
+def next_listening_spot(
+    *,
+    listening_dir: Path = LISTENING_DIR,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> ListeningSpot | None:
+    """The first spot without a verdict, with its snippet and loop written (None when all are
+    judged). Draws the sample on the first start."""
+    sample = load_listening_sample(listening_dir) or draw_listening_sample(
+        listening_dir=listening_dir,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
     )
-    return listen.write(out, snippet)
+    done = load_verdicts(listening_dir)
+    n = next((k for k in range(1, len(sample) + 1) if k not in done), None)
+    if n is None:
+        return None
+    spot = sample[n - 1]
+    snippet = listening_dir / "snippets" / f"{n:03d}.wav"
+    loop = listening_dir / "snippets" / f"{n:03d}-loop.wav"
+    if not (snippet.exists() and loop.exists()):
+        mix, stem = _song_audio(spot.song, data_dir, cache_dir, adapters_root)
+        listen.write(snippet, listen.render(mix, stem, spot.time))
+        listen.write(loop, listen.render_loop(mix, stem, spot.time))
+    return ListeningSpot(n, len(sample), spot, listen.QUESTIONS[spot.cls], snippet, loop)
+
+
+def play(path: Path, *, loop: bool = False, half_speed: bool = False) -> subprocess.Popen:
+    """Starts playing a WAV with ffplay (no window); the caller waits for or stops it."""
+    cmd = ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet"]
+    if loop:
+        cmd += ["-loop", "0"]
+    if half_speed:
+        cmd += ["-af", "atempo=0.5"]
+    return subprocess.Popen([*cmd, str(path)])
 
 
 def error_breakdown(

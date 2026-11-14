@@ -199,6 +199,21 @@ counts per pipeline and class with the drum each class is most often written as,
 them per song to `results/<config>/errors.csv` (`ref_as_<drum>`: reference hits of the row's
 class written as that drum). Computes nothing; run `stickler run` first.
 
+### 3.7 Judging error spots by ear: `listen`
+
+```console
+uv run stickler listen
+```
+
+Estimates how many errors on the own songs are really errors of the reference (SPEC.md,
+"Release 3"). On the first start it draws a fixed sample of 100 error spots of Fast and Quality
+(`data/own/_listening/sample.csv`, never redrawn), then plays them one by one: the passage
+around the spot, once plain and once with a click on the right channel at the moment in question
+(headphones help). It asks only which drum to listen for, never whether the reference or a model
+claims the hit. Answer with a letter and Enter: `y` yes, `n` no, `u` unclear; `r` plays the
+passage again, `l` loops just the spot until Enter, `s` the same at half speed, `q` stops.
+Answers go to `verdicts.csv`; the next start continues at the first unjudged spot.
+
 ---
 
 ## 4. Development helpers

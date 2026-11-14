@@ -25,6 +25,14 @@ PEAK = 0.8  # the passage is normalised to this peak, so quiet songs are as audi
 MARKER_FREQ = 1000.0
 MARKER_SECONDS = 0.04
 MARKER_LEVEL = 0.9  # alone in its ear, so it can be as loud as the music
+QUESTIONS = {  # asked blind: never says whether the reference or a model claims the hit
+    "KD": "Is there a kick drum hit at the click?",
+    "SD": "Is there a snare hit (incl. side stick) at the click?",
+    "TT": "Is there a tom hit at the click?",
+    "HH": "Is there a hi-hat hit (closed, open or pedal) at the click?",
+    "CY": "Is there a cymbal hit (crash, ride, china or splash) at the click?",
+}
+VERDICTS = ("yes", "no", "unclear")
 LOOP_BEFORE, LOOP_AFTER = 0.75, 0.5  # the loop: just the spot, to hear it again and again
 FADE = 0.01  # seconds faded in and out at the loop's ends, so the seam does not click
 

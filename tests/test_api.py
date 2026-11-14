@@ -824,3 +824,66 @@ def test_listening_sample_is_drawn_once_and_kept(monkeypatch, tmp_path):
     assert api.load_listening_sample(where) == sample
     with pytest.raises(RuntimeError, match="already drawn"):
         api.draw_listening_sample(cfg, ["combo+kick"], listening_dir=where, **kw)
+
+
+def _listening_setup(monkeypatch, tmp_path, n_spots=2):
+    from test_audio import write_wav
+
+    from stickler import adapters as ad
+
+    _own_song(monkeypatch, tmp_path)
+    stem = write_wav(tmp_path / "drums.wav", 6.0)
+    monkeypatch.setattr(
+        api.runner, "cached_or_run", lambda *a, **k: ad.AdapterResult(True, stem, {}, None)
+    )
+    where = tmp_path / "listening"
+    where.mkdir()
+    lines = ["n,song,time,class,side,pipelines"] + [
+        f"{k},song,{k}.0,HH,ref,none+adtof" for k in range(1, n_spots + 1)
+    ]
+    (where / "sample.csv").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return {"listening_dir": where, "cache_dir": tmp_path}
+
+
+def test_listening_goes_spot_by_spot_and_resumes(monkeypatch, tmp_path):
+    kw = _listening_setup(monkeypatch, tmp_path)
+    first = api.next_listening_spot(**kw)
+    assert (first.n, first.total) == (1, 2) and first.spot.time == 1.0
+    assert first.snippet.exists() and first.loop.exists()
+    assert "hi-hat" in first.question and "ref" not in first.question  # blind
+    api.record_verdict(1, "yes", listening_dir=kw["listening_dir"])
+    assert api.next_listening_spot(**kw).n == 2  # also after a restart: read from the file
+    api.record_verdict(2, "unclear", listening_dir=kw["listening_dir"])
+    assert api.next_listening_spot(**kw) is None
+    assert api.load_verdicts(kw["listening_dir"]) == {1: "yes", 2: "unclear"}
+
+
+def test_listening_draws_the_sample_on_the_first_start(monkeypatch, tmp_path):
+    kw = _listening_setup(monkeypatch, tmp_path)
+    (kw["listening_dir"] / "sample.csv").unlink()
+    drawn = []
+
+    def draw(**k):
+        drawn.append(k["listening_dir"])
+        return []
+
+    monkeypatch.setattr(api, "draw_listening_sample", draw)
+    assert api.next_listening_spot(**kw) is None and drawn == [kw["listening_dir"]]
+
+
+def test_a_verdict_must_be_yes_no_or_unclear(tmp_path):
+    with pytest.raises(ValueError, match="unclear"):
+        api.record_verdict(1, "maybe", listening_dir=tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("loop", "half_speed", "extra"),
+    [(False, False, []), (True, False, ["-loop", "0"]), (True, True, ["-loop", "0", "-af"])],
+)
+def test_play_uses_ffplay_without_a_window(monkeypatch, tmp_path, loop, half_speed, extra):
+    started = []
+    monkeypatch.setattr(api.subprocess, "Popen", lambda cmd, **kw: started.append(cmd) or "proc")
+    assert api.play(tmp_path / "x.wav", loop=loop, half_speed=half_speed) == "proc"
+    (cmd,) = started
+    assert cmd[0] == "ffplay" and "-nodisp" in cmd and cmd[-1] == str(tmp_path / "x.wav")
+    assert all(x in cmd for x in extra) and ("atempo=0.5" in cmd) == half_speed

@@ -135,6 +135,41 @@ def errors_cmd(
     typer.echo(f"Per song: {out / 'errors.csv'}")
 
 
+ANSWERS = {"y": "yes", "n": "no", "u": "unclear"}
+KEYS = "y = yes, n = no, u = unclear, r = again, l = loop, s = loop at half speed, q = quit"
+
+
+@app.command("listen")
+def listen_cmd() -> None:
+    """Judge the error spots of the own songs by ear, blind (the sample is drawn once)."""
+    try:
+        spot = api.next_listening_spot()
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    total = spot.total if spot else 0
+    while spot is not None:
+        typer.echo(f"\n[{spot.n}/{spot.total}] {spot.question}")
+        api.play(spot.snippet).wait()
+        while True:
+            key = typer.prompt(KEYS, default="", show_default=False).strip().lower()
+            if key in ANSWERS:
+                api.record_verdict(spot.n, ANSWERS[key])
+                break
+            if key == "q":
+                typer.echo(f"Stopped: {spot.n - 1} of {spot.total} judged; run it again to go on.")
+                return
+            if key == "r":
+                api.play(spot.snippet).wait()
+            elif key in ("l", "s"):
+                loop = api.play(spot.loop, loop=True, half_speed=key == "s")
+                typer.prompt("Enter stops the loop", default="", show_default=False)
+                loop.terminate()
+                loop.wait()
+        spot = api.next_listening_spot()
+    typer.echo(f"All {total} spots judged." if total else "All spots are judged.")
+
+
 @app.command("report")
 def report_cmd() -> None:
     """Write results/report.html from all available summary.csv files."""

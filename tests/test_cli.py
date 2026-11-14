@@ -320,3 +320,79 @@ def test_remote_with_nothing_missing_says_so(monkeypatch):
     monkeypatch.setattr(api, "run_remote", lambda *a, **k: [])
     result = CliRunner().invoke(cli.app, ["remote", "root@h", "--config", "config/own.yaml"])
     assert result.exit_code == 0 and "Nothing to compute" in result.output
+
+
+class _FakeProcess:
+    def __init__(self, log, what):
+        self.log, self.what = log, what
+
+    def wait(self):
+        self.log.append(("done", self.what))
+
+    def terminate(self):
+        self.log.append(("stopped", self.what))
+
+
+def _fake_listening(monkeypatch, tmp_path, total=2):
+    from stickler.errors import Spot
+
+    log, verdicts = [], {}
+
+    def next_spot():
+        n = len(verdicts) + 1
+        if n > total:
+            return None
+        spot = Spot("song", float(n), "HH", "ref", frozenset({"none+adtof"}))
+        return api.ListeningSpot(
+            n, total, spot, "Is there a hi-hat hit?", tmp_path / f"{n}.wav", tmp_path / f"{n}l.wav"
+        )
+
+    def play(path, loop=False, half_speed=False):
+        what = (path.name, loop, half_speed)
+        log.append(("play", what))
+        return _FakeProcess(log, what)
+
+    monkeypatch.setattr(api, "next_listening_spot", next_spot)
+    monkeypatch.setattr(api, "play", play)
+    monkeypatch.setattr(api, "record_verdict", lambda n, v: verdicts.__setitem__(n, v))
+    return log, verdicts
+
+
+def test_listen_asks_blind_and_records_answers(monkeypatch, tmp_path):
+    log, verdicts = _fake_listening(monkeypatch, tmp_path)
+    result = CliRunner().invoke(cli.app, ["listen"], input="r\ns\n\ny\nu\n")
+    assert result.exit_code == 0, result.output
+    assert verdicts == {1: "yes", 2: "unclear"}
+    assert "[1/2] Is there a hi-hat hit?" in result.output and "ref" not in result.output
+    assert log[:6] == [
+        ("play", ("1.wav", False, False)),  # the snippet first
+        ("done", ("1.wav", False, False)),
+        ("play", ("1.wav", False, False)),  # r: again
+        ("done", ("1.wav", False, False)),
+        ("play", ("1l.wav", True, True)),  # s: the loop at half speed until Enter
+        ("stopped", ("1l.wav", True, True)),
+    ]
+    assert "All 2 spots judged" in result.output
+
+
+def test_listen_can_stop_and_says_how_far_it_got(monkeypatch, tmp_path):
+    log, verdicts = _fake_listening(monkeypatch, tmp_path, total=3)
+    result = CliRunner().invoke(cli.app, ["listen"], input="n\nl\n\nx\nq\n")
+    assert result.exit_code == 0, result.output
+    assert verdicts == {1: "no"} and ("play", ("2l.wav", True, False)) in log
+    assert "1 of 3 judged" in result.output
+
+
+def test_listen_when_everything_is_judged(monkeypatch, tmp_path):
+    _fake_listening(monkeypatch, tmp_path, total=0)
+    result = CliRunner().invoke(cli.app, ["listen"])
+    assert result.exit_code == 0 and "All spots are judged" in result.output
+
+
+def test_listen_reports_a_missing_stem(monkeypatch):
+    def boom():
+        raise RuntimeError("song: no cached drum stem")
+
+    monkeypatch.setattr(api, "next_listening_spot", boom)
+    result = CliRunner().invoke(cli.app, ["listen"])
+    assert result.exit_code == 1 and "drum stem" in result.output
