@@ -334,6 +334,14 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: test on a generated song (length, energy at the hit times); the owner listens to one own song with the clicks and confirms they sit on the drums
   - Dependencies: none · Files: `src/stickler/{api,audio}.py`, tests
 
+- [ ] **Task 40: Ctrl+C cancels `stickler notate` and `stickler setup`** (S) (owner, 2026-11-14)
+  - Today the adapter runs in its own session, so Ctrl+C ends the CLI but not the model, which keeps computing in the background.
+  - Acceptance:
+    - Ctrl+C during `notate` or `setup` sets a `CancelToken`; the running model or `uv`/`setup.py` process group ends, the CLI prints "Cancelled" and exits with code 130.
+    - The CLI still holds no logic beyond turning the signal into a cancel.
+  - Verify: CLI test with a sleeping dummy adapter and SIGINT (no process of the group left, exit code 130); by hand: Ctrl+C during `uv run stickler notate` on an uncached song, then `pgrep -f run.py` finds nothing
+  - Dependencies: 34, 36 · Files: `src/stickler/cli.py`, tests
+
 ### Checkpoint H
 - [ ] All 8 success criteria of SPEC.md `engine-api` met; review with the owner; decide whether this is a release of its own
 
