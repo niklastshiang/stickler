@@ -704,9 +704,27 @@ in light and dark, wide and narrow (screens 4, 5, 8 and 9 of `design`).
 7. **Languages:** every string goes through gettext; German is complete in the first version.
    Translations come in through Weblate later (owner's decision 2026-11-14): Weblate commits
    `po/*.po` to the repository, so outside pull requests stay off.
-8. **Keyboard:** every action is reachable by keyboard, and the shortcuts window lists them:
-   Ctrl+O open, Ctrl+E export menu, Escape cancel an analysis or export, Ctrl+W close the
-   window, Ctrl+Q quit, Ctrl+? shortcuts, F10 main menu.
+8. **Keyboard:** every action is reachable by keyboard, and the shortcuts window lists them.
+   GNOME HIG standard shortcuts (checked 2026-11-14): Ctrl+O open, Ctrl+W close the window,
+   Ctrl+Q quit, Ctrl+? shortcuts, F10 main menu. Not in the HIG but common: Escape cancels an
+   analysis or export, Ctrl+E opens the export menu (as in GIMP). Later modules use F9 for the
+   corrections sidebar (HIG "side pane") and Space for play/pause.
+9. **As few sandbox permissions as possible** (owner, 2026-11-14), so the code never needs more
+   than the Flatpak grants:
+
+   | Permission | Why | Module |
+   |---|---|---|
+   | `--socket=wayland`, `--socket=fallback-x11`, `--share=ipc` | Show a window (X11 only where there is no Wayland) | `app-shell` |
+   | `--device=dri` | Drawing on the GPU; without it GTK draws on the CPU, slower | `app-shell` |
+   | `--share=network` | Downloading the models on first start and Demucs for the drum track; the analysis itself runs offline | `setup-assistant` |
+   | `--socket=pulseaudio` | Playback (PipeWire through its PulseAudio interface) | `playback` |
+
+   No file system access: songs come in through the file chooser and drag and drop, which
+   go through the document portal; exports go out through the save dialog; "Open" in a toast
+   and opening a file in another app use the OpenURI portal. Models, environments and the
+   cache stay in the app's own folder (`~/.var/app/ng.tshia.Stickler/`). No GPU compute
+   (ROCm/CUDA would need `--device=all`): Fast takes about 15 s on the CPU. No access to other
+   programs (no `flatpak-spawn --host`).
 
 Not part of this module: the sheet music and the bar marker (`sheet-view`), playback and volume
 (`playback`), the corrections sidebar (`corrections`), the setup assistant (`setup-assistant`),
@@ -781,10 +799,12 @@ def _on_progress(self, step: api.Step) -> None:  # called on the worker thread
 
 - **Always:** only `stickler.api` from the app; models only in the worker thread; every user
   string through `_()`; screens as in `design`, or agree the change on the canvas first.
-- **Ask first:** a new dependency (Blueprint, a GTK test library); changing the mockups; the
+- **Ask first:** any sandbox permission beyond the table in Objective 9; a new dependency
+  (Blueprint, a GTK test library); changing the mockups; the
   CONSTRAINTS.md lines for `stickler_gtk` (proposed: logic in the 95% rule, `ui/` excluded).
 - **Never:** import GTK in `src/stickler` or in `stickler_gtk/logic`; block the main loop;
-  logic in widget code; strings shown to the user without translation.
+  logic in widget code; strings shown to the user without translation; read or write a file
+  outside the app's folder except through a portal (file chooser, drag and drop, save dialog).
 
 #### Success criteria
 
@@ -807,8 +827,17 @@ def _on_progress(self, step: api.Step) -> None:  # called on the worker thread
 
 - The Weblate project is set up by the owner (account, access to the repository) when the
   first outside language is wanted; until then only German, translated in the repository.
-- Whether "Open in MuseScore" (screen 8) stays: it needs MuseScore and belongs with the
-  MusicXML export; proposed for `sheet-view` together with the PDF.
+- Whether recent songs can be reopened after a restart inside the Flatpak depends on the
+  document portal keeping the access granted through the file chooser or drag and drop; to be
+  checked in the early Flatpak sandbox trial (`packaging`). If it does not, a recent song
+  whose result is cached still opens (the cache is the app's own), and only a new analysis
+  asks for the file again.
+
+#### Resolved questions (owner, 2026-11-14)
+
+- "Open in MuseScore" (screen 8) moves to `sheet-view`, next to the PDF. It becomes "Open
+  With…", the system's own app chooser (OpenURI portal) on the MusicXML file, which needs no
+  permission; starting MuseScore directly from the sandbox would need access to the host.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
