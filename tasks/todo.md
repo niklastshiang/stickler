@@ -229,6 +229,14 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: CliRunner tests with a fake player (answer, repeat, quit, resume); owner judges 3 spots as a trial
   - Dependencies: 24, 25 · Files: `src/stickler/{listen,api,cli}.py`, tests
 
+- [ ] **Task 29: Badges for `stickler listen`** (M) (SPEC.md, "Gamification")
+  - Acceptance:
+    - `rewards.earned(events)` gives the 11 badges from an events log (spot judged, loop played, half-speed loop, session started; with timestamps, without answers); banner texts in drummer humour.
+    - `stickler listen` records the events in `data/own/_listening/events.csv`, shows a banner when a badge is new and the collection on `q` and at the end.
+    - Badges never depend on verdicts, speed or results (by construction: events carry no answer; test).
+  - Verify: `uv run pytest tests/test_rewards.py tests/test_api.py tests/test_cli.py -k "reward or badge or listen"`; owner starts listening (the first 3 spots are also Task 26's trial)
+  - Dependencies: 26 · Files: `src/stickler/{rewards,api,cli}.py`, `tests/test_rewards.py`, tests
+
 ### Checkpoint F
 - [ ] The owner has judged all 100 spots (about an hour)
 
@@ -239,12 +247,19 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests with hand-computed counts and synthetic verdicts (can be built during Checkpoint F); `metrics.csv`/`summary.csv` unchanged
   - Dependencies: 23, 25 · Files: `src/stickler/{errors,api,report}.py`, tests
 
+- [ ] **Task 30: The finale** (S) (SPEC.md, "Gamification")
+  - Acceptance:
+    - After spot 100, and on every later `stickler listen`: a showdown of Fast against Quality (measured and corrected macro-F1, winner per class) and the badge collection.
+    - The README's nonsense row gets `ears: certified` (scripts/badges.py).
+  - Verify: CliRunner test with a fake API; owner sees the finale after spot 100
+  - Dependencies: 27, 29 · Files: `src/stickler/{api,cli}.py`, `scripts/badges.py`, tests
+
 - [ ] **Task 28: Report and release 3** (S)
   - Acceptance:
     - `docs/report.md`: section "Errors and reference quality" (breakdown, top confusions, corrected F1 with intervals, limits); section 1 quotes measured and corrected values.
     - README roadmap and status; release steps of ADR 0006; release notes in Keep a Changelog style.
   - Verify: all 5 success criteria of SPEC.md "Release 3"; `scripts/check.sh task`
-  - Dependencies: 27 · Files: `docs/report.md`, `README.md`, `tasks/todo.md`, version files
+  - Dependencies: 27, 30 · Files: `docs/report.md`, `README.md`, `tasks/todo.md`, version files
 
 ### Checkpoint G
 - [ ] All success criteria of SPEC.md "Release 3" met, review with the owner, then release 3

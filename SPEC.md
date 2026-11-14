@@ -303,6 +303,63 @@ class Spot:
    and the corrected numbers; section 1 ("In short") quotes measured and corrected values.
 5. Existing results are unchanged: `results/own/summary.csv` is identical before and after.
 
+### Gamification of `stickler listen` (owner's wish, 2026-11-14)
+
+> Status: **approved** by the owner on 2026-11-14; part of release 3. The owner starts listening only once the badges are in (Task 29).
+
+**Objective.** Judging 100 spots takes about an hour; badges and a finale make it fun to keep
+going. Owner's choice: badges and a big finale, in drummer humour like the README's nonsense
+badges (no ranks, sets or streaks).
+
+**Rule above all: the game must not bias the verdicts.**
+- Rewards depend only on *that* spots were judged, on time of day, sessions and the use of the
+  loops, never on *what* was answered (yes, no, unclear), never on speed.
+- Built so by construction: the reward code reads an events log that records "spot n judged",
+  "loop played", "session started" with a timestamp, but no answer.
+- No feedback per spot (nobody knows the truth, and it would reveal who claims the hit) and no
+  interim results; numbers only in the finale, after spot 100.
+
+**Badges** (English, like all messages; shown as a small ASCII banner when earned; `q` and the
+end list the collection, e.g. "7 of 11 badges"):
+
+| Badge | Earned when |
+|---|---|
+| `first hit` | the first spot is judged |
+| `warmed up` | 10 spots |
+| `quarter note` | 25 spots |
+| `neighbours: annoyed` | 50 spots |
+| `three-quarter time` | 75 spots |
+| `encore` | all 100 spots |
+| `night shift` | a spot judged between 0:00 and 5:00 |
+| `early bird` | a spot judged between 5:00 and 7:00 |
+| `slow motion` | the first loop at half speed |
+| `loop pedal` | 10 loops played in total |
+| `comeback tour` | a session on a later day than the previous one |
+
+**Big finale** (after spot 100, and on every later `stickler listen`): a "showdown" of Fast
+against Quality with measured and corrected macro-F1 and the per-class winners (needs Task 27),
+followed by the full badge collection. After the finale the README's nonsense row gets the badge
+`ears: certified` (scripts/badges.py).
+
+**Files.** `src/stickler/rewards.py` (pure: events → earned badges, banner texts),
+`data/own/_listening/events.csv` (gitignored), `api.py` (record events, earned badges, finale
+data), `cli.py` (banners and finale output only), `tests/test_rewards.py`.
+
+**Testing.** Unit tests for every badge rule with synthetic events (times, days, counts); a test
+that `rewards` cannot see verdict values (it only receives events, and events have no answer
+field); CliRunner tests for a banner and the finale with a fake API.
+
+**Boundaries.**
+- Always: the rule above; badges are earned once and never lost.
+- Ask first: any reward that depends on answers, speed or results.
+- Never: interim results or per-spot feedback; publishing events or verdicts.
+
+**Success criteria.**
+1. Each of the 11 badges is earned exactly at its trigger (tests) and shown once.
+2. Nothing in `rewards.py` or `events.csv` can depend on a verdict (test and code review).
+3. After spot 100, `stickler listen` shows the showdown with measured and corrected values and
+   the collection; the README carries `ears: certified`.
+
 ### Resolved questions
 1. **Blind judgement** (step 3) instead of hearing reference and model clicks side by side:
    approved by the owner on 2026-11-14. It keeps the owner from favouring either side and lets

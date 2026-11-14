@@ -39,8 +39,11 @@ Architecture decisions:
   appended to `verdicts.csv`, so quitting and resuming loses nothing.
 
 Order: categories (22) → `stickler errors` end to end (23) → snippets (24, perceptual risk,
-early) → sample (25) → listening loop (26) → owner listens (Checkpoint F) → correction (27, can
-be built while the owner listens, on synthetic verdicts) → report and release (28).
+early) → sample (25) → listening loop (26) → badges (29, owner's wish: listening starts
+only once they are in) → owner listens (Checkpoint F) → correction (27, can
+be built while the owner listens, on synthetic verdicts) → finale (30) → report and release (28).
+
+Gamification: rewards read an events log without answers, so they cannot bias the verdicts.
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
