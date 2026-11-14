@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import bisect
 import random
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
 
@@ -224,3 +224,102 @@ def draw_sample(all_spots: list[Spot], per_class_side: int, seed: int = SEED) ->
     ]
     rng.shuffle(sample)
     return sample
+
+
+# --- Correction for reference errors (SPEC.md, "Release 3", step 4) -----------------------
+
+BOOTSTRAP = 2000  # resamples of the verdicts for the 95 % interval
+
+
+@dataclass(frozen=True)
+class Corrected:
+    measured: float  # F1 against the reference as it is
+    corrected: float  # F1 with the estimated reference errors taken out
+    low: float  # 95 % bootstrap interval of `corrected` over the verdicts
+    high: float
+    bound_low: float  # `corrected` with every "unclear" counted as a model error ...
+    bound_high: float  # ... and as a reference error
+    n_ref: int  # judged spots of this pipeline (incl. unclear) the reference claims
+    n_est: int  # ... the pipeline claims
+    unclear: int
+    r_ref: float | None  # share of reference errors among the reference's spots (None: none)
+    r_est: float | None  # share of reference errors among the pipeline's spots
+
+
+def _share(verdicts: Sequence[str], reference_wrong: str) -> float | None:
+    """Share of reference errors among the yes/no answers: a hit the reference claims is
+    wrong if the answer is "no", a hit only the model claims is real if it is "yes"."""
+    judged = [v for v in verdicts if v != "unclear"]
+    return sum(v == reference_wrong for v in judged) / len(judged) if judged else None
+
+
+def _corrected_f1(prf, r_ref: float | None, r_est: float | None) -> float:
+    r_ref, r_est = r_ref or 0.0, r_est or 0.0
+    tp = prf.tp + prf.fp * r_est
+    fp, fn = prf.fp * (1 - r_est), prf.fn * (1 - r_ref)
+    if not tp + fp + fn:
+        return 1.0  # every reference hit of the class was wrong and the model wrote none
+    return 2 * tp / (2 * tp + fp + fn)
+
+
+def correct(
+    counts: Mapping[str, object],
+    judged: Sequence[tuple[Spot, str]],
+    pipeline: str,
+    *,
+    n_boot: int = BOOTSTRAP,
+    seed: int = SEED,
+) -> dict[str, Corrected]:
+    """Measured and corrected F1 per class of `counts` (tp/fp/fn summed over the songs) and
+    "macro" (mean over the classes with measured reference hits), from the verdicts on the
+    spots in `pipeline`'s own error set:
+    fn' = fn·(1 − r_ref), tp' = tp + fp·r_est, fp' = fp·(1 − r_est)."""
+    groups: dict[tuple[str, str], list[str]] = {(c, s): [] for c in counts for s in ("ref", "est")}
+    for spot, verdict in judged:
+        if pipeline in spot.pipelines and (spot.cls, spot.side) in groups:
+            groups[(spot.cls, spot.side)].append(verdict)
+    scored = [c for c, p in counts.items() if p.tp + p.fn]
+
+    def f1s(g: Mapping[tuple[str, str], Sequence[str]]) -> dict[str, float]:
+        out = {
+            c: _corrected_f1(counts[c], _share(g[(c, "ref")], "no"), _share(g[(c, "est")], "yes"))
+            for c in counts
+        }
+        out["macro"] = float(np.mean([out[c] for c in scored])) if scored else 0.0
+        return out
+
+    def unclear_as(ref: str, est: str) -> dict[str, float]:
+        return f1s(
+            {
+                key: [(ref if key[1] == "ref" else est) if v == "unclear" else v for v in vs]
+                for key, vs in groups.items()
+            }
+        )
+
+    measured = f1s({key: [] for key in groups})
+    point = f1s(groups)
+    as_model_errors, as_reference_errors = unclear_as("yes", "no"), unclear_as("no", "yes")
+    rng = np.random.default_rng(seed)
+    boots = [
+        f1s({k: [vs[i] for i in rng.integers(0, len(vs), len(vs))] for k, vs in groups.items()})
+        for _ in range(n_boot)
+    ]
+    out = {}
+    for c in [*counts, "macro"]:
+        low, high = np.percentile([b[c] for b in boots], [2.5, 97.5])
+        mine = [groups[k] for k in groups if c in ("macro", k[0])]
+        refs = [vs for k, vs in groups.items() if k[1] == "ref" and c in ("macro", k[0])]
+        out[c] = Corrected(
+            measured=measured[c],
+            corrected=point[c],
+            low=float(low),
+            high=float(high),
+            bound_low=min(as_model_errors[c], as_reference_errors[c]),
+            bound_high=max(as_model_errors[c], as_reference_errors[c]),
+            n_ref=sum(len(vs) for vs in refs),
+            n_est=sum(len(vs) for vs in mine) - sum(len(vs) for vs in refs),
+            unclear=sum(v == "unclear" for vs in mine for v in vs),
+            r_ref=None if c == "macro" else _share(groups[(c, "ref")], "no"),
+            r_est=None if c == "macro" else _share(groups[(c, "est")], "yes"),
+        )
+    return out

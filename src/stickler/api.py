@@ -25,6 +25,7 @@ from stickler import (
     combine,
     doctor,
     errors,
+    evaluate,
     fusion,
     grid,
     listen,
@@ -267,8 +268,11 @@ def evaluate_benchmark(
     adapters_root: Path = ADAPTERS_ROOT,
     results_dir: Path = RESULTS_DIR,
     only: set[str] | None = None,
+    listening_dir: Path | None = None,
 ) -> list[dict]:
-    """Scores the cached results (computes nothing); writes metrics.csv and summary.csv."""
+    """Scores the cached results (computes nothing); writes metrics.csv and summary.csv, and
+    for the own songs corrected.csv once every listening spot is judged."""
+    listening_dir = listening_dir or LISTENING_DIR
     cfg, tracks, records = _all_records(
         config_path,
         device=device,
@@ -283,6 +287,15 @@ def evaluate_benchmark(
     summary = summarize(rows)
     write_csv(results_dir / "metrics.csv", rows)
     write_csv(results_dir / "summary.csv", summary)
+    if cfg.datasets == ["own"]:  # the listening sample is drawn from the own songs
+        corrected_scores(
+            config_path,
+            listening_dir=listening_dir,
+            results_dir=results_dir,
+            data_dir=data_dir,
+            cache_dir=cache_dir,
+            adapters_root=adapters_root,
+        )
     return summary
 
 
@@ -451,6 +464,51 @@ def _song_audio(
             f"{song}: no cached drum stem, run `stickler run --config config/own.yaml` first"
         )
     return audio.load_mono(track.mix, listen.SR), audio.load_mono(res.output, listen.SR)
+
+
+def corrected_scores(
+    config_path: Path = OWN_CONFIG,
+    pipelines: tuple[str, ...] | list[str] = ERROR_PIPELINES,
+    *,
+    listening_dir: Path = LISTENING_DIR,
+    results_dir: Path = RESULTS_DIR / "own",
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> list[dict] | None:
+    """Measured and corrected F1 per pipeline and class (errors.correct), written to
+    corrected.csv. None until every spot of the sample is judged: no interim results."""
+    sample = load_listening_sample(listening_dir)
+    verdicts = load_verdicts(listening_dir)
+    if not sample or any(n not in verdicts for n in range(1, len(sample) + 1)):
+        return None
+    found = error_breakdowns(
+        config_path, pipelines, data_dir=data_dir, cache_dir=cache_dir, adapters_root=adapters_root
+    )
+    classes = list(load_schemes(CLASSES)["5"].classes)
+    pooled = errors.pool(
+        [
+            {"pipeline": label, **row}
+            for (_, _, label), b in found.items()
+            for row in errors.count_rows(b, classes)
+        ]
+    )
+    judged = [(spot, verdicts[n]) for n, spot in enumerate(sample, 1)]
+    rows = []
+    for label in pipelines:
+        counts = {
+            r["class"]: evaluate.PRF(
+                tp=r["tp"],
+                fp=r["invented"] + r["off_time"] + r["confused_est"],
+                fn=r["missed"] + r["off_time"] + r["confused_ref"],
+            )
+            for r in pooled
+            if r["pipeline"] == label
+        }
+        for cls, c in errors.correct(counts, judged, label).items():
+            rows.append({"pipeline": label, "class": cls, **dataclasses.asdict(c)})
+    write_csv(results_dir / "corrected.csv", rows)
+    return rows
 
 
 def listening_snippet(
@@ -699,9 +757,14 @@ def write_report(config_paths: list[Path] | None = None, results_dir: Path = RES
         for name, folder in folders.items()
         if (folder / "summary.csv").is_file()
     }
+    corrected = {
+        name: report.read_corrected(folder / "corrected.csv")
+        for name, folder in folders.items()
+        if (folder / "corrected.csv").is_file()
+    }
     path = results_dir / "report.html"
     results_dir.mkdir(parents=True, exist_ok=True)
-    path.write_text(report.render(configs), encoding="utf-8")
+    path.write_text(report.render(configs, corrected), encoding="utf-8")
     return path
 
 

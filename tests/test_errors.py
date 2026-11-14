@@ -141,3 +141,68 @@ def test_the_sample_is_reproducible_and_shuffled():
 def test_a_small_group_is_taken_whole():
     spots = [errors.Spot("s", 1.0, "TT", "ref", frozenset({"p"}))]
     assert errors.draw_sample(spots, per_class_side=10, seed=1) == spots
+
+
+def _judged(cls, side, verdicts, pipelines=("fast",)):
+    return [
+        (errors.Spot("s", float(k), cls, side, frozenset(pipelines)), v)
+        for k, v in enumerate(verdicts)
+    ]
+
+
+COUNTS = {"SD": evaluate.PRF(tp=8, fp=2, fn=2)}
+
+
+def test_correction_by_hand():
+    judged = _judged("SD", "ref", ["no", "no", "yes", "yes"])
+    judged += _judged("SD", "est", ["yes", "no", "no", "no"])
+    c = errors.correct(COUNTS, judged, "fast")["SD"]
+    assert c.measured == pytest.approx(0.8)
+    assert (c.r_ref, c.r_est) == (0.5, 0.25)
+    assert c.corrected == pytest.approx(17 / 19.5)  # tp 8.5, fp 1.5, fn 1
+    assert (c.n_ref, c.n_est, c.unclear) == (4, 4, 0)
+
+
+def test_without_verdicts_nothing_is_corrected():
+    c = errors.correct(COUNTS, [], "fast")["SD"]
+    assert c.corrected == c.measured == c.low == c.high and c.r_ref is None
+
+
+def test_only_the_pipelines_own_spots_count():
+    judged = _judged("SD", "ref", ["no", "no"], pipelines=("quality",))
+    assert errors.correct(COUNTS, judged, "fast")["SD"].corrected == pytest.approx(0.8)
+
+
+def test_unclear_is_left_out_but_bounds_count_it_either_way():
+    judged = _judged("SD", "ref", ["no", "yes", "unclear", "unclear"])
+    c = errors.correct(COUNTS, judged, "fast")["SD"]
+    assert c.r_ref == 0.5 and c.unclear == 2
+    as_ref_errors = 16 / (16 + 2 + 2 * (1 - 3 / 4))  # unclear = "no": 3 of 4 reference errors
+    as_model_errors = 16 / (16 + 2 + 2 * (1 - 1 / 4))
+    assert (c.bound_low, c.bound_high) == pytest.approx((as_model_errors, as_ref_errors))
+
+
+def test_unanimous_verdicts_leave_no_room_for_the_bootstrap():
+    c = errors.correct(COUNTS, _judged("SD", "ref", ["no"] * 5), "fast")["SD"]
+    assert c.low == pytest.approx(c.corrected) == pytest.approx(c.high)
+
+
+def test_bootstrap_interval_contains_the_estimate_and_is_reproducible():
+    judged = _judged("SD", "ref", ["no", "yes"] * 5) + _judged("SD", "est", ["yes", "no", "no"])
+    a = errors.correct(COUNTS, judged, "fast")["SD"]
+    assert a.low < a.corrected < a.high
+    assert errors.correct(COUNTS, judged, "fast")["SD"] == a
+
+
+def test_macro_is_the_mean_over_classes_with_reference_hits():
+    counts = {**COUNTS, "TT": evaluate.PRF(tp=1, fp=1, fn=0), "CY": evaluate.PRF(0, 3, 0)}
+    c = errors.correct(counts, _judged("SD", "ref", ["no", "yes"]), "fast")
+    expected = (c["SD"].corrected + c["TT"].corrected) / 2  # CY has no reference hits
+    assert c["macro"].corrected == pytest.approx(expected)
+    assert c["macro"].measured == pytest.approx((0.8 + 2 / 3) / 2)
+
+
+def test_a_class_whose_only_reference_hits_were_wrong_is_perfect():
+    # the reference claims one snare the model rightly left out: nothing to find, nothing found
+    counts = {"SD": evaluate.PRF(tp=0, fp=0, fn=1)}
+    assert errors.correct(counts, _judged("SD", "ref", ["no"]), "fast")["SD"].corrected == 1.0

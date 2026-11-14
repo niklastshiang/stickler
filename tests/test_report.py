@@ -141,3 +141,34 @@ def test_read_summary_parses_numbers_and_blank_classes(tmp_path):
     assert row["tracks"] == 5 and row["macro_f1"] == 0.4
     assert row["f1_KD"] == 0.7 and row["f1_CY"] is None
     assert row["audio_seconds"] == 0.0 and row["device"] == ""  # old CSV without new columns
+
+
+def crow(pipeline="none+adtof", cls="macro", measured=0.77, corrected=0.82, **kw):
+    row = {"pipeline": pipeline, "class": cls, "measured": measured, "corrected": corrected}
+    row |= {"low": 0.79, "high": 0.85, "bound_low": 0.80, "bound_high": 0.84}
+    row |= {"n_ref": 50, "n_est": 40, "unclear": 6, "r_ref": "", "r_est": ""}
+    row.update(kw)
+    return row
+
+
+def test_corrected_scores_are_shown_next_to_the_measured_ones():
+    html = report.render({"own": [srow(dataset="own")]}, {"own": [crow(), crow(cls="SD")]})
+    assert "reference errors judged by ear" in html
+    assert "0.770" in html and "0.820" in html and "0.790–0.850" in html
+    assert "0.800–0.840" in html and "50 / 40" in html
+
+
+def test_no_corrected_section_without_verdicts():
+    assert "judged by ear" not in page([srow()])
+
+
+def test_corrected_csv_is_read_back(tmp_path):
+    import csv
+
+    path = tmp_path / "corrected.csv"
+    with path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(crow()))
+        writer.writeheader()
+        writer.writerow(crow())
+    (row,) = report.read_corrected(path)
+    assert row["corrected"] == 0.82 and row["n_ref"] == 50 and row["class"] == "macro"

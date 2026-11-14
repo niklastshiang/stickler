@@ -445,6 +445,17 @@ def test_write_report_reads_default_and_subfolders(tmp_path):
     assert "Config: default" in html and "Config: own_songs" in html
 
 
+def test_write_report_shows_corrected_scores_when_there_are_any(tmp_path):
+    _write_summary(tmp_path / "own")
+    (tmp_path / "own" / "corrected.csv").write_text(
+        "pipeline,class,measured,corrected,low,high,bound_low,bound_high,n_ref,n_est,unclear,"
+        "r_ref,r_est\nnone+adtof,macro,0.77,0.82,0.79,0.85,0.8,0.84,50,40,6,,\n",
+        encoding="utf-8",
+    )
+    html = api.write_report(results_dir=tmp_path).read_text(encoding="utf-8")
+    assert "judged by ear" in html and "0.820" in html
+
+
 def test_write_report_for_given_configs(tmp_path):
     _write_summary(tmp_path)
     _write_summary(tmp_path / "own_songs")
@@ -927,3 +938,31 @@ def test_encore_counts_the_spots_of_the_drawn_sample(monkeypatch, tmp_path):
 def test_unknown_listening_event(tmp_path):
     with pytest.raises(ValueError, match="dance"):
         api.record_listening_event("dance", listening_dir=tmp_path)
+
+
+def test_corrected_scores_only_once_every_spot_is_judged(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0
+    cfg = _bench(tmp_path)
+    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    api.run_benchmark(cfg, **kw)
+    where, out = tmp_path / "listening", tmp_path / "results"
+    pipes = ["combo+kick"]
+    api.draw_listening_sample(cfg, pipes, listening_dir=where, **kw)  # one spot: the snare
+    args = {"listening_dir": where, "results_dir": out, **kw}
+    assert api.corrected_scores(cfg, pipes, **args) is None  # no interim results
+    api.record_verdict(1, "yes", listening_dir=where)
+    rows = api.corrected_scores(cfg, pipes, **args)
+    by = {r["class"]: r for r in rows}
+    assert by["SD"]["measured"] == by["SD"]["corrected"] == 0.0 and by["SD"]["n_ref"] == 1
+    assert by["KD"]["corrected"] == 1.0 and "macro" in by
+    assert (out / "corrected.csv").read_text().startswith("pipeline,class,measured,corrected")
+
+
+def test_eval_of_the_own_songs_adds_the_corrected_scores(monkeypatch, tmp_path):
+    cfg = api.BenchmarkConfig(["own"], ["none"], ["adtof"], "cpu", ["5"])
+    monkeypatch.setattr(api, "_all_records", lambda *a, **k: (cfg, {}, []))
+    called = []
+    monkeypatch.setattr(api, "corrected_scores", lambda *a, **k: called.append(k["results_dir"]))
+    api.evaluate_benchmark(tmp_path / "own.yaml", results_dir=tmp_path)
+    assert called == [tmp_path]

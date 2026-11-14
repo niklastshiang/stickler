@@ -240,7 +240,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint F
 - [ ] The owner has judged all 100 spots (about an hour)
 
-- [ ] **Task 27: Corrected scores** (M)
+- [x] **Task 27: Corrected scores** (M)
   - Acceptance:
     - `errors.correct(counts, verdicts)`: per pipeline and class r_ref and r_est from the pipeline's own spots, corrected tp/fp/fn and F1, 95 % bootstrap interval, n and share of *unclear*, bounds with *unclear* counted either way.
     - `stickler eval --config config/own.yaml` writes `results/own/corrected.csv` once verdicts exist; `report.html` shows measured and corrected values side by side.

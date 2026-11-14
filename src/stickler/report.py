@@ -75,6 +75,49 @@ def read_summary(path: Path) -> list[dict]:
     return parsed
 
 
+_CORRECTED_FLOATS = ("measured", "corrected", "low", "high", "bound_low", "bound_high")
+
+
+def read_corrected(path: Path) -> list[dict]:
+    """Reads corrected.csv (stickler.errors.correct per pipeline and class)."""
+    with path.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    for row in rows:
+        for key in _CORRECTED_FLOATS:
+            row[key] = float(row[key])
+        for key in ("n_ref", "n_est", "unclear"):
+            row[key] = int(row[key])
+    return rows
+
+
+def _corrected_section(name: str, rows: list[dict]) -> str:
+    table = _table(
+        rows,
+        [
+            ("Pipeline", lambda r: r["pipeline"], "", None),
+            ("Class", lambda r: r["class"], "", None),
+            ("Measured F1", lambda r: r["measured"], ".3f", None),
+            ("Corrected F1", lambda r: r["corrected"], ".3f", None),
+            ("95 % interval", lambda r: f"{r['low']:.3f}–{r['high']:.3f}", "", None),
+            (
+                "Unclear either way",
+                lambda r: f"{r['bound_low']:.3f}–{r['bound_high']:.3f}",
+                "",
+                None,
+            ),
+            ("Spots ref / model", lambda r: f"{r['n_ref']} / {r['n_est']}", "", None),
+            ("Unclear", lambda r: r["unclear"], ".0f", None),
+        ],
+    )
+    return (
+        f"<h2>Config: {escape(name)}: reference errors judged by ear</h2>"
+        '<p class="muted">Measured: against the reference as it is. Corrected: with the share '
+        "of reference errors estimated from the spots judged blind by ear taken out "
+        '(SPEC.md, "Release 3"). Interval: bootstrap over the verdicts.</p>'
+        f"{table}"
+    )
+
+
 def _rtf(row: dict) -> float | None:
     if row["audio_seconds"] <= 0:
         return None
@@ -184,13 +227,15 @@ def _device_note(all_rows: list[dict]) -> str:
     return ""
 
 
-def render(configs: dict[str, list[dict]]) -> str:
-    """The complete HTML page for {config name: summary rows}."""
+def render(configs: dict[str, list[dict]], corrected: dict[str, list[dict]] | None = None) -> str:
+    """The complete HTML page for {config name: summary rows}, plus corrected scores
+    {config name: corrected rows} where reference errors were judged by ear."""
     all_rows = [r for rows in configs.values() for r in rows]
     if all_rows:
         body = _device_note(all_rows) + "".join(
             _config_section(name, rows) for name, rows in configs.items() if rows
         )
+        body += "".join(_corrected_section(n, rows) for n, rows in (corrected or {}).items())
     else:
         body = "<p>No results found. Run <code>stickler eval</code> first.</p>"
     return (
