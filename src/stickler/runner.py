@@ -11,6 +11,7 @@ import ast
 import hashlib
 import json
 import logging
+import sys
 import threading
 import tomllib
 from collections.abc import Callable
@@ -91,6 +92,11 @@ def _sha1_file(path: Path) -> str:
         return hashlib.file_digest(f, "sha1").hexdigest()
 
 
+# Python 3.13 stopped printing empty fields in ast.dump; show_empty=True gives 3.12's output, so a
+# harness on 3.13 or 3.14 (the GTK app) computes the same cache keys as one on 3.12.
+_DUMP_AS_312 = {"show_empty": True} if sys.version_info >= (3, 13) else {}
+
+
 def _canonical(path: Path) -> bytes:
     """What defines an adapter's behaviour: Python as syntax tree without docstrings (comments
     are not part of it), TOML as parsed data. Comments and translations do not change it."""
@@ -107,7 +113,7 @@ def _canonical(path: Path) -> bytes:
                 and isinstance(body[0].value.value, str)
             ):
                 node.body = body[1:] or [ast.Pass()]
-        return ast.dump(tree).encode()
+        return ast.dump(tree, **_DUMP_AS_312).encode()
     if path.suffix == ".toml":
         return json.dumps(tomllib.loads(text), sort_keys=True).encode()
     return text.encode()
