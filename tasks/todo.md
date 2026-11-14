@@ -375,7 +375,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: logic tests; `scripts/gtk.sh test` with a fake `stickler.api` from drop to result; by hand: an uncached own song shows the three steps, a cached one reaches the result in < 1 s
   - Dependencies: 42 · Files: `src/stickler/api.py`, `src/stickler_gtk/logic/{session,steps,paths}.py`, `src/stickler_gtk/ui/*`, tests
 
-- [ ] **Task 44: Cancel and errors** (S)
+- [x] **Task 44: Cancel and errors** (S): done 2026-11-14. The analysis job is `logic/analysis.py`; every analysis has a job number, so reports of a cancelled or replaced one are ignored. Error pages: models not set up (the commands, open), unreadable file, failed analysis (Try Again, technical details folded). Real models: cancel through the window's action ends ADTOF's group in 0.07 s, nothing cached. Found on the way: ending the app by a signal or closing it left a half-written cache folder, because the process ended before the cancelled worker cleaned up; the window now cancels and waits for its job on close-request (0.04 s), and SIGINT/SIGTERM close the window first (`GLibUnix.signal_add`, not the deprecated `GLib.unix_signal_add`). A second start hands the song to the running instance (GApplication).
   - Acceptance:
     - "Cancel" and Escape set the token; the window returns to the previous page within 1 s.
     - Error pages for `SetupMissing` (names the models and `stickler setup --adapter …`), a failed analysis ("Try Again", the technical message folded away) and an unreadable file.

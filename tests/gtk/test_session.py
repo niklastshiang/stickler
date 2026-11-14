@@ -23,32 +23,31 @@ def test_an_unknown_step_still_gets_a_row():
 
 
 def test_fast_is_planned_as_three_waiting_steps():
-    rows = session.open_song(Path("song.flac")).steps
+    rows = session.open_song(Path("song.flac"), session.Empty()).steps
     assert [r.id for r in rows] == ["transcribe", "beats", "engrave"]
     assert {r.state for r in rows} == {"waiting"}
 
 
 def test_progress_moves_each_step_from_waiting_to_running_to_done():
-    state = session.open_song(Path("song.flac"))
-    state = session.on_step(state, _step("transcribe", 1, 3, "started"))
+    state = session.open_song(Path("song.flac"), session.Empty())
+    state = session.on_step(state, state.job, _step("transcribe", 1, 3, "started"))
     assert [r.state for r in state.steps] == ["running", "waiting", "waiting"]
-    state = session.on_step(state, _step("transcribe", 1, 3, "done"))
-    state = session.on_step(state, _step("beats", 2, 3, "started"))
+    state = session.on_step(state, state.job, _step("transcribe", 1, 3, "done"))
+    state = session.on_step(state, state.job, _step("beats", 2, 3, "started"))
     assert [r.state for r in state.steps] == ["done", "running", "waiting"]
 
 
 def test_steps_the_plan_did_not_expect_are_added():
-    state = session.open_song(Path("song.flac"))
-    state = session.on_step(state, _step("separate", 4, 4, "started"))
+    state = session.open_song(Path("song.flac"), session.Empty())
+    state = session.on_step(state, state.job, _step("separate", 4, 4, "started"))
     assert [r.id for r in state.steps] == ["transcribe", "beats", "engrave", "separate"]
     assert state.steps[3].state == "running"
 
 
 def test_progress_after_the_analysis_changes_nothing():
-    result = session.finished(
-        session.open_song(Path("s.flac")), api.SongInfo("T", "A", 1.0), _notation()
-    )
-    assert session.on_step(result, _step("engrave", 3, 3, "done")) is result
+    state = session.open_song(Path("s.flac"), session.Empty())
+    result = session.finished(state, state.job, api.SongInfo("T", "A", 1.0), _notation())
+    assert session.on_step(result, state.job, _step("engrave", 3, 3, "done")) is result
 
 
 def _notation(tempo=109, meter=(4, 4)):
@@ -57,19 +56,23 @@ def _notation(tempo=109, meter=(4, 4)):
 
 
 def test_the_result_names_artist_tempo_and_meter():
-    state = session.open_song(Path("eye.flac"))
-    result = session.finished(
-        state, api.SongInfo("Eye of the Tiger", "Survivor", 246.0), _notation()
-    )
+    state = session.open_song(Path("eye.flac"), session.Empty())
+    info = api.SongInfo("Eye of the Tiger", "Survivor", 246.0)
+    result = session.finished(state, state.job, info, _notation())
     assert result.title == "Eye of the Tiger"
     assert result.subtitle == "Survivor · ♩ = 109 · 4/4"
-    untagged = session.finished(state, api.SongInfo("eye", "", 1.0), _notation(96, (3, 4)))
+    untagged = session.finished(
+        state, state.job, api.SongInfo("eye", "", 1.0), _notation(96, (3, 4))
+    )
     assert untagged.subtitle == "♩ = 96 · 3/4"
 
 
-def test_a_failed_analysis_returns_to_the_empty_window_with_the_reason():
-    state = session.failed(session.open_song(Path("s.flac")), "ffmpeg: no audio")
-    assert isinstance(state, session.Empty) and state.message == "ffmpeg: no audio"
+def test_a_failed_analysis_leads_to_an_error_page_that_can_go_back():
+    empty = session.Empty()
+    state = session.open_song(Path("s.flac"), empty)
+    error = session.failed(state, state.job, RuntimeError("ffmpeg: no audio"))
+    assert isinstance(error, session.Failed) and error.details == "ffmpeg: no audio"
+    assert error.previous is empty
 
 
 def test_only_audio_files_are_taken():

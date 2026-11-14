@@ -3,9 +3,10 @@
 
 from __future__ import annotations
 
+import signal
 from pathlib import Path
 
-from gi.repository import Adw, Gdk, Gio, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, GLibUnix, Gtk
 
 from stickler_gtk import APP_ID
 from stickler_gtk.ui.window import Window
@@ -17,7 +18,7 @@ STYLE = """
   background: color-mix(in srgb, var(--accent-bg-color) 8%, transparent); }
 """
 
-ACCELS = {"win.open": ["<Control>o"]}
+ACCELS = {"win.open": ["<Control>o"], "win.cancel": ["Escape"]}
 
 
 class Application(Adw.Application):
@@ -33,6 +34,16 @@ class Application(Adw.Application):
         )
         for action, keys in ACCELS.items():
             self.set_accels_for_action(action, keys)
+        # Models run in their own process group; ending the app by a signal (Ctrl+C in a
+        # terminal, logging out) cancels them first, as closing the window does.
+        for signum in (signal.SIGINT, signal.SIGTERM):
+            GLibUnix.signal_add(GLib.PRIORITY_DEFAULT, signum, self._quit_on_signal)
+
+    def _quit_on_signal(self) -> bool:
+        for window in self.get_windows():
+            window.close()  # the window cancels its job and waits for it on close-request
+        self.quit()
+        return GLib.SOURCE_REMOVE
 
     def _window(self) -> Window:
         window = self.get_active_window() or Window(application=self)

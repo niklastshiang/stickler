@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-14 16:07+0100\n"
+"POT-Creation-Date: 2026-11-14 16:14+0100\n"
 "PO-Revision-Date: 2026-11-14 16:03+0100\n"
 "Last-Translator: Stickler maintainers\n"
 "Language-Team: none\n"
@@ -16,6 +16,32 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/stickler_gtk/logic/session.py:102
+msgid ""
+"Stickler needs these models before it can listen: {models}. Set them up once "
+"in a terminal:"
+msgstr "Stickler braucht diese Modelle, bevor es zuhören kann: {models}. Richten Sie sie einmal im Terminal ein:"
+
+#: src/stickler_gtk/logic/session.py:106
+msgid "Models Not Set Up"
+msgstr "Modelle nicht eingerichtet"
+
+#: src/stickler_gtk/logic/session.py:109
+msgid "“{name}” cannot be read. Is it a complete sound file?"
+msgstr "„{name}“ kann nicht gelesen werden. Ist es eine vollständige Audiodatei?"
+
+#: src/stickler_gtk/logic/session.py:113
+msgid "Cannot Read This File"
+msgstr "Datei kann nicht gelesen werden"
+
+#: src/stickler_gtk/logic/session.py:118
+msgid "Something went wrong while listening to “{name}”."
+msgstr "Beim Anhören von „{name}“ ist etwas schiefgegangen."
+
+#: src/stickler_gtk/logic/session.py:120
+msgid "The Analysis Failed"
+msgstr "Die Analyse ist fehlgeschlagen"
 
 #: src/stickler_gtk/logic/steps.py:13
 msgid "Only the drum track, without the band"
@@ -85,26 +111,46 @@ msgstr "Wartet"
 msgid "Open…"
 msgstr "Öffnen …"
 
-#: src/stickler_gtk/ui/window.py:68 src/stickler_gtk/ui/window.py:107
+#: src/stickler_gtk/ui/window.py:68 src/stickler_gtk/ui/window.py:139
 msgid "Open a Song"
 msgstr "Song öffnen"
 
 #: src/stickler_gtk/ui/window.py:74
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: src/stickler_gtk/ui/window.py:80
 msgid "Writing the Drum Part"
 msgstr "Schlagzeugstimme wird geschrieben"
 
-#: src/stickler_gtk/ui/window.py:79
+#: src/stickler_gtk/ui/window.py:84 src/stickler_gtk/ui/window.py:215
+msgid "Technical Details"
+msgstr "Technische Details"
+
+#: src/stickler_gtk/ui/window.py:86
+msgid "Try Again"
+msgstr "Erneut versuchen"
+
+#: src/stickler_gtk/ui/window.py:89
+msgid "Open Another Song…"
+msgstr "Anderen Song öffnen …"
+
+#: src/stickler_gtk/ui/window.py:100
 msgid "The Notes Are Ready"
 msgstr "Die Noten sind fertig"
 
-#: src/stickler_gtk/ui/window.py:80
+#: src/stickler_gtk/ui/window.py:101
 msgid "The sheet music will be shown here."
 msgstr "Hier werden die Noten angezeigt."
 
-#: src/stickler_gtk/ui/window.py:103
+#: src/stickler_gtk/ui/window.py:135
 msgid "Songs"
 msgstr "Songs"
 
-#: src/stickler_gtk/ui/window.py:122
+#: src/stickler_gtk/ui/window.py:154
 msgid "Not an audio file"
 msgstr "Keine Audiodatei"
+
+#: src/stickler_gtk/ui/window.py:215
+msgid "Commands"
+msgstr "Befehle"

@@ -18,6 +18,21 @@ LABELS = {
 }
 FAST = ("transcribe", "beats", "engrave")  # what Fast runs with pdf=False
 
+# adapter id → the model's own name, as its authors write it
+MODEL_NAMES = {
+    "adtof": "ADTOF",
+    "beat_this": "Beat This!",
+    "demucs": "Demucs",
+    "roformer": "BS-RoFormer",
+    "muscriptor_m": "MuScriptor",
+    "muscriptor_s": "MuScriptor",
+    "adt_str": "ADT_STR",
+}
+
+
+def model_name(adapter: str) -> str:
+    return MODEL_NAMES.get(adapter, adapter)
+
 
 @dataclass(frozen=True)
 class StepRow:

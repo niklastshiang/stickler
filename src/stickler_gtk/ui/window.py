@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 from gi.repository import Adw, Gdk, Gio, Gtk
@@ -10,7 +11,7 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 from stickler import api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
-from stickler_gtk.logic import paths, session
+from stickler_gtk.logic import analysis, paths, session
 from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import worker
 
@@ -70,10 +71,31 @@ class Window(Adw.ApplicationWindow):
         )
 
         self.steps = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
-        self.analysing = Adw.StatusPage(
-            title=_("Writing the Drum Part"),
-            child=Adw.Clamp(maximum_size=460, child=self.steps),
+        cancel_button = Gtk.Button(
+            label=_("Cancel"), halign=Gtk.Align.CENTER, action_name="win.cancel"
         )
+        cancel_button.add_css_class("pill")
+        analysing_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
+        analysing_box.append(Adw.Clamp(maximum_size=460, child=self.steps))
+        analysing_box.append(cancel_button)
+        self.analysing = Adw.StatusPage(title=_("Writing the Drum Part"), child=analysing_box)
+
+        self.error_details = Gtk.Label(selectable=True, wrap=True, xalign=0)
+        self.error_details.add_css_class("monospace")
+        self.error_expander = Gtk.Expander(label=_("Technical Details"))
+        self.error_expander.set_child(self.error_details)
+        self.retry_button = Gtk.Button(label=_("Try Again"), action_name="win.retry")
+        self.retry_button.add_css_class("pill")
+        self.retry_button.add_css_class("suggested-action")
+        other_button = Gtk.Button(label=_("Open Another Song…"), action_name="win.open")
+        other_button.add_css_class("pill")
+        buttons = Gtk.Box(spacing=12, halign=Gtk.Align.CENTER)
+        buttons.append(other_button)
+        buttons.append(self.retry_button)
+        error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
+        error_box.append(Adw.Clamp(maximum_size=560, child=self.error_expander))
+        error_box.append(buttons)
+        self.error = Adw.StatusPage(icon_name="dialog-warning-symbolic", child=error_box)
         self.result = Adw.StatusPage(
             icon_name="emblem-ok-symbolic",
             title=_("The Notes Are Ready"),
@@ -83,6 +105,7 @@ class Window(Adw.ApplicationWindow):
         self.pages.add_named(_empty_page(), "empty")
         self.pages.add_named(self.analysing, "analysing")
         self.pages.add_named(self.result, "result")
+        self.pages.add_named(self.error, "error")
 
         self.toasts = Adw.ToastOverlay(child=self.pages)
         view = Adw.ToolbarView(content=self.toasts)
@@ -93,9 +116,20 @@ class Window(Adw.ApplicationWindow):
         drop.connect("drop", self._on_drop)
         self.pages.add_controller(drop)
 
-        open_action = Gio.SimpleAction.new("open", None)
-        open_action.connect("activate", lambda *_args: self.choose_song())
-        self.add_action(open_action)
+        self.token: api.CancelToken | None = None
+        self.job_thread: threading.Thread | None = None
+        self.actions: dict[str, Gio.SimpleAction] = {}
+        for name, handler in (
+            ("open", self.choose_song),
+            ("cancel", self.cancel),
+            ("retry", self.retry),
+        ):
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", lambda _action, _param, run=handler: run())
+            self.add_action(action)
+            self.actions[name] = action
+        self.connect("close-request", self._on_close)
+        self.show(self.state)
 
     # what the user does
 
@@ -125,25 +159,43 @@ class Window(Adw.ApplicationWindow):
         return True
 
     def open_song(self, song: Path) -> None:
-        self.show(session.open_song(song))
-        report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, step)))
+        self._start(session.open_song(song, self.state))
 
-        def analyse() -> tuple[api.SongInfo, api.Notation]:
-            info = api.song_info(song)
-            notation = api.notate(
-                song,
-                paths.score_path(song),
-                title=info.title,
-                artist=info.artist,
-                pdf=False,
-                progress=report,
-            )
-            return info, notation
+    def retry(self) -> None:
+        if isinstance(self.state, session.Failed) and self.state.can_retry:
+            self._start(session.retry(self.state))
 
-        worker.run(
-            analyse,
-            lambda done: self.show(session.finished(self.state, *done)),
-            lambda exc: self.show(session.failed(self.state, str(exc))),
+    def cancel(self) -> None:
+        self._stop_job()
+        self.show(session.cancel(self.state))
+
+    def _stop_job(self) -> bool:
+        if self.token is not None:
+            self.token.cancel()  # the worker ends the model's processes within a second
+            self.token = None
+        return False  # let a closing window close
+
+    def _on_close(self, _window) -> bool:
+        self.wait_for_job(2.0)  # a cancel takes well under a second
+        return False  # close
+
+    def wait_for_job(self, seconds: float) -> None:
+        """Cancels the running job and waits until it has cleaned up (its half-written cache
+        folder removed), so that quitting leaves nothing behind."""
+        self._stop_job()
+        if self.job_thread is not None:
+            self.job_thread.join(seconds)
+
+    def _start(self, state: session.Analysing) -> None:
+        self._stop_job()
+        self.token = token = api.CancelToken()
+        job, song = state.job, state.song
+        self.show(state)
+        report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, job, step)))
+        self.job_thread = worker.run(
+            lambda: analysis.analyse(song, paths.score_path(song), report, token),
+            lambda done: self.show(session.finished(self.state, job, *done)),
+            lambda exc: self.show(session.failed(self.state, job, exc)),
         )
 
     # what the window shows
@@ -153,6 +205,8 @@ class Window(Adw.ApplicationWindow):
 
     def show(self, state: session.State) -> None:
         self.state = state
+        self.actions["cancel"].set_enabled(isinstance(state, session.Analysing))
+        self.actions["retry"].set_enabled(isinstance(state, session.Failed) and state.can_retry)
         if isinstance(state, session.Analysing):
             self.heading.set_title(state.song.stem)
             self.heading.set_subtitle("")
@@ -164,9 +218,18 @@ class Window(Adw.ApplicationWindow):
             self.heading.set_title(state.title)
             self.heading.set_subtitle(state.subtitle)
             self.pages.set_visible_child_name("result")
+        elif isinstance(state, session.Failed):
+            self.heading.set_title(state.song.stem)
+            self.heading.set_subtitle("")
+            self.error.set_title(state.title)
+            self.error.set_description(state.description)
+            self.error_details.set_label(state.details)
+            setup = state.kind == "setup"  # the commands are the point, so they stay open
+            self.error_expander.set_label(_("Commands") if setup else _("Technical Details"))
+            self.error_expander.set_expanded(setup)
+            self.retry_button.set_visible(state.can_retry)
+            self.pages.set_visible_child_name("error")
         else:
             self.heading.set_title(APP_NAME)
             self.heading.set_subtitle("")
             self.pages.set_visible_child_name("empty")
-            if state.message:
-                self.toast(state.message)
