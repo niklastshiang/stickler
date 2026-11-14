@@ -295,7 +295,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: test with a sleeping dummy adapter (raises within 1 s, no process of the group left, second run computes again)
   - Dependencies: 33 · Files: `src/stickler/{api,runner,adapters}.py`, tests
 
-- [ ] **Task 35: Readiness** (S)
+- [x] **Task 35: Readiness** (S): done 2026-11-14. `adapters.missing_setup(spec, device)` is the one check (`.venv` present and `uv sync --check --offline`, or the GPU environment that would run; marker `weights/.setup-complete`, so deleting the weights drops it too). Adapters missing from the registry are not listed (setup cannot fix a missing folder). `SetupMissing` is a `RuntimeError`, so the CLI prints it. On the real checkout `mode_ready("fast")` is empty after `stickler setup --adapter beat_this` (7.5 s, no download); every other adapter with a `setup.py` reads "weights missing" in `doctor` until `stickler setup` has run once for it, and `--mode quality` raises `SetupMissing` until then.
   - Acceptance:
     - `api.mode_ready(mode)` returns the adapters of the mode that are not set up (environment or weights missing).
     - An environment counts only if `uv sync --check --offline` passes (a killed `uv sync` leaves an empty `.venv`); weights count only if `setup.py` finished, recorded by a marker the harness writes after it succeeds; `setup` removes stray `*.partial` files (Task 32). The marker lives outside the files that make up the cache key.

@@ -516,6 +516,7 @@ def _fake_pipeline(tmp_path, monkeypatch):
     }
     monkeypatch.setattr(runner, "cached_or_run", fake)
     monkeypatch.setattr(api.adapters, "discover", lambda root: registry)
+    monkeypatch.setattr(api.adapters, "missing_setup", lambda spec, device="auto": [])
     return audio, stem, calls
 
 
@@ -689,6 +690,7 @@ def test_cancelling_a_running_model_leaves_no_cache_entry(tmp_path):
     audio = tmp_path / "song.wav"
     audio.write_bytes(b"x")
     spec = ad.discover(fixtures)["sleepy"]
+    ad.setup_adapter(spec)  # an analysis needs its models set up
     pid_file = runner.cache_dir_for(tmp_path / "cache", spec, audio) / "pid"
     kw = {"cache_dir": tmp_path / "cache", "adapters_root": fixtures}
 
@@ -719,6 +721,52 @@ def _cancel_when_running(pid_file, token, seen):
         token.cancel()
 
     threading.Thread(target=watch, daemon=True).start()
+
+
+def _plain_adapter(root, stage, name, weights=False):
+    """An adapter without dependencies (set up offline in milliseconds)."""
+    from stickler import adapters as ad
+
+    d = root / stage / name
+    d.mkdir(parents=True)
+    (d / "run.py").write_text("", encoding="utf-8")
+    (d / "pyproject.toml").write_text(
+        f'[project]\nname = "{name}"\nversion = "0"\nrequires-python = ">=3.12,<3.13"\n',
+        encoding="utf-8",
+    )
+    if weights:
+        (d / "setup.py").write_text("", encoding="utf-8")
+    return ad.AdapterSpec(id=name, stage=stage, path=d)
+
+
+def test_mode_ready_lists_the_adapters_not_set_up(tmp_path):
+    from stickler import adapters as ad
+
+    root = tmp_path / "adapters"
+    adtof = _plain_adapter(root, "transcribers", "adtof")
+    beat_this = _plain_adapter(root, "beats", "beat_this", weights=True)
+    assert api.mode_ready("fast", adapters_root=root) == ["adtof", "beat_this"]
+    ad.setup_adapter(adtof)
+    assert api.mode_ready("fast", adapters_root=root) == ["beat_this"]
+    ad.setup_adapter(beat_this)
+    assert api.mode_ready("fast", adapters_root=root) == []
+
+
+def test_an_analysis_names_the_models_not_set_up_before_starting_any(tmp_path, monkeypatch):
+    audio, _, calls = _fake_pipeline(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        api.adapters,
+        "missing_setup",
+        lambda spec, device="auto": ["weights"] if spec.id == "beat_this" else [],
+    )
+    steps = []
+    with pytest.raises(api.SetupMissing) as err:
+        api.transcribe_song(audio, cache_dir=tmp_path, progress=steps.append)
+    assert err.value.adapters == ["beat_this"]
+    assert "stickler setup --adapter beat_this" in str(err.value)
+    with pytest.raises(api.SetupMissing):
+        api.notate(audio, tmp_path / "o.musicxml", cache_dir=tmp_path)
+    assert calls == [] and steps == []
 
 
 def test_unknown_mode_raises(tmp_path, monkeypatch):

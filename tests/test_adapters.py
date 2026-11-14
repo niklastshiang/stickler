@@ -191,6 +191,77 @@ def test_an_unset_token_changes_nothing(registry, tmp_path):
     assert not token.is_set()
 
 
+COMMON = Path(__file__).parents[1] / "adapters" / "_common"
+
+
+def _local_adapter(root: Path, name: str = "t", weights: bool = True) -> adapters.AdapterSpec:
+    """An adapter outside the fixtures, set up offline: its only dependency is the local
+    stickler-adapter package; its setup.py "downloads" weights."""
+    d = root / "transcribers" / name
+    d.mkdir(parents=True)
+    (d / "run.py").write_text("", encoding="utf-8")
+    (d / "pyproject.toml").write_text(
+        f'[project]\nname = "{name}"\nversion = "0"\nrequires-python = ">=3.12,<3.13"\n'
+        'dependencies = ["stickler-adapter"]\n'
+        f'[tool.uv.sources]\nstickler-adapter = {{ path = "{COMMON}", editable = true }}\n',
+        encoding="utf-8",
+    )
+    if weights:
+        (d / "setup.py").write_text(
+            "from pathlib import Path\n"
+            "w = Path(__file__).parent / 'weights' / 'hub'\n"
+            "w.mkdir(parents=True, exist_ok=True)\n"
+            "(w / 'model.ckpt').write_bytes(b'x')\n",
+            encoding="utf-8",
+        )
+    return adapters.AdapterSpec(id=name, stage="transcribers", path=d)
+
+
+def test_an_adapter_without_environment_is_not_set_up(tmp_path):
+    spec = _local_adapter(tmp_path)
+    assert adapters.missing_setup(spec) == ["environment", "weights"]
+
+
+def test_an_empty_venv_left_by_a_killed_sync_does_not_count(tmp_path):
+    spec = _local_adapter(tmp_path, weights=False)
+    (spec.path / ".venv").mkdir()
+    assert adapters.missing_setup(spec) == ["environment"]
+
+
+def test_a_finished_setup_is_ready(tmp_path):
+    spec = _local_adapter(tmp_path)
+    adapters.setup_adapter(spec)
+    assert adapters.missing_setup(spec) == []
+    assert adapters.missing_setup(_local_adapter(tmp_path, "nw", weights=False)) == ["environment"]
+
+
+def test_weights_count_only_after_setup_py_finished(tmp_path):
+    spec = _local_adapter(tmp_path)
+    adapters.setup_adapter(spec)
+    (spec.path / adapters.SETUP_MARKER).unlink()  # as if setup.py had been killed
+    assert adapters.missing_setup(spec) == ["weights"]
+
+
+def test_setup_removes_stray_partial_downloads(tmp_path):
+    spec = _local_adapter(tmp_path)
+    partial = spec.path / "weights" / "hub" / "checkpoints" / "model.ckpt.1a2b.partial"
+    partial.parent.mkdir(parents=True)
+    partial.write_bytes(b"half")
+    assert "weights" in adapters.missing_setup(spec)
+    adapters.setup_adapter(spec)
+    assert not partial.exists()
+    assert adapters.missing_setup(spec) == []
+
+
+def test_a_failed_setup_py_leaves_the_weights_not_set_up(tmp_path):
+    spec = _local_adapter(tmp_path)
+    adapters.setup_adapter(spec)
+    (spec.path / "setup.py").write_text("raise SystemExit('server down')", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="Setup of t"):
+        adapters.setup_adapter(spec)
+    assert adapters.missing_setup(spec) == ["weights"]
+
+
 def test_harness_uv_settings_do_not_reach_the_adapters(registry, tmp_path, monkeypatch):
     """The harness may run on another Python or in another environment (CI matrix, the GTK
     app); the adapters keep their own pinned Python and environment."""

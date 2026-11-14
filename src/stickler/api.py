@@ -921,6 +921,30 @@ CancelToken = adapters.CancelToken
 Cancelled = adapters.Cancelled
 
 
+class SetupMissing(RuntimeError):
+    """Models an analysis needs are not set up (environment or weights missing)."""
+
+    def __init__(self, missing: list[str]):
+        self.adapters = missing
+        commands = "; ".join(f"stickler setup --adapter {a}" for a in missing)
+        super().__init__(f"not set up: {', '.join(missing)} → {commands}")
+
+
+def _not_set_up(plan: _Analysis, registry: dict, device: str) -> list[str]:
+    """The planned adapters that cannot run yet. Adapters missing from the registry are not
+    listed: setup cannot fix a missing folder."""
+    planned = dict.fromkeys(adapter for _, adapter in plan.steps if adapter in registry)
+    return [a for a in planned if adapters.missing_setup(registry[a], device)]
+
+
+def mode_ready(
+    mode: str = DEFAULT_MODE, *, device: str = "auto", adapters_root: Path = ADAPTERS_ROOT
+) -> list[str]:
+    """The adapters of `mode` that are not set up yet, in the order they run (empty: ready)."""
+    registry = adapters.discover(adapters_root)
+    return _not_set_up(_analysis(None, mode, False, registry), registry, device)
+
+
 class _Steps:
     """Runs planned steps in order, reports them to `progress` and stops before the next step
     once `cancel` is set."""
@@ -1016,6 +1040,16 @@ def _analysis(pipeline: str | None, mode: str, drums: bool, registry: dict) -> _
     return _Analysis(parts, pairs, separators, steps)
 
 
+def _planned(
+    pipeline: str | None, mode: str, drums: bool, registry: dict, device: str
+) -> _Analysis:
+    """The analysis to run, once every model it needs is set up (else SetupMissing)."""
+    plan = _analysis(pipeline, mode, drums, registry)
+    if missing := _not_set_up(plan, registry, device):
+        raise SetupMissing(missing)
+    return plan
+
+
 def transcribe_song(
     audio_path: Path,
     pipeline: str | None = None,
@@ -1033,9 +1067,10 @@ def transcribe_song(
     part provides its classes; hits outside the five classes come from the first part.
     `drums`: also separate the drums if the mode itself does not (for the drum track export).
     `progress` receives every step as it starts and ends (see Step); setting `cancel` stops
-    the call with Cancelled."""
+    the call with Cancelled. Raises SetupMissing before anything runs if a model is not set
+    up."""
     registry = adapters.discover(adapters_root)
-    plan = _analysis(pipeline, mode, drums, registry)
+    plan = _planned(pipeline, mode, drums, registry, device)
     steps = _Steps(plan.steps, progress, cancel)
     return _transcribe(audio_path, pipeline or mode, plan, registry, steps, device, cache_dir)
 
@@ -1110,9 +1145,9 @@ def notate(
     runs of equal bars once between repeat signs (notation.to_musicxml). `progress` receives
     every step as it starts and ends, including engraving and the PDF (see Step); setting
     `cancel` stops the call with Cancelled (a running model at once, otherwise before the
-    next step)."""
+    next step). Raises SetupMissing before anything runs if a model is not set up."""
     registry = adapters.discover(adapters_root)
-    plan = _analysis(pipeline, mode, drums, registry)
+    plan = _planned(pipeline, mode, drums, registry, device)
     planned = [*plan.steps, ("engrave", None), *([("pdf", None)] if pdf else [])]
     steps = _Steps(planned, progress, cancel)
     t = _transcribe(audio_path, pipeline or mode, plan, registry, steps, device, cache_dir)

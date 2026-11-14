@@ -60,13 +60,11 @@ def _rocm_device_name(spec: adapters.AdapterSpec) -> str | None:
 def check_adapters(root: Path, probe_gpu: bool = False) -> list[Check]:
     checks = []
     for adapter_id, spec in sorted(adapters.discover(root).items()):
-        problems = []
-        if not (spec.path / ".venv").is_dir():
-            problems.append("CPU environment missing")
-        if (spec.path / "setup.py").exists():
-            weights = spec.path / "weights"
-            if not weights.is_dir() or not any(weights.iterdir()):
-                problems.append("weights missing")
+        missing = adapters.missing_setup(spec, device="cpu")  # the same check as mode_ready
+        problems = [
+            {"environment": "CPU environment missing", "weights": "weights missing"}[m]
+            for m in missing
+        ]
         cfg = adapters.rocm_config(spec) if (spec.path / "pyproject.toml").exists() else None
         if cfg is None:
             rocm = "ROCm: –"

@@ -371,9 +371,44 @@ def _setup_cuda(spec: AdapterSpec) -> Path:
     raise RuntimeError(f"CUDA setup of {spec.id} failed for {pins}: " + "; ".join(errors))
 
 
+# Written by the harness once setup.py has finished. It lives in the git-ignored weights
+# folder, so deleting the weights also drops it, and it is not part of any cache key.
+SETUP_MARKER = Path("weights") / ".setup-complete"
+
+
+def _environment_ready(spec: AdapterSpec, device: str) -> bool:
+    """The environment that would run on `device` is complete. For the CPU environment that
+    is what `uv sync --check --offline` says: a killed `uv sync` leaves a `.venv` behind
+    without the packages."""
+    variant = env_variant(spec, device)
+    if variant == "rocm":
+        return _rocm_python(spec).exists()
+    if variant == "cuda":
+        return _cuda_python(spec).exists()
+    # without dependencies `uv sync --check` passes even when there is no environment at all
+    if variant is None or not (spec.path / ".venv").is_dir():
+        return False
+    cmd = ["uv", "sync", "--check", "--offline", "--quiet", "--project", str(spec.path)]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, env=adapter_env())
+    except OSError:  # no uv: nothing can run
+        return False
+    return proc.returncode == 0
+
+
+def missing_setup(spec: AdapterSpec, device: str = "auto") -> list[str]:
+    """What keeps the adapter from running on `device`: "environment" and/or "weights"
+    (empty: set up). Weights count only once setup.py has finished (SETUP_MARKER)."""
+    missing = [] if _environment_ready(spec, device) else ["environment"]
+    if (spec.path / "setup.py").exists() and not (spec.path / SETUP_MARKER).exists():
+        missing.append("weights")
+    return missing
+
+
 def setup_adapter(spec: AdapterSpec, device: str = "cpu") -> None:
     """Builds the environment (cpu: uv sync, rocm: .venv-rocm, cuda: .venv-cuda) and runs
-    setup.py if present."""
+    setup.py if present. Stray `*.partial` downloads of an interrupted setup are removed
+    first; SETUP_MARKER is written once setup.py has succeeded."""
     if device not in SETUP_DEVICES:
         raise ValueError(f"device must be one of {SETUP_DEVICES}, not {device!r}")
     if device == "rocm":
@@ -384,5 +419,11 @@ def setup_adapter(spec: AdapterSpec, device: str = "cpu") -> None:
         _check(["uv", "sync", "--quiet", "--project", str(spec.path)], spec)
         python = ["uv", "run", "--quiet", "--project", str(spec.path), "python"]
     if (spec.path / "setup.py").exists():
+        marker = spec.path / SETUP_MARKER
+        marker.unlink(missing_ok=True)
+        for partial in (spec.path / "weights").rglob("*.partial"):
+            partial.unlink()
         _check([*python, str(spec.path / "setup.py")], spec)
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text("", encoding="utf-8")
     log.info("%s: setup (%s) done", spec.id, device)

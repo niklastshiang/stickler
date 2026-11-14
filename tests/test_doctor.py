@@ -6,18 +6,22 @@ from stickler import adapters, doctor, musescore
 
 
 def adapter(root: Path, stage: str, name: str, rocm: bool = False, weights: bool = False) -> Path:
+    """A set-up adapter: a real (empty) environment and, with `weights`, a finished setup.py."""
     d = root / stage / name
     d.mkdir(parents=True)
     (d / "run.py").write_text("", encoding="utf-8")
-    text = '[project]\nname = "x"\n'
+    text = f'[project]\nname = "{name}"\nversion = "0"\nrequires-python = ">=3.12,<3.13"\n'
     if rocm:
         text += '[tool.stickler.rocm]\nindex = "i"\nreplace = []\npackages = []\n'
     (d / "pyproject.toml").write_text(text, encoding="utf-8")
-    (d / ".venv").mkdir()
     if weights:
-        (d / "setup.py").write_text("", encoding="utf-8")
-        (d / "weights").mkdir()
-        (d / "weights" / "model.bin").write_bytes(b"x")
+        (d / "setup.py").write_text(
+            "from pathlib import Path\n"
+            "(Path(__file__).parent / 'weights').mkdir(exist_ok=True)\n"
+            "(Path(__file__).parent / 'weights' / 'model.bin').write_bytes(b'x')\n",
+            encoding="utf-8",
+        )
+    adapters.setup_adapter(adapters.AdapterSpec(id=name, stage=stage, path=d))
     return d
 
 

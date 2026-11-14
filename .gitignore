@@ -15,4 +15,5 @@ __pycache__/
 coverage.xml
 tests/fixtures/**/uv.lock
 tests/fixtures/**/.setup-done
+tests/fixtures/**/weights/
 .claude/worktrees/
