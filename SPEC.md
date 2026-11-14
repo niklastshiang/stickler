@@ -54,6 +54,8 @@ Only to speed up benchmark runs during development; the app itself runs locally.
 - **`stickler remote`:** copies code, the needed audio and the cache to the pod via rsync over SSH, sets up the CUDA environments, runs a config, copies new cache entries back and, if a `RUNPOD_API_KEY` is set, stops the pod. Secrets (Hugging Face token, API key) are passed as environment variables only and never written to disk or the repo. No new harness dependencies (rsync, ssh, urllib).
 
 ### Later: GTK interface (not part of v1)
+> Now specified module by module under [GTK application](#gtk-application); the notes below are the original wishes.
+
 - GTK 4 + libadwaita via PyGObject, separate package `stickler-gtk` that only uses `stickler.api`.
 - For this to work, v1 needs: a public API in `stickler/api.py` (`run_benchmark`, `evaluate`, `transcribe_song`, `notate`) with progress callbacks and cancellation support, no `print`s in the logic (logging instead), and results as data objects, not only as files.
 - **Design together first:** before any GTK code, the owner and Claude design the interface together, following current design principles, above all the GNOME Human Interface Guidelines (libadwaita patterns, adaptive layout, accessibility). Mockups first, then implementation.
@@ -369,6 +371,204 @@ field); CliRunner tests for a banner and the finale with a fake API.
 1. **Blind judgement** (step 3) instead of hearing reference and model clicks side by side:
    approved by the owner on 2026-11-14. It keeps the owner from favouring either side and lets
    one verdict serve both pipelines.
+
+## GTK application
+
+> Status: capability map **approved** by the owner on 2026-11-14. Module specs are written and
+> approved one at a time, in build order. Idea and Verovio test:
+> [docs/ideas/gtk-music-stand.md](docs/ideas/gtk-music-stand.md).
+
+A single-window GTK 4 + libadwaita app for drummers who are not technical: drop a song, read the
+sheet music in the app, hear the detected hits over the song, correct lightly, export. Fast mode
+only in its first version.
+
+### Capability map
+
+| Module id | Responsibility | Depends on | Spec |
+|---|---|---|---|
+| `engine-api` | Additions to `stickler.api`, no GTK: progress and cancellation for `transcribe_song`, `notate` and `setup_adapters`; song bar → written bar map; correction parameters; audio of the detected hits | – | approved, below |
+| `design` | Mockups of every screen, made with the owner, following the GNOME HIG; no code | – | – |
+| `app-shell` | Window, open or drop a song, analysis with a step display, export (PDF, MusicXML, drum track), recent songs | `engine-api`, `design` | – |
+| `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window | `app-shell` | – |
+| `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | – |
+| `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | – |
+| `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
+| `packaging` | Flatpak and AppImage with every release | all | – |
+
+Build order: `engine-api`, `design` (in parallel) → `app-shell` → `sheet-view` → `playback`,
+`corrections` → `setup-assistant` → `packaging`.
+
+Out of order on purpose: the Flatpak sandbox trial (can `uv` build a model environment inside
+the sandbox?) belongs to `packaging` but runs early, because a failure changes `setup-assistant`.
+
+### Decisions for all modules (owner, 2026-11-14)
+
+- **No GTK code before `design` is approved.** `engine-api` is library work and may run in
+  parallel.
+- **Languages:** English and German in the first version; strings are translatable from the
+  start. How translations are contributed and kept up to date later needs its own answer (no
+  outside pull requests today); it is specified in `app-shell`.
+- **Coverage:** the app's logic is kept apart from its widgets and falls under the 95% rule;
+  pure widget code is excluded like `cli.py`. CONSTRAINTS.md is extended accordingly when
+  `app-shell` fixes the paths.
+- **Scope:** everything under "Not Doing" in the idea one-pager stays out (Quality mode, editing
+  single hits, practice tools, a song library, doubtful-bar marks, developer commands, macOS,
+  Flathub).
+
+### Module `engine-api`
+
+> Status: **approved** by the owner on 2026-11-14. Plan: `tasks/plan.md` ("GTK application:
+> `engine-api`"), tasks 31–39 in `tasks/todo.md`.
+
+#### Assumptions
+
+1. The app calls `stickler.api` in a worker thread of its own process. Callbacks are called on
+   that thread; handing them to the GTK main loop is the app's job.
+2. The harness can run on the Python the GTK bindings use. Today it is pinned to 3.12, while
+   PyGObject on the development machine exists for the system Python 3.14 only, and the GNOME
+   Flatpak runtime brings its own Python. The harness pin is widened to 3.12–3.14: a trial
+   run of the test suite on 3.14 passed (2026-11-14; 461 of 462, the one failure came from the
+   trial not installing the package). The adapters stay on 3.12 in their own environments:
+   they run as subprocesses, so the app's Python does not matter to them, and raising them
+   would change every cache key and require the benchmark to be recomputed.
+3. Nothing in `adapters/*/run.py`, `setup.py` or `pyproject.toml` changes, so no cache key
+   changes and no rekeying is needed.
+4. Corrections are parameters of notation only. They never rerun a model: the transcription is
+   cached, so every correction costs well under a second.
+5. The detected hits are heard as clicks (three pitches: kick, snare/toms, cymbals, as in
+   `align`'s click track). Drum samples are a later decision.
+6. Where an installed app keeps environments, weights and cache (today: inside the checkout) is
+   not part of this module; it is specified in `setup-assistant` and `packaging`.
+
+#### Objective
+
+Give the app everything it needs from the library, so that no GTK module has to reach around
+`stickler.api`. Each addition is usable and testable from Python without a display.
+
+1. **Progress.** `transcribe_song`, `notate` and `setup_adapters` accept a `progress` callback.
+   The steps of a call are announced up front, then each step reports `started` and `done`
+   (with `cached` when nothing had to be computed). Step ids are stable and not translated:
+   `separate`, `transcribe`, `beats`, `engrave`, `pdf`; for setup `environment:<adapter>` and
+   `weights:<adapter>`.
+2. **Cancellation.** The same three functions accept a `cancel` token. Setting it ends the
+   running adapter or setup process with its whole process group and raises `Cancelled`. A
+   cancelled step leaves no cache entry behind that a later run would take for a result.
+3. **Readiness.** `mode_ready("fast")` returns the adapters of a mode that are not set up yet
+   (empty: ready), so the app knows when to show the setup assistant. A model missing at
+   analysis time raises `SetupMissing` naming those adapters, instead of a failed subprocess.
+4. **Bar map.** `notate` also returns, for every bar of the song in played order, its start and
+   end in seconds and the number of the written bar it is engraved as (several song bars share
+   one written bar inside repeat signs; a multi-bar rest maps to its first written bar).
+5. **Corrections.** `notate` accepts `Corrections`: `tempo` (`half`, `normal`, `double`),
+   `beats_per_bar` (override of the detected meter), `first_downbeat` (which beat is "one",
+   which also sets the pickup), next to today's `simplify` and `repeats`.
+6. **Detected hits as audio.** `render_hits(transcription, dest)` writes a mono WAV as long as
+   the song with one click per detected hit. The app mixes it with the song.
+
+Not part of this module: byte-exact download progress, any change to models or pipelines,
+persistence of a song's corrections, Verovio, audio playback.
+
+#### Commands
+
+```bash
+uv run pytest -q tests/test_api.py tests/test_notation.py tests/test_adapters.py   # this module's tests
+uv run --python 3.14 pytest -q          # the harness on the GTK bindings' Python
+scripts/check.sh fast                   # after changes
+scripts/check.sh task                   # before every commit
+uv run stickler notate song.flac        # unchanged for the user; prints the steps as they run
+```
+
+#### Project structure (additions)
+
+```
+src/stickler/api.py        # Step, Progress, CancelToken, Cancelled, SetupMissing, Corrections,
+                           # BarTime; mode_ready, render_hits; new parameters on the three functions
+src/stickler/notation.py   # bar map next to the MusicXML; tempo, meter and downbeat corrections
+src/stickler/adapters.py   # process groups end on cancel (today: on timeout only)
+src/stickler/cli.py        # notate and setup print the steps (still no logic)
+tests/test_api.py, test_notation.py, test_adapters.py
+```
+
+#### Code style
+
+As the rest of the harness: frozen dataclasses for results, keyword-only options, no `print` in
+the library. The shape the app will use:
+
+```python
+cancel = api.CancelToken()
+
+
+def on_step(step: api.Step) -> None:  # called on the worker thread
+    log.info("%s %d/%d %s", step.id, step.index, step.total, step.state)
+
+
+result = api.notate(
+    song,
+    pdf=False,
+    corrections=api.Corrections(tempo="half", first_downbeat=2),
+    progress=on_step,
+    cancel=cancel,
+)
+bar = next(b for b in result.bars if b.start <= position < b.end)
+marker.show(bar.written)
+```
+
+#### Testing strategy
+
+- Test first, without models or network, with the dummy adapters the existing tests use.
+- Progress: the announced steps equal the reported ones, in order, for Fast, for a pipeline with
+  a separator and for a fully cached song.
+- Cancellation: a dummy adapter that sleeps is cancelled; the call raises `Cancelled` within a
+  second, no process of its group survives, and a second run computes the step again.
+- Bar map: built for the songs the notation tests already use (with and without repeats, with a
+  pickup, with a multi-bar rest); expanding the written bars along the map gives back every
+  song bar.
+- Corrections: `half` then `double` returns the original grid; an overridden meter and downbeat
+  produce the expected bars; the hits themselves never change.
+- `render_hits`: length equals the song's, energy sits at the hit times.
+- Coverage stays ≥ 95% for `src/stickler` (CONSTRAINTS.md unchanged by this module).
+
+#### Boundaries
+
+- **Always:** keep `stickler.api` the only entry point; keep every existing call working without
+  the new parameters; SPEC before code; one commit per task.
+- **Ask first:** widening the Python pin if anything but the version line has to change; new
+  harness dependencies; any edit to an adapter's `run.py`, `setup.py` or `pyproject.toml`.
+- **Never:** import GTK, Verovio or an audio player in `src/stickler`; change what a model
+  computes or how results are cached; weaken a test or CONSTRAINTS.md.
+
+#### Success criteria
+
+1. `notate` on a cached own song with a `progress` callback reports the announced steps in
+   order, each `started` then `done`, all marked `cached`; the CLI prints them.
+2. Cancelling a running dummy adapter raises `Cancelled` within 1 s, leaves no process behind
+   and no cache entry; the next run succeeds.
+3. `mode_ready("fast")` lists `adtof` and `beat_this` in a checkout without environments and
+   is empty after `stickler setup --adapter adtof` and `--adapter beat_this`.
+4. For Eye of the Tiger the bar map has one entry per song bar (110), its times rise without
+   gaps, and its written bars are exactly the 46 bars of the MusicXML.
+5. Each correction changes the notation of a cached song in under 1 s on the development
+   laptop, without starting an adapter (verified by a test that fails if one is started).
+6. `render_hits` for a cached own song yields a WAV whose clicks, played with the song, sit on
+   the drums (checked by ear by the owner on one song).
+7. The harness test suite passes on Python 3.12 and 3.14, and the pin in `pyproject.toml` says
+   so.
+8. Every existing test passes unchanged; `scripts/check.sh task` is green.
+
+#### Resolved questions (owner, 2026-11-14)
+
+1. **Setup progress in bytes:** this module reports steps only. `setup-assistant` later shows
+   bytes on disk against the sizes in `docs/requirements.md`.
+2. **Resuming an interrupted setup:** measured in this module's first tasks (Task 32); if a
+   second `setup` starts over, the fix is specified before `setup-assistant`.
+3. **Python:** the harness is widened to 3.12–3.14 now. Raising the adapters is planned for the
+   future (`tasks/todo.md`, "Later"), together with a benchmark rerun, because it changes every
+   cache key.
+
+#### Open questions
+
+- Which Python the GNOME runtime ships at the time of `packaging` is not checked yet; the
+  3.12–3.14 range covers the development machine and is widened again if needed.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

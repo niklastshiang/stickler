@@ -52,6 +52,38 @@ Gamification: rewards read an events log without answers, so they cannot bias th
 | Few spots of a pipeline's own error set (Quality-only kick/snare/toms errors) | Medium | Report n per pipeline and class next to every corrected value; intervals by bootstrap |
 | Many *unclear* answers | Medium | Bounds with *unclear* counted either way; share reported |
 
+## GTK application: `engine-api` (approved 2026-11-14, SPEC.md "GTK application")
+
+The first module of the capability map: everything the app needs from the library, without GTK.
+`design` (mockups with the owner) runs in parallel and has no tasks here.
+
+Design decisions:
+- **One path for progress and cancellation:** `api` builds the list of steps before it starts
+  (from the mode's pipelines), then passes `progress` and `cancel` down through
+  `runner.cached_or_run` to `adapters._run_group`, which already runs every adapter in its own
+  process group. The group is polled instead of waited on, so a cancel ends it within a second.
+- **A cancelled step cleans up after itself:** a cache entry counts only with its output and
+  `meta.json`; a cancelled run removes what it wrote, so the next run starts clean.
+- **`notation.engrave` returns the MusicXML and the bar map together;** `to_musicxml` stays
+  and returns the MusicXML alone. The map comes from the same repeat blocks that write the
+  repeat signs, so the two cannot disagree.
+- **Corrections change the beat grid, not the hits:** a pure function turns beats, downbeats
+  and `Corrections` into the corrected beats and downbeats; everything after it is today's code.
+- **`render_hits` generalises `align`'s click track** (clicks only, no mix; the app mixes).
+- **No adapter file is touched,** so no cache key changes.
+
+Order: Python range (31) and the setup measurement (32) first, because both can change later
+modules → progress (33) → cancellation (34) → setup progress and cancel (36); readiness (35),
+bar map (37) → corrections (38) and hit audio (39) are independent of the progress chain.
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| A cancelled `uv sync` or weight download leaves a broken environment | High | Task 32 measures it on a copy of an adapter folder before anything is built; a needed fix is specified before `setup-assistant` |
+| Bar map and repeat signs drift apart | High | One source for both (the repeat blocks); test: expanding the written bars along the map gives back every song bar; checked against Verovio's expanded timemap for one song |
+| Halving the tempo with an odd number of beats, or a meter override that leaves a rest of a bar | Medium | Pure function with its own tests for the edges; the last incomplete bar is kept as today |
+| A dependency behaves differently on Python 3.14 | Low | The trial run passed (461 of 462); CI runs the suite on 3.12 and 3.14 |
+| Clicks mask the drums or are hard to tell apart | Medium | Owner listens to one song (Task 39); samples stay an open decision for `playback` |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

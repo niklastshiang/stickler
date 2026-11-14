@@ -264,6 +264,77 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint G
 - [x] All success criteria of SPEC.md "Release 3" met, review with the owner, then release 3
 
+## Phase 8: GTK application, module `engine-api` (approved 2026-11-14, SPEC.md "GTK application")
+
+- [ ] **Task 31: The harness on Python 3.12–3.14** (S)
+  - Acceptance:
+    - `requires-python` of the harness is `>=3.12,<3.15`; `uv.lock` follows; the adapters' files are untouched.
+    - CI runs the checks on 3.12 and 3.14.
+  - Verify: `uv run --python 3.14 pytest -q` and `scripts/check.sh task` (3.12) both green
+  - Dependencies: none · Files: `pyproject.toml`, `uv.lock`, `.github/workflows/check.yml`, `SPEC.md` (Tech Stack)
+
+- [ ] **Task 32: Measure an interrupted setup** (S)
+  - Acceptance:
+    - On a copy of `adapters/beats/beat_this` in a scratch adapters root: `setup` is killed during `uv sync` and during the weight download; a second `setup` is timed against a fresh one, and the result works (`doctor`).
+    - The result is written into SPEC.md (`engine-api`, resolved question 2): resumes, or starts over and what the fix would be.
+  - Verify: the numbers in SPEC.md; the real adapter folders and the cache are unchanged (`git status`, `stickler cache-digests`)
+  - Dependencies: none · Files: `SPEC.md`
+
+- [ ] **Task 33: Progress for `transcribe_song` and `notate`** (M)
+  - Acceptance:
+    - `api.Step` (id, index, total, state `started`/`done`, `cached`) and a `progress` parameter on both functions; the steps are known before the first one starts.
+    - Step ids `separate`, `transcribe`, `beats`, `engrave`, `pdf`; a cached step reports `done` with `cached`.
+    - `stickler notate` prints the steps; the CLI still holds no logic.
+  - Verify: `uv run pytest tests/test_api.py tests/test_cli.py -k progress` (Fast, a pipeline with a separator, a fully cached song); `uv run stickler notate` on a cached own song
+  - Dependencies: none · Files: `src/stickler/{api,runner,cli}.py`, tests
+
+- [ ] **Task 34: Cancellation of an analysis** (M)
+  - Acceptance:
+    - `api.CancelToken` and `api.Cancelled`; `cancel` on `transcribe_song` and `notate`.
+    - A set token ends the adapter's process group within 1 s; the cancelled step leaves nothing a later run takes for a result.
+  - Verify: test with a sleeping dummy adapter (raises within 1 s, no process of the group left, second run computes again)
+  - Dependencies: 33 · Files: `src/stickler/{api,runner,adapters}.py`, tests
+
+- [ ] **Task 35: Readiness** (S)
+  - Acceptance:
+    - `api.mode_ready(mode)` returns the adapters of the mode that are not set up (environment or weights missing).
+    - `transcribe_song` raises `api.SetupMissing` naming them before any adapter is started.
+  - Verify: tests with dummy adapters with and without an environment; on the real checkout `mode_ready("fast")` is empty
+  - Dependencies: none · Files: `src/stickler/{api,doctor}.py`, tests
+
+- [ ] **Task 36: Progress and cancellation for `setup_adapters`** (M)
+  - Acceptance:
+    - `progress` reports `environment:<adapter>` and `weights:<adapter>`; `cancel` ends the running `uv` or `setup.py` process group and raises `Cancelled`.
+    - `stickler setup` prints the steps.
+    - What Task 32 found about resuming holds after a cancel.
+  - Verify: tests with a dummy adapter and a stand-in for `uv`, without network; `uv run stickler setup --adapter beat_this` on the set-up checkout reports both steps
+  - Dependencies: 32, 34 · Files: `src/stickler/{api,adapters,cli}.py`, tests
+
+- [ ] **Task 37: Bar map** (M)
+  - Acceptance:
+    - `notation.engrave(...)` returns the MusicXML and `bars`: per song bar in played order its start and end in seconds and the written bar's number; `to_musicxml` is unchanged for its callers.
+    - `api.Notation.bars` carries it.
+    - Repeats, a pickup and a multi-bar rest are covered.
+  - Verify: `uv run pytest tests/test_notation.py -k bar_map`; Eye of the Tiger: 110 entries, times rise without gaps, written bars are exactly the 46 of the MusicXML, and the order matches Verovio's expanded timemap
+  - Dependencies: none · Files: `src/stickler/{notation,api}.py`, tests
+
+- [ ] **Task 38: Corrections** (M)
+  - Acceptance:
+    - `api.Corrections(tempo, beats_per_bar, first_downbeat, simplify, repeats)`; `notate(..., corrections=...)`; today's `simplify` and `repeats` parameters keep working.
+    - A pure function gives the corrected beats and downbeats; the hits never change; the bar map follows the corrected grid.
+    - No adapter is started for a correction on a cached song.
+  - Verify: tests (`half` then `double` is the original grid; meter and downbeat overrides give the expected bars; a test fails if an adapter is started); each correction of a cached own song takes < 1 s
+  - Dependencies: 37 · Files: `src/stickler/{notation,api}.py`, tests
+
+- [ ] **Task 39: Detected hits as audio** (S)
+  - Acceptance:
+    - `api.render_hits(transcription, dest)`: a mono WAV as long as the song, one click per hit, three pitches (kick, snare/toms, cymbals); `align`'s click track uses the same clicks.
+  - Verify: test on a generated song (length, energy at the hit times); the owner listens to one own song with the clicks and confirms they sit on the drums
+  - Dependencies: none · Files: `src/stickler/{api,audio}.py`, tests
+
+### Checkpoint H
+- [ ] All 8 success criteria of SPEC.md `engine-api` met; review with the owner; decide whether this is a release of its own
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
@@ -290,6 +361,8 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Further ideas: CONTRIBUTING.md (adding an adapter, TDD, checks), CITATION.cff (Stickler plus the datasets and models it builds on, ENST citation required), CI with the unit tests, issue templates, a "reproduce the benchmark" guide.
 
 - [ ] **Flathub (owner, 2026-11-13: maybe later):** only the GTK application (no console apps on Flathub). Rules as of 2026-10: AI-generated code allowed with disclosure, reviewers may still reject by its extent; the Flatpak manifest, the submission pull request, commit messages and replies must not be AI-generated, so the owner writes them himself. Technical: no network during the build (every dependency incl. PyTorch as a manifest source), no complicated post-install setup (today's `stickler setup`). First step instead: our own Flatpak via GitHub releases.
+- [ ] **Raise the adapters' Python (owner, 2026-11-14: plan for the future):** all seven adapters are pinned to 3.12; the harness runs on 3.12–3.14 from Task 31 on. Raising an adapter changes its `pyproject.toml`, so its cache keys change and its results must be recomputed (no rekeying: new environments are a real change). To check first: wheels of the pinned PyTorch builds for the target version, above all AMD's ROCm wheels (ADR 0003 was verified on 3.12), and each model's own dependencies. Best done together with the next model refresh, so the benchmark is recomputed once.
+
 - [ ] **Release pipeline: Flatpak and AppImage with every release**
   - Wish: A new release tag `vN` (ADR 0006) automatically builds a Flatpak and an AppImage.
   - Open points:
