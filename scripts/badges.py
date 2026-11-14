@@ -4,6 +4,9 @@ The SVGs live in the repository, so the README does not depend on the service be
 Each row is a rainbow: every badge's gradient starts where the previous one ends. Hues run from
 the project's orange over pink, violet and blue to cyan; yellow and green are left out because
 white text is hard to read on them. Test count and coverage are measured by running the tests.
+The value (second half) is set bold: shieldcn has no font weight, so the value's glyph path
+gets a white outline of its own (owner's wish: easier to read, and without shieldcn's split the
+badges need less room).
 
     uv run python scripts/badges.py          # after changes that move the numbers
 """
@@ -22,7 +25,11 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "badges"
 SERVICE = "https://shieldcn.dev/badge"
 USER_AGENT = "stickler-badges (+https://github.com/niklastshiang/stickler)"
-STYLE = {"font": "jetbrains-mono", "split": "true"}
+STYLE = {"font": "jetbrains-mono", "split": "false"}
+# shieldcn draws the text as two white paths: the label (slightly transparent) and the value
+VALUE_PATH = '<path fill="#fff" d='
+BOLD = 'stroke="#fff" stroke-width="0.8" stroke-linejoin="round" '
+
 # Hue path in degrees: orange → red → pink → violet → blue → cyan (no yellow/green)
 HUE_START, HUE_END = 30.0, -170.0
 
@@ -103,6 +110,14 @@ def url(label: str, message: str, start: float, end: float, shimmer: bool) -> st
     )
 
 
+def bold_value(svg: bytes, file: str) -> bytes:
+    """Sets the value bold by outlining its glyph path."""
+    text = svg.decode("utf-8")
+    if text.count(VALUE_PATH) != 1:
+        sys.exit(f"{file}: shieldcn's SVG changed, the value path was not found exactly once")
+    return text.replace(VALUE_PATH, VALUE_PATH.replace("d=", BOLD + "d=")).encode("utf-8")
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, badges in rows(facts()).items():
@@ -115,7 +130,7 @@ def main() -> None:
                 svg = response.read()
             if not svg.lstrip().startswith(b"<svg"):
                 sys.exit(f"{file}: no SVG returned")
-            (OUT / f"{name}-{file}.svg").write_bytes(svg)
+            (OUT / f"{name}-{file}.svg").write_bytes(bold_value(svg, file))
             print(f"{name}-{file}.svg  {label}: {message}")
 
 
