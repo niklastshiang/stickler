@@ -312,7 +312,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests with a dummy adapter and a stand-in for `uv`, without network; `uv run stickler setup --adapter beat_this` on the set-up checkout reports both steps
   - Dependencies: 32, 34 · Files: `src/stickler/{api,adapters,cli}.py`, tests
 
-- [ ] **Task 37: Bar map** (M)
+- [x] **Task 37: Bar map** (M): done 2026-11-14. `notation.engrave` returns `Engraving(musicxml, bars)`; `to_musicxml` wraps it. A last bar that runs past the last beat ends at the average beat length. Eye of the Tiger (cached, 0.19 s): 110 entries without gaps; the written bars are the 43 the score shows (46 `<measure>` elements, the first four one multi-measure rest; SPEC criterion 4 reworded accordingly); with the rest collapsed the order equals Verovio's timemap (107 entries; Verovio run via `uvx`, not a dependency).
   - Acceptance:
     - `notation.engrave(...)` returns the MusicXML and `bars`: per song bar in played order its start and end in seconds and the written bar's number; `to_musicxml` is unchanged for its callers.
     - `api.Notation.bars` carries it.

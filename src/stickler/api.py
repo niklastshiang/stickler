@@ -1003,12 +1003,16 @@ class SongTranscription:
     hits: list[tuple[float, int, int]]  # (seconds, GM pitch, velocity)
 
 
+BarTime = notation.BarTime  # one song bar: start, end (seconds), number of its written bar
+
+
 @dataclass(frozen=True)
 class Notation:
     musicxml: Path
     pdf: Path | None
     pdf_error: str | None  # why there is no PDF (MuseScore missing or failed)
     transcription: SongTranscription
+    bars: list[BarTime] = field(default_factory=list)  # every song bar in played order
 
 
 def _parse_pipeline(pipeline: str, registry: dict) -> tuple[str, str]:
@@ -1172,10 +1176,10 @@ def notate(
     t = _transcribe(audio_path, pipeline or mode, plan, registry, steps, device, cache_dir)
     target = out or audio_path.with_suffix(".musicxml")
 
-    def engrave() -> tuple[None, bool]:
+    def engrave() -> tuple[list[BarTime], bool]:
         target.parent.mkdir(parents=True, exist_ok=True)
         found = audio.tags(audio_path) if title is None or artist is None else {}
-        xml = notation.to_musicxml(
+        engraving = notation.engrave(
             t.hits,
             t.beats,
             t.downbeats,
@@ -1184,14 +1188,14 @@ def notate(
             simplify_bars=simplify,
             repeats=repeats,
         )
-        target.write_text(xml, encoding="utf-8")
-        return None, False
+        target.write_text(engraving.musicxml, encoding="utf-8")
+        return engraving.bars, False
 
-    steps.run(engrave)
+    bars = steps.run(engrave)
     if not pdf:
-        return Notation(target, None, None, t)
+        return Notation(target, None, None, t, bars)
     pdf_path, pdf_error = steps.run(lambda: (_export_pdf(target), False))
-    return Notation(target, pdf_path, pdf_error, t)
+    return Notation(target, pdf_path, pdf_error, t, bars)
 
 
 def _export_pdf(musicxml: Path) -> tuple[Path | None, str | None]:

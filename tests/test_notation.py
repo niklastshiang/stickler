@@ -343,3 +343,83 @@ def test_triplet_eighths_are_beamed_and_beams_come_before_the_tuplet():
 def test_quarter_notes_have_no_beams():
     notes = [(k * 0.5, KICK, 100) for k in range(4)]
     assert _beams(notation.to_musicxml(notes, BEATS, DOWNBEATS)) == []
+
+
+def _bar_map(engraving):
+    return [(b.start, b.end, b.written) for b in engraving.bars]
+
+
+def _rises_without_gaps(bars) -> bool:
+    return all(a.end == b.start for a, b in zip(bars, bars[1:], strict=False)) and all(
+        b.start < b.end for b in bars
+    )
+
+
+def test_bar_map_without_repeats_numbers_every_bar():
+    e = notation.engrave(groove(4), BEATS, DOWNBEATS)
+    assert e.musicxml == notation.to_musicxml(groove(4), BEATS, DOWNBEATS)
+    assert _bar_map(e) == [(0.0, 2.0, 1), (2.0, 4.0, 2), (4.0, 6.0, 3), (6.0, 8.0, 4)]
+
+
+def test_bar_map_sends_repeated_bars_to_the_written_bar():
+    e = notation.engrave(groove(4), BEATS, DOWNBEATS, repeats=True)
+    assert [b.written for b in e.bars] == [1, 1, 1, 1]
+    assert _rises_without_gaps(e.bars) and e.bars[-1].end == 8.0
+
+
+def test_bar_map_of_a_repeated_phrase_alternates_its_bars():
+    a, b = groove(1), [(0.0 + k * 0.5, FLOOR, 100) for k in range(4)]
+    notes = [
+        (t + 4.0 * k, p, v) for k in range(3) for t, p, v in a + [(t + 2.0, p, v) for t, p, v in b]
+    ]
+    beats = [k * 0.5 for k in range(25)]
+    e = notation.engrave(notes, beats, beats[:-1:4], repeats=True)
+    assert [b.written for b in e.bars] == [1, 2, 1, 2, 1, 2]
+    assert _rises_without_gaps(e.bars)
+
+
+def test_bar_map_gives_the_pickup_bar_number_zero():
+    beats = [k * 0.5 for k in range(19)]
+    notes = [(0.0, SNARE, 100)] + [(t, KICK, 100) for t in (1.0, 3.0, 5.0, 7.0)]
+    e = notation.engrave(notes, beats, beats[2:-1:4])
+    assert _bar_map(e) == [
+        (0.0, 1.0, 0),
+        (1.0, 3.0, 1),
+        (3.0, 5.0, 2),
+        (5.0, 7.0, 3),
+        (7.0, 9.0, 4),
+    ]
+
+
+def test_bar_map_sends_a_multi_bar_rest_to_its_first_bar():
+    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2: one multi-measure rest
+    e = notation.engrave(notes, BEATS, DOWNBEATS, repeats=True)
+    assert [b.written for b in e.bars] == [1, 1, 3, 3]  # bars 3 and 4 repeat bar 3
+    assert _rises_without_gaps(e.bars)
+
+
+def test_bar_map_extends_a_last_bar_that_runs_past_the_last_beat():
+    beats = [k * 0.5 for k in range(19)]  # 18 beats: the fifth bar has only two
+    e = notation.engrave([(0.0, KICK, 100)], beats, beats[:-1:4])
+    assert e.bars[-1].start == 8.0 and e.bars[-1].end == 10.0
+
+
+def test_bar_map_expanded_along_the_written_bars_gives_back_every_song_bar():
+    """The written bar of each song bar holds that song bar's notes."""
+    a, b = groove(1), [(0.0 + k * 0.5, FLOOR, 100) for k in range(4)]
+    notes = [(t + 2.0, p, v) for t, p, v in b] + [
+        (t + 4.0 * k + 4.0, p, v)
+        for k in range(2)
+        for t, p, v in a + [(t + 2.0, p, v) for t, p, v in b]
+    ]
+    beats = [k * 0.5 for k in range(25)]
+    plain = _measures(notation.to_musicxml(notes, beats, beats[:-1:4]))
+    folded = notation.engrave(notes, beats, beats[:-1:4], repeats=True)
+    written = {int(m.split('"')[1]): m for m in _measures(folded.musicxml)}
+
+    def pitches(measure: str) -> list[str]:
+        return [n.split("</")[0] for n in measure.split("<display-step>")[1:]]
+
+    assert len(folded.bars) == len(plain) == 6
+    for song_bar, bar in zip(plain, folded.bars, strict=True):
+        assert pitches(written[bar.written]) == pitches(song_bar)

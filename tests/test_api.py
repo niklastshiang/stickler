@@ -639,6 +639,14 @@ def test_cached_steps_are_marked_and_no_pdf_step_without_pdf(tmp_path, monkeypat
     assert done == [("transcribe", True), ("beats", True), ("engrave", False)]
 
 
+def test_notate_returns_the_bar_map(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)  # two equal bars of 2 s
+    result = api.notate(audio, tmp_path / "o.musicxml", pdf=False, cache_dir=tmp_path)
+    assert result.bars == [api.BarTime(0.0, 2.0, 1), api.BarTime(2.0, 4.0, 1)]
+    plain = api.notate(audio, tmp_path / "p.musicxml", pdf=False, repeats=False, cache_dir=tmp_path)
+    assert [b.written for b in plain.bars] == [1, 2]
+
+
 def test_runner_says_when_a_result_comes_from_the_cache(tmp_path):
     from stickler import adapters as ad
 

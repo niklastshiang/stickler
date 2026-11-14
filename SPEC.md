@@ -546,7 +546,10 @@ marker.show(bar.written)
 3. `mode_ready("fast")` lists `adtof` and `beat_this` in a checkout without environments and
    is empty after `stickler setup --adapter adtof` and `--adapter beat_this`.
 4. For Eye of the Tiger the bar map has one entry per song bar (110), its times rise without
-   gaps, and its written bars are exactly the 46 bars of the MusicXML.
+   gaps, and its written bars are exactly the bars the score shows: the MusicXML has 46
+   `<measure>` elements, of which the first four are one multi-measure rest, so 43 bars
+   (Verovio's MEI has the same 43; checked 2026-11-14, Task 37). Collapsing the rest's four
+   entries into one gives Verovio's expanded timemap in the same order (107 entries).
 5. Each correction changes the notation of a cached song in under 1 s on the development
    laptop, without starting an adapter (verified by a test that fails if one is started).
 6. `render_hits` for a cached own song yields a WAV whose clicks, played with the song, sit on

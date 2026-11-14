@@ -471,7 +471,42 @@ def simplify(
     return sorted(out)
 
 
+@dataclass(frozen=True)
+class BarTime:
+    """One bar of the song in played order: when it sounds, and the number of the written bar
+    it is engraved as (several song bars share one inside repeat signs; the bars of a
+    multi-measure rest share its first bar; a pickup bar is number 0)."""
+
+    start: float  # seconds
+    end: float
+    written: int
+
+
+@dataclass(frozen=True)
+class Engraving:
+    musicxml: str
+    bars: list[BarTime]
+
+
 def to_musicxml(
+    notes: list[tuple[float, int, int]],
+    beats: list[float],
+    downbeats: list[float],
+    **options,
+) -> str:
+    """MusicXML (partwise 4.0) with one percussion staff; see engrave."""
+    return engrave(notes, beats, downbeats, **options).musicxml
+
+
+def _beat_time(b: np.ndarray, i: int) -> float:
+    """Time of beat `i`; past the last beat the bar runs on at the average beat."""
+    if i < len(b):
+        return float(b[i])
+    step = float(b[-1] - b[0]) / (len(b) - 1) if len(b) > 1 else 0.5
+    return float(b[-1]) + (i - (len(b) - 1)) * step
+
+
+def engrave(
     notes: list[tuple[float, int, int]],
     beats: list[float],
     downbeats: list[float],
@@ -482,11 +517,11 @@ def to_musicxml(
     ghost_velocity: int = 0,
     simplify_bars: bool = False,
     repeats: bool = False,
-) -> str:
-    """MusicXML (partwise 4.0) with one percussion staff. Bars start at the downbeats;
-    beats before the first downbeat form a pickup bar. For readability, `simplify_bars` gives
-    similar bars their common pattern (see simplify) and `repeats` writes runs of equal bars or
-    phrases once, between repeat signs."""
+) -> Engraving:
+    """MusicXML (partwise 4.0) with one percussion staff, and the bar map (BarTime per song
+    bar). Bars start at the downbeats; beats before the first downbeat form a pickup bar. For
+    readability, `simplify_bars` gives similar bars their common pattern (see simplify) and
+    `repeats` writes runs of equal bars or phrases once, between repeat signs."""
     q = quantize(notes, beats, min_velocity)
     b = np.asarray(beats, dtype=float)
     layout = bar_layout(beats, downbeats)
@@ -556,7 +591,11 @@ def to_musicxml(
     blocks = _repeat_blocks(measures) if repeats else [(k, 1, 1) for k in range(len(measures))]
     out = []
     number = 0 if pickup else 1
+    written = [0] * len(measures)  # song bar → number of its written bar
     for start, length, times in blocks:
+        for t in range(times):
+            for j in range(length):
+                written[start + t * length + j] = number + j
         for k in range(start, start + length):
             ms = measures[k]
             left = right = words = ""
@@ -588,7 +627,14 @@ def to_musicxml(
         f"<midi-unpitched>{p + 1}</midi-unpitched></midi-instrument>"
         for p in used
     )
-    return (
+    for k, run in multi_rest.items():  # empty bars are never inside repeat signs
+        for r in range(k + 1, k + run):
+            written[r] = written[k]
+    bar_map = [
+        BarTime(_beat_time(b, bar[0]), _beat_time(b, bar[-1] + 1), written[m])
+        for m, bar in enumerate(bars)
+    ]
+    musicxml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" '
         '"http://www.musicxml.org/dtds/partwise.dtd">\n'
@@ -603,3 +649,4 @@ def to_musicxml(
         f"{instruments}</score-part></part-list>"
         f'<part id="P1">{"".join(out)}</part></score-partwise>\n'
     )
+    return Engraving(musicxml, bar_map)
