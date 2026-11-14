@@ -407,7 +407,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 - [ ] **Task 48: Narrow windows and the German check** (S)
   - Acceptance:
     - Breakpoint at 400 px: the header keeps icon buttons, every page of this module fits without horizontal scrolling (screens 10/11 apply where the module has the parts).
-    - `po/de.po` complete; every visible string German with `LANGUAGE=de`.
+    - `po/de.po` complete; every visible string German with `LANGUAGE=de`; German addresses the user informally ("du", owner 2026-11-14).
   - Verify: translation tests; by hand at 400 px, in German, light and dark
   - Dependencies: 46, 47 · Files: `src/stickler_gtk/ui/*`, `po/de.po`
 

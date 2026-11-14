@@ -21,7 +21,7 @@ msgstr ""
 msgid ""
 "Stickler needs these models before it can listen: {models}. Set them up once "
 "in a terminal:"
-msgstr "Stickler braucht diese Modelle, bevor es zuhören kann: {models}. Richten Sie sie einmal im Terminal ein:"
+msgstr "Stickler braucht diese Modelle, bevor es zuhören kann: {models}. Richte sie einmal im Terminal ein:"
 
 #: src/stickler_gtk/logic/session.py:106
 msgid "Models Not Set Up"
