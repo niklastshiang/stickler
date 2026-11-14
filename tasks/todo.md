@@ -366,7 +366,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/gtk -k translat`; `LANGUAGE=de scripts/gtk.sh` shows the empty window in German
   - Dependencies: 41 · Files: `src/stickler_gtk/i18n.py`, `po/*`, `scripts/i18n.sh`, `tests/gtk/test_translations.py`
 
-- [ ] **Task 43: Open a song, analyse, show the result** (M)
+- [x] **Task 43: Open a song, analyse, show the result** (M): done 2026-11-14. Tempo and meter come from `notation.Engraving` (the grid that was engraved, corrections included). Songs also open from the command line and "Open With" (`HANDLES_OPEN`). Real app on the laptop: a cached own song reaches the result 1.3–1.5 s after starting the app (the analysis itself 0.25 s); an uncached 60 s clip in 7.2 s with ADTOF and Beat This! running as their own processes. Found on the way: the app on Python 3.14 computed other cache keys than the CLI on 3.12 and analysed cached songs again; fixed separately (`f552ed8`).
   - Acceptance:
     - `api.song_info(path)` (title, artist, seconds) and `Notation.tempo`, `Notation.meter` in `stickler.api`, with tests.
     - `logic/session.py`: states empty → analysing → result, driven by `api.Step`; `logic/steps.py`: label and detail for each step id (screen 5).

@@ -526,6 +526,8 @@ class BarTime:
 class Engraving:
     musicxml: str
     bars: list[BarTime]
+    tempo: int  # quarter notes per minute, as written
+    meter: tuple[int, int]  # time signature, as written
 
 
 def to_musicxml(
@@ -689,4 +691,4 @@ def engrave(
         f"{instruments}</score-part></part-list>"
         f'<part id="P1">{"".join(out)}</part></score-partwise>\n'
     )
-    return Engraving(musicxml, bar_map)
+    return Engraving(musicxml, bar_map, tempo, (num, den))

@@ -1009,6 +1009,20 @@ BarTime = notation.BarTime  # one song bar: start, end (seconds), number of its 
 
 
 @dataclass(frozen=True)
+class SongInfo:
+    title: str  # from the tags, else the file name
+    artist: str  # "" without a tag
+    seconds: float
+
+
+def song_info(path: Path) -> SongInfo:
+    """What a window shows about a song before analysing it; RuntimeError if ffprobe cannot
+    read the file."""
+    found = audio.tags(path)
+    return SongInfo(found.get("title") or path.stem, found.get("artist", ""), audio.duration(path))
+
+
+@dataclass(frozen=True)
 class Corrections:
     """The reader's fixes to a detected beat grid (notation.corrected_grid); the hits never
     change. `tempo`: "half", "normal" or "double"; `beats_per_bar` overrides the detected
@@ -1037,6 +1051,8 @@ class Notation:
     pdf_error: str | None  # why there is no PDF (MuseScore missing or failed)
     transcription: SongTranscription
     bars: list[BarTime] = field(default_factory=list)  # every song bar in played order
+    tempo: int = 0  # quarter notes per minute, as written (0: not engraved)
+    meter: tuple[int, int] = (4, 4)  # time signature, as written
 
 
 def _parse_pipeline(pipeline: str, registry: dict) -> tuple[str, str]:
@@ -1204,7 +1220,7 @@ def notate(
     t = _transcribe(audio_path, pipeline or mode, plan, registry, steps, device, cache_dir)
     target = out or audio_path.with_suffix(".musicxml")
 
-    def engrave() -> tuple[list[BarTime], bool]:
+    def engrave() -> tuple[notation.Engraving, bool]:
         target.parent.mkdir(parents=True, exist_ok=True)
         found = audio.tags(audio_path) if title is None or artist is None else {}
         beats, downbeats = notation.corrected_grid(
@@ -1224,13 +1240,13 @@ def notate(
             repeats=fix.repeats,
         )
         target.write_text(engraving.musicxml, encoding="utf-8")
-        return engraving.bars, False
+        return engraving, False
 
-    bars = steps.run(engrave)
+    e = steps.run(engrave)
     if not pdf:
-        return Notation(target, None, None, t, bars)
+        return Notation(target, None, None, t, e.bars, e.tempo, e.meter)
     pdf_path, pdf_error = steps.run(lambda: (_export_pdf(target), False))
-    return Notation(target, pdf_path, pdf_error, t, bars)
+    return Notation(target, pdf_path, pdf_error, t, e.bars, e.tempo, e.meter)
 
 
 def _export_pdf(musicxml: Path) -> tuple[Path | None, str | None]:

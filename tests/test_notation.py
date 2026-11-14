@@ -480,3 +480,11 @@ def test_no_correction_keeps_the_grid():
 def test_impossible_corrections_are_rejected(kw):
     with pytest.raises(ValueError):
         notation.corrected_grid(BEATS, DOWNBEATS, **kw)
+
+
+def test_engraving_reports_tempo_and_meter_of_the_grid_it_used():
+    e = notation.engrave(groove(4), BEATS, DOWNBEATS)
+    assert (e.tempo, e.meter) == (120, (4, 4))
+    beats, downbeats = notation.corrected_grid(BEATS, DOWNBEATS, tempo="half", beats_per_bar=3)
+    e = notation.engrave(groove(4), beats, downbeats)
+    assert (e.tempo, e.meter) == (60, (3, 4))

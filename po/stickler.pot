@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-14 16:03+0100\n"
+"POT-Creation-Date: 2026-11-14 16:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,16 +17,92 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/stickler_gtk/ui/window.py:14
-msgid "Open a Song…"
+#: src/stickler_gtk/logic/steps.py:13
+msgid "Only the drum track, without the band"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:19
+#: src/stickler_gtk/logic/steps.py:13
+msgid "Separate the drums"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:14
+msgid "Detect the hits"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:14
+msgid "Kick, snare, toms, hi-hat, cymbals"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:15
+msgid "Find the beat and the bars"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:15
+msgid "Tempo, time signature, the first “one”"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:16
+msgid "Bars, repeats, beams"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:16
+msgid "Write the notes"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:17
+msgid "Make the PDF"
+msgstr ""
+
+#: src/stickler_gtk/logic/steps.py:17
+msgid "To print or to read on a tablet"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:30
 msgid "Drop a Song Here"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:21
+#: src/stickler_gtk/ui/window.py:32
 msgid ""
 "Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV "
 "or OGG; a song takes about 15 seconds."
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:35
+msgid "Open a Song…"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:44
+msgid "Done"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:52
+msgid "Waiting"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:66
+msgid "Open…"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:68 src/stickler_gtk/ui/window.py:107
+msgid "Open a Song"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:74
+msgid "Writing the Drum Part"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:79
+msgid "The Notes Are Ready"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:80
+msgid "The sheet music will be shown here."
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:103
+msgid "Songs"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:122
+msgid "Not an audio file"
 msgstr ""

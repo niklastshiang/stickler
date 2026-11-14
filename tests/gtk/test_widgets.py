@@ -43,3 +43,72 @@ def test_the_window_speaks_german(monkeypatch):
         i18n.setup()
     assert "Song hier ablegen" in labels
     assert "Song öffnen …" in labels
+
+
+def _wait(predicate, seconds=5.0) -> bool:
+    """Runs the main loop until `predicate()` holds (the worker reports through it)."""
+    import time
+
+    from gi.repository import GLib
+
+    context, deadline = GLib.MainContext.default(), time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        while context.pending():
+            context.iteration(False)
+        if predicate():
+            return True
+        time.sleep(0.01)
+    return False
+
+
+def _fake_analysis(monkeypatch, tmp_path):
+    """stickler.api without models: three steps, then a result in 4/4 at 109."""
+    from pathlib import Path
+
+    from stickler import api
+
+    seen = []
+
+    def notate(song, out, *, progress, **kw):
+        for i, step_id in enumerate(("transcribe", "beats", "engrave"), 1):
+            for state in ("started", "done"):
+                step = api.Step(step_id, i, 3, state, False, None)
+                seen.append(step)
+                progress(step)
+        t = api.SongTranscription(song, "fast", None, [], [], [])
+        return api.Notation(Path(out), None, None, t, [], 109, (4, 4))
+
+    monkeypatch.setattr(
+        api, "song_info", lambda p: api.SongInfo("Eye of the Tiger", "Survivor", 246.0)
+    )
+    monkeypatch.setattr(api, "notate", notate)
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    return seen
+
+
+def test_opening_a_song_shows_the_steps_and_ends_on_the_result(monkeypatch, tmp_path):
+    from stickler_gtk.ui.window import Window
+
+    seen = _fake_analysis(monkeypatch, tmp_path)
+    window = Window()
+    window.open_song(tmp_path / "eye.flac")
+    assert window.pages.get_visible_child_name() == "analysing"
+    assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+    assert len(seen) == 6
+    assert window.heading.get_title() == "Eye of the Tiger"
+    assert window.heading.get_subtitle() == "Survivor · ♩ = 109 · 4/4"
+
+
+def test_a_failed_analysis_returns_with_the_reason(monkeypatch, tmp_path):
+    from stickler import api
+    from stickler_gtk.ui.window import Window
+
+    def broken(song, out, **kw):
+        raise RuntimeError("ffmpeg: no audio")
+
+    monkeypatch.setattr(api, "song_info", lambda p: api.SongInfo("x", "", 1.0))
+    monkeypatch.setattr(api, "notate", broken)
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    window = Window()
+    window.open_song(tmp_path / "x.flac")
+    assert _wait(lambda: window.pages.get_visible_child_name() == "empty")

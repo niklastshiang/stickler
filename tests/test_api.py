@@ -1347,3 +1347,34 @@ def test_render_hits_writes_one_click_per_hit_as_long_as_the_song(tmp_path):
     clicks = audio_mod.load_mono(dest, sr=api.CLICK_SR)
     expected = audio_mod.clicks([(0.5, 0), (1.0, 1), (1.5, 1), (2.0, 2)], len(clicks), api.CLICK_SR)
     assert np.allclose(clicks, expected, atol=1e-3)  # kick, snare and tom, cymbal
+
+
+def test_notation_carries_tempo_and_meter_for_the_window(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)  # beats every 0.5 s, 4/4
+    kw = {"pdf": False, "cache_dir": tmp_path}
+    result = api.notate(audio, tmp_path / "o.musicxml", **kw)
+    assert (result.tempo, result.meter) == (120, (4, 4))
+    fixed = api.Corrections(beats_per_bar=2)
+    result = api.notate(audio, tmp_path / "o.musicxml", corrections=fixed, **kw)
+    assert result.meter == (2, 4)
+
+
+def test_song_info_reads_title_artist_and_length(tmp_path):
+    import subprocess
+
+    import numpy as np
+
+    from stickler import audio as audio_mod
+
+    plain = audio_mod.write_wav(tmp_path / "Plain Song.wav", np.zeros(44100 * 2), 44100)
+    info = api.song_info(plain)
+    assert (info.title, info.artist) == ("Plain Song", "")
+    assert info.seconds == pytest.approx(2.0, abs=0.05)
+    tagged = tmp_path / "tagged.flac"
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(plain), "-metadata", "title=Eye of the Tiger"]
+        + ["-metadata", "artist=Survivor", str(tagged)],
+        check=True,
+    )
+    info = api.song_info(tagged)
+    assert (info.title, info.artist) == ("Eye of the Tiger", "Survivor")
