@@ -388,8 +388,8 @@ only in its first version.
 |---|---|---|---|
 | `engine-api` | Additions to `stickler.api`, no GTK: progress and cancellation for `transcribe_song`, `notate` and `setup_adapters`; song bar → written bar map; correction parameters; audio of the detected hits | – | approved, below |
 | `design` | Mockups of every screen, made with the owner, following the GNOME HIG; no code | – | approved, below |
-| `app-shell` | Window, open or drop a song, analysis with a step display, export (PDF, MusicXML, drum track), recent songs | `engine-api`, `design` | – |
-| `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window | `app-shell` | – |
+| `app-shell` | Window, open or drop a song, analysis with a step display, export (MusicXML, drum track; PDF with `sheet-view`), recent songs | `engine-api`, `design` | draft, below |
+| `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | – |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | – |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | – |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
@@ -649,6 +649,166 @@ is drawn here; a change of a screen is agreed on the canvas first and copied to 
 - Keyboard shortcuts (play/pause, next/previous bar, open, export) are listed in the main menu
   but not designed; `app-shell` defines them.
 - The app icon (GNOME style, `tasks/todo.md`) is not part of these screens.
+
+### Module `app-shell`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-14).
+
+#### Assumptions
+
+1. **App ID `ng.tshia.Stickler`** (the owner's domain `tshia.ng`, owner's choice 2026-11-14). It
+   names the desktop file, the settings and later the Flatpak. Flathub would ask to verify the
+   domain (a token under `https://tshia.ng/.well-known/`); our own Flatpak does not.
+2. **Same repository, own package:** `src/stickler_gtk/` next to `src/stickler/`, started with
+   `stickler-gtk`. It calls only `stickler.api`; `src/stickler` stays free of GTK.
+3. **GTK comes from the system, not from PyPI.** PyGObject, GTK 4 and libadwaita need the
+   system libraries and typelibs. In development the app runs on the system Python 3.14
+   (GTK 4.22, libadwaita 1.9, GStreamer 1.28, librsvg, pycairo, checked 2026-11-14) in its own
+   environment `.venv-gtk`, made with `--system-site-packages`; in the Flatpak the GNOME
+   runtime provides them (runtime 51: Python 3.14.9, libadwaita 1.10). Minimum libadwaita: 1.7
+   (toggle groups; the bottom sheet is 1.6).
+4. **Logic apart from widgets:** `stickler_gtk/logic/` imports no GTK (window states, steps →
+   labels, recent songs, export names and costs, settings) and falls under the 95% coverage
+   rule; `stickler_gtk/ui/` holds the widgets and is excluded like `cli.py`. Widgets are built
+   in Python (no Blueprint or `.ui` files, so no build step and one string extractor).
+5. **Analyses run in a worker thread**; `progress` callbacks reach the window through
+   `GLib.idle_add`. The main loop never waits for a model.
+6. **The sheet music is not part of this module.** After an analysis the window shows the
+   result page with title, artist, tempo and meter in the header and the export menu; the page
+   body is a placeholder until `sheet-view`. The PDF export comes with `sheet-view`, made with
+   Verovio (owner's decision 2026-11-14), so it needs no MuseScore.
+7. **Where models and the cache live** is not decided here: `app-shell` reads both from one
+   function (today: the checkout's folders), which `setup-assistant` and `packaging` change.
+8. **Before `setup-assistant` exists**, a missing model (`api.SetupMissing`) shows a page that
+   names the models and the `stickler setup` command.
+
+#### Objective
+
+The window around everything else: open or drop a song, watch the analysis, export the
+results, come back to recent songs. For drummers who are not technical, in English and German,
+in light and dark, wide and narrow (screens 4, 5, 8 and 9 of `design`).
+
+1. **Open a song** by dropping it on the window or with "Open a Song…" (file chooser filtered
+   to audio). Anything else dropped gives a toast ("Not an audio file").
+2. **Analysis** in Fast mode with the step list (done, running, waiting) and "Cancel"; cancel
+   returns to where the user came from. A cached song skips straight to the result.
+3. **Errors** as pages, in the user's words: a model not set up, an analysis that failed
+   (with "Try Again" and the technical message folded away), a file that cannot be read.
+4. **Export** from the header's menu: MusicXML, and the drum track. The drum track names its
+   cost first (about 1.84× the song's length on the CPU and a one-time download of about
+   1.2 GB, as long as Demucs is not set up) and then runs as a step list with "Cancel". A toast
+   says where the file went and offers "Open".
+5. **Recent songs:** the last ten, newest first, on the empty window. A song whose file is gone
+   is shown as missing and can be removed.
+6. **Appearance:** follow the system, light or dark, chosen in the main menu and remembered.
+7. **Languages:** every string goes through gettext; German is complete in the first version.
+   Translations come in through Weblate later (owner's decision 2026-11-14): Weblate commits
+   `po/*.po` to the repository, so outside pull requests stay off.
+8. **Keyboard:** every action is reachable by keyboard, and the shortcuts window lists them:
+   Ctrl+O open, Ctrl+E export menu, Escape cancel an analysis or export, Ctrl+W close the
+   window, Ctrl+Q quit, Ctrl+? shortcuts, F10 main menu.
+
+Not part of this module: the sheet music and the bar marker (`sheet-view`), playback and volume
+(`playback`), the corrections sidebar (`corrections`), the setup assistant (`setup-assistant`),
+the PDF export (with `sheet-view`), the app icon, Flatpak and AppImage (`packaging`).
+
+#### Commands
+
+```bash
+scripts/gtk.sh                          # build .venv-gtk on the system Python if needed, start the app
+LANGUAGE=de scripts/gtk.sh              # the app in German
+scripts/gtk.sh test                     # widget smoke tests (pytest -m gtk) on the system Python
+uv run pytest -q tests/gtk              # logic tests, no GTK needed (part of check.sh)
+scripts/i18n.sh                         # strings → po/stickler.pot, merged into po/de.po
+scripts/check.sh task                   # before every commit
+```
+
+#### Project structure (additions)
+
+```
+src/stickler_gtk/__init__.py
+src/stickler_gtk/main.py           # Adw.Application ng.tshia.Stickler; entry point stickler-gtk
+src/stickler_gtk/logic/            # no GTK: session.py (states), steps.py (labels), recent.py,
+                                   # exports.py (names, costs), settings.py, paths.py
+src/stickler_gtk/ui/               # window.py, pages (empty, analysing, result, error),
+                                   # export_menu.py, shortcuts.py
+po/POTFILES, po/stickler.pot, po/de.po
+data/ng.tshia.Stickler.desktop
+scripts/gtk.sh, scripts/i18n.sh
+tests/gtk/                         # logic tests; test_widgets.py marked `gtk`
+```
+
+Recent songs and settings are JSON files under the XDG folders (`GLib.get_user_data_dir()` and
+`get_user_config_dir()`, `stickler/`), which the Flatpak maps into its sandbox by itself.
+
+#### Code style
+
+As the harness: frozen dataclasses for state, no `print`, English identifiers and comments,
+user-facing strings only through `_()`. The logic decides, the widgets show:
+
+```python
+# logic/session.py: no GTK import
+@dataclass(frozen=True)
+class Analysing:
+    song: Path
+    steps: tuple[StepRow, ...]  # label, detail, state: "done" | "running" | "waiting"
+
+
+def on_step(state: Analysing, step: api.Step) -> Analysing:
+    """The next state after a progress report; pure, tested without GTK."""
+
+
+# ui/window.py
+def _on_progress(self, step: api.Step) -> None:  # called on the worker thread
+    GLib.idle_add(self._show, session.on_step(self._state, step))
+```
+
+#### Testing strategy
+
+- Logic first and without GTK: state changes from `api.Step`, cancel and errors; labels for
+  every step id; recent songs (order, limit, missing files, a damaged JSON file); export names
+  and the drum track's cost from the song's length; settings. These run on Python 3.12 and 3.14
+  in `check.sh` and count for coverage.
+- Widgets: a few smoke tests marked `gtk` on the system Python (the window opens, each page
+  shows, a fake `stickler.api` drives an analysis to the result); not part of the default run,
+  like the `adapters` tests, because CI has no display.
+- Translations: a test fails if a `.py` file under `stickler_gtk` has a string literal shown to
+  the user without `_()`, or if `po/de.po` misses a string from `po/stickler.pot`.
+- By hand on the development laptop: drop a cached and an uncached own song, cancel, export,
+  German, dark, a 400 px window.
+
+#### Boundaries
+
+- **Always:** only `stickler.api` from the app; models only in the worker thread; every user
+  string through `_()`; screens as in `design`, or agree the change on the canvas first.
+- **Ask first:** a new dependency (Blueprint, a GTK test library); changing the mockups; the
+  CONSTRAINTS.md lines for `stickler_gtk` (proposed: logic in the 95% rule, `ui/` excluded).
+- **Never:** import GTK in `src/stickler` or in `stickler_gtk/logic`; block the main loop;
+  logic in widget code; strings shown to the user without translation.
+
+#### Success criteria
+
+1. `scripts/gtk.sh` opens the empty window (screen 4) on the development laptop; dropping or
+   opening an uncached own song shows the analysis (screen 5) and ends on the result page; a
+   cached song reaches it in under 1 s.
+2. "Cancel" during an analysis returns to the previous page within 1 s, and no model process
+   is left (as `engine-api` criterion 2).
+3. Export of MusicXML and of the drum track writes the files; the drum track names its cost
+   before it starts and can be cancelled.
+4. Recent songs survive a restart, keep the newest ten, and a missing file can be removed.
+5. The appearance switch works and is remembered; dark mode follows the system by default.
+6. With `LANGUAGE=de` every visible string is German; the translation test passes.
+7. At 400 px width every page of this module is usable without horizontal scrolling.
+8. Every action works by keyboard; the shortcuts window lists them.
+9. `scripts/check.sh task` is green, with `stickler_gtk/logic` at ≥ 95% coverage; no GTK
+   import in `src/stickler` or `stickler_gtk/logic` (a test checks it).
+
+#### Open questions
+
+- The Weblate project is set up by the owner (account, access to the repository) when the
+  first outside language is wanted; until then only German, translated in the repository.
+- Whether "Open in MuseScore" (screen 8) stays: it needs MuseScore and belongs with the
+  MusicXML export; proposed for `sheet-view` together with the PDF.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
