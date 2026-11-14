@@ -179,7 +179,8 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 
 ## Release 3: Error analysis (honest numbers)
 
-> Status: **approved** by the owner on 2026-11-14 (blind judgement included).
+> Status: **done**, released as release 3 on 2026-11-14 (approved by the owner on 2026-11-14,
+> blind judgement included).
 
 ### Objective
 **Honest numbers for Fast and Quality.** The F1 values on the own songs count every

@@ -254,7 +254,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: CliRunner test with a fake API; owner sees the finale after spot 100
   - Dependencies: 27, 29 · Files: `src/stickler/{api,cli}.py`, `scripts/badges.py`, tests
 
-- [ ] **Task 28: Report and release 3** (S)
+- [x] **Task 28: Report and release 3** (S)
   - Acceptance:
     - `docs/report.md`: section "Errors and reference quality" (breakdown, top confusions, corrected F1 with intervals, limits); section 1 quotes measured and corrected values.
     - README roadmap and status; release steps of ADR 0006; release notes in Keep a Changelog style.
@@ -262,12 +262,13 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 27, 30 · Files: `docs/report.md`, `README.md`, `tasks/todo.md`, version files
 
 ### Checkpoint G
-- [ ] All success criteria of SPEC.md "Release 3" met, review with the owner, then release 3
+- [x] All success criteria of SPEC.md "Release 3" met, review with the owner, then release 3
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
 
+- [x] **Release 3 published on 2026-11-14** (tag v3, GitHub release): error analysis and honest numbers (Phase 7).
 - [x] **Release 2 published on 2026-11-13** (tag v2, GitHub release): readable sheet music (similar bars simplified, repeat signs). Release 3 (owner, 2026-11-13): the error analysis on the own songs (see Phase 5c).
 - [x] **Release 1 published on 2026-11-13** (tag v1, GitHub release, repository public; private vulnerability reporting and Dependabot alerts on, pull requests and wiki off).
 - [x] **Release plan (owner, 2026-11-13):** the repository goes public with release 1; the old music folder names in the git history may stay. Release 1 = the command line tool (`notate --mode fast|quality` once the 25-song results are in, docs in `docs/`); the GTK application is the next release after it, whatever its number is (ADR 0006: every release counts, fixes to the command line tool in between included; owner, 2026-11-13). With the application, add the GitHub topics `gtk4`, `libadwaita`, `flatpak` (18 of 20 are set since 2026-11-13). Owner, 2026-11-13: release 2 is another command line release; the application comes after it.
