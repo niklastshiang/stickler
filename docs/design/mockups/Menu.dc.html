@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler: main menu with appearance</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1c71d8}a:hover{color:#1a5fb4}
+.light{--win:#fafafb;--view:#ebebed;--head:#ffffff;--pop:#ffffff;--fg:rgba(0,0,6,.8);--dim:rgba(0,0,6,.56);--line:rgba(0,0,6,.1);--btn:rgba(0,0,6,.07);--hover:rgba(0,0,6,.06);--accent:#3584e4;--accent-fg:#1c71d8}
+.dark{--win:#222226;--view:#1d1d20;--head:#2e2e32;--pop:#36363a;--fg:#ffffff;--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.1);--btn:rgba(255,255,255,.1);--hover:rgba(255,255,255,.08);--accent:#3584e4;--accent-fg:#78aeed}
+</style>
+</helmet>
+<div class="{{theme}}" style="width: 1000px; height: 700px; position: relative; display: flex; flex-direction: column; background: var(--win); color: var(--fg); font-family: Inter, 'Adwaita Sans', Cantarell, sans-serif; font-size: 15px; overflow: hidden;">
+  <header style="height: 47px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--head); box-shadow: 0 1px var(--line);">
+    <button aria-label="Open a song" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14V13H2z"></path></svg>
+    </button>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; line-height: 1.25;">
+      <span style="font-weight: 700;">Eye of the Tiger</span>
+      <span style="font-size: 13px; color: var(--dim);">Survivor · ♩ = 109 · 4/4</span>
+    </div>
+    <button style="height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+      Export
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5l3 3 3-3"></path></svg>
+    </button>
+    <button aria-label="Corrections" aria-pressed="false" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h6M11.5 4h2M2.5 12h2M7.5 12h6"></path><circle cx="10" cy="4" r="1.6"></circle><circle cx="6" cy="12" r="1.6"></circle></svg>
+    </button>
+    <button aria-label="Main menu" aria-expanded="true" aria-haspopup="menu" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: var(--btn); color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"></path></svg>
+    </button>
+    <button aria-label="Close" style="width: 34px; height: 34px; border: 0; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--btn); display: flex; align-items: center; justify-content: center;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"></path></svg>
+      </span>
+    </button>
+  </header>
+
+  <main style="flex-grow: 1; min-height: 0; overflow: hidden; background: var(--view); display: flex; justify-content: center; padding-top: 24px;">
+    <dc-import name="SheetPage" width="600" marked="0" inverted="{{dark}}" hint-size="600px,525px"></dc-import>
+  </main>
+
+  <div role="menu" aria-label="Main menu" style="position: absolute; top: 50px; right: 10px; width: 260px; padding: 6px; box-sizing: border-box; border-radius: 12px; background: var(--pop); box-shadow: 0 0 0 1px rgba(0,0,6,.1), 0 4px 16px rgba(0,0,6,.2); display: flex; flex-direction: column;">
+    <div role="radiogroup" aria-label="Appearance" style="display: flex; justify-content: center; gap: 18px; padding: 10px 0 12px;">
+      <sc-for list="{{styles}}" as="s" hint-placeholder-count="3">
+        <button role="radio" aria-checked="{{s.on}}" aria-label="{{s.label}}" title="{{s.label}}" style="width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: {{s.fill}}; box-shadow: {{s.ring}}; position: relative; display: flex; align-items: flex-end; justify-content: flex-end;">
+          <sc-if value="{{s.selected}}" hint-placeholder-val="{{false}}">
+            <span style="width: 18px; height: 18px; border-radius: 9px; background: var(--accent); color: #ffffff; display: flex; align-items: center; justify-content: center; margin: -2px;">
+              <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5l2.5 2.5L11 4.5"></path></svg>
+            </span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </div>
+    <div style="height: 1px; margin: 0 4px 6px; background: var(--line);"></div>
+    <button role="menuitem" style="min-height: 38px; padding: 6px 12px; border: 0; border-radius: 6px; background: var(--hover); color: var(--fg); font: inherit; text-align: left;">Open a Song…</button>
+    <button role="menuitem" style="min-height: 38px; padding: 6px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; text-align: left;">Keyboard Shortcuts</button>
+    <button role="menuitem" style="min-height: 38px; padding: 6px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; text-align: left;">About Stickler</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"appearance":{"editor":"enum","options":["Follow System","Light","Dark"],"default":"Follow System"},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pick = this.props.appearance ?? 'Follow System';
+    const fills = {
+      'Follow System': 'linear-gradient(135deg, #ffffff 50%, #222226 50%)',
+      'Light': '#ffffff',
+      'Dark': '#222226'
+    };
+    return {
+      theme: this.props.dark ? 'dark' : 'light',
+      dark: !!this.props.dark,
+      styles: ['Follow System', 'Light', 'Dark'].map((label) => ({
+        label,
+        on: label === pick ? 'true' : 'false',
+        selected: label === pick,
+        fill: fills[label],
+        ring: label === pick ? '0 0 0 2px var(--accent)' : '0 0 0 1px rgba(0,0,6,.25)'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

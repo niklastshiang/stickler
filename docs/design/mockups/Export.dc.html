@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler: export menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1c71d8}a:hover{color:#1a5fb4}
+.light{--win:#fafafb;--view:#ebebed;--head:#ffffff;--pop:#ffffff;--fg:rgba(0,0,6,.8);--dim:rgba(0,0,6,.56);--line:rgba(0,0,6,.1);--btn:rgba(0,0,6,.07);--hover:rgba(0,0,6,.06);--accent:#3584e4;--accent-fg:#1c71d8;--toast:#353538}
+.dark{--win:#222226;--view:#1d1d20;--head:#2e2e32;--pop:#36363a;--fg:#ffffff;--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.1);--btn:rgba(255,255,255,.1);--hover:rgba(255,255,255,.08);--accent:#3584e4;--accent-fg:#78aeed;--toast:#4a4a4e}
+</style>
+</helmet>
+<div class="{{theme}}" style="width: 1000px; height: 700px; position: relative; display: flex; flex-direction: column; background: var(--win); color: var(--fg); font-family: Inter, 'Adwaita Sans', Cantarell, sans-serif; font-size: 15px; overflow: hidden;">
+  <header style="height: 47px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--head); box-shadow: 0 1px var(--line);">
+    <button aria-label="Open a song" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14V13H2z"></path></svg>
+    </button>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; line-height: 1.25;">
+      <span style="font-weight: 700;">Eye of the Tiger</span>
+      <span style="font-size: 13px; color: var(--dim);">Survivor · ♩ = 109 · 4/4</span>
+    </div>
+    <button aria-expanded="true" aria-haspopup="menu" style="height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--btn); color: var(--fg); font: inherit; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+      Export
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5l3 3 3-3"></path></svg>
+    </button>
+    <button aria-label="Corrections" aria-pressed="false" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h6M11.5 4h2M2.5 12h2M7.5 12h6"></path><circle cx="10" cy="4" r="1.6"></circle><circle cx="6" cy="12" r="1.6"></circle></svg>
+    </button>
+    <button aria-label="Main menu" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"></path></svg>
+    </button>
+    <button aria-label="Close" style="width: 34px; height: 34px; border: 0; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--btn); display: flex; align-items: center; justify-content: center;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"></path></svg>
+      </span>
+    </button>
+  </header>
+
+  <main style="flex-grow: 1; min-height: 0; overflow: hidden; background: var(--view); display: flex; justify-content: center; padding-top: 24px;">
+    <dc-import name="SheetPage" width="600" marked="0" inverted="{{dark}}" hint-size="600px,525px"></dc-import>
+  </main>
+
+  <div role="menu" aria-label="Export" style="position: absolute; top: 50px; right: 92px; width: 290px; padding: 6px; box-sizing: border-box; border-radius: 12px; background: var(--pop); box-shadow: 0 0 0 1px rgba(0,0,6,.1), 0 4px 16px rgba(0,0,6,.2); display: flex; flex-direction: column;">
+    <sc-for list="{{items}}" as="item" hint-placeholder-count="3">
+      <button role="menuitem" style="min-height: 52px; padding: 6px 12px; border: 0; border-radius: 6px; background: {{item.bg}}; color: var(--fg); font: inherit; text-align: left; display: flex; flex-direction: column; justify-content: center; gap: 2px;">
+        <span>{{item.label}}</span>
+        <span style="font-size: 13px; color: var(--dim);">{{item.detail}}</span>
+      </button>
+    </sc-for>
+    <div style="height: 1px; margin: 6px 4px; background: var(--line);"></div>
+    <button role="menuitem" style="min-height: 38px; padding: 6px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; text-align: left;">Open in MuseScore</button>
+  </div>
+
+  <div role="status" style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); min-height: 44px; padding: 4px 6px 4px 18px; box-sizing: border-box; border-radius: 22px; background: var(--toast); color: #ffffff; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,6,.3); white-space: nowrap;">
+    <span>Saved “Eye of the Tiger.pdf”</span>
+    <button style="height: 34px; padding: 0 14px; border: 0; border-radius: 17px; background: rgba(255,255,255,.15); color: #ffffff; font: inherit; font-weight: 700;">Open</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      theme: this.props.dark ? 'dark' : 'light',
+      dark: !!this.props.dark,
+      items: [
+        { label: 'Sheet Music (PDF)…', detail: 'To print or to read on a tablet', bg: 'var(--hover)' },
+        { label: 'MusicXML…', detail: 'To edit in MuseScore or Dorico', bg: 'transparent' },
+        { label: 'Drum Track…', detail: 'Separates the drums first: about 8 minutes for this song, and a one-time 1.2 GB download', bg: 'transparent' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

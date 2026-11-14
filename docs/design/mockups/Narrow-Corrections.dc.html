@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler: narrow window, corrections</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1c71d8}a:hover{color:#1a5fb4}
+.light{--win:#fafafb;--view:#ebebed;--head:#ffffff;--sheet:#f2f2f4;--card:#ffffff;--fg:rgba(0,0,6,.8);--dim:rgba(0,0,6,.56);--line:rgba(0,0,6,.1);--btn:rgba(0,0,6,.07);--accent:#3584e4;--accent-fg:#1c71d8;--shadow:0 0 0 1px rgba(0,0,6,.03),0 1px 3px 1px rgba(0,0,6,.07)}
+.dark{--win:#222226;--view:#1d1d20;--head:#2e2e32;--sheet:#2e2e32;--card:rgba(255,255,255,.08);--fg:#ffffff;--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.1);--btn:rgba(255,255,255,.1);--accent:#3584e4;--accent-fg:#78aeed;--shadow:0 0 0 1px rgba(0,0,6,.09),0 1px 3px 1px rgba(0,0,6,.09)}
+</style>
+</helmet>
+<div class="{{theme}}" style="width: 400px; height: 860px; position: relative; display: flex; flex-direction: column; background: var(--win); color: var(--fg); font-family: Inter, 'Adwaita Sans', Cantarell, sans-serif; font-size: 15px; overflow: hidden;">
+  <header style="height: 47px; flex-shrink: 0; display: flex; align-items: center; gap: 2px; padding: 0 6px; background: var(--head); box-shadow: 0 1px var(--line);">
+    <button aria-label="Open a song" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14V13H2z"></path></svg>
+    </button>
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; line-height: 1.25;">
+      <span style="font-weight: 700; white-space: nowrap;">Eye of the Tiger</span>
+      <span style="font-size: 13px; color: var(--dim); white-space: nowrap;">♩ = 109 · 4/4</span>
+    </div>
+    <button aria-label="Export" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10"></path></svg>
+    </button>
+    <button aria-label="Corrections" aria-pressed="true" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: var(--btn); color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h6M11.5 4h2M2.5 12h2M7.5 12h6"></path><circle cx="10" cy="4" r="1.6"></circle><circle cx="6" cy="12" r="1.6"></circle></svg>
+    </button>
+    <button aria-label="Main menu" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"></path></svg>
+    </button>
+    <button aria-label="Close" style="width: 34px; height: 34px; border: 0; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--btn); display: flex; align-items: center; justify-content: center;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"></path></svg>
+      </span>
+    </button>
+  </header>
+
+  <main style="flex-grow: 1; min-height: 0; overflow: hidden; background: var(--view); display: flex; justify-content: center; padding-top: 16px;">
+    <dc-import name="SheetPage" width="376" marked="0" inverted="{{dark}}" hint-size="376px,329px"></dc-import>
+  </main>
+
+  <section aria-label="Corrections" style="position: absolute; left: 0; right: 0; bottom: 0; height: 500px; box-sizing: border-box; padding: 8px 14px 16px; border-radius: 14px 14px 0 0; background: var(--sheet); box-shadow: 0 -2px 12px rgba(0,0,6,.2); display: flex; flex-direction: column; gap: 14px;">
+    <div style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line);" aria-hidden="true"></div>
+    <h2 style="margin: 0 0 0 4px; font-size: 15px; font-weight: 700;">Beat</h2>
+    <div style="background: var(--card); border-radius: 12px; box-shadow: var(--shadow);">
+      <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line);">
+        <span>Tempo</span>
+        <div role="radiogroup" aria-label="Tempo" style="display: flex; padding: 3px; gap: 3px; border-radius: 9px; background: var(--btn);">
+          <button role="radio" aria-checked="false" style="flex: 1 1 0; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; font-size: 14px; font-weight: 700;">Half</button>
+          <button role="radio" aria-checked="true" style="flex: 1 1 0; height: 32px; border: 0; border-radius: 6px; background: var(--head); box-shadow: 0 1px 3px rgba(0,0,6,.2); color: var(--fg); font: inherit; font-size: 14px; font-weight: 700;">As Detected</button>
+          <button role="radio" aria-checked="false" style="flex: 1 1 0; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; font-size: 14px; font-weight: 700;">Double</button>
+        </div>
+      </div>
+      <div style="min-height: 56px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line);">
+        <label for="n-bpb" style="flex-grow: 1;">Beats per bar</label>
+        <button aria-label="Fewer beats per bar" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">−</button>
+        <input id="n-bpb" value="4" readonly style="width: 28px; border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; text-align: center;">
+        <button aria-label="More beats per bar" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">+</button>
+      </div>
+      <div style="min-height: 56px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px;">
+        <label for="n-one" style="flex-grow: 1;">First “one”</label>
+        <button aria-label="Earlier first one" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">−</button>
+        <input id="n-one" value="1" readonly style="width: 28px; border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; text-align: center;">
+        <button aria-label="Later first one" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">+</button>
+      </div>
+    </div>
+    <h2 style="margin: 0 0 0 4px; font-size: 15px; font-weight: 700;">Easier to Read</h2>
+    <div style="background: var(--card); border-radius: 12px; box-shadow: var(--shadow);">
+      <div style="min-height: 52px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line);">
+        <span id="n-simplify" style="flex-grow: 1;">Simplify</span>
+        <button role="switch" aria-checked="true" aria-labelledby="n-simplify" style="width: 48px; height: 26px; border: 0; border-radius: 13px; background: var(--accent); position: relative;"><span style="position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 10px; background: #ffffff;"></span></button>
+      </div>
+      <div style="min-height: 52px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px;">
+        <span id="n-repeats" style="flex-grow: 1;">Repeat signs</span>
+        <button role="switch" aria-checked="true" aria-labelledby="n-repeats" style="width: 48px; height: 26px; border: 0; border-radius: 13px; background: var(--accent); position: relative;"><span style="position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 10px; background: #ffffff;"></span></button>
+      </div>
+    </div>
+    <button style="align-self: center; height: 34px; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: var(--accent-fg); font: inherit; font-weight: 700;">Back to Detected</button>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":400,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'dark' : 'light', dark: !!this.props.dark };
+  }
+}
+</script>
+</body>
+</html>

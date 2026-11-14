@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler: first start, a server is down</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1c71d8}a:hover{color:#1a5fb4}
+.light{--win:#fafafb;--card:#ffffff;--fg:rgba(0,0,6,.8);--dim:rgba(0,0,6,.56);--line:rgba(0,0,6,.1);--btn:rgba(0,0,6,.07);--accent:#3584e4;--accent-fg:#1c71d8;--warn:#9c6e03;--ok:#1b8553;--shadow:0 0 0 1px rgba(0,0,6,.03),0 1px 3px 1px rgba(0,0,6,.07),0 2px 6px 2px rgba(0,0,6,.03)}
+.dark{--win:#222226;--card:rgba(255,255,255,.08);--fg:#ffffff;--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.1);--btn:rgba(255,255,255,.1);--accent:#3584e4;--accent-fg:#78aeed;--warn:#f8e45c;--ok:#8ff0a4;--shadow:0 0 0 1px rgba(0,0,6,.09),0 1px 3px 1px rgba(0,0,6,.09)}
+</style>
+</helmet>
+<div class="{{theme}}" style="width: 1000px; height: 700px; display: flex; flex-direction: column; background: var(--win); color: var(--fg); font-family: Inter, 'Adwaita Sans', Cantarell, sans-serif; font-size: 15px; overflow: hidden;">
+  <header style="height: 47px; flex-shrink: 0; display: flex; align-items: center; padding: 0 6px;">
+    <div style="flex-grow: 1;"></div>
+    <button aria-label="Close" style="width: 34px; height: 34px; border: 0; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--btn); display: flex; align-items: center; justify-content: center;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"></path></svg>
+      </span>
+    </button>
+  </header>
+
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding-bottom: 47px;">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--warn);" aria-hidden="true">
+      <path d="M32 8L58 54H6z"></path><path d="M32 26v12"></path><circle cx="32" cy="46" r="1.5" fill="currentColor"></circle>
+    </svg>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800;">A Download Server Is Not Answering</h1>
+      <p style="margin: 0; max-width: 500px; color: var(--dim); line-height: 1.45;">The Beat This! model is hosted by JKU Linz at cloud.cp.jku.at, and that server is not answering right now. Everything else is ready and stays downloaded.</p>
+    </div>
+
+    <ul aria-label="Setup state" style="width: 460px; margin: 0; padding: 0; list-style: none; background: var(--card); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden;">
+      <li style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 8px 16px; box-sizing: border-box; border-bottom: 1px solid var(--line);">
+        <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--ok); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5l2.5 2.5L11 4.5"></path></svg>
+        </span>
+        <span style="flex-grow: 1;">ADTOF and the Beat This! programs</span>
+        <span style="font-size: 13px; color: var(--dim);">Ready</span>
+      </li>
+      <li style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 8px 16px; box-sizing: border-box; border-bottom: 1px solid var(--line);">
+        <span style="width: 24px; height: 24px; border-radius: 12px; border: 2px solid var(--warn); box-sizing: border-box; color: var(--warn); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 800; font-size: 13px;">!</span>
+        <span style="flex-grow: 1;">Beat This! model, 78 MB</span>
+        <span style="font-size: 13px; color: var(--warn); font-weight: 700;">Not reached</span>
+      </li>
+      <li style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px; box-sizing: border-box;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color: var(--dim);" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"></path></svg>
+        <span style="flex-grow: 1; color: var(--dim);">Technical details</span>
+        <span style="font-size: 13px; color: var(--dim);">HTTP 500</span>
+      </li>
+    </ul>
+
+    <div style="display: flex; gap: 12px;">
+      <button style="height: 38px; padding: 0 24px; border: 0; border-radius: 19px; background: var(--btn); color: var(--fg); font: inherit; font-weight: 700;">Later</button>
+      <button style="height: 38px; padding: 0 28px; border: 0; border-radius: 19px; background: var(--accent); color: #ffffff; font: inherit; font-weight: 700;">Try Again</button>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

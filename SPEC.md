@@ -387,7 +387,7 @@ only in its first version.
 | Module id | Responsibility | Depends on | Spec |
 |---|---|---|---|
 | `engine-api` | Additions to `stickler.api`, no GTK: progress and cancellation for `transcribe_song`, `notate` and `setup_adapters`; song bar → written bar map; correction parameters; audio of the detected hits | – | approved, below |
-| `design` | Mockups of every screen, made with the owner, following the GNOME HIG; no code | – | – |
+| `design` | Mockups of every screen, made with the owner, following the GNOME HIG; no code | – | approved, below |
 | `app-shell` | Window, open or drop a song, analysis with a step display, export (PDF, MusicXML, drum track), recent songs | `engine-api`, `design` | – |
 | `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window | `app-shell` | – |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | – |
@@ -595,6 +595,60 @@ marker.show(bar.written)
 
 - Which Python the GNOME runtime ships at the time of `packaging` is not checked yet; the
   3.12–3.14 range covers the development machine and is widened again if needed.
+
+### Module `design`
+
+> Status: **approved** by the owner on 2026-11-14. Mockups: [docs/design/](docs/design/README.md)
+> (sources of the design canvas; the owner's canvas is the live copy).
+
+Mockups of every screen, made with the owner in two rounds. No code. The GTK modules build what
+is drawn here; a change of a screen is agreed on the canvas first and copied to `docs/design/`.
+
+#### Screens
+
+| # | Screen | Module |
+|---|---|---|
+| 1 | First start: consent (what is downloaded, sizes, ADTOF's non-commercial licence) | `setup-assistant` |
+| 2 | First start: download with the setup steps | `setup-assistant` |
+| 3 | First start: a server is not answering (names the server, keeps what is done, retry) | `setup-assistant` |
+| 4 | Empty window: drop area, "Open a Song…", recent songs | `app-shell` |
+| 5 | Analysis: the steps of Fast, cancel | `app-shell` |
+| 6 | Sheet music with the bar marker; playback bar with position, bar number, Song / Hits / Both, volume | `sheet-view`, `playback` |
+| 7 | Corrections in a sidebar | `corrections` |
+| 8 | Export menu and the "saved" toast | `app-shell` |
+| 9 | Main menu with the appearance switch | `app-shell` |
+| 10, 11 | Narrow window (400 px): sheet music; corrections as a bottom sheet | all of the above |
+
+#### Decisions (owner, 2026-11-14)
+
+- **Look:** GNOME HIG with libadwaita widgets and colours (accent blue, boxed lists, pill
+  buttons, toggle groups); no colours or styles of our own.
+- **Appearance:** follows the system by default; the main menu has the three-way switch
+  (follow system, light, dark), as GNOME's own apps do. No preferences window for it.
+- **Sheet music in dark mode is inverted** (light notes on a dark page, the bar marker stays
+  blue), as music readers such as forScore do it; in light mode the page is white.
+- **Tempo and time signature stand in the window title**, not on the page (librsvg cannot draw
+  Verovio's tempo glyph, see the idea one-pager).
+- **Corrections are a sidebar** next to the sheet (a bottom sheet in a narrow window), grouped
+  "Beat" (tempo half / as detected / double, beats per bar, first "one") and "Easier to Read"
+  (simplify, repeat signs), with "Back to Detected".
+- **Playback:** what to hear is Song / Hits / Both; a volume button opens one slider for the song
+  and one for the detected hits.
+- **Export of the drum track announces its cost** before it starts: Fast does not separate the
+  drums, so the export runs Demucs (CPU: about 1.84× the song's length) and downloads it once
+  (about 1.2 GB).
+- **Narrow windows** are part of v1: the header keeps icon buttons only, the playback bar takes
+  two rows, the corrections become a bottom sheet.
+- **One step list** for setup and analysis: done, running, waiting, each with a short line of
+  what it does; model names appear only in setup.
+- **Copy:** English source strings, written for drummers, not for developers; German comes
+  through translation (`app-shell`).
+
+#### Open questions
+
+- Keyboard shortcuts (play/pause, next/previous bar, open, export) are listed in the main menu
+  but not designed; `app-shell` defines them.
+- The app icon (GNOME style, `tasks/todo.md`) is not part of these screens.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

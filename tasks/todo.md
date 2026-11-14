@@ -387,7 +387,7 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Done: code comments, docstrings, messages, tests, README, SPEC, ADRs, tasks, adapter READMEs, CONSTRAINTS.md, CLAUDE.md; commit messages in English from now on.
   - Adapters' `run.py`, `setup.py` and `pyproject.toml` translated after the benchmark finished. The `description` values and two error messages changed the code digests, so the cache was rekeyed (`stickler cache-digests` before, `stickler cache-migrate --rekey-from` after): 445 entries moved, evaluation identical before and after.
 
-- [ ] **Design the interface together (before any GTK code)**
+- [x] **Design the interface together (before any GTK code)**: done 2026-11-14, module `design` approved (SPEC.md, `docs/design/`): eleven screens in two rounds with the owner.
   - Wish (2026-11-12): design a beautiful interface together with the owner, following current design principles, including the GNOME Human Interface Guidelines.
   - Approach: collect the user flows (drop a song → separation and transcription with progress → sheet music preview → export of notes and drum track), then mockups (e.g. as an artifact or Penpot/SVG) to discuss and iterate before implementing in GTK 4 + libadwaita.
 

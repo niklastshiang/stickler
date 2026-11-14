@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler: sheet music, playing</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1c71d8}a:hover{color:#1a5fb4}
+.light{--win:#fafafb;--view:#ebebed;--head:#ffffff;--card:#ffffff;--fg:rgba(0,0,6,.8);--dim:rgba(0,0,6,.56);--line:rgba(0,0,6,.1);--btn:rgba(0,0,6,.07);--accent:#3584e4;--accent-fg:#1c71d8;--trough:rgba(0,0,6,.15)}
+.dark{--win:#222226;--view:#1d1d20;--head:#2e2e32;--card:rgba(255,255,255,.08);--fg:#ffffff;--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.1);--btn:rgba(255,255,255,.1);--accent:#3584e4;--accent-fg:#78aeed;--trough:rgba(255,255,255,.2)}
+</style>
+</helmet>
+<div class="{{theme}}" style="width: 1000px; height: 700px; position: relative; display: flex; flex-direction: column; background: var(--win); color: var(--fg); font-family: Inter, 'Adwaita Sans', Cantarell, sans-serif; font-size: 15px; overflow: hidden;">
+  <header style="height: 47px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--head); box-shadow: 0 1px var(--line);">
+    <button aria-label="Open a song" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14V13H2z"></path></svg>
+    </button>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; line-height: 1.25;">
+      <span style="font-weight: 700;">Eye of the Tiger</span>
+      <span style="font-size: 13px; color: var(--dim);">Survivor · ♩ = 109 · 4/4</span>
+    </div>
+    <button style="height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+      Export
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5l3 3 3-3"></path></svg>
+    </button>
+    <button aria-label="Corrections" aria-pressed="false" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h6M11.5 4h2M2.5 12h2M7.5 12h6"></path><circle cx="10" cy="4" r="1.6"></circle><circle cx="6" cy="12" r="1.6"></circle></svg>
+    </button>
+    <button aria-label="Main menu" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"></path></svg>
+    </button>
+    <button aria-label="Close" style="width: 34px; height: 34px; border: 0; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--btn); display: flex; align-items: center; justify-content: center;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"></path></svg>
+      </span>
+    </button>
+  </header>
+
+  <main style="flex-grow: 1; min-height: 0; overflow: hidden; background: var(--view); display: flex; justify-content: center; padding-top: 24px;">
+    <dc-import name="SheetPage" width="{{pageWidth}}" marked="2" inverted="{{dark}}" hint-size="600px,525px"></dc-import>
+  </main>
+
+  <footer style="flex-shrink: 0; height: 64px; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: var(--head); box-shadow: 0 -1px var(--line);">
+    <button aria-label="Pause" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: var(--accent); color: #ffffff; display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1"></rect><rect x="9.5" y="2.5" width="3" height="11" rx="1"></rect></svg>
+    </button>
+    <span style="font-variant-numeric: tabular-nums; font-size: 13px; color: var(--dim); white-space: nowrap;">0:06</span>
+    <div role="slider" aria-label="Position" aria-valuemin="0" aria-valuemax="246" aria-valuenow="6" aria-valuetext="0:06, bar 2 of 110" style="flex-grow: 1; height: 20px; position: relative; display: flex; align-items: center;">
+      <div style="width: 100%; height: 4px; border-radius: 2px; background: var(--trough);"></div>
+      <div style="position: absolute; left: 0; width: 2.4%; height: 4px; border-radius: 2px; background: var(--accent);"></div>
+      <div style="position: absolute; left: calc(2.4% - 10px); width: 20px; height: 20px; border-radius: 10px; background: #ffffff; box-shadow: 0 0 0 1px rgba(0,0,6,.12), 0 1px 3px rgba(0,0,6,.25);"></div>
+    </div>
+    <span style="font-variant-numeric: tabular-nums; font-size: 13px; color: var(--dim); white-space: nowrap;">4:06</span>
+    <span style="font-size: 13px; color: var(--dim); white-space: nowrap; min-width: 92px;">Bar 2 of 110</span>
+    <button aria-label="Volume" aria-expanded="{{volumeExpanded}}" aria-haspopup="dialog" style="width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 6px; background: {{volumeBg}}; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.5l3.5-3v10l-3.5-3H2.5z"></path><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.5a6 6 0 0 1 0 9"></path></svg>
+    </button>
+    <div role="radiogroup" aria-label="What to hear" style="display: flex; padding: 3px; gap: 3px; border-radius: 9px; background: var(--btn);">
+      <sc-for list="{{listen}}" as="opt" hint-placeholder-count="3">
+        <button role="radio" aria-checked="{{opt.on}}" style="{{opt.style}}">{{opt.label}}</button>
+      </sc-for>
+    </div>
+  </footer>
+
+  <sc-if value="{{volumeOpen}}" hint-placeholder-val="{{true}}">
+    <div role="dialog" aria-label="Volume" style="position: absolute; right: 196px; bottom: 70px; width: 280px; padding: 14px 16px; box-sizing: border-box; border-radius: 12px; background: var(--head); box-shadow: 0 0 0 1px rgba(0,0,6,.1), 0 4px 16px rgba(0,0,6,.2); display: flex; flex-direction: column; gap: 12px;">
+      <label style="display: flex; flex-direction: column; gap: 6px;">
+        <span style="display: flex; justify-content: space-between;"><span>Song</span><span style="color: var(--dim); font-size: 13px;">80 %</span></span>
+        <input type="range" min="0" max="100" value="80" style="width: 100%; accent-color: var(--accent);">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px;">
+        <span style="display: flex; justify-content: space-between;"><span>Detected hits</span><span style="color: var(--dim); font-size: 13px;">60 %</span></span>
+        <input type="range" min="0" max="100" value="60" style="width: 100%; accent-color: var(--accent);">
+      </label>
+      <span style="font-size: 13px; color: var(--dim); line-height: 1.4;">The hits are clicks: low for the kick, middle for snare and toms, high for cymbals.</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"volumeOpen":{"editor":"boolean","default":true},"hear":{"editor":"enum","options":["Song","Hits","Both"],"default":"Both"},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const hear = this.props.hear ?? 'Both';
+    const base = 'height: 32px; padding: 0 14px; border: 0; border-radius: 6px; font: inherit; font-size: 14px; font-weight: 700; color: var(--fg);';
+    const volumeOpen = this.props.volumeOpen ?? true;
+    return {
+      theme: this.props.dark ? 'dark' : 'light',
+      dark: !!this.props.dark,
+      volumeOpen,
+      volumeExpanded: volumeOpen ? 'true' : 'false',
+      volumeBg: volumeOpen ? 'var(--btn)' : 'transparent',
+      pageWidth: 600,
+      listen: ['Song', 'Hits', 'Both'].map((label) => ({
+        label,
+        on: label === hear ? 'true' : 'false',
+        style: base + (label === hear ? ' background: var(--head); box-shadow: 0 1px 3px rgba(0,0,6,.2);' : ' background: transparent;')
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

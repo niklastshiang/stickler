@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler: empty window</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1c71d8}a:hover{color:#1a5fb4}
+.light{--win:#fafafb;--view:#ffffff;--head:#ffffff;--card:#ffffff;--fg:rgba(0,0,6,.8);--dim:rgba(0,0,6,.56);--line:rgba(0,0,6,.1);--btn:rgba(0,0,6,.07);--accent:#3584e4;--accent-fg:#1c71d8;--shadow:0 0 0 1px rgba(0,0,6,.03),0 1px 3px 1px rgba(0,0,6,.07),0 2px 6px 2px rgba(0,0,6,.03)}
+.dark{--win:#222226;--view:#1d1d20;--head:#2e2e32;--card:rgba(255,255,255,.08);--fg:#ffffff;--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.1);--btn:rgba(255,255,255,.1);--accent:#3584e4;--accent-fg:#78aeed;--shadow:0 0 0 1px rgba(0,0,6,.09),0 1px 3px 1px rgba(0,0,6,.09)}
+</style>
+</helmet>
+<div class="{{theme}}" style="width: 1000px; height: 700px; display: flex; flex-direction: column; background: var(--win); color: var(--fg); font-family: Inter, 'Adwaita Sans', Cantarell, sans-serif; font-size: 15px; overflow: hidden;">
+  <header style="height: 47px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--head); box-shadow: 0 1px var(--line);">
+    <button style="height: 34px; padding: 0 12px; border: 0; border-radius: 6px; background: var(--btn); color: var(--fg); font: inherit; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14V13H2z"></path></svg>
+      Open…
+    </button>
+    <div style="flex-grow: 1; text-align: center; font-weight: 700;">Stickler</div>
+    <button aria-label="Main menu" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"></path></svg>
+    </button>
+    <button aria-label="Close" style="width: 34px; height: 34px; border: 0; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--btn); display: flex; align-items: center; justify-content: center;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"></path></svg>
+      </span>
+    </button>
+  </header>
+
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; padding: 24px;">
+    <div style="width: 560px; height: 250px; box-sizing: border-box; border: 2px dashed var(--line); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;">
+      <svg width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--dim);" aria-hidden="true">
+        <ellipse cx="36" cy="30" rx="24" ry="8"></ellipse>
+        <path d="M12 30v18c0 4.4 10.7 8 24 8s24-3.6 24-8V30"></path>
+        <path d="M20 8l14 18M52 8L38 26"></path>
+      </svg>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800;">Drop a Song Here</h1>
+      <p style="margin: 0; max-width: 420px; color: var(--dim); line-height: 1.45;">Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV or OGG; a song takes about 15 seconds.</p>
+      <button style="margin-top: 6px; height: 38px; padding: 0 28px; border: 0; border-radius: 19px; background: var(--accent); color: #ffffff; font: inherit; font-weight: 700;">Open a Song…</button>
+    </div>
+
+    <section style="width: 560px; display: flex; flex-direction: column; gap: 10px;">
+      <h2 style="margin: 0 0 0 2px; font-size: 15px; font-weight: 700;">Recent</h2>
+      <ul style="margin: 0; padding: 0; list-style: none; background: var(--card); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden;">
+        <sc-for list="{{recent}}" as="song" hint-placeholder-count="3">
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px; box-sizing: border-box; border-bottom: 1px solid var(--line);">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+              <span>{{song.title}}</span>
+              <span style="font-size: 13px; color: var(--dim);">{{song.detail}}</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color: var(--dim);" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"></path></svg>
+          </li>
+        </sc-for>
+      </ul>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      theme: this.props.dark ? 'dark' : 'light',
+      recent: [
+        { title: 'Eye of the Tiger', detail: 'Survivor · opened today' },
+        { title: 'Everlong', detail: 'Foo Fighters · opened yesterday' },
+        { title: 'Chop Suey!', detail: 'System of a Down · opened 12 November' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler: corrections panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1c71d8}a:hover{color:#1a5fb4}
+.light{--win:#fafafb;--view:#ebebed;--side:#f2f2f4;--head:#ffffff;--card:#ffffff;--fg:rgba(0,0,6,.8);--dim:rgba(0,0,6,.56);--line:rgba(0,0,6,.1);--btn:rgba(0,0,6,.07);--accent:#3584e4;--accent-fg:#1c71d8;--trough:rgba(0,0,6,.15);--shadow:0 0 0 1px rgba(0,0,6,.03),0 1px 3px 1px rgba(0,0,6,.07),0 2px 6px 2px rgba(0,0,6,.03)}
+.dark{--win:#222226;--view:#1d1d20;--side:#2e2e32;--head:#2e2e32;--card:rgba(255,255,255,.08);--fg:#ffffff;--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.1);--btn:rgba(255,255,255,.1);--accent:#3584e4;--accent-fg:#78aeed;--trough:rgba(255,255,255,.2);--shadow:0 0 0 1px rgba(0,0,6,.09),0 1px 3px 1px rgba(0,0,6,.09)}
+</style>
+</helmet>
+<div class="{{theme}}" style="width: 1000px; height: 700px; display: flex; flex-direction: column; background: var(--win); color: var(--fg); font-family: Inter, 'Adwaita Sans', Cantarell, sans-serif; font-size: 15px; overflow: hidden;">
+  <header style="height: 47px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--head); box-shadow: 0 1px var(--line);">
+    <button aria-label="Open a song" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14V13H2z"></path></svg>
+    </button>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; line-height: 1.25;">
+      <span style="font-weight: 700;">Eye of the Tiger</span>
+      <span style="font-size: 13px; color: var(--dim);">Survivor · ♩ = 109 · 4/4</span>
+    </div>
+    <button style="height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font: inherit; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+      Export
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5l3 3 3-3"></path></svg>
+    </button>
+    <button aria-label="Corrections" aria-pressed="true" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: var(--btn); color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h6M11.5 4h2M2.5 12h2M7.5 12h6"></path><circle cx="10" cy="4" r="1.6"></circle><circle cx="6" cy="12" r="1.6"></circle></svg>
+    </button>
+    <button aria-label="Main menu" style="width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"></path></svg>
+    </button>
+    <button aria-label="Close" style="width: 34px; height: 34px; border: 0; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center;">
+      <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--btn); display: flex; align-items: center; justify-content: center;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"></path></svg>
+      </span>
+    </button>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <main style="flex-grow: 1; min-width: 0; overflow: hidden; background: var(--view); display: flex; justify-content: center; padding-top: 24px;">
+      <dc-import name="SheetPage" width="560" marked="0" inverted="{{dark}}" hint-size="560px,490px"></dc-import>
+    </main>
+
+    <aside aria-label="Corrections" style="width: 340px; flex-shrink: 0; box-sizing: border-box; padding: 18px 16px; display: flex; flex-direction: column; gap: 18px; background: var(--side); box-shadow: -1px 0 var(--line); overflow: hidden;">
+      <section style="display: flex; flex-direction: column; gap: 8px;">
+        <h2 style="margin: 0 0 0 4px; font-size: 15px; font-weight: 700;">Beat</h2>
+        <div style="background: var(--card); border-radius: 12px; box-shadow: var(--shadow);">
+          <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line);">
+            <span>Tempo</span>
+            <div role="radiogroup" aria-label="Tempo" style="display: flex; padding: 3px; gap: 3px; border-radius: 9px; background: var(--btn);">
+              <sc-for list="{{tempos}}" as="t" hint-placeholder-count="3">
+                <button role="radio" aria-checked="{{t.on}}" style="{{t.style}}">{{t.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="min-height: 56px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line);">
+            <label for="bpb" style="flex-grow: 1;">Beats per bar</label>
+            <button aria-label="Fewer beats per bar" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">−</button>
+            <input id="bpb" value="4" readonly style="width: 28px; border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; text-align: center;">
+            <button aria-label="More beats per bar" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">+</button>
+          </div>
+          <div style="min-height: 64px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px;">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+              <label for="one">First “one”</label>
+              <span style="font-size: 13px; color: var(--dim);">Beats before it are a pickup</span>
+            </div>
+            <button aria-label="Earlier first one" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">−</button>
+            <input id="one" value="1" readonly style="width: 28px; border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; text-align: center;">
+            <button aria-label="Later first one" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--btn); color: var(--fg); font: inherit; font-size: 18px;">+</button>
+          </div>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 8px;">
+        <h2 style="margin: 0 0 0 4px; font-size: 15px; font-weight: 700;">Easier to Read</h2>
+        <div style="background: var(--card); border-radius: 12px; box-shadow: var(--shadow);">
+          <div style="min-height: 64px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line);">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+              <span id="simplify-label">Simplify</span>
+              <span style="font-size: 13px; color: var(--dim);">Nearly equal bars get one pattern</span>
+            </div>
+            <button role="switch" aria-checked="true" aria-labelledby="simplify-label" style="width: 48px; height: 26px; border: 0; border-radius: 13px; background: var(--accent); position: relative; flex-shrink: 0;">
+              <span style="position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 10px; background: #ffffff;"></span>
+            </button>
+          </div>
+          <div style="min-height: 64px; padding: 8px 14px; box-sizing: border-box; display: flex; align-items: center; gap: 10px;">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+              <span id="repeats-label">Repeat signs</span>
+              <span style="font-size: 13px; color: var(--dim);">Equal bars are written once</span>
+            </div>
+            <button role="switch" aria-checked="true" aria-labelledby="repeats-label" style="width: 48px; height: 26px; border: 0; border-radius: 13px; background: var(--accent); position: relative; flex-shrink: 0;">
+              <span style="position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 10px; background: #ffffff;"></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <button style="align-self: center; height: 34px; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: var(--accent-fg); font: inherit; font-weight: 700;">Back to Detected</button>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"tempo":{"editor":"enum","options":["Half","As Detected","Double"],"default":"As Detected"},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tempo = this.props.tempo ?? 'As Detected';
+    const base = 'flex: 1 1 0; height: 32px; padding: 0 6px; border: 0; border-radius: 6px; font: inherit; font-size: 14px; font-weight: 700; color: var(--fg);';
+    return {
+      theme: this.props.dark ? 'dark' : 'light',
+      dark: !!this.props.dark,
+      tempos: ['Half', 'As Detected', 'Double'].map((label) => ({
+        label,
+        on: label === tempo ? 'true' : 'false',
+        style: base + (label === tempo ? ' background: var(--head); box-shadow: 0 1px 3px rgba(0,0,6,.2);' : ' background: transparent;')
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
