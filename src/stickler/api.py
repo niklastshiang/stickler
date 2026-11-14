@@ -836,22 +836,24 @@ class AlignReport:
     approved_by_ear: str | None = None  # owner overrode failed checks after listening
 
 
-CLICK_SR = 22050
-CLICK_FREQ = {0: 700.0, 1: 1400.0, 2: 2800.0}  # kick, snare/toms, cymbals
+CLICK_SR = 22050  # clicks go up to 2800 Hz (audio.CLICK_FREQ)
 
 
 def _click_track(song: own.Song, notes: list[tuple[float, int]]) -> Path:
     mix = audio.load_mono(song.audio, sr=CLICK_SR)
-    clicks = np.zeros_like(mix)
-    t = np.arange(int(0.02 * CLICK_SR)) / CLICK_SR
-    for time, pitch in notes:
-        burst = 0.6 * np.exp(-t * 200) * np.sin(2 * np.pi * CLICK_FREQ[align._group(pitch)] * t)
-        start = int(time * CLICK_SR)
-        end = min(len(clicks), start + len(burst))
-        if 0 <= start < end:
-            clicks[start:end] += burst[: end - start]
+    clicks = audio.clicks([(t, align._group(p)) for t, p in notes], len(mix), CLICK_SR)
     stereo = np.stack([0.7 * mix, clicks], axis=1)
     return audio.write_wav(song.dir / "click.wav", stereo, CLICK_SR)
+
+
+def render_hits(transcription: SongTranscription, dest: Path) -> Path:
+    """The detected hits as a mono WAV as long as the song: one click per hit, pitched for
+    kick, snare/toms and cymbals (the same clicks as align's click track). The app mixes it
+    with the song."""
+    length = round(audio.duration(transcription.audio) * CLICK_SR)
+    hits = [(t, align._group(pitch)) for t, pitch, _ in transcription.hits]
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    return audio.write_wav(dest, audio.clicks(hits, length, CLICK_SR), CLICK_SR)
 
 
 def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) -> AlignReport:

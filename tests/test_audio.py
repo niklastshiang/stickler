@@ -142,3 +142,31 @@ def test_undecodable_input_raises(tmp_path):
     bad.write_bytes(b"not audio")
     with pytest.raises(RuntimeError, match="decode"):
         audio.readable(bad, tmp_path / "cache")
+
+
+def _peak_frequency(signal, sr: int) -> float:
+    import numpy as np
+
+    spectrum = np.abs(np.fft.rfft(signal, n=4 * sr))
+    return float(np.fft.rfftfreq(4 * sr, 1 / sr)[int(np.argmax(spectrum))])
+
+
+def test_clicks_sit_at_the_hits_with_one_pitch_per_group():
+    import numpy as np
+
+    sr = 22050
+    signal = audio.clicks([(0.5, 0), (1.0, 1), (2.0, 2)], 3 * sr, sr)
+    assert len(signal) == 3 * sr
+    for t, freq in ((0.5, 700), (1.0, 1400), (2.0, 2800)):
+        burst = signal[int(t * sr) : int((t + 0.02) * sr)]
+        assert np.sqrt(np.mean(burst**2)) > 0.05
+        assert _peak_frequency(burst, sr) == pytest.approx(freq, abs=60)
+    quiet = np.concatenate([signal[: int(0.45 * sr)], signal[int(2.1 * sr) :]])
+    assert np.max(np.abs(quiet)) == 0
+
+
+def test_clicks_past_the_end_or_before_the_start_are_dropped_or_cut():
+    sr = 22050
+    signal = audio.clicks([(-0.1, 0), (0.995, 1), (5.0, 2)], sr, sr)
+    assert len(signal) == sr and signal[int(0.995 * sr) :].any()  # cut at the end, not dropped
+    assert not signal[: int(0.9 * sr)].any()

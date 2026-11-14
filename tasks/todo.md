@@ -328,7 +328,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests (`half` then `double` is the original grid; meter and downbeat overrides give the expected bars; a test fails if an adapter is started); each correction of a cached own song takes < 1 s
   - Dependencies: 37 · Files: `src/stickler/{notation,api}.py`, tests
 
-- [ ] **Task 39: Detected hits as audio** (S)
+- [ ] **Task 39: Detected hits as audio** (S): code done 2026-11-14, **the owner's ear check is open**. `audio.clicks` makes the clicks for `render_hits` and `align`'s click track alike; `render_hits` takes the song's length from ffprobe. Eye of the Tiger: 1375 hits, 245.64 s like the song, 0.18 s to render.
   - Acceptance:
     - `api.render_hits(transcription, dest)`: a mono WAV as long as the song, one click per hit, three pitches (kick, snare/toms, cymbals); `align`'s click track uses the same clicks.
   - Verify: test on a generated song (length, energy at the hit times); the owner listens to one own song with the clicks and confirms they sit on the drums

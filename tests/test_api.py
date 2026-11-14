@@ -1328,3 +1328,22 @@ def test_finale_after_the_last_spot(monkeypatch, tmp_path):
 def test_impossible_corrections_fail_before_any_model_runs(kw):
     with pytest.raises(ValueError):
         api.Corrections(**kw)
+
+
+def test_render_hits_writes_one_click_per_hit_as_long_as_the_song(tmp_path):
+    import wave
+
+    import numpy as np
+
+    from stickler import audio as audio_mod
+
+    song = audio_mod.write_wav(tmp_path / "song.wav", np.zeros(3 * 44100), 44100)
+    hits = [(0.5, 36, 100), (1.0, 38, 90), (1.5, 45, 90), (2.0, 49, 80)]
+    t = api.SongTranscription(song, "fast", None, [0.0, 0.5], [0.0], hits)
+    dest = api.render_hits(t, tmp_path / "out" / "hits.wav")
+    with wave.open(str(dest)) as w:
+        assert w.getnchannels() == 1
+        assert w.getnframes() / w.getframerate() == pytest.approx(3.0, abs=1e-3)
+    clicks = audio_mod.load_mono(dest, sr=api.CLICK_SR)
+    expected = audio_mod.clicks([(0.5, 0), (1.0, 1), (1.5, 1), (2.0, 2)], len(clicks), api.CLICK_SR)
+    assert np.allclose(clicks, expected, atol=1e-3)  # kick, snare and tom, cymbal
