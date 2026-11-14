@@ -1,6 +1,7 @@
 """Tests for the adapter contract (subprocess, meta.json, error log, extensibility)."""
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -233,6 +234,64 @@ def test_a_finished_setup_is_ready(tmp_path):
     adapters.setup_adapter(spec)
     assert adapters.missing_setup(spec) == []
     assert adapters.missing_setup(_local_adapter(tmp_path, "nw", weights=False)) == ["environment"]
+
+
+def test_cancelling_the_weights_download_keeps_them_not_set_up(tmp_path):
+    """setup.py hangs mid-download; cancel kills its group. As measured in Task 32 the weights
+    then do not count, and the next setup cleans up the partial file and finishes."""
+    spec = _local_adapter(tmp_path)
+    setup_py = spec.path / "setup.py"
+    finishing = setup_py.read_text(encoding="utf-8")
+    setup_py.write_text(
+        "import os, time\nfrom pathlib import Path\n"
+        "w = Path(__file__).parent / 'weights' / 'hub'\n"
+        "w.mkdir(parents=True, exist_ok=True)\n"
+        "(w / 'model.ckpt.1a2b.partial').write_bytes(b'half')\n"
+        "(Path(__file__).parent / 'pid').write_text(str(os.getpid()))\n"
+        "time.sleep(60)\n",
+        encoding="utf-8",
+    )
+    token, seen = adapters.CancelToken(), {}
+    _cancel_when_running(spec.path / "pid", token, seen)
+    with pytest.raises(adapters.Cancelled):
+        adapters.setup_adapter(spec, cancel=token)
+    assert _group_gone(seen["group"], within=1)
+    assert adapters.missing_setup(spec) == ["weights"]
+    setup_py.write_text(finishing, encoding="utf-8")
+    adapters.setup_adapter(spec)
+    assert adapters.missing_setup(spec) == []
+    assert not list((spec.path / "weights").rglob("*.partial"))
+
+
+def test_cancelling_uv_sync_leaves_the_environment_not_set_up(tmp_path, monkeypatch):
+    """A stand-in for `uv` that hangs: cancel kills it; the next setup with the real uv builds
+    the environment (uv resumes, Task 32)."""
+    spec = _local_adapter(tmp_path, weights=False)
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "uv").write_text('#!/bin/sh\necho $$ > "$STUB_PID"\nexec sleep 60\n', encoding="utf-8")
+    (stub / "uv").chmod(0o755)
+    token, seen = adapters.CancelToken(), {}
+    _cancel_when_running(tmp_path / "uv.pid", token, seen)
+    with monkeypatch.context() as m:
+        m.setenv("PATH", f"{stub}:{os.environ['PATH']}")
+        m.setenv("STUB_PID", str(tmp_path / "uv.pid"))
+        with pytest.raises(adapters.Cancelled):
+            adapters.setup_adapter(spec, cancel=token)
+    assert _group_gone(seen["group"], within=1)
+    assert adapters.missing_setup(spec) == ["environment"]
+    adapters.setup_adapter(spec)
+    assert adapters.missing_setup(spec) == []
+
+
+def test_setup_steps_can_run_one_by_one(tmp_path):
+    spec = _local_adapter(tmp_path)
+    assert adapters.needs_weights(spec)
+    python = adapters.setup_environment(spec)
+    assert adapters.missing_setup(spec) == ["weights"]
+    adapters.setup_weights(spec, python)
+    assert adapters.missing_setup(spec) == []
+    assert not adapters.needs_weights(_local_adapter(tmp_path, "nw", weights=False))
 
 
 def test_weights_count_only_after_setup_py_finished(tmp_path):

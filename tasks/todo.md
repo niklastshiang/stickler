@@ -304,7 +304,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests with dummy adapters: no environment, an empty `.venv`, weights with only a `.partial`, complete; on the real checkout `mode_ready("fast")` is empty after one `stickler setup --adapter beat_this` (writes the marker for an existing install)
   - Dependencies: none · Files: `src/stickler/{api,doctor}.py`, tests
 
-- [ ] **Task 36: Progress and cancellation for `setup_adapters`** (M)
+- [x] **Task 36: Progress and cancellation for `setup_adapters`** (M): done 2026-11-14. `setup_adapter` is split into `setup_environment` and `setup_weights`, which the API runs as steps (`Step.adapter` names the adapter); `uv sync` and `setup.py` run in their own process group. Building `.venv-rocm`/`.venv-cuda` (developer tools) is cancelled only between steps. Tests: a hanging `setup.py` and a stand-in `uv` on `PATH` are cancelled, the next setup finishes. On the real checkout `stickler setup --adapter beat_this` prints both steps.
   - Acceptance:
     - `progress` reports `environment:<adapter>` and `weights:<adapter>`; `cancel` ends the running `uv` or `setup.py` process group and raises `Cancelled`.
     - `stickler setup` prints the steps.

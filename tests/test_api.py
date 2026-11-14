@@ -41,7 +41,9 @@ def test_setup_adapters_selects_one_or_all(monkeypatch, tmp_path):
         (d / "run.py").write_text("", encoding="utf-8")
     done = []
     monkeypatch.setattr(
-        adapters, "setup_adapter", lambda spec, device="cpu": done.append((spec.id, device))
+        adapters,
+        "setup_environment",
+        lambda spec, device="cpu", cancel=None: done.append((spec.id, device)) or [],
     )
     assert api.setup_adapters("a", adapters_root=tmp_path) == ["a"]
     assert api.setup_adapters(None, adapters_root=tmp_path) == ["a", "b"]
@@ -750,6 +752,52 @@ def test_mode_ready_lists_the_adapters_not_set_up(tmp_path):
     assert api.mode_ready("fast", adapters_root=root) == ["beat_this"]
     ad.setup_adapter(beat_this)
     assert api.mode_ready("fast", adapters_root=root) == []
+
+
+def test_setup_adapters_reports_environment_and_weights_steps(tmp_path):
+    root = tmp_path / "adapters"
+    _plain_adapter(root, "transcribers", "adtof")
+    _plain_adapter(root, "beats", "beat_this", weights=True)
+    steps = []
+    assert api.setup_adapters(None, adapters_root=root, progress=steps.append) == [
+        "adtof",
+        "beat_this",
+    ]
+    assert _trace(steps) == [
+        ("environment:adtof", "adtof", "started", 1, 3),
+        ("environment:adtof", "adtof", "done", 1, 3),
+        ("environment:beat_this", "beat_this", "started", 2, 3),
+        ("environment:beat_this", "beat_this", "done", 2, 3),
+        ("weights:beat_this", "beat_this", "started", 3, 3),
+        ("weights:beat_this", "beat_this", "done", 3, 3),
+    ]
+    assert api.mode_ready("fast", adapters_root=root) == []
+
+
+def test_cancelled_setup_stops_before_the_next_step(tmp_path):
+    root = tmp_path / "adapters"
+    _plain_adapter(root, "transcribers", "adtof")
+    _plain_adapter(root, "beats", "beat_this", weights=True)
+    token, steps = api.CancelToken(), []
+
+    def on_step(step):
+        steps.append(step)
+        if step.state == "done":
+            token.cancel()
+
+    with pytest.raises(api.Cancelled):
+        api.setup_adapters(None, adapters_root=root, progress=on_step, cancel=token)
+    assert [s.id for s in steps] == ["environment:adtof", "environment:adtof"]
+    assert api.mode_ready("fast", adapters_root=root) == ["beat_this"]
+
+
+def test_setup_adapters_rejects_an_unknown_device_before_any_step(tmp_path):
+    root = tmp_path / "adapters"
+    _plain_adapter(root, "transcribers", "adtof")
+    steps = []
+    with pytest.raises(ValueError, match="tpu"):
+        api.setup_adapters("adtof", device="tpu", adapters_root=root, progress=steps.append)
+    assert steps == []
 
 
 def test_an_analysis_names_the_models_not_set_up_before_starting_any(tmp_path, monkeypatch):

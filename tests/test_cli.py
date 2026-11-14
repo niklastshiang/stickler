@@ -43,7 +43,9 @@ def test_unknown_dataset_gives_error(tmp_path):
 def test_setup_delegates_to_api(monkeypatch):
     calls = []
     monkeypatch.setattr(
-        api, "setup_adapters", lambda adapter, device: calls.append((adapter, device)) or [adapter]
+        api,
+        "setup_adapters",
+        lambda adapter, device, progress=None: calls.append((adapter, device)) or [adapter],
     )
     result = CliRunner().invoke(cli.app, ["setup", "--adapter", "adt_str", "--device", "rocm"])
     assert result.exit_code == 0, result.output
@@ -255,6 +257,22 @@ def test_notate_prints_each_step(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert "[1/2] transcribe (adtof) … cached" in result.output
     assert "[2/2] engrave … done" in result.output
+
+
+def test_setup_prints_each_step(monkeypatch):
+    from stickler.api import Step
+
+    def fake_setup(adapter, device, progress):
+        for index, step_id in enumerate(("environment:beat_this", "weights:beat_this"), 1):
+            progress(Step(step_id, index, 2, "started", adapter="beat_this"))
+            progress(Step(step_id, index, 2, "done", adapter="beat_this"))
+        return [adapter]
+
+    monkeypatch.setattr(api, "setup_adapters", fake_setup)
+    result = CliRunner().invoke(cli.app, ["setup", "--adapter", "beat_this"])
+    assert result.exit_code == 0, result.output
+    assert "[1/2] environment:beat_this … done" in result.output
+    assert "[2/2] weights:beat_this … done" in result.output
 
 
 def test_notate_can_write_every_bar_exactly(monkeypatch, tmp_path):

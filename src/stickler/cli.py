@@ -38,7 +38,7 @@ def setup(
 ) -> None:
     """Build the adapter environment and download weights."""
     try:
-        done = api.setup_adapters(adapter, device=device)
+        done = api.setup_adapters(adapter, device=device, progress=_print_step)
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -228,7 +228,7 @@ def align_cmd(song: Annotated[str | None, typer.Argument()] = None) -> None:
 def _print_step(step: api.Step) -> None:
     """`[2/4] transcribe (adtof) … done` as the step starts and ends."""
     if step.state == "started":
-        model = f" ({step.adapter})" if step.adapter else ""
+        model = f" ({step.adapter})" if step.adapter and step.adapter not in step.id else ""
         typer.echo(f"[{step.index}/{step.total}] {step.id}{model} …", nl=False)
     else:
         typer.echo(" cached" if step.cached else " done")

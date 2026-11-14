@@ -159,10 +159,20 @@ def fetch_dataset(name: str, data_dir: Path) -> int:
 
 
 def setup_adapters(
-    adapter: str | None, device: str = "cpu", adapters_root: Path = ADAPTERS_ROOT
+    adapter: str | None,
+    device: str = "cpu",
+    adapters_root: Path = ADAPTERS_ROOT,
+    *,
+    progress: Progress | None = None,
+    cancel: CancelToken | None = None,
 ) -> list[str]:
-    """Sets up one adapter (or all with None) for cpu or rocm; returns the IDs.
-    For rocm without an adapter given, only adapters with a ROCm declaration are set up."""
+    """Sets up one adapter (or all with None) for cpu, rocm or cuda; returns the IDs.
+    For rocm without an adapter given, only adapters with a ROCm declaration are set up.
+    `progress` receives the steps `environment:<adapter>` and, for adapters with weights,
+    `weights:<adapter>`; setting `cancel` kills the running `uv sync` or setup.py and raises
+    Cancelled (see Step, CancelToken)."""
+    if device not in adapters.SETUP_DEVICES:
+        raise ValueError(f"device must be one of {adapters.SETUP_DEVICES}, not {device!r}")
     registry = adapters.discover(adapters_root)
     if adapter is not None and adapter not in registry:
         raise ValueError(f"Adapter {adapter!r} unknown (available: {', '.join(registry)})")
@@ -172,8 +182,17 @@ def setup_adapters(
         ids = sorted(i for i, spec in registry.items() if adapters.rocm_config(spec))
     else:
         ids = sorted(registry)
-    for adapter_id in ids:
-        adapters.setup_adapter(registry[adapter_id], device=device)
+    specs = [registry[i] for i in ids]
+    plan: list[tuple[str, str | None]] = []
+    for spec in specs:
+        plan.append((f"environment:{spec.id}", spec.id))
+        if adapters.needs_weights(spec):
+            plan.append((f"weights:{spec.id}", spec.id))
+    steps = _Steps(plan, progress, cancel)
+    for spec in specs:
+        python = steps.run(lambda s=spec: (adapters.setup_environment(s, device, cancel), False))
+        if adapters.needs_weights(spec):
+            steps.run(lambda s=spec, py=python: (adapters.setup_weights(s, py, cancel), False))
     return ids
 
 

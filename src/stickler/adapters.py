@@ -405,25 +405,58 @@ def missing_setup(spec: AdapterSpec, device: str = "auto") -> list[str]:
     return missing
 
 
-def setup_adapter(spec: AdapterSpec, device: str = "cpu") -> None:
-    """Builds the environment (cpu: uv sync, rocm: .venv-rocm, cuda: .venv-cuda) and runs
-    setup.py if present. Stray `*.partial` downloads of an interrupted setup are removed
-    first; SETUP_MARKER is written once setup.py has succeeded."""
+def _check_group(cmd: list[str], spec: AdapterSpec, cancel: threading.Event | None) -> None:
+    """Like _check, in its own process group, so a set `cancel` kills it (raises Cancelled)."""
+    try:
+        proc = _run_group(cmd, None, cancel)
+    except Cancelled:
+        raise Cancelled(f"{spec.id}: setup cancelled") from None
+    if proc.returncode != 0:
+        tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
+        raise RuntimeError(f"Setup of {spec.id} failed ({cmd[0]} {cmd[1]}):\n{tail}")
+
+
+def needs_weights(spec: AdapterSpec) -> bool:
+    """The adapter downloads weights in a setup.py."""
+    return (spec.path / "setup.py").exists()
+
+
+def setup_environment(
+    spec: AdapterSpec, device: str = "cpu", cancel: threading.Event | None = None
+) -> list[str]:
+    """Builds the environment (cpu: uv sync, rocm: .venv-rocm, cuda: .venv-cuda); returns the
+    command that runs Python in it. `cancel` kills a running `uv sync`; building the ROCm and
+    CUDA environments (developer tools) is not cancelled midway."""
     if device not in SETUP_DEVICES:
         raise ValueError(f"device must be one of {SETUP_DEVICES}, not {device!r}")
     if device == "rocm":
-        python = [str(_setup_rocm(spec))]
-    elif device == "cuda":
-        python = [str(_setup_cuda(spec))]
-    else:
-        _check(["uv", "sync", "--quiet", "--project", str(spec.path)], spec)
-        python = ["uv", "run", "--quiet", "--project", str(spec.path), "python"]
-    if (spec.path / "setup.py").exists():
-        marker = spec.path / SETUP_MARKER
-        marker.unlink(missing_ok=True)
-        for partial in (spec.path / "weights").rglob("*.partial"):
-            partial.unlink()
-        _check([*python, str(spec.path / "setup.py")], spec)
-        marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.write_text("", encoding="utf-8")
+        return [str(_setup_rocm(spec))]
+    if device == "cuda":
+        return [str(_setup_cuda(spec))]
+    _check_group(["uv", "sync", "--quiet", "--project", str(spec.path)], spec, cancel)
+    return ["uv", "run", "--quiet", "--project", str(spec.path), "python"]
+
+
+def setup_weights(
+    spec: AdapterSpec, python: list[str], cancel: threading.Event | None = None
+) -> None:
+    """Runs setup.py with `python` (from setup_environment). Stray `*.partial` downloads of an
+    interrupted setup are removed first; SETUP_MARKER is written once setup.py has succeeded,
+    so a failed or cancelled run leaves the weights not set up."""
+    if not needs_weights(spec):
+        return
+    marker = spec.path / SETUP_MARKER
+    marker.unlink(missing_ok=True)
+    for partial in (spec.path / "weights").rglob("*.partial"):
+        partial.unlink()
+    _check_group([*python, str(spec.path / "setup.py")], spec, cancel)
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("", encoding="utf-8")
+
+
+def setup_adapter(
+    spec: AdapterSpec, device: str = "cpu", cancel: threading.Event | None = None
+) -> None:
+    """setup_environment, then setup_weights."""
+    setup_weights(spec, setup_environment(spec, device, cancel), cancel)
     log.info("%s: setup (%s) done", spec.id, device)
