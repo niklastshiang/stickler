@@ -279,3 +279,67 @@ def test_simplify_never_adds_hits_beyond_the_last_beat():
     assert max(layout.bars[-1]) >= len(beats) - 1  # the last bar reaches past the beats
     simple = notation.simplify(q, layout.bars, n_beats=len(beats) - 1)
     assert max(n.beat for n in simple) < len(beats) - 1
+
+
+def _beams(xml: str) -> list[str]:
+    return [m.split("<")[0] for m in xml.split('<beam number="1">')[1:]]
+
+
+def test_four_plain_eighths_filling_half_a_bar_share_a_beam():
+    xml = notation.to_musicxml(groove(bars=1), BEATS[:5], DOWNBEATS[:1])
+    # the hi-hat eighths; kick and snare are quarters
+    assert _beams(xml) == ["begin", "continue", "continue", "end"] * 2
+    assert xml.count("<beam") == 8  # a chord carries its beam once, on its first note
+
+
+def test_eighths_are_beamed_per_beat_next_to_other_rhythms_and_across_the_bar_middle():
+    eighths = [(k * 0.25, HAT, 90) for k in range(2, 6)]  # beats 2 and 3 of the bar
+    assert _beams(notation.to_musicxml(eighths, BEATS, DOWNBEATS)) == ["begin", "end"] * 2
+    mixed = [(0.0, HAT, 90), (0.25, HAT, 90), (0.5, HAT, 90), (0.75, HAT, 90), (0.875, HAT, 90)]
+    assert _beams(notation.to_musicxml(mixed, BEATS, DOWNBEATS)) == [
+        *["begin", "end"],
+        *["begin", "continue", "end"],
+    ]
+
+
+def test_three_eighths_after_an_eighth_rest_share_a_beam():
+    notes = [(0.25, HAT, 90), (0.5, HAT, 90), (0.75, HAT, 90)]
+    assert _beams(notation.to_musicxml(notes, BEATS, DOWNBEATS)) == ["begin", "continue", "end"]
+    notes = [(0.0, HAT, 90), (0.25, HAT, 90), (0.75, HAT, 90)]  # the rest comes second: no join
+    assert _beams(notation.to_musicxml(notes, BEATS, DOWNBEATS)) == ["begin", "end"]
+
+
+def test_three_four_time_beams_per_beat():
+    beats = [k * 0.5 for k in range(7)]  # two bars of 3/4
+    eighths = [(k * 0.25, HAT, 90) for k in range(6)]
+    xml = notation.to_musicxml(eighths, beats, beats[:-1:3])
+    assert _beams(xml) == ["begin", "end"] * 3
+
+
+def test_four_sixteenths_are_one_beam_group():
+    notes = [(k * 0.125, SNARE, 100) for k in range(4)]
+    xml = notation.to_musicxml(notes, BEATS, DOWNBEATS)
+    assert _beams(xml) == ["begin", "continue", "continue", "end"]
+    assert xml.index("</notehead>") < xml.index("<beam") < xml.index("</note>")
+
+
+def test_a_rest_breaks_the_beam_and_a_single_note_keeps_its_flag():
+    notes = [(0.0, SNARE, 100), (0.25, SNARE, 100), (0.375, SNARE, 100)]  # 8th, 16th, 16th
+    assert _beams(notation.to_musicxml(notes, BEATS, DOWNBEATS)) == ["begin", "continue", "end"]
+    notes = [(0.125, SNARE, 100), (0.375, SNARE, 100)]  # rest, 8th note, 16th: all one group
+    assert _beams(notation.to_musicxml(notes, BEATS, DOWNBEATS)) == ["begin", "end"]
+    notes = [(0.25, SNARE, 100)]  # an eighth rest, then one eighth
+    assert _beams(notation.to_musicxml(notes, BEATS, DOWNBEATS)) == []
+
+
+def test_triplet_eighths_are_beamed_and_beams_come_before_the_tuplet():
+    notes = [(0.0, SNARE, 100), (0.5 / 3, SNARE, 100), (1.0 / 3, SNARE, 100)]
+    xml = notation.to_musicxml(notes, BEATS, DOWNBEATS)
+    assert _beams(xml) == ["begin", "continue", "end"]
+    assert xml.index("<beam") < xml.index("<notations>")
+    assert len(parse(xml).parts[0].recurse().notes) == 3  # still valid for music21
+
+
+def test_quarter_notes_have_no_beams():
+    notes = [(k * 0.5, KICK, 100) for k in range(4)]
+    assert _beams(notation.to_musicxml(notes, BEATS, DOWNBEATS)) == []

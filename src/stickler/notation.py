@@ -4,6 +4,11 @@
   A hit just before a beat belongs to that beat.
 - Staff positions follow common drum notation (as used by MuseScore's drumset): hands in
   voice 1 (stems up), feet in voice 2 (stems down), cymbals with x noteheads.
+- Beams are written explicitly, one group per beat and voice (rests break a group); plain
+  eighths in half of a bar (four, or three after an eighth rest) share one beam, as MuseScore
+  beams them. MuseScore would beam by
+  itself; Verovio, which draws the sheet inside the app, would not. Only the primary beam is
+  written: both derive the secondary beams from the note values.
 - MusicXML is written with the standard library, durations in twelfths of a quarter so that
   sixteenths (3) and triplet eighths (4) are both exact.
 """
@@ -129,6 +134,25 @@ _TYPES = {
     48: ("whole", 0),
 }
 _TRIPLET_TYPES = {4: "eighth", 8: "quarter"}
+_FLAGGED = {"16th", "eighth"}  # note values that can share a beam
+
+
+def _flagged(duration: int, triplet: bool) -> bool:
+    kind = _TRIPLET_TYPES.get(duration) if triplet else None
+    return (kind or _TYPES[duration][0]) in _FLAGGED
+
+
+def _beams(beamable: list[bool]) -> list[str | None]:
+    """Beam value per item of a beat: runs of two or more beamable neighbours form a group."""
+    out: list[str | None] = [None] * len(beamable)
+    start = 0
+    for k in range(1, len(beamable) + 1):
+        if k < len(beamable) and beamable[k] and beamable[k - 1]:
+            continue
+        if k - start >= 2:
+            out[start:k] = ["begin", *["continue"] * (k - start - 2), "end"]
+        start = k
+    return out
 
 
 def _note_xml(
@@ -139,6 +163,7 @@ def _note_xml(
     chord: bool = False,
     ghost: bool = False,
     tuplet: str | None = None,
+    beam: str | None = None,
     voice: int = 1,
     instrument: str | None = None,
 ) -> str:
@@ -169,6 +194,8 @@ def _note_xml(
         parts.append(f"<stem>{'up' if voice == 1 else 'down'}</stem>")
         paren = ' parentheses="yes"' if ghost else ""
         parts.append(f"<notehead{paren}>{staff.notehead}</notehead>")
+    if beam:
+        parts.append(f'<beam number="1">{beam}</beam>')
     if tuplet:
         parts.append(f'<notations><tuplet type="{tuplet}"/></notations>')
     parts.append("</note>")
@@ -186,7 +213,8 @@ def _voice_xml(
     bar: list[int], hits: dict[int, list[QNote]], voice: int, ghost: int, merge_halves: bool
 ) -> list[str]:
     """One voice of one bar. Two empty beats that form half of a bar (beats 1-2 or 3-4 of an
-    even meter) become one half rest instead of two quarter rests."""
+    even meter) become one half rest instead of two quarter rests; two beats of plain eighths
+    that form half of a bar share one beam."""
     out: list[str] = []
     k = 0
     while k < len(bar):
@@ -195,13 +223,35 @@ def _voice_xml(
             out.append(_note_xml(None, 2 * DIVISIONS, False, voice=voice))
             k += 2
             continue
+        first = _EIGHTH_BEAMS.get(_slots(hits.get(bar[k], [])))
+        if pair and first and _slots(hits.get(bar[k + 1], [])) == _TWO_EIGHTHS:
+            out.extend(_beat_xml(hits[bar[k]], voice, ghost, first))
+            out.extend(_beat_xml(hits[bar[k + 1]], voice, ghost, ["continue", "end"]))
+            k += 2
+            continue
         out.extend(_beat_xml(hits.get(bar[k], []), voice, ghost))
         k += 1
     return out
 
 
-def _beat_xml(hits: list[QNote], voice: int, ghost_velocity: int) -> list[str]:
-    """One beat of one voice: rests and chords that add up to a quarter note."""
+_TWO_EIGHTHS = frozenset({(0, 4), (2, 4)})
+# A beat of plain eighths that can open a beam running into the next beat: its positions and
+# the beam values of its items (two eighths, or an eighth rest and an eighth).
+_EIGHTH_BEAMS: dict[frozenset[tuple[int, int]], list[str | None]] = {
+    _TWO_EIGHTHS: ["begin", "continue"],
+    frozenset({(2, 4)}): [None, "begin"],
+}
+
+
+def _slots(hits: list[QNote]) -> frozenset[tuple[int, int]]:
+    return frozenset(h.position for h in hits)
+
+
+def _beat_xml(
+    hits: list[QNote], voice: int, ghost_velocity: int, beams: list[str | None] | None = None
+) -> list[str]:
+    """One beat of one voice: rests and chords that add up to a quarter note. `beams` replaces
+    the beat's own beam values when the beam continues from or into a neighbouring beat."""
     if not hits:
         return [_note_xml(None, DIVISIONS, False, voice=voice)]
     g = hits[0].position[1]
@@ -214,6 +264,8 @@ def _beat_xml(hits: list[QNote], voice: int, ghost_velocity: int) -> list[str]:
         end = slots[k + 1] if k + 1 < len(slots) else g
         items.append(((end - slot) * unit, [h for h in hits if h.position[0] == slot]))
     triplet = g == 3 and len(items) > 1
+    if beams is None:
+        beams = _beams([bool(chord) and _flagged(duration, triplet) for duration, chord in items])
     out = []
     for n, (duration, chord) in enumerate(items):
         tuplet = None
@@ -233,6 +285,7 @@ def _beat_xml(hits: list[QNote], voice: int, ghost_velocity: int) -> list[str]:
                     chord=c > 0,
                     ghost=h.velocity < ghost_velocity,
                     tuplet=tuplet if c == 0 else None,
+                    beam=beams[n] if c == 0 else None,
                     voice=voice,
                     instrument=f"P1-I{h.pitch}",
                 )

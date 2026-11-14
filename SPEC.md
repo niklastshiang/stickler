@@ -60,6 +60,7 @@ Only to speed up benchmark runs during development; the app itself runs locally.
 - Features requested by the owner:
   - **Two modes instead of a model choice:** "Fast" and "Quality" (pipelines decided after the benchmark).
   - **Readable sheet music:** fold repeated bars and passages into repeat signs (done in the command line tool for release 2: `notate` simplifies nearly equal bars and writes repeat signs; `--no-simplify`, `--no-repeats`).
+  - **Beams in the MusicXML (owner, 2026-11-14):** `notate` writes beams itself, one group per beat and voice, for every reader of the file. Verovio, the candidate for showing the sheet inside the app (`docs/ideas/gtk-music-stand.md`), does not beam on its own; MuseScore follows the written beams.
   - **Export drum track:** a button that saves the separated drum stem (the pipeline produces it anyway) as WAV or FLAC, next to the sheet music export. The API returns the stem path as part of the result, e.g. `transcribe_song(...).stem`.
 
 ## Commands
