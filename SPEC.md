@@ -177,6 +177,133 @@ def score(ref: Onsets, est: Onsets, window: float = 0.05) -> dict[str, PRF]:
 8. `stickler doctor` detects the Radeon 840M. At least the Torch adapters (Demucs, RoFormer, ADT_STR, MuScriptor) run with `--device gpu`. Results deviate from CPU runs by at most 0.01 F1. CPU vs. GPU runtimes are shown in the report.
 9. The CLI contains no logic beyond argument parsing and output. Everything runs through `stickler.api` (verified by a test), so the GTK interface can build on it later.
 
+## Release 3: Error analysis (honest numbers)
+
+> Status: **approved** by the owner on 2026-11-14 (blind judgement included).
+
+### Objective
+**Honest numbers for Fast and Quality.** The F1 values on the own songs count every
+disagreement with the reference as a model error, but the references are third-party
+transcriptions, aligned automatically. Release 3 estimates how much of the measured error is
+really the reference's, and reports Fast and Quality with that taken into account.
+
+User stories:
+- As the owner, I want to know how good Fast and Quality really are on my music, not only how
+  well they agree with musescore.com transcriptions.
+- As the owner, I want to see what kind of errors the models make per drum (missed, invented,
+  confused with another drum, slightly off time), so the numbers can be read correctly.
+- As the owner, I want to judge a sample of error spots by ear in about an hour, without
+  knowing whether the reference or the model claims the hit.
+
+Scope: the 25 own songs, Fast (`none+adtof`) and Quality (`combo+quality`). Not in scope:
+changing references or the scoring (±50 ms, 5 classes), new models, MDB/ENST (they have
+studio-exact references).
+
+### Method
+1. **Error breakdown per song, pipeline and class.** Every false negative (reference hit
+   without a match) and false positive (estimated hit without a match) from `evaluate.score`
+   gets exactly one category, in this order:
+   - *confused*: a false negative of class A and a false positive of class B ≠ A within ±50 ms
+     (one-to-one, like mir_eval's matching); counted as a pair A → B;
+   - *off time*: a false negative and a false positive of the same class 50–100 ms apart;
+   - *missed* (remaining false negatives) and *invented* (remaining false positives).
+   The categories add up exactly to fn and fp of `evaluate.score`.
+2. **Sample of spots, drawn once before listening.** A spot is (song, time, class, side):
+   side `ref` = the reference claims a hit the pipeline did not find, `est` = the pipeline
+   claims a hit the reference does not have. Spots come from the union of the Fast and
+   Quality errors (they share hi-hat and cymbals). 100 spots: per class 10 `ref` and
+   10 `est`, uniform at random, fixed seed, random order. The sample is never redrawn after
+   listening.
+3. **Blind judgement.** For each spot the owner hears a ~4 s snippet (drum stem and mix around
+   the spot, once plain and once with a soft marker at the moment in question) and answers one
+   question: "Is there a <class> hit at the marker?" — *yes*, *no* or *unclear*. The owner is
+   not told whether reference or model claims it.
+4. **Correction.** A `ref` spot judged *no* and an `est` spot judged *yes* are reference
+   errors. Per class, the shares of reference errors among `ref` and `est` spots
+   (r_ref, r_est) correct the counts of each pipeline: fn' = fn · (1 − r_ref),
+   tp' = tp + fp · r_est, fp' = fp · (1 − r_est). Reported: measured F1, corrected F1 with a
+   95 % bootstrap interval over the verdicts, and the share of *unclear* (not counted; bounds
+   with *unclear* counted either way). Shares come only from the spots in a pipeline's own
+   error set.
+5. **Known limit, stated in the report:** hits where reference and model are wrong in the same
+   way (both claim a hit that is not there) are invisible to this method; with ~10 spots per
+   class and side, per-class intervals are wide (about ±30 points), the pooled estimate is
+   about ±10 points.
+
+### Commands
+```bash
+uv run stickler errors --config config/own.yaml   # breakdown → results/own/errors.csv + table
+uv run stickler listen                            # draw the sample once, then judge spot by spot
+                                                  # (keys: y / n / u, r = repeat, s = half speed,
+                                                  #  q = quit; resumes where it stopped)
+uv run stickler eval --config config/own.yaml     # also writes the corrected scores once
+                                                  # verdicts exist → results/own/corrected.csv
+uv run stickler report                            # report.html shows breakdown and corrected F1
+```
+Snippets are played with `ffplay` (part of ffmpeg, already required); no new dependencies.
+
+### Project structure (additions)
+```
+src/stickler/errors.py         # categorise errors, draw the sample, correct the counts
+src/stickler/listen.py         # snippets (drum stem + mix + marker) and the judging loop state
+src/stickler/api.py            # error_breakdown(), draw_sample(), record_verdict(), corrected_scores()
+src/stickler/cli.py            # `errors`, `listen` (thin, as always)
+tests/test_errors.py, tests/test_listen.py
+data/own/_listening/sample.csv    # the drawn spots (gitignored, never redrawn)
+data/own/_listening/verdicts.csv  # the owner's answers (gitignored)
+data/own/_listening/*.wav         # snippets of commercial recordings (gitignored, never published)
+docs/report.md                    # new section "Errors and reference quality"
+```
+
+### Code style
+As in the rest of the harness, e.g.:
+```python
+@dataclass(frozen=True)
+class Spot:
+    """One error spot to judge by ear: does `cls` have a hit at `time` in `song`?"""
+
+    song: str
+    time: float
+    cls: str
+    side: Literal["ref", "est"]  # who claims the hit: the reference or a pipeline
+    pipelines: frozenset[str]  # pipelines whose error set contains this spot
+```
+
+### Testing strategy
+- Unit tests with synthetic onsets: every category, the one-to-one pairing of confusions, the
+  categories summing to fn/fp of `evaluate.score`, the seeded sample (same seed → same spots,
+  10/10 per class and side, union of pipelines), the correction formula on hand-computed
+  counts, resuming a half-judged sample.
+- `listen`: snippet cutting and marker placement tested on a generated WAV; the playback
+  command is injected, so tests never play sound.
+- Coverage stays ≥ 95 % (CONSTRAINTS.md).
+
+### Boundaries
+- **Always:** draw the sample before listening and keep it; judge blind; report measured and
+  corrected F1 side by side, never the corrected value alone; state the limits.
+- **Ask first:** changing the sample size or the categories after listening has started; using
+  verdicts for anything beyond the estimate (e.g. as exclusions, which would change the
+  scoring).
+- **Never:** commit snippets, verdicts or reference data; change references or metrics.csv
+  because of verdicts.
+
+### Success criteria
+1. `stickler errors` writes `results/own/errors.csv` for Fast and Quality; per song and class,
+   confused + off time + missed = fn and confused + off time + invented = fp (test and a check
+   over all 25 songs).
+2. `stickler listen` draws 100 spots (10 `ref` + 10 `est` per class), reproducibly, and resumes
+   after quitting; the owner has judged all of them.
+3. `results/own/corrected.csv` and the report show, for Fast and Quality: measured and corrected
+   macro-F1 and per-class F1 with 95 % intervals, and the share of *unclear*.
+4. `docs/report.md` has a section with the breakdown (largest error sources, top confusions)
+   and the corrected numbers; section 1 ("In short") quotes measured and corrected values.
+5. Existing results are unchanged: `results/own/summary.csv` is identical before and after.
+
+### Resolved questions
+1. **Blind judgement** (step 3) instead of hearing reference and model clicks side by side:
+   approved by the owner on 2026-11-14. It keeps the owner from favouring either side and lets
+   one verdict serve both pipelines.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)

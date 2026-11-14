@@ -22,6 +22,33 @@ Stickler compares pipelines of drum-stem separation and drum transcription on MD
 | 5 Notes | 17–18 | `stickler notate` → MusicXML/PDF |
 | 6 Later | – | noted for later: release pipeline (Flatpak, AppImage), everything in English |
 
+## Release 3: Error analysis (approved 2026-11-14, SPEC.md "Release 3")
+Goal: honest numbers for Fast and Quality on the own songs. Tasks 22–28 in [todo.md](todo.md), Phase 7.
+
+Architecture decisions:
+- **Same records as the benchmark:** the breakdown reuses the record building of
+  `evaluate_benchmark` (combos included, excluded regions removed), extracted into one helper,
+  so error counts and F1 can never disagree.
+- **`errors.py` is pure** (onsets in, categories/sample/corrections out); file and audio
+  handling live in `listen.py` and `api.py`. Easy to test without audio.
+- **Drum stems only from the cache:** snippets use the cached Demucs stems (Quality computed
+  them for all 25 songs); `listen` never starts a model.
+- **Line input instead of raw keys** in `listen` (a letter plus Enter): no terminal raw mode,
+  testable with CliRunner; the player command is injected, tests never play sound.
+- **Sample before listening:** `sample.csv` is written once and never redrawn; verdicts are
+  appended to `verdicts.csv`, so quitting and resuming loses nothing.
+
+Order: categories (22) → `stickler errors` end to end (23) → snippets (24, perceptual risk,
+early) → sample (25) → listening loop (26) → owner listens (Checkpoint F) → correction (27, can
+be built while the owner listens, on synthetic verdicts) → report and release (28).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Marker click masks or is mistaken for the hit | High | Snippet plays plain first, then with the marker; marker in a distinct timbre; owner tries 3 snippets before the sample is judged (Task 24) |
+| Demucs stem bleed makes a "no" sound like "yes" | Medium | Mix and stem together in the snippet; *unclear* is a valid answer and reported |
+| Few spots of a pipeline's own error set (Quality-only kick/snare/toms errors) | Medium | Report n per pipeline and class next to every corrected value; intervals by bootstrap |
+| Many *unclear* answers | Medium | Bounds with *unclear* counted either way; share reported |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

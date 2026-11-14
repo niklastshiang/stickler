@@ -187,6 +187,68 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 - [ ] **More reference songs in the owner's genres** (rock/metal): with 10 songs, tuning on them is not possible without overfitting; with ~30 they could be split for tuning and testing.
 - [ ] **Finer classes for notation** (owner, 2026-11-13: later): open/closed hi-hat, ride/crash; ADTOF does not distinguish them, MuScriptor does.
 
+## Phase 7: Release 3, error analysis (approved 2026-11-14, SPEC.md "Release 3")
+
+- [ ] **Task 22: Error categories** (M)
+  - Acceptance:
+    - `errors.categorise(ref, est)` gives per class: tp, missed, invented, off time (same class, 50–100 ms) and confusions as pairs A → B (±50 ms, one-to-one), with the times of every error spot.
+    - confused + off time + missed = fn and confused + off time + invented = fp of `evaluate.score` for the same onsets.
+  - Verify: `uv run pytest tests/test_errors.py` (synthetic onsets for every category, a property test of the sums on random onsets)
+  - Dependencies: none · Files: `src/stickler/errors.py`, `tests/test_errors.py`
+
+- [ ] **Task 23: `stickler errors` end to end** (M)
+  - Acceptance:
+    - The record building of `evaluate_benchmark` is shared with `api.error_breakdown(config, pipelines)`; default pipelines `none+adtof` and `combo+quality`.
+    - `results/own/errors.csv` (per song, pipeline, class and category, confusion pairs) and a summary table in the CLI.
+    - `results/own/summary.csv` is byte-identical before and after (`stickler eval`).
+  - Verify: unit tests with the fake MDB fixture; `uv run stickler errors --config config/own.yaml` on the 25 songs, sums checked against `metrics.csv`
+  - Dependencies: 22 · Files: `src/stickler/{api,cli,errors}.py`, `tests/test_{api,cli}.py`
+
+### Checkpoint E
+- [ ] Breakdown reviewed with the owner (largest error sources, top confusions), before any listening
+
+- [ ] **Task 24: Snippets** (M)
+  - Acceptance:
+    - `listen.snippet(spot, mix, stem)` writes a WAV of ~4 s around the spot: drum stem and mix, played once plain and once with a soft marker of a distinct timbre at the spot.
+    - Stems only from the cache; a missing stem is a clear error, never a model run.
+  - Verify: tests on a generated WAV (length, marker position, levels); owner listens to 3 snippets and confirms the marker is clear and does not hide the hit
+  - Dependencies: 22 · Files: `src/stickler/listen.py`, `src/stickler/api.py`, `tests/test_listen.py`
+
+- [ ] **Task 25: Draw the sample** (S)
+  - Acceptance:
+    - `errors.draw_sample(spots, per_class_side=10, seed)`: 10 `ref` and 10 `est` spots per class from the union of the pipelines' error spots, each spot listing the pipelines it belongs to; random order; same seed → same sample.
+    - `data/own/_listening/sample.csv` is written once; drawing again refuses.
+  - Verify: `uv run pytest tests/test_errors.py tests/test_api.py -k sample`
+  - Dependencies: 23 · Files: `src/stickler/{errors,api}.py`, tests
+
+- [ ] **Task 26: `stickler listen`** (M)
+  - Acceptance:
+    - Asks spot by spot "Is there a <class> hit at the marker?" without saying who claims it; answers y / n / u, r = repeat, s = half speed, q = quit (a letter plus Enter).
+    - Verdicts appended to `data/own/_listening/verdicts.csv`; a new start resumes at the first unjudged spot; shows progress (k / 100).
+    - The CLI only calls the API; the player (`ffplay`) is injected.
+  - Verify: CliRunner tests with a fake player (answer, repeat, quit, resume); owner judges 3 spots as a trial
+  - Dependencies: 24, 25 · Files: `src/stickler/{listen,api,cli}.py`, tests
+
+### Checkpoint F
+- [ ] The owner has judged all 100 spots (about an hour)
+
+- [ ] **Task 27: Corrected scores** (M)
+  - Acceptance:
+    - `errors.correct(counts, verdicts)`: per pipeline and class r_ref and r_est from the pipeline's own spots, corrected tp/fp/fn and F1, 95 % bootstrap interval, n and share of *unclear*, bounds with *unclear* counted either way.
+    - `stickler eval --config config/own.yaml` writes `results/own/corrected.csv` once verdicts exist; `report.html` shows measured and corrected values side by side.
+  - Verify: tests with hand-computed counts and synthetic verdicts (can be built during Checkpoint F); `metrics.csv`/`summary.csv` unchanged
+  - Dependencies: 23, 25 · Files: `src/stickler/{errors,api,report}.py`, tests
+
+- [ ] **Task 28: Report and release 3** (S)
+  - Acceptance:
+    - `docs/report.md`: section "Errors and reference quality" (breakdown, top confusions, corrected F1 with intervals, limits); section 1 quotes measured and corrected values.
+    - README roadmap and status; release steps of ADR 0006; release notes in Keep a Changelog style.
+  - Verify: all 5 success criteria of SPEC.md "Release 3"; `scripts/check.sh task`
+  - Dependencies: 27 · Files: `docs/report.md`, `README.md`, `tasks/todo.md`, version files
+
+### Checkpoint G
+- [ ] All success criteria of SPEC.md "Release 3" met, review with the owner, then release 3
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
