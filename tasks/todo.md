@@ -328,13 +328,13 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests (`half` then `double` is the original grid; meter and downbeat overrides give the expected bars; a test fails if an adapter is started); each correction of a cached own song takes < 1 s
   - Dependencies: 37 · Files: `src/stickler/{notation,api}.py`, tests
 
-- [ ] **Task 39: Detected hits as audio** (S): code done 2026-11-14, **the owner's ear check is open**. `audio.clicks` makes the clicks for `render_hits` and `align`'s click track alike; `render_hits` takes the song's length from ffprobe. Eye of the Tiger: 1375 hits, 245.64 s like the song, 0.18 s to render.
+- [x] **Task 39: Detected hits as audio** (S): done 2026-11-14; the owner listened to Eye of the Tiger with the clicks: they sit on the drums. `audio.clicks` makes the clicks for `render_hits` and `align`'s click track alike; `render_hits` takes the song's length from ffprobe. Eye of the Tiger: 1375 hits, 245.64 s like the song, 0.18 s to render.
   - Acceptance:
     - `api.render_hits(transcription, dest)`: a mono WAV as long as the song, one click per hit, three pitches (kick, snare/toms, cymbals); `align`'s click track uses the same clicks.
   - Verify: test on a generated song (length, energy at the hit times); the owner listens to one own song with the clicks and confirms they sit on the drums
   - Dependencies: none · Files: `src/stickler/{api,audio}.py`, tests
 
-- [ ] **Task 40: Ctrl+C cancels `stickler notate` and `stickler setup`** (S) (owner, 2026-11-14)
+- [x] **Task 40: Ctrl+C cancels `stickler notate` and `stickler setup`** (S) (owner, 2026-11-14; part of release 4): done 2026-11-14. A second Ctrl+C stops at once (for ROCm/CUDA builds, which are cancelled between steps only). By hand: SIGINT to the CLI's process group during ADTOF on an uncached clip; model and `uv run` gone after 100 ms, CLI after 200 ms with "Cancelled" and exit code 130, no cache entry left.
   - Today the adapter runs in its own session, so Ctrl+C ends the CLI but not the model, which keeps computing in the background.
   - Acceptance:
     - Ctrl+C during `notate` or `setup` sets a `CancelToken`; the running model or `uv`/`setup.py` process group ends, the CLI prints "Cancelled" and exits with code 130.

@@ -3,6 +3,7 @@
 import ast
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from stickler import api, cli
@@ -45,7 +46,9 @@ def test_setup_delegates_to_api(monkeypatch):
     monkeypatch.setattr(
         api,
         "setup_adapters",
-        lambda adapter, device, progress=None: calls.append((adapter, device)) or [adapter],
+        lambda adapter, device, progress=None, cancel=None: (
+            calls.append((adapter, device)) or [adapter]
+        ),
     )
     result = CliRunner().invoke(cli.app, ["setup", "--adapter", "adt_str", "--device", "rocm"])
     assert result.exit_code == 0, result.output
@@ -262,7 +265,7 @@ def test_notate_prints_each_step(monkeypatch, tmp_path):
 def test_setup_prints_each_step(monkeypatch):
     from stickler.api import Step
 
-    def fake_setup(adapter, device, progress):
+    def fake_setup(adapter, device, progress, cancel=None):
         for index, step_id in enumerate(("environment:beat_this", "weights:beat_this"), 1):
             progress(Step(step_id, index, 2, "started", adapter="beat_this"))
             progress(Step(step_id, index, 2, "done", adapter="beat_this"))
@@ -468,3 +471,92 @@ def test_listen_reports_a_missing_stem(monkeypatch):
     monkeypatch.setattr(api, "next_listening_spot", boom)
     result = CliRunner().invoke(cli.app, ["listen"])
     assert result.exit_code == 1 and "drum stem" in result.output
+
+
+FIXTURE_ADAPTERS = Path(__file__).parent / "fixtures" / "adapters"
+
+
+def _ctrl_c_when(pid_file: Path, seen: dict) -> None:
+    """Presses Ctrl+C (SIGINT to this process) once the process writing `pid_file` runs."""
+    import os
+    import signal
+    import threading
+    import time
+
+    def press() -> None:
+        while not (pid_file.exists() and pid_file.read_text()):
+            time.sleep(0.01)
+        seen["group"] = os.getpgid(int(pid_file.read_text()))
+        os.kill(os.getpid(), signal.SIGINT)
+
+    threading.Thread(target=press, daemon=True).start()
+
+
+def _gone(group: int) -> bool:
+    import os
+    import time
+
+    deadline = time.monotonic() + 1
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(group, 0)
+        except ProcessLookupError:
+            return True
+        time.sleep(0.01)
+    return False
+
+
+def test_ctrl_c_cancels_notate_and_ends_the_model(monkeypatch, tmp_path):
+    import signal
+
+    from stickler import adapters, runner
+
+    spec = adapters.discover(FIXTURE_ADAPTERS)["sleepy"]
+    adapters.setup_adapter(spec)
+    song = tmp_path / "s.wav"
+    song.write_bytes(b"x")
+    real = api.notate
+    fixed = {"pipeline": "none+sleepy", "cache_dir": tmp_path, "adapters_root": FIXTURE_ADAPTERS}
+    monkeypatch.setattr(api, "notate", lambda a, o=None, **kw: real(a, o, **{**kw, **fixed}))
+    seen = {}
+    _ctrl_c_when(runner.cache_dir_for(tmp_path, spec, song) / "pid", seen)
+    result = CliRunner().invoke(cli.app, ["notate", str(song), "--no-pdf"])
+    assert result.exit_code == 130, result.output
+    assert "Cancelled" in result.output
+    assert _gone(seen["group"]), "the model keeps running after Ctrl+C"
+    assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+
+
+def test_ctrl_c_cancels_setup_and_ends_setup_py(monkeypatch, tmp_path):
+    d = tmp_path / "transcribers" / "slow"
+    d.mkdir(parents=True)
+    (d / "run.py").write_text("", encoding="utf-8")
+    (d / "pyproject.toml").write_text(
+        '[project]\nname = "slow"\nversion = "0"\nrequires-python = ">=3.12,<3.13"\n',
+        encoding="utf-8",
+    )
+    (d / "setup.py").write_text(
+        "import os, time\nfrom pathlib import Path\n"
+        "(Path(__file__).parent / 'pid').write_text(str(os.getpid()))\ntime.sleep(60)\n",
+        encoding="utf-8",
+    )
+    real = api.setup_adapters
+    monkeypatch.setattr(
+        api, "setup_adapters", lambda a, device, **kw: real(a, device, tmp_path, **kw)
+    )
+    seen = {}
+    _ctrl_c_when(d / "pid", seen)
+    result = CliRunner().invoke(cli.app, ["setup", "--adapter", "slow"])
+    assert result.exit_code == 130, result.output
+    assert "Cancelled" in result.output
+    assert _gone(seen["group"]), "setup.py keeps running after Ctrl+C"
+
+
+def test_a_second_ctrl_c_stops_at_once():
+    import signal
+
+    with cli._ctrl_c_cancels() as token:
+        signal.raise_signal(signal.SIGINT)
+        assert token.is_set()
+        with pytest.raises(KeyboardInterrupt):
+            signal.raise_signal(signal.SIGINT)

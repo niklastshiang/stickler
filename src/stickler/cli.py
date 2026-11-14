@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
+import signal
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Annotated
 
@@ -13,6 +16,32 @@ from stickler import api
 app = typer.Typer(help="Stickler: benchmark for drum transcription", no_args_is_help=True)
 
 DataDir = Annotated[Path, typer.Option("--data-dir", help="Storage location for datasets")]
+
+
+CANCELLED = 130  # exit code after Ctrl+C, as the shell reports it
+
+
+@contextlib.contextmanager
+def _ctrl_c_cancels() -> Iterator[api.CancelToken]:
+    """Ctrl+C sets the token (the running model or setup process is ended); a second Ctrl+C
+    stops at once, for steps that are not cancelled midway."""
+    token = api.CancelToken()
+
+    def on_ctrl_c(signum, frame) -> None:
+        if token.is_set():
+            raise KeyboardInterrupt
+        token.cancel()
+
+    previous = signal.signal(signal.SIGINT, on_ctrl_c)
+    try:
+        yield token
+    finally:
+        signal.signal(signal.SIGINT, previous)
+
+
+def _cancelled(exc: api.Cancelled) -> typer.Exit:
+    typer.echo("\nCancelled", err=True)
+    return typer.Exit(CANCELLED)
 
 
 @app.callback()
@@ -38,7 +67,10 @@ def setup(
 ) -> None:
     """Build the adapter environment and download weights."""
     try:
-        done = api.setup_adapters(adapter, device=device, progress=_print_step)
+        with _ctrl_c_cancels() as cancel:
+            done = api.setup_adapters(adapter, device=device, progress=_print_step, cancel=cancel)
+    except api.Cancelled as exc:
+        raise _cancelled(exc) from exc
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -265,22 +297,26 @@ def notate_cmd(
 ) -> None:
     """Song → drum sheet music (MusicXML, PDF if MuseScore is installed)."""
     try:
-        result = api.notate(
-            audio,
-            out,
-            pipeline=pipeline,
-            mode=mode,
-            drums=drums is not None,
-            title=title,
-            artist=artist,
-            pdf=pdf,
-            simplify=simplify,
-            repeats=repeats,
-            device=device or "auto",
-            progress=_print_step,
-        )
+        with _ctrl_c_cancels() as cancel:
+            result = api.notate(
+                audio,
+                out,
+                pipeline=pipeline,
+                mode=mode,
+                drums=drums is not None,
+                title=title,
+                artist=artist,
+                pdf=pdf,
+                simplify=simplify,
+                repeats=repeats,
+                device=device or "auto",
+                progress=_print_step,
+                cancel=cancel,
+            )
         stem = result.transcription.stem
         exported = api.export_drum_track(stem, drums) if drums and stem else None
+    except api.Cancelled as exc:
+        raise _cancelled(exc) from exc
     except (ValueError, RuntimeError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
