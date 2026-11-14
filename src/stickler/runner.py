@@ -257,6 +257,15 @@ def _outside(notes: list[tuple[float, int]], excluded) -> list[tuple[float, int]
     return [(t, p) for t, p in notes if not any(a <= t < b for a, b in excluded)]
 
 
+def record_notes(
+    rec: Record, track: Track, read_notes: Callable[[Path], list[tuple[float, int]]] = None
+) -> tuple[list[tuple[float, int]], list[tuple[float, int]]]:
+    """Reference and estimated notes of a successful record, without the excluded regions."""
+    read = read_notes or read_drum_notes
+    notes = rec.notes if rec.notes is not None else read(rec.midi)
+    return _outside(track.reference_notes(), track.excluded), _outside(notes, track.excluded)
+
+
 def score_records(
     records: list[Record],
     tracks: dict[str, list[Track]],
@@ -298,10 +307,7 @@ def score_records(
         if not rec.ok:
             rows.extend(_row(base, name, "", None) for name in schemes)
             continue
-        track = by_id[(rec.dataset, rec.track)]
-        ref_notes = _outside(track.reference_notes(), track.excluded)
-        notes = rec.notes if rec.notes is not None else read_notes(rec.midi)
-        est_notes = _outside(notes, track.excluded)
+        ref_notes, est_notes = record_notes(rec, by_id[(rec.dataset, rec.track)], read_notes)
         for name, scheme in schemes.items():
             s = score(onsets_from_notes(ref_notes, scheme), onsets_from_notes(est_notes, scheme))
             for cls, prf in [*s.per_class.items(), ("micro", s.micro)]:

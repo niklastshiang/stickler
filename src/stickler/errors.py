@@ -133,3 +133,31 @@ def categorise(ref: Onsets, est: Onsets, window: float = WINDOW) -> Breakdown:
             off_time=tuple(sorted((float(r[i]), float(e[j])) for i, j in pairs)),
         )
     return Breakdown(per_class, confused)
+
+
+def count_rows(b: Breakdown, classes: list[str]) -> list[dict]:
+    """One row per class: the counts, and per drum how many of this class's reference hits were
+    written as that drum (`ref_as_<drum>`; always 0 for the class itself, so every row has the
+    same columns)."""
+    return [
+        {
+            "class": c,
+            **b.counts(c),
+            **{
+                f"ref_as_{other}": sum(x.ref_cls == c and x.est_cls == other for x in b.confused)
+                for other in classes
+            },
+        }
+        for c in classes
+    ]
+
+
+def pool(rows: list[dict], keys: tuple[str, ...] = ("pipeline", "class")) -> list[dict]:
+    """Sums the integer counts of rows with the same `keys` (e.g. over all songs)."""
+    out: dict[tuple, dict] = {}
+    for row in rows:
+        group = out.setdefault(tuple(row[k] for k in keys), {k: row[k] for k in keys})
+        for k, v in row.items():
+            if k not in keys and isinstance(v, int):
+                group[k] = group.get(k, 0) + v
+    return list(out.values())

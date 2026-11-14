@@ -185,6 +185,20 @@ prints a `fusions` entry to paste into a configuration. Tune on one dataset and 
 on another; settings tuned on MDB did not transfer to rock and metal recordings (report,
 section 6).
 
+### 3.6 Error analysis: `errors`
+
+```console
+uv run stickler errors --config config/own.yaml                        # Fast and Quality
+uv run stickler errors --config config/own.yaml --pipeline demucs+adtof
+```
+
+Splits every error of a pipeline (5 classes, ±50 ms, the same matching as `eval`) into one
+kind, in this order: **confused** (another drum within 50 ms, e.g. a crash written for a
+hi-hat), **off time** (the same drum 50–100 ms away), **missed** and **invented**. Prints the
+counts per pipeline and class with the drum each class is most often written as, and writes
+them per song to `results/<config>/errors.csv` (`ref_as_<drum>`: reference hits of the row's
+class written as that drum). Computes nothing; run `stickler run` first.
+
 ---
 
 ## 4. Development helpers

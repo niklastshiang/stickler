@@ -98,6 +98,43 @@ def eval_cmd(config: ConfigOpt = None, only: Only = None) -> None:
         )
 
 
+@app.command("errors")
+def errors_cmd(
+    config: ConfigOpt = None,
+    pipeline: Annotated[
+        list[str] | None,
+        typer.Option(help="separator+transcriber to analyse (repeatable); default: Fast, Quality"),
+    ] = None,
+    only: Only = None,
+) -> None:
+    """Break the errors down: missed, invented, off time, confused with another drum."""
+    cfg = config or api.CONFIG
+    out = api.results_dir_for(cfg)
+    try:
+        pooled = api.error_breakdown(
+            cfg,
+            tuple(pipeline) if pipeline else api.ERROR_PIPELINES,
+            results_dir=out,
+            only=_only(only),
+        )
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(
+        f"{'Pipeline':16} {'Class':5} {'Hits':>6} {'Missed':>7} {'Invented':>9} {'Off time':>9}"
+        f" {'Confused':>9}  Most often written as"
+    )
+    for r in pooled:
+        written = {k.removeprefix("ref_as_"): v for k, v in r.items() if k.startswith("ref_as_")}
+        top = max(written, key=written.get, default=None)
+        most = f"{r['class']}→{top} {written[top]}" if top and written[top] else "–"
+        typer.echo(
+            f"{r['pipeline']:16} {r['class']:5} {r['tp']:6} {r['missed']:7} {r['invented']:9}"
+            f" {r['off_time']:9} {r['confused_ref']:9}  {most}"
+        )
+    typer.echo(f"Per song: {out / 'errors.csv'}")
+
+
 @app.command("report")
 def report_cmd() -> None:
     """Write results/report.html from all available summary.csv files."""

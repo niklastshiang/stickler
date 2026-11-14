@@ -79,3 +79,10 @@ def test_categories_add_up_to_the_scores_errors(seed):
         assert k["tp"] == prf.tp
         assert k["missed"] + k["off_time"] + k["confused_ref"] == prf.fn
         assert k["invented"] + k["off_time"] + k["confused_est"] == prf.fp
+
+
+def test_count_rows_split_confusions_by_the_drum_written_instead():
+    b = errors.categorise(onsets(HH=[1.0, 2.0, 3.0]), onsets(CY=[1.0, 2.0], SD=[3.0]))
+    (hh,) = [r for r in errors.count_rows(b, ["KD", "SD", "HH", "CY"]) if r["class"] == "HH"]
+    assert hh["confused_ref"] == 3 and hh["ref_as_CY"] == 2 and hh["ref_as_SD"] == 1
+    assert hh["ref_as_KD"] == 0 and hh["ref_as_HH"] == 0

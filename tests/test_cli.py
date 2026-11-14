@@ -145,6 +145,35 @@ def test_run_and_eval_accept_another_config(monkeypatch, tmp_path):
     assert seen == {"run": cfg, "eval": cfg, "out": api.RESULTS_DIR / "own"}
 
 
+def test_errors_prints_the_breakdown_per_pipeline(monkeypatch, tmp_path):
+    cfg = tmp_path / "own.yaml"
+    seen = {}
+    row = {"pipeline": "none+adtof", "class": "HH", "tp": 900, "missed": 40, "invented": 30}
+    row |= {"off_time": 5, "confused_ref": 25, "confused_est": 3}
+    row |= {"ref_as_KD": 0, "ref_as_SD": 2, "ref_as_HH": 0, "ref_as_CY": 23}
+
+    def fake(c, pipelines, results_dir=None, only=None):
+        seen.update(config=c, pipelines=pipelines, out=results_dir)
+        return [row]
+
+    monkeypatch.setattr(api, "error_breakdown", fake)
+    result = CliRunner().invoke(cli.app, ["errors", "--config", str(cfg)])
+    assert result.exit_code == 0, result.output
+    assert seen == {"config": cfg, "pipelines": api.ERROR_PIPELINES, "out": api.RESULTS_DIR / "own"}
+    line = next(x for x in result.output.splitlines() if "HH" in x and "900" in x)
+    assert "HH→CY 23" in line and "none+adtof" in line
+    assert "errors.csv" in result.output
+
+
+def test_errors_reports_a_bad_pipeline(monkeypatch):
+    def boom(c, pipelines, results_dir=None, only=None):
+        raise ValueError("not in benchmark.yaml: none+nix")
+
+    monkeypatch.setattr(api, "error_breakdown", boom)
+    result = CliRunner().invoke(cli.app, ["errors", "--pipeline", "none+nix"])
+    assert result.exit_code == 1 and "none+nix" in result.output
+
+
 def test_run_and_eval_restricted_to_some_tracks(monkeypatch):
     seen = {}
     monkeypatch.setattr(

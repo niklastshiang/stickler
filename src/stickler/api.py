@@ -21,6 +21,7 @@ from stickler import (
     cachemigration,
     combine,
     doctor,
+    errors,
     fusion,
     grid,
     musescore,
@@ -31,7 +32,7 @@ from stickler import (
     runner,
     vote,
 )
-from stickler.classes import load_schemes
+from stickler.classes import load_schemes, onsets_from_notes
 from stickler.datasets import enst, mdb, own
 from stickler.midi import read_drum_hits
 from stickler.results import summarize, write_csv
@@ -263,6 +264,33 @@ def evaluate_benchmark(
     only: set[str] | None = None,
 ) -> list[dict]:
     """Scores the cached results (computes nothing); writes metrics.csv and summary.csv."""
+    cfg, tracks, records = _all_records(
+        config_path,
+        device=device,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
+        only=only,
+    )
+    all_schemes = load_schemes(CLASSES)
+    schemes = {name: all_schemes[name] for name in cfg.schemes}
+    rows = runner.score_records(records, tracks, schemes)
+    summary = summarize(rows)
+    write_csv(results_dir / "metrics.csv", rows)
+    write_csv(results_dir / "summary.csv", summary)
+    return summary
+
+
+def _all_records(
+    config_path: Path,
+    *,
+    device: str | None,
+    data_dir: Path,
+    cache_dir: Path,
+    adapters_root: Path,
+    only: set[str] | None,
+) -> tuple[BenchmarkConfig, dict, list[runner.Record]]:
+    """The cached records of a config plus its fusions, votes, combos and grid variants."""
     cfg = load_benchmark_config(config_path)
     tracks = _tracks(cfg, data_dir, only)
     records = run_benchmark(
@@ -275,7 +303,6 @@ def evaluate_benchmark(
         only=only,
     )
     all_schemes = load_schemes(CLASSES)
-    schemes = {name: all_schemes[name] for name in cfg.schemes}
     # Fusions and combos name classes of the 5-class scheme; scored in every configured scheme.
     # Fusions first, so that combos can use them ("fusion+<name>").
     five = all_schemes["5"]
@@ -293,11 +320,79 @@ def evaluate_benchmark(
         records += grid.grid_records(
             records, pipelines, beats, runner.read_drum_notes, cfg.consensus, cfg.simplify
         )
-    rows = runner.score_records(records, tracks, schemes)
-    summary = summarize(rows)
-    write_csv(results_dir / "metrics.csv", rows)
-    write_csv(results_dir / "summary.csv", summary)
-    return summary
+    return cfg, tracks, records
+
+
+ERROR_PIPELINES = ("none+adtof", "combo+quality")  # Fast and Quality
+
+
+def error_breakdowns(
+    config_path: Path = CONFIG,
+    pipelines: tuple[str, ...] | list[str] = ERROR_PIPELINES,
+    *,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+    only: set[str] | None = None,
+) -> dict[tuple[str, str, str], errors.Breakdown]:
+    """(dataset, track, pipeline) → the categorised errors in the 5-class scheme, from the same
+    records `evaluate_benchmark` scores (computes nothing)."""
+    _, tracks, records = _all_records(
+        config_path,
+        device=None,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
+        only=only,
+    )
+    five = load_schemes(CLASSES)["5"]
+    by_id = {(ds, t.id): t for ds, ts in tracks.items() for t in ts}
+    found, out = set(), {}
+    for r in records:
+        label = f"{r.separator}+{r.transcriber}"
+        if label not in pipelines:
+            continue
+        found.add(label)
+        if not r.ok:
+            where = f"{r.dataset}/{r.track}"
+            raise RuntimeError(f"{label} on {where}: not computed, run `stickler run`")
+        ref, est = runner.record_notes(r, by_id[(r.dataset, r.track)])
+        out[(r.dataset, r.track, label)] = errors.categorise(
+            onsets_from_notes(ref, five), onsets_from_notes(est, five)
+        )
+    if unknown := [p for p in pipelines if p not in found]:
+        raise ValueError(f"not in {config_path.name}: {', '.join(unknown)}")
+    return out
+
+
+def error_breakdown(
+    config_path: Path = CONFIG,
+    pipelines: tuple[str, ...] | list[str] = ERROR_PIPELINES,
+    *,
+    results_dir: Path = RESULTS_DIR,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+    only: set[str] | None = None,
+) -> list[dict]:
+    """Writes errors.csv (per track, pipeline and class) and returns the counts summed over the
+    tracks, per pipeline and class."""
+    found = error_breakdowns(
+        config_path,
+        pipelines,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
+        only=only,
+    )
+    classes = list(load_schemes(CLASSES)["5"].classes)
+    rows = [
+        {"dataset": ds, "track": track, "pipeline": label, **row}
+        for (ds, track, label), b in found.items()
+        for row in errors.count_rows(b, classes)
+    ]
+    write_csv(results_dir / "errors.csv", rows)
+    return errors.pool(rows)
 
 
 def _class_of(scheme) -> dict[int, str]:

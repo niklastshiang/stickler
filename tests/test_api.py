@@ -99,6 +99,37 @@ def test_run_and_evaluate_benchmark(monkeypatch, tmp_path):
     assert (tmp_path / "results" / "summary.csv").exists()
 
 
+def test_error_breakdown_of_a_pipeline(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0; dummy echoes it
+    cfg = _bench(tmp_path)
+    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    api.run_benchmark(cfg, **kw)
+    pooled = api.error_breakdown(
+        cfg, ["none+dummy", "combo+kick"], results_dir=tmp_path / "results", **kw
+    )
+    by = {(r["pipeline"], r["class"]): r for r in pooled}
+    assert by[("none+dummy", "SD")]["tp"] == 1 and by[("none+dummy", "SD")]["missed"] == 0
+    assert by[("combo+kick", "SD")]["missed"] == 1 and by[("combo+kick", "KD")]["tp"] == 1
+    rows = (tmp_path / "results" / "errors.csv").read_text().splitlines()
+    assert rows[0].startswith("dataset,track,pipeline,class,tp,missed")
+    assert len(rows) == 1 + 2 * 5  # one row per pipeline and class of the 5-class scheme
+
+
+def test_error_breakdown_needs_computed_results(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)  # nothing run, nothing cached
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    with pytest.raises(RuntimeError, match="stickler run"):
+        api.error_breakdown(_bench(tmp_path), ["none+dummy"], results_dir=tmp_path, **kw)
+
+
+def test_error_breakdown_rejects_an_unknown_pipeline(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    with pytest.raises(ValueError, match="none\\+nix"):
+        api.error_breakdown(_bench(tmp_path), ["none+nix"], results_dir=tmp_path, **kw)
+
+
 def test_evaluate_scores_combos(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)
     cfg = _bench(tmp_path)

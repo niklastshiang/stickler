@@ -196,7 +196,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest tests/test_errors.py` (synthetic onsets for every category, a property test of the sums on random onsets)
   - Dependencies: none · Files: `src/stickler/errors.py`, `tests/test_errors.py`
 
-- [ ] **Task 23: `stickler errors` end to end** (M)
+- [x] **Task 23: `stickler errors` end to end** (M)
   - Acceptance:
     - The record building of `evaluate_benchmark` is shared with `api.error_breakdown(config, pipelines)`; default pipelines `none+adtof` and `combo+quality`.
     - `results/own/errors.csv` (per song, pipeline, class and category, confusion pairs) and a summary table in the CLI.
