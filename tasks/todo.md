@@ -229,7 +229,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: CliRunner tests with a fake player (answer, repeat, quit, resume); owner judges 3 spots as a trial
   - Dependencies: 24, 25 · Files: `src/stickler/{listen,api,cli}.py`, tests
 
-- [ ] **Task 29: Badges for `stickler listen`** (M) (SPEC.md, "Gamification")
+- [x] **Task 29: Badges for `stickler listen`** (M) (SPEC.md, "Gamification")
   - Acceptance:
     - `rewards.earned(events)` gives the 11 badges from an events log (spot judged, loop played, half-speed loop, session started; with timestamps, without answers); banner texts in drummer humour.
     - `stickler listen` records the events in `data/own/_listening/events.csv`, shows a banner when a badge is new and the collection on `q` and at the end.

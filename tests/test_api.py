@@ -887,3 +887,43 @@ def test_play_uses_ffplay_without_a_window(monkeypatch, tmp_path, loop, half_spe
     (cmd,) = started
     assert cmd[0] == "ffplay" and "-nodisp" in cmd and cmd[-1] == str(tmp_path / "x.wav")
     assert all(x in cmd for x in extra) and ("atempo=0.5" in cmd) == half_speed
+
+
+def test_judging_records_an_event_without_the_answer_and_awards_badges(tmp_path):
+    from datetime import datetime
+
+    now = datetime(2026, 11, 14, 20, 0)
+    yes, no = tmp_path / "yes", tmp_path / "no"
+    banners = api.record_verdict(1, "yes", listening_dir=yes, now=now)
+    api.record_verdict(1, "no", listening_dir=no, now=now)
+    assert len(banners) == 1 and "first hit" in banners[0]
+    events = (yes / "events.csv").read_text(encoding="utf-8")
+    assert events == (no / "events.csv").read_text(encoding="utf-8")  # the answer is not in it
+    assert "yes" not in events
+    assert api.record_verdict(2, "yes", listening_dir=yes, now=now) == []  # nothing new
+
+
+def test_loops_and_sessions_are_events_too(tmp_path):
+    from datetime import datetime, timedelta
+
+    day = datetime(2026, 11, 14, 20, 0)
+    (banner,) = api.record_listening_event("slow_loop", listening_dir=tmp_path, now=day)
+    assert "slow motion" in banner
+    assert api.record_listening_event("session", listening_dir=tmp_path, now=day) == []
+    later = day + timedelta(days=1)
+    (banner,) = api.record_listening_event("session", listening_dir=tmp_path, now=later)
+    assert "comeback tour" in banner
+    assert "2 of 11" in api.badge_collection(listening_dir=tmp_path)
+
+
+def test_encore_counts_the_spots_of_the_drawn_sample(monkeypatch, tmp_path):
+    kw = _listening_setup(monkeypatch, tmp_path, n_spots=2)
+    where = kw["listening_dir"]
+    api.record_verdict(1, "yes", listening_dir=where)
+    banners = api.record_verdict(2, "no", listening_dir=where)
+    assert any("encore" in b for b in banners)
+
+
+def test_unknown_listening_event(tmp_path):
+    with pytest.raises(ValueError, match="dance"):
+        api.record_listening_event("dance", listening_dir=tmp_path)

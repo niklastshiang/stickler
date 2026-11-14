@@ -354,7 +354,18 @@ def _fake_listening(monkeypatch, tmp_path, total=2):
 
     monkeypatch.setattr(api, "next_listening_spot", next_spot)
     monkeypatch.setattr(api, "play", play)
-    monkeypatch.setattr(api, "record_verdict", lambda n, v: verdicts.__setitem__(n, v))
+
+    def verdict(n, v):
+        verdicts[n] = v
+        return ["BANNER first hit"] if n == 1 else []
+
+    def event(kind):
+        log.append(("event", kind))
+        return [f"BANNER {kind}"] if kind == "slow_loop" else []
+
+    monkeypatch.setattr(api, "record_verdict", verdict)
+    monkeypatch.setattr(api, "record_listening_event", event)
+    monkeypatch.setattr(api, "badge_collection", lambda: f"Badges: {len(verdicts)} of 11")
     return log, verdicts
 
 
@@ -364,6 +375,8 @@ def test_listen_asks_blind_and_records_answers(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert verdicts == {1: "yes", 2: "unclear"}
     assert "[1/2] Is there a hi-hat hit?" in result.output and "ref" not in result.output
+    assert log[0] == ("event", "session")
+    log = [x for x in log if x[0] != "event"]
     assert log[:6] == [
         ("play", ("1.wav", False, False)),  # the snippet first
         ("done", ("1.wav", False, False)),
@@ -373,6 +386,8 @@ def test_listen_asks_blind_and_records_answers(monkeypatch, tmp_path):
         ("stopped", ("1l.wav", True, True)),
     ]
     assert "All 2 spots judged" in result.output
+    assert "BANNER first hit" in result.output and "BANNER slow_loop" in result.output
+    assert "Badges: 2 of 11" in result.output
 
 
 def test_listen_can_stop_and_says_how_far_it_got(monkeypatch, tmp_path):
@@ -380,13 +395,15 @@ def test_listen_can_stop_and_says_how_far_it_got(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["listen"], input="n\nl\n\nx\nq\n")
     assert result.exit_code == 0, result.output
     assert verdicts == {1: "no"} and ("play", ("2l.wav", True, False)) in log
-    assert "1 of 3 judged" in result.output
+    assert "1 of 3 judged" in result.output and "Badges: 1 of 11" in result.output
+    assert ("event", "loop") in log
 
 
 def test_listen_when_everything_is_judged(monkeypatch, tmp_path):
     _fake_listening(monkeypatch, tmp_path, total=0)
     result = CliRunner().invoke(cli.app, ["listen"])
     assert result.exit_code == 0 and "All spots are judged" in result.output
+    assert "Badges" in result.output
 
 
 def test_listen_reports_a_missing_stem(monkeypatch):

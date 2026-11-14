@@ -139,6 +139,11 @@ ANSWERS = {"y": "yes", "n": "no", "u": "unclear"}
 KEYS = "y = yes, n = no, u = unclear, r = again, l = loop, s = loop at half speed, q = quit"
 
 
+def _echo_all(texts: list[str]) -> None:
+    for text in texts:
+        typer.echo(f"\n{text}")
+
+
 @app.command("listen")
 def listen_cmd() -> None:
     """Judge the error spots of the own songs by ear, blind (the sample is drawn once)."""
@@ -148,16 +153,19 @@ def listen_cmd() -> None:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
     total = spot.total if spot else 0
+    if spot is not None:
+        _echo_all(api.record_listening_event("session"))
     while spot is not None:
         typer.echo(f"\n[{spot.n}/{spot.total}] {spot.question}")
         api.play(spot.snippet).wait()
         while True:
             key = typer.prompt(KEYS, default="", show_default=False).strip().lower()
             if key in ANSWERS:
-                api.record_verdict(spot.n, ANSWERS[key])
+                _echo_all(api.record_verdict(spot.n, ANSWERS[key]))
                 break
             if key == "q":
                 typer.echo(f"Stopped: {spot.n - 1} of {spot.total} judged; run it again to go on.")
+                typer.echo(f"\n{api.badge_collection()}")
                 return
             if key == "r":
                 api.play(spot.snippet).wait()
@@ -166,8 +174,10 @@ def listen_cmd() -> None:
                 typer.prompt("Enter stops the loop", default="", show_default=False)
                 loop.terminate()
                 loop.wait()
+                _echo_all(api.record_listening_event("slow_loop" if key == "s" else "loop"))
         spot = api.next_listening_spot()
-    typer.echo(f"All {total} spots judged." if total else "All spots are judged.")
+    typer.echo(f"\nAll {total} spots judged." if total else "All spots are judged.")
+    typer.echo(f"\n{api.badge_collection()}")
 
 
 @app.command("report")

@@ -214,6 +214,10 @@ claims the hit. Answer with a letter and Enter: `y` yes, `n` no, `u` unclear; `r
 passage again, `l` loops just the spot until Enter, `s` the same at half speed, `q` stops.
 Answers go to `verdicts.csv`; the next start continues at the first unjudged spot.
 
+Badges in drummer humour keep you going (11 to collect, shown on `q` and at the end). They
+come only from *that* you judge, when, and how often you loop, never from *what* you answer or
+how fast: `events.csv` records no answers, so the game cannot bias the verdicts.
+
 ---
 
 ## 4. Development helpers

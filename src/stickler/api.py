@@ -10,7 +10,9 @@ import shutil
 import subprocess
 import threading
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
+from typing import get_args
 
 import numpy as np
 import yaml
@@ -31,6 +33,7 @@ from stickler import (
     onsets,
     remote,
     report,
+    rewards,
     runner,
     vote,
 )
@@ -487,8 +490,11 @@ def load_verdicts(listening_dir: Path = LISTENING_DIR) -> dict[int, str]:
         return {int(r["n"]): r["verdict"] for r in csv.DictReader(f)}
 
 
-def record_verdict(n: int, verdict: str, *, listening_dir: Path = LISTENING_DIR) -> None:
-    """Appends the owner's answer for spot `n` to verdicts.csv."""
+def record_verdict(
+    n: int, verdict: str, *, listening_dir: Path = LISTENING_DIR, now: datetime | None = None
+) -> list[str]:
+    """Appends the owner's answer for spot `n` to verdicts.csv and records that a spot was
+    judged (without the answer); returns the banners of newly earned badges."""
     if verdict not in listen.VERDICTS:
         raise ValueError(f"verdict must be one of {', '.join(listen.VERDICTS)}, got {verdict!r}")
     path = listening_dir / "verdicts.csv"
@@ -499,6 +505,47 @@ def record_verdict(n: int, verdict: str, *, listening_dir: Path = LISTENING_DIR)
         if new:
             writer.writerow(["n", "verdict"])
         writer.writerow([n, verdict])
+    return record_listening_event("judged", listening_dir=listening_dir, now=now)
+
+
+def _listening_events(listening_dir: Path) -> list[rewards.Event]:
+    path = listening_dir / "events.csv"
+    if not path.exists():
+        return []
+    with path.open(newline="", encoding="utf-8") as f:
+        return [
+            rewards.Event(datetime.fromisoformat(r["when"]), r["kind"]) for r in csv.DictReader(f)
+        ]
+
+
+def _earned(listening_dir: Path) -> dict[str, datetime]:
+    total = len(load_listening_sample(listening_dir))
+    return rewards.earned(_listening_events(listening_dir), total)
+
+
+def record_listening_event(
+    kind: str, *, listening_dir: Path = LISTENING_DIR, now: datetime | None = None
+) -> list[str]:
+    """Logs a listening event to events.csv (when and what, never an answer: the badges must
+    not bias the verdicts) and returns the banners of badges it earned."""
+    if kind not in get_args(rewards.EventKind):
+        raise ValueError(f"unknown listening event {kind!r}")
+    before = _earned(listening_dir)
+    path = listening_dir / "events.csv"
+    new = not path.exists()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if new:
+            writer.writerow(["when", "kind"])
+        writer.writerow([(now or datetime.now()).isoformat(timespec="seconds"), kind])
+    after = _earned(listening_dir)
+    return [rewards.banner(b) for b in rewards.BADGES if b.name in after and b.name not in before]
+
+
+def badge_collection(*, listening_dir: Path = LISTENING_DIR) -> str:
+    """The badges earned so far (the others stay a mystery)."""
+    return rewards.collection(_earned(listening_dir))
 
 
 def next_listening_spot(
