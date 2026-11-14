@@ -26,6 +26,7 @@
   <img src="docs/badges/fun-burgers.svg" alt="burgers" />
   <img src="docs/badges/fun-neighbours.svg" alt="neighbours" />
   <img src="docs/badges/fun-jazz.svg" alt="jazz" />
+  <img src="docs/badges/fun-ears.svg" alt="ears: certified" />
 </p>
 
 <p align="center"><sub>Badges: <a href="scripts/badges.py">scripts/badges.py</a>, rendered with <a href="https://shieldcn.dev">shieldcn</a>.</sub></p>

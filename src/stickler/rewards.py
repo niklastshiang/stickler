@@ -105,3 +105,56 @@ def collection(got: dict[str, datetime]) -> str:
     lines = [f"Badges: {sum(b.name in got for b in BADGES)} of {len(BADGES)}"]
     lines += [f"  ✓ {b.name}" if b.name in got else "  · ???" for b in BADGES]
     return "\n".join(lines)
+
+
+# --- The finale: Fast against Quality, once every spot is judged ---------------------------
+
+PIPELINE_NAMES = {"none+adtof": "Fast", "combo+quality": "Quality"}
+DRUMS = {"KD": "kick", "SD": "snare", "TT": "toms", "HH": "hi-hat", "CY": "cymbals"}
+TIE = 0.0005  # equal at three decimals
+
+
+def showdown(rows: Sequence[dict]) -> str:
+    """The showdown from corrected.csv rows (stickler.errors.correct per pipeline and class):
+    measured and corrected macro-F1 per pipeline, the winner per drum and overall."""
+    pipes = list(dict.fromkeys(r["pipeline"] for r in rows))
+    by = {(r["pipeline"], r["class"]): r for r in rows}
+
+    def name(p: str) -> str:
+        return PIPELINE_NAMES.get(p, p)
+
+    def winner(cls: str) -> tuple[str, float]:
+        values = {p: by[(p, cls)]["corrected"] for p in pipes}
+        best = max(values.values())
+        top = [p for p in pipes if best - values[p] < TIE]
+        runner_up = max((v for p, v in values.items() if p not in top), default=best)
+        return ("tie" if len(top) > 1 else name(top[0])), best - runner_up
+
+    lines = [
+        "╔══════════════════════════════╗",
+        "║        THE SHOWDOWN          ║",
+        "╚══════════════════════════════╝",
+        "  " + "  vs  ".join(name(p) for p in pipes),
+        "",
+        f"  {'':9}{'measured':>9}{'corrected':>11}   95 % interval   unclear answers",
+    ]
+    for p in pipes:
+        m = by[(p, "macro")]
+        lines.append(
+            f"  {name(p):9}{m['measured']:9.3f}{m['corrected']:11.3f}   "
+            f"{m['low']:.3f}–{m['high']:.3f}     {m['unclear']} of {m['n_ref'] + m['n_est']}"
+        )
+    lines += ["", "  Round by round (corrected F1):"]
+    for cls, drum in DRUMS.items():
+        if all((p, cls) in by for p in pipes):
+            who, _ = winner(cls)
+            scores = " vs ".join(f"{by[(p, cls)]['corrected']:.3f}" for p in pipes)
+            lines.append(f"    {drum:9}{who:9}({scores})")
+    who, margin = winner("macro")
+    lines.append("")
+    if who == "tie":
+        lines.append("  It's a tie. Split the drum solo.")
+    else:
+        lines.append(f"  And the winner is: {who} (+{margin:.3f} corrected macro-F1). Encore!")
+    lines.append("  (All numbers: stickler report → results/report.html)")
+    return "\n".join(lines)

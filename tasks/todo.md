@@ -221,7 +221,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest tests/test_errors.py tests/test_api.py -k sample`
   - Dependencies: 23 · Files: `src/stickler/{errors,api}.py`, tests
 
-- [ ] **Task 26: `stickler listen`** (M)
+- [x] **Task 26: `stickler listen`** (M)
   - Acceptance:
     - Asks spot by spot "Is there a <class> hit at the marker?" without saying who claims it; answers y / n / u, r = repeat the snippet, l = loop the spot, s = loop at half speed (a loop runs until Enter), q = quit (a letter plus Enter).
     - Verdicts appended to `data/own/_listening/verdicts.csv`; a new start resumes at the first unjudged spot; shows progress (k / 100).
@@ -238,7 +238,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 26 · Files: `src/stickler/{rewards,api,cli}.py`, `tests/test_rewards.py`, tests
 
 ### Checkpoint F
-- [ ] The owner has judged all 100 spots (about an hour)
+- [x] The owner has judged all 100 spots (done 2026-11-14; owner: "partly very difficult")
 
 - [x] **Task 27: Corrected scores** (M)
   - Acceptance:
@@ -247,7 +247,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests with hand-computed counts and synthetic verdicts (can be built during Checkpoint F); `metrics.csv`/`summary.csv` unchanged
   - Dependencies: 23, 25 · Files: `src/stickler/{errors,api,report}.py`, tests
 
-- [ ] **Task 30: The finale** (S) (SPEC.md, "Gamification")
+- [x] **Task 30: The finale** (S) (SPEC.md, "Gamification")
   - Acceptance:
     - After spot 100, and on every later `stickler listen`: a showdown of Fast against Quality (measured and corrected macro-F1, winner per class) and the badge collection.
     - The README's nonsense row gets `ears: certified` (scripts/badges.py).

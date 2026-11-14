@@ -966,3 +966,20 @@ def test_eval_of_the_own_songs_adds_the_corrected_scores(monkeypatch, tmp_path):
     monkeypatch.setattr(api, "corrected_scores", lambda *a, **k: called.append(k["results_dir"]))
     api.evaluate_benchmark(tmp_path / "own.yaml", results_dir=tmp_path)
     assert called == [tmp_path]
+
+
+def test_finale_after_the_last_spot(monkeypatch, tmp_path):
+    fixtures = _fake_mdb(monkeypatch, tmp_path)
+    cfg = _bench(tmp_path)
+    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+    api.run_benchmark(cfg, **kw)
+    where = tmp_path / "listening"
+    pipes = ["combo+kick", "none+dummy"]
+    api.draw_listening_sample(cfg, pipes, listening_dir=where, **kw)
+    args = {"config_path": cfg, "pipelines": pipes, "listening_dir": where}
+    args |= {"results_dir": tmp_path / "results", **kw}
+    assert api.finale(**args) is None
+    api.record_verdict(1, "yes", listening_dir=where)
+    text = api.finale(**args)
+    assert "SHOWDOWN" in text and "Badges:" in text

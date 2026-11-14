@@ -72,3 +72,34 @@ def test_collection_shows_earned_badges_and_hides_the_others():
     text = rewards.collection({"first hit": DAY})
     assert "1 of 11" in text and "first hit" in text
     assert "encore" not in text and "???" in text
+
+
+def crow(pipeline, cls, corrected, measured=0.7, low=None, high=None, unclear=0):
+    return {
+        "pipeline": pipeline,
+        "class": cls,
+        "measured": measured,
+        "corrected": corrected,
+        "low": corrected - 0.02 if low is None else low,
+        "high": corrected + 0.02 if high is None else high,
+        "unclear": unclear,
+        "n_ref": 50,
+        "n_est": 40,
+    }
+
+
+def test_showdown_compares_fast_and_quality_with_both_numbers():
+    rows = [
+        crow("none+adtof", "macro", 0.812, measured=0.770, unclear=7),
+        crow("combo+quality", "macro", 0.818, measured=0.776, unclear=5),
+        crow("none+adtof", "SD", 0.90),
+        crow("combo+quality", "SD", 0.93),
+        crow("none+adtof", "HH", 0.80),
+        crow("combo+quality", "HH", 0.80),
+    ]
+    text = rewards.showdown(rows)
+    assert "SHOWDOWN" in text and "Fast" in text and "Quality" in text
+    assert "0.770" in text and "0.812" in text and "0.792–0.832" in text
+    assert "snare" in text and "hi-hat" in text and "tie" in text
+    assert "Quality" in text.splitlines()[-2] and "+0.006" in text  # the overall winner
+    assert "7 of 90" in text  # unclear answers of Fast's spots

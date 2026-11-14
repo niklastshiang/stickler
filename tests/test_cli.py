@@ -366,6 +366,7 @@ def _fake_listening(monkeypatch, tmp_path, total=2):
     monkeypatch.setattr(api, "record_verdict", verdict)
     monkeypatch.setattr(api, "record_listening_event", event)
     monkeypatch.setattr(api, "badge_collection", lambda: f"Badges: {len(verdicts)} of 11")
+    monkeypatch.setattr(api, "finale", lambda: f"SHOWDOWN\nBadges: {len(verdicts)} of 11")
     return log, verdicts
 
 
@@ -385,6 +386,7 @@ def test_listen_loops_each_spot_at_half_speed_until_the_answer(monkeypatch, tmp_
         ("done", ("2l.wav", True, True)),
     ]
     assert "All 2 spots judged" in result.output and "BANNER first hit" in result.output
+    assert "SHOWDOWN" in result.output
     assert "Badges: 2 of 11" in result.output
 
 
@@ -419,7 +421,7 @@ def test_listen_when_everything_is_judged(monkeypatch, tmp_path):
     _fake_listening(monkeypatch, tmp_path, total=0)
     result = CliRunner().invoke(cli.app, ["listen"])
     assert result.exit_code == 0 and "All spots are judged" in result.output
-    assert "Badges" in result.output
+    assert "SHOWDOWN" in result.output and "Badges" in result.output
 
 
 def test_listen_reports_a_missing_stem(monkeypatch):

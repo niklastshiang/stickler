@@ -511,6 +511,32 @@ def corrected_scores(
     return rows
 
 
+def finale(
+    config_path: Path = OWN_CONFIG,
+    pipelines: tuple[str, ...] | list[str] = ERROR_PIPELINES,
+    *,
+    listening_dir: Path = LISTENING_DIR,
+    results_dir: Path = RESULTS_DIR / "own",
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+) -> str | None:
+    """The showdown of the pipelines with measured and corrected F1, and the badge collection;
+    None until every spot is judged."""
+    rows = corrected_scores(
+        config_path,
+        pipelines,
+        listening_dir=listening_dir,
+        results_dir=results_dir,
+        data_dir=data_dir,
+        cache_dir=cache_dir,
+        adapters_root=adapters_root,
+    )
+    if rows is None:
+        return None
+    return f"{rewards.showdown(rows)}\n\n{rewards.collection(_earned(listening_dir))}"
+
+
 def listening_snippet(
     song: str,
     time: float,

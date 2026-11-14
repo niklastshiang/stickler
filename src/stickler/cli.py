@@ -177,7 +177,12 @@ def listen_cmd() -> None:
             playing = api.play(spot.loop, loop=True, half_speed=key != "l")
         spot = api.next_listening_spot()
     typer.echo(f"\nAll {total} spots judged." if total else "All spots are judged.")
-    typer.echo(f"\n{api.badge_collection()}")
+    try:
+        finale = api.finale()
+    except (ValueError, RuntimeError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"\n{finale or api.badge_collection()}")
 
 
 @app.command("report")

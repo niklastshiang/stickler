@@ -76,6 +76,7 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
             ("burgers", "burgers received", "0"),
             ("neighbours", "neighbours", "annoyed"),
             ("jazz", "jazz", "it's complicated"),
+            ("ears", "ears", "certified"),
         ],
         "origin": [
             ("built-with", "built with", "Claude Code"),
