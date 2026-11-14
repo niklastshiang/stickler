@@ -48,12 +48,11 @@ def test_night_shift_and_early_bird_go_by_the_clock():
     assert {"night shift", "early bird"}.isdisjoint(rewards.earned(late_evening, total=100))
 
 
-def test_loop_badges():
-    slow = [rewards.Event(DAY, "slow_loop")]
-    assert set(rewards.earned(slow, total=100)) == {"slow motion"}
-    loops = [rewards.Event(DAY + timedelta(seconds=k), "loop") for k in range(9)]
-    assert "loop pedal" not in rewards.earned(loops, total=100)
-    assert "loop pedal" in rewards.earned([*loops, *slow], total=100)  # both kinds count
+def test_replay_badges():
+    replays = [rewards.Event(DAY + timedelta(seconds=k), "replay") for k in range(10)]
+    assert set(rewards.earned(replays[:1], total=100)) == {"second opinion"}
+    assert "loop pedal" not in rewards.earned(replays[:9], total=100)
+    assert "loop pedal" in rewards.earned(replays, total=100)
 
 
 def test_comeback_tour_needs_a_session_on_a_later_day():

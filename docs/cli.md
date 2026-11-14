@@ -207,15 +207,16 @@ uv run stickler listen
 
 Estimates how many errors on the own songs are really errors of the reference (SPEC.md,
 "Release 3"). On the first start it draws a fixed sample of 100 error spots of Fast and Quality
-(`data/own/_listening/sample.csv`, never redrawn), then plays them one by one: the passage
-around the spot, once plain and once with a click on the right channel at the moment in question
-(headphones help). It asks only which drum to listen for, never whether the reference or a model
-claims the hit. Answer with a letter and Enter: `y` yes, `n` no, `u` unclear; `r` plays the
-passage again, `l` loops just the spot until Enter, `s` the same at half speed, `q` stops.
+(`data/own/_listening/sample.csv`, never redrawn), then plays them one by one: just the
+spot (1.25 s), as a loop at half speed with a click on the right channel at the moment in
+question (headphones help); the loop runs until you answer. It asks only which drum to listen
+for, never whether the reference or a model claims the hit. Answer with a letter and Enter:
+`y` yes, `n` no, `u` unclear; `r` plays the whole passage once (plain, then with the click),
+`l` loops at normal speed, `s` at half speed again, `q` stops.
 Answers go to `verdicts.csv`; the next start continues at the first unjudged spot.
 
 Badges in drummer humour keep you going (11 to collect, shown on `q` and at the end). They
-come only from *that* you judge, when, and how often you loop, never from *what* you answer or
+come only from *that* you judge, when, and how often you listen again, never from *what* you answer or
 how fast: `events.csv` records no answers, so the game cannot bias the verdicts.
 
 ---

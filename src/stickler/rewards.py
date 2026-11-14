@@ -1,8 +1,9 @@
 """Badges for `stickler listen` (SPEC.md, "Gamification of `stickler listen`").
 
 Rule above all: the game must not bias the verdicts. Badges are computed from events that say
-only *when* something happened and *what* (a spot judged, a loop played, a session started),
-never what was answered. So no badge can reward yes, no or unclear, and none rewards speed.
+only *when* something happened and *what* (a spot judged, a spot replayed on purpose, a
+session started), never what was answered. So no badge can reward yes, no or unclear, and
+none rewards speed.
 """
 
 from __future__ import annotations
@@ -12,7 +13,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
-EventKind = Literal["judged", "loop", "slow_loop", "session"]
+# replay: the owner chose to hear a spot again or differently (r, l, s); the slow loop every
+# spot starts with is not an event
+EventKind = Literal["judged", "replay", "session"]
 
 
 @dataclass(frozen=True)
@@ -36,8 +39,8 @@ BADGES = (
     Badge("encore", "Every spot judged. The crowd is screaming for the showdown."),
     Badge("night shift", "Judging drums after midnight. The neighbours are thrilled."),
     Badge("early bird", "Up before seven to listen to hi-hats. Respect."),
-    Badge("slow motion", "Half speed, full concentration."),
-    Badge("loop pedal", "Ten loops. Your ears are a loop station now."),
+    Badge("second opinion", "Listened again. Measure twice, judge once."),
+    Badge("loop pedal", "Ten replays. Your ears are a loop station now."),
     Badge("comeback tour", "Back on another day. The band is back together."),
 )
 MILESTONES = {  # spots judged → badge
@@ -47,7 +50,7 @@ MILESTONES = {  # spots judged → badge
     50: "neighbours: annoyed",
     75: "three-quarter time",
 }
-LOOPS_FOR_PEDAL = 10
+REPLAYS_FOR_PEDAL = 10
 
 
 def earned(events: Sequence[Event], total: int) -> dict[str, datetime]:
@@ -58,7 +61,7 @@ def earned(events: Sequence[Event], total: int) -> dict[str, datetime]:
     def award(name: str, when: datetime) -> None:
         got.setdefault(name, when)
 
-    judged = loops = 0
+    judged = replays = 0
     session_days: list = []
     for e in sorted(events, key=lambda e: e.when):
         if e.kind == "judged":
@@ -71,11 +74,11 @@ def earned(events: Sequence[Event], total: int) -> dict[str, datetime]:
                 award("night shift", e.when)
             elif e.when.hour < 7:
                 award("early bird", e.when)
-        elif e.kind in ("loop", "slow_loop"):
-            loops += 1
-            if e.kind == "slow_loop":
-                award("slow motion", e.when)
-            if loops == LOOPS_FOR_PEDAL:
+        elif e.kind == "replay":
+            replays += 1
+            if replays == 1:
+                award("second opinion", e.when)
+            if replays == REPLAYS_FOR_PEDAL:
                 award("loop pedal", e.when)
         elif e.kind == "session":
             if session_days and e.when.date() > max(session_days):

@@ -136,7 +136,7 @@ def errors_cmd(
 
 
 ANSWERS = {"y": "yes", "n": "no", "u": "unclear"}
-KEYS = "y = yes, n = no, u = unclear, r = again, l = loop, s = loop at half speed, q = quit"
+KEYS = "y = yes, n = no, u = unclear | r = passage, l = normal speed, s = half speed, q = quit"
 
 
 def _echo_all(texts: list[str]) -> None:
@@ -157,9 +157,13 @@ def listen_cmd() -> None:
         _echo_all(api.record_listening_event("session"))
     while spot is not None:
         typer.echo(f"\n[{spot.n}/{spot.total}] {spot.question}")
-        api.play(spot.snippet).wait()
-        while True:
+        playing = api.play(spot.loop, loop=True, half_speed=True)  # the spot, slowly, until
+        while True:  # the answer
             key = typer.prompt(KEYS, default="", show_default=False).strip().lower()
+            if key not in ANSWERS and key not in ("q", "r", "l", "s"):
+                continue
+            playing.terminate()
+            playing.wait()
             if key in ANSWERS:
                 _echo_all(api.record_verdict(spot.n, ANSWERS[key]))
                 break
@@ -167,14 +171,10 @@ def listen_cmd() -> None:
                 typer.echo(f"Stopped: {spot.n - 1} of {spot.total} judged; run it again to go on.")
                 typer.echo(f"\n{api.badge_collection()}")
                 return
+            _echo_all(api.record_listening_event("replay"))
             if key == "r":
                 api.play(spot.snippet).wait()
-            elif key in ("l", "s"):
-                loop = api.play(spot.loop, loop=True, half_speed=key == "s")
-                typer.prompt("Enter stops the loop", default="", show_default=False)
-                loop.terminate()
-                loop.wait()
-                _echo_all(api.record_listening_event("slow_loop" if key == "s" else "loop"))
+            playing = api.play(spot.loop, loop=True, half_speed=key != "l")
         spot = api.next_listening_spot()
     typer.echo(f"\nAll {total} spots judged." if total else "All spots are judged.")
     typer.echo(f"\n{api.badge_collection()}")

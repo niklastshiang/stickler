@@ -907,8 +907,8 @@ def test_loops_and_sessions_are_events_too(tmp_path):
     from datetime import datetime, timedelta
 
     day = datetime(2026, 11, 14, 20, 0)
-    (banner,) = api.record_listening_event("slow_loop", listening_dir=tmp_path, now=day)
-    assert "slow motion" in banner
+    (banner,) = api.record_listening_event("replay", listening_dir=tmp_path, now=day)
+    assert "second opinion" in banner
     assert api.record_listening_event("session", listening_dir=tmp_path, now=day) == []
     later = day + timedelta(days=1)
     (banner,) = api.record_listening_event("session", listening_dir=tmp_path, now=later)

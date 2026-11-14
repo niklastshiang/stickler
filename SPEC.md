@@ -219,6 +219,8 @@ studio-exact references).
    needed, a 1.25 s loop of just the spot, also at half speed. The music is on the left
    channel, the click alone on the right, as in `align`'s click.wav (trial on 2026-11-14: a soft
    marker mixed into the music was inaudible; the loop at half speed made the spot judgeable).
+   Owner's wish after the trial: every spot starts right away as the half-speed loop and runs
+   until the answer; the passage (r) and normal speed (l) stay available.
    The owner answers one question: "Is there a <class> hit at the marker?" — *yes*, *no* or
    *unclear*. The owner is not told whether reference or model claims it.
 4. **Correction.** A `ref` spot judged *no* and an `est` spot judged *yes* are reference
@@ -237,9 +239,10 @@ studio-exact references).
 ```bash
 uv run stickler errors --config config/own.yaml   # breakdown → results/own/errors.csv + table
 uv run stickler listen                            # draw the sample once, then judge spot by spot
-                                                  # (keys: y / n / u, r = repeat, l = loop the
-                                                  #  spot, s = loop at half speed, q = quit;
-                                                  #  resumes where it stopped)
+                                                  # (each spot loops at half speed until the
+                                                  #  answer y / n / u; r = whole passage,
+                                                  #  l = normal speed, s = half speed again,
+                                                  #  q = quit; resumes where it stopped)
 uv run stickler eval --config config/own.yaml     # also writes the corrected scores once
                                                   # verdicts exist → results/own/corrected.csv
 uv run stickler report                            # report.html shows breakdown and corrected F1
@@ -312,10 +315,10 @@ going. Owner's choice: badges and a big finale, in drummer humour like the READM
 badges (no ranks, sets or streaks).
 
 **Rule above all: the game must not bias the verdicts.**
-- Rewards depend only on *that* spots were judged, on time of day, sessions and the use of the
-  loops, never on *what* was answered (yes, no, unclear), never on speed.
+- Rewards depend only on *that* spots were judged, on time of day, sessions and replays chosen
+  on purpose (r, l, s), never on *what* was answered (yes, no, unclear), never on speed.
 - Built so by construction: the reward code reads an events log that records "spot n judged",
-  "loop played", "session started" with a timestamp, but no answer.
+  "spot replayed on purpose", "session started" with a timestamp, but no answer.
 - No feedback per spot (nobody knows the truth, and it would reveal who claims the hit) and no
   interim results; numbers only in the finale, after spot 100.
 
@@ -332,8 +335,8 @@ end list the collection, e.g. "7 of 11 badges"):
 | `encore` | all 100 spots |
 | `night shift` | a spot judged between 0:00 and 5:00 |
 | `early bird` | a spot judged between 5:00 and 7:00 |
-| `slow motion` | the first loop at half speed |
-| `loop pedal` | 10 loops played in total |
+| `second opinion` | the first spot replayed on purpose (r, l or s) |
+| `loop pedal` | 10 replays on purpose in total |
 | `comeback tour` | a session on a later day than the previous one |
 
 **Big finale** (after spot 100, and on every later `stickler listen`): a "showdown" of Fast

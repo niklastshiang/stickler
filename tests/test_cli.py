@@ -361,7 +361,7 @@ def _fake_listening(monkeypatch, tmp_path, total=2):
 
     def event(kind):
         log.append(("event", kind))
-        return [f"BANNER {kind}"] if kind == "slow_loop" else []
+        return [f"BANNER {kind}"] if kind == "replay" else []
 
     monkeypatch.setattr(api, "record_verdict", verdict)
     monkeypatch.setattr(api, "record_listening_event", event)
@@ -369,34 +369,50 @@ def _fake_listening(monkeypatch, tmp_path, total=2):
     return log, verdicts
 
 
-def test_listen_asks_blind_and_records_answers(monkeypatch, tmp_path):
+def test_listen_loops_each_spot_at_half_speed_until_the_answer(monkeypatch, tmp_path):
     log, verdicts = _fake_listening(monkeypatch, tmp_path)
-    result = CliRunner().invoke(cli.app, ["listen"], input="r\ns\n\ny\nu\n")
+    result = CliRunner().invoke(cli.app, ["listen"], input="y\nu\n")
     assert result.exit_code == 0, result.output
     assert verdicts == {1: "yes", 2: "unclear"}
     assert "[1/2] Is there a hi-hat hit?" in result.output and "ref" not in result.output
-    assert log[0] == ("event", "session")
-    log = [x for x in log if x[0] != "event"]
-    assert log[:6] == [
-        ("play", ("1.wav", False, False)),  # the snippet first
-        ("done", ("1.wav", False, False)),
-        ("play", ("1.wav", False, False)),  # r: again
-        ("done", ("1.wav", False, False)),
-        ("play", ("1l.wav", True, True)),  # s: the loop at half speed until Enter
-        ("stopped", ("1l.wav", True, True)),
+    assert log == [
+        ("event", "session"),
+        ("play", ("1l.wav", True, True)),  # straight into the slow loop
+        ("stopped", ("1l.wav", True, True)),  # the answer stops it
+        ("done", ("1l.wav", True, True)),
+        ("play", ("2l.wav", True, True)),
+        ("stopped", ("2l.wav", True, True)),
+        ("done", ("2l.wav", True, True)),
     ]
-    assert "All 2 spots judged" in result.output
-    assert "BANNER first hit" in result.output and "BANNER slow_loop" in result.output
+    assert "All 2 spots judged" in result.output and "BANNER first hit" in result.output
     assert "Badges: 2 of 11" in result.output
+
+
+def test_listen_offers_the_passage_and_normal_speed(monkeypatch, tmp_path):
+    log, verdicts = _fake_listening(monkeypatch, tmp_path, total=1)
+    result = CliRunner().invoke(cli.app, ["listen"], input="r\nl\ns\nx\nn\n")
+    assert result.exit_code == 0, result.output
+    plays = [what for kind, what in log if kind == "play"]
+    assert plays == [
+        ("1l.wav", True, True),
+        ("1.wav", False, False),  # r: the whole passage once ...
+        ("1l.wav", True, True),  # ... then back to the slow loop
+        ("1l.wav", True, False),  # l: normal speed
+        ("1l.wav", True, True),  # s: half speed again (an unknown key changes nothing)
+    ]
+    assert [x for x in log if x[0] == "event"].count(("event", "replay")) == 3
+    assert verdicts == {1: "no"} and "BANNER replay" in result.output
 
 
 def test_listen_can_stop_and_says_how_far_it_got(monkeypatch, tmp_path):
     log, verdicts = _fake_listening(monkeypatch, tmp_path, total=3)
-    result = CliRunner().invoke(cli.app, ["listen"], input="n\nl\n\nx\nq\n")
+    result = CliRunner().invoke(cli.app, ["listen"], input="n\nq\n")
     assert result.exit_code == 0, result.output
-    assert verdicts == {1: "no"} and ("play", ("2l.wav", True, False)) in log
+    assert verdicts == {1: "no"} and log[-2:] == [
+        ("stopped", ("2l.wav", True, True)),
+        ("done", ("2l.wav", True, True)),
+    ]
     assert "1 of 3 judged" in result.output and "Badges: 1 of 11" in result.output
-    assert ("event", "loop") in log
 
 
 def test_listen_when_everything_is_judged(monkeypatch, tmp_path):
