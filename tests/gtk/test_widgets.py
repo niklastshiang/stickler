@@ -28,3 +28,18 @@ def test_the_empty_window_offers_to_open_a_song():
     labels = _labels(window)
     assert "Drop a Song Here" in labels
     assert "Open a Song…" in labels
+
+
+def test_the_window_speaks_german(monkeypatch):
+    from stickler_gtk import i18n
+    from stickler_gtk.ui.window import Window
+
+    monkeypatch.setenv("LANGUAGE", "de")
+    i18n.setup()  # the catalogues scripts/gtk.sh builds into the app environment
+    try:
+        labels = _labels(Window())
+    finally:
+        monkeypatch.setenv("LANGUAGE", "en")
+        i18n.setup()
+    assert "Song hier ablegen" in labels
+    assert "Song öffnen …" in labels

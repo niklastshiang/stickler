@@ -2,3 +2,4 @@
 decides (no GTK), `ui/` the widgets that show it."""
 
 APP_ID = "ng.tshia.Stickler"
+APP_NAME = "Stickler"  # a name, not translated

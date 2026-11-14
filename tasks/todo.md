@@ -358,7 +358,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `scripts/check.sh task`; `scripts/gtk.sh` shows the empty window; `scripts/gtk.sh test` (window opens)
   - Dependencies: none · Files: `pyproject.toml`, `src/stickler_gtk/*`, `scripts/gtk.sh`, `CONSTRAINTS.md`, `tests/gtk/*`, `packaging/*`
 
-- [ ] **Task 42: Translations** (S)
+- [x] **Task 42: Translations** (S): done 2026-11-14. `stickler_gtk/i18n.py` (no GTK) with `_()`/`N_()`; the app name stays untranslated (`APP_NAME`). The tests read source and `.po` files with Python, so CI needs no gettext tools; `scripts/gtk.sh` builds the `.mo` files with `msgfmt` into `.venv-gtk/share/locale`. No `po/POTFILES`: `scripts/i18n.sh` takes the sources from git. German follows the GNOME German team's style ("Song öffnen …").
   - Acceptance:
     - `_()` through gettext (domain `stickler`), the `.mo` built from `po/` at start in development; `scripts/i18n.sh` writes `po/stickler.pot` and merges `po/de.po`.
     - Tests: a string literal shown to the user without `_()` fails; `po/de.po` without a translation for a string of the `.pot` fails.

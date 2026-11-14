@@ -20,6 +20,13 @@ if [[ ! -x .venv-gtk/bin/python ]]; then
 fi
 uv sync --quiet --frozen
 
+# translations: po/<lang>.po → .venv-gtk/share/locale/<lang>/LC_MESSAGES/stickler.mo
+for po in po/*.po; do
+  dir=".venv-gtk/share/locale/$(basename "$po" .po)/LC_MESSAGES"
+  mkdir -p "$dir"
+  msgfmt --check --output-file="$dir/stickler.mo" "$po"
+done
+
 .venv-gtk/bin/python - <<'EOF'
 import gi
 gi.require_version("Gtk", "4.0")
