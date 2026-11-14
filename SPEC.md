@@ -417,8 +417,9 @@ the sandbox?) belongs to `packaging` but runs early, because a failure changes `
 
 ### Module `engine-api`
 
-> Status: **approved** by the owner on 2026-11-14. Plan: `tasks/plan.md` ("GTK application:
-> `engine-api`"), tasks 31–39 in `tasks/todo.md`.
+> Status: **done**, released as release 4 on 2026-11-14 (approved by the owner on
+> 2026-11-14). Plan: `tasks/plan.md` ("GTK application:
+> `engine-api`"), tasks 31–40 in `tasks/todo.md`.
 
 #### Assumptions
 

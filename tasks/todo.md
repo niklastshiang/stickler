@@ -343,7 +343,8 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 34, 36 · Files: `src/stickler/cli.py`, tests
 
 ### Checkpoint H
-- [ ] All 8 success criteria of SPEC.md `engine-api` met; review with the owner
+- [x] All 8 success criteria of SPEC.md `engine-api` met; review with the owner (2026-11-14: criterion 4 reworded, criterion 8 with test doubles that only gained the new parameters)
+- [x] **Release 4 published on 2026-11-14** (tag v4, GitHub release): the library groundwork for the GTK application (Phase 8, Tasks 31–40).
 - [x] Release of its own (owner, 2026-11-14): release 4, the groundwork for the app
 
 ## Phase 6: Later (noted by the user, 2026-11-12)

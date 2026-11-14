@@ -219,13 +219,13 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 4, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 454,
+  "tests": 521,
   "smoke_tests_with_models": 8,
-  "coverage_percent": 96,
+  "coverage_percent": 97,
   "coverage_minimum": 95,
   "adrs": 6,
-  "version": 3,
-  "status": "release 3: honest numbers"
+  "version": 4,
+  "status": "release 4: groundwork for the app"
 }
 ```
 
