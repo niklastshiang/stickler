@@ -84,6 +84,45 @@ bar map (37) → corrections (38) and hit audio (39) are independent of the prog
 | A dependency behaves differently on Python 3.14 | Low | The trial run passed (461 of 462); CI runs the suite on 3.12 and 3.14 |
 | Clicks mask the drums or are hard to tell apart | Medium | Owner listens to one song (Task 39); samples stay an open decision for `playback` |
 
+## GTK application: `app-shell` (approved 2026-11-14, SPEC.md "Module `app-shell`")
+
+The first module with GTK code: the window, opening a song, the analysis, export of MusicXML
+and the drum track, recent songs, appearance, keyboard, German. Screens 4, 5, 8 and 9 of
+`design` (`docs/design/`).
+
+Design decisions:
+- **Logic and widgets apart from the first commit:** `stickler_gtk/logic` has no GTK and is
+  tested in `check.sh` on 3.12 and 3.14; `stickler_gtk/ui` runs only on the system Python and
+  is checked by a few smoke tests marked `gtk` plus by hand. CONSTRAINTS.md gets the two lines
+  the spec proposes (approved with the spec).
+- **The window is a state machine in `logic/session.py`:** empty, analysing, result, error,
+  exporting; every change is a pure function of the state and an event (`api.Step`, done,
+  failed, cancelled). The widgets only draw the current state.
+- **One worker thread per job** (analysis or export) with an `api.CancelToken`; results and
+  steps reach the main loop through `GLib.idle_add`. A new job cancels the running one.
+- **The app writes only into its own folders:** `notate` writes the MusicXML into the app's
+  cache folder (not next to the song, which the sandbox could not do); "Export" copies it to
+  the place chosen in the save dialog. The drum track goes the same way.
+- **Translations from the start:** gettext with the domain `stickler`; `scripts/i18n.sh`
+  extracts with `xgettext` from `stickler_gtk` and merges `po/de.po`; the app installs its
+  `.mo` files from `po/` at start in development. Every task adds its German strings.
+- **What the window needs and the API lacks** (title, artist and length of a song for the
+  header and the drum track's cost; tempo and meter of a result) comes as one small addition
+  to `stickler.api` (`song_info`, `Notation.tempo`, `Notation.meter`), tested like the rest of
+  `engine-api`; no GTK and no new dependency in `src/stickler`.
+
+Order: skeleton and checks (41) → translations (42), so every later string is translatable →
+the main path open → analyse → result (43) → cancel and errors (44) → recent songs (45) and
+export (46) → menu, appearance and keyboard (47) → narrow windows and the German check (48).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| `.venv-gtk` with `--system-site-packages` picks up system packages that differ from `uv.lock` | Medium | The app environment installs the harness's locked dependencies on top (`uv sync` into it); only `gi` and `cairo` come from the system; `scripts/gtk.sh` prints both versions |
+| GTK calls from the worker thread crash or corrupt the window | High | Workers never touch widgets; everything goes through `GLib.idle_add`; a smoke test runs a fake analysis with progress |
+| Widget code grows logic that is not tested | Medium | Code review against "logic decides, widgets show"; coverage counts `logic/` only, so moving logic there pays off |
+| A string slips through untranslated | Low | The translation test fails on string literals shown to the user without `_()` |
+| Drop or file chooser paths behave differently in the Flatpak | Medium | Only portal-friendly GTK APIs (`Gtk.FileDialog`, `Gdk.FileList`, `Gtk.FileLauncher`); the sandbox trial in `packaging` checks them early |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

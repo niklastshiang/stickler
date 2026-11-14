@@ -347,6 +347,73 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 - [x] **Release 4 published on 2026-11-14** (tag v4, GitHub release): the library groundwork for the GTK application (Phase 8, Tasks 31–40).
 - [x] Release of its own (owner, 2026-11-14): release 4, the groundwork for the app
 
+## Phase 9: GTK application, module `app-shell` (approved 2026-11-14, SPEC.md "Module `app-shell`")
+
+- [ ] **Task 41: Skeleton, app environment and checks** (M)
+  - Acceptance:
+    - `src/stickler_gtk/` with `logic/` and `ui/`; `stickler-gtk` (entry point) opens an `Adw.ApplicationWindow` with the ID `ng.tshia.Stickler` and the empty page of screen 4 (drop area and "Open a Song…", no function yet).
+    - `scripts/gtk.sh` builds `.venv-gtk` on the system Python with `--system-site-packages`, installs the project with its locked dependencies into it, prints the versions of `gi`, GTK and libadwaita, and starts the app; `scripts/gtk.sh test` runs `pytest -m gtk`.
+    - CONSTRAINTS.md: coverage counts `src/stickler_gtk/logic`; `src/stickler_gtk/ui` and `main.py` are excluded like `cli.py`. A test fails if `src/stickler` or `stickler_gtk/logic` imports `gi`.
+    - `data/ng.tshia.Stickler.desktop`.
+  - Verify: `scripts/check.sh task`; `scripts/gtk.sh` shows the empty window; `scripts/gtk.sh test` (window opens)
+  - Dependencies: none · Files: `pyproject.toml`, `src/stickler_gtk/*`, `scripts/gtk.sh`, `CONSTRAINTS.md`, `tests/gtk/*`, `data/*`
+
+- [ ] **Task 42: Translations** (S)
+  - Acceptance:
+    - `_()` through gettext (domain `stickler`), the `.mo` built from `po/` at start in development; `scripts/i18n.sh` writes `po/stickler.pot` and merges `po/de.po`.
+    - Tests: a string literal shown to the user without `_()` fails; `po/de.po` without a translation for a string of the `.pot` fails.
+    - The strings of Task 41 in German.
+  - Verify: `uv run pytest -q tests/gtk -k translat`; `LANGUAGE=de scripts/gtk.sh` shows the empty window in German
+  - Dependencies: 41 · Files: `src/stickler_gtk/i18n.py`, `po/*`, `scripts/i18n.sh`, `tests/gtk/test_translations.py`
+
+- [ ] **Task 43: Open a song, analyse, show the result** (M)
+  - Acceptance:
+    - `api.song_info(path)` (title, artist, seconds) and `Notation.tempo`, `Notation.meter` in `stickler.api`, with tests.
+    - `logic/session.py`: states empty → analysing → result, driven by `api.Step`; `logic/steps.py`: label and detail for each step id (screen 5).
+    - Drop and "Open a Song…" (`Gtk.FileDialog`, audio filter, Ctrl+O) start Fast in a worker thread; the step list follows; the result page shows title, artist, tempo and meter in the header and a placeholder body. A dropped file that is not audio gives a toast.
+    - `notate` writes into the app's cache folder (`logic/paths.py`).
+  - Verify: logic tests; `scripts/gtk.sh test` with a fake `stickler.api` from drop to result; by hand: an uncached own song shows the three steps, a cached one reaches the result in < 1 s
+  - Dependencies: 42 · Files: `src/stickler/api.py`, `src/stickler_gtk/logic/{session,steps,paths}.py`, `src/stickler_gtk/ui/*`, tests
+
+- [ ] **Task 44: Cancel and errors** (S)
+  - Acceptance:
+    - "Cancel" and Escape set the token; the window returns to the previous page within 1 s.
+    - Error pages for `SetupMissing` (names the models and `stickler setup --adapter …`), a failed analysis ("Try Again", the technical message folded away) and an unreadable file.
+  - Verify: logic tests for every error state; `scripts/gtk.sh test` (fake analysis cancelled, fake failure); by hand: cancel during ADTOF, `pgrep -f run.py` finds nothing
+  - Dependencies: 43 · Files: `src/stickler_gtk/logic/session.py`, `src/stickler_gtk/ui/*`, tests
+
+- [ ] **Task 45: Recent songs** (S)
+  - Acceptance:
+    - `logic/recent.py`: the newest ten, a song opened again moves to the top, a missing file is marked and can be removed, a damaged JSON file starts an empty list; stored under the XDG data folder.
+    - The empty window lists them (screen 4); a click opens the song (a cached one at once).
+  - Verify: logic tests; by hand: restart keeps the list, a renamed file shows as missing
+  - Dependencies: 43 · Files: `src/stickler_gtk/logic/recent.py`, `src/stickler_gtk/ui/*`, tests
+
+- [ ] **Task 46: Export: MusicXML and the drum track** (M)
+  - Acceptance:
+    - Export menu (screen 8, Ctrl+E) with MusicXML and the drum track; the save dialog proposes "<title>.musicxml" and "<title> (drums).flac".
+    - The drum track names its cost first (`logic/exports.py`: 1.84 × the song's length, the 1.2 GB download while Demucs is not set up) and runs as a step list with "Cancel".
+    - A toast says where the file went and opens it with "Open" (`Gtk.FileLauncher`).
+  - Verify: logic tests (names, cost for a 4:06 song ≈ 7.5 min); `scripts/gtk.sh test` (fake export); by hand: MusicXML of a cached song, the drum track of one song
+  - Dependencies: 44 · Files: `src/stickler_gtk/logic/exports.py`, `src/stickler_gtk/ui/*`, tests
+
+- [ ] **Task 47: Main menu, appearance, keyboard** (S)
+  - Acceptance:
+    - Main menu (screen 9, F10) with the three-way appearance switch, remembered in the XDG config folder (`logic/settings.py`); follow the system by default.
+    - Shortcuts window (Ctrl+?) listing Ctrl+O, Ctrl+E, Escape, Ctrl+W, Ctrl+Q, Ctrl+?, F10; "About Stickler".
+  - Verify: logic tests (settings, damaged file); `scripts/gtk.sh test`; by hand: dark is kept after a restart, every action works without the mouse
+  - Dependencies: 43 · Files: `src/stickler_gtk/logic/settings.py`, `src/stickler_gtk/ui/*`, tests
+
+- [ ] **Task 48: Narrow windows and the German check** (S)
+  - Acceptance:
+    - Breakpoint at 400 px: the header keeps icon buttons, every page of this module fits without horizontal scrolling (screens 10/11 apply where the module has the parts).
+    - `po/de.po` complete; every visible string German with `LANGUAGE=de`.
+  - Verify: translation tests; by hand at 400 px, in German, light and dark
+  - Dependencies: 46, 47 · Files: `src/stickler_gtk/ui/*`, `po/de.po`
+
+### Checkpoint I
+- [ ] All 9 success criteria of SPEC.md `app-shell` met; review with the owner
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
