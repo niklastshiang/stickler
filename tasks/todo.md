@@ -189,7 +189,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 7: Release 3, error analysis (approved 2026-11-14, SPEC.md "Release 3")
 
-- [ ] **Task 22: Error categories** (M)
+- [x] **Task 22: Error categories** (M)
   - Acceptance:
     - `errors.categorise(ref, est)` gives per class: tp, missed, invented, off time (same class, 50–100 ms) and confusions as pairs A → B (±50 ms, one-to-one), with the times of every error spot.
     - confused + off time + missed = fn and confused + off time + invented = fp of `evaluate.score` for the same onsets.
