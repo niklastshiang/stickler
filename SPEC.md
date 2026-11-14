@@ -34,7 +34,7 @@ User stories:
 | Beats | `beat_this` | CPJKU/beat_this | MIT |
 
 ## Tech Stack
-- Python **3.12** and `uv` ≥ 0.13 (Homebrew). Every environment is managed with `uv`.
+- Python **3.12** and `uv` ≥ 0.13 (Homebrew). Every environment is managed with `uv`. The harness also runs on 3.13 and 3.14 (since 2026-11-14, for the GTK app, whose bindings use the system's or the GNOME runtime's Python); `.python-version` keeps 3.12 the default for development, and the adapters stay on 3.12.
 - Harness: `mir_eval`, `pretty_midi`, `music21`, `librosa`, `pandas`, `pyyaml`, `jinja2`, `typer`.
 - Dev: `pytest`, `ruff`.
 - Every adapter has its **own** `pyproject.toml` with its own environment (Torch CPU wheels). The harness never imports model code; it calls adapters as subprocesses.

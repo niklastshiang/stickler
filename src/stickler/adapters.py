@@ -142,12 +142,27 @@ def discover(root: Path) -> dict[str, AdapterSpec]:
     return found
 
 
+# uv settings that point at the harness's own Python or environment. Inherited by an adapter's
+# `uv run` or `uv sync`, they would run it on the wrong Python or build it in the wrong place.
+HARNESS_ONLY_ENV = ("UV_PYTHON", "UV_PROJECT_ENVIRONMENT", "UV_PROJECT", "VIRTUAL_ENV")
+
+
+def adapter_env() -> dict[str, str]:
+    """The environment for adapter processes: the harness's, without HARNESS_ONLY_ENV."""
+    return {k: v for k, v in os.environ.items() if k not in HARNESS_ONLY_ENV}
+
+
 def _run_group(cmd: list[str], timeout: float | None) -> subprocess.CompletedProcess | None:
     """Starts the adapter in its own process group. On timeout the whole group is killed:
     `uv run` starts the model as a grandchild process that would otherwise keep running.
     Returns None on timeout."""
     with subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+        env=adapter_env(),
     ) as proc:
         try:
             stdout, stderr = proc.communicate(timeout=timeout)
@@ -205,7 +220,7 @@ def run_adapter(
 
 
 def _check(cmd: list[str], spec: AdapterSpec, **kw) -> str:
-    proc = subprocess.run(cmd, capture_output=True, text=True, **kw)
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=adapter_env(), **kw)
     if proc.returncode != 0:
         tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
         raise RuntimeError(f"Setup of {spec.id} failed ({cmd[0]} {cmd[1]}):\n{tail}")
@@ -304,7 +319,7 @@ def _setup_cuda(spec: AdapterSpec) -> Path:
             f.name,
             *pins,
         ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=spec.path)
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=spec.path, env=adapter_env())
         if proc.returncode == 0:
             return python
         errors.append(f"{index}: {proc.stderr.strip().splitlines()[-1:] or proc.returncode}")

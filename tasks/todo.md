@@ -266,7 +266,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 8: GTK application, module `engine-api` (approved 2026-11-14, SPEC.md "GTK application")
 
-- [ ] **Task 31: The harness on Python 3.12–3.14** (S)
+- [x] **Task 31: The harness on Python 3.12–3.14** (S): done 2026-11-14. Found on the way: uv settings of the harness (`UV_PYTHON`, `UV_PROJECT_ENVIRONMENT`, `UV_PROJECT`, `VIRTUAL_ENV`) were inherited by the adapters' `uv run`/`uv sync`, so a harness on 3.14 ran the 3.12 adapters on 3.14 (22 failing tests), and `UV_PROJECT_ENVIRONMENT` would have built an adapter's environment in the harness's place; adapter processes now get an environment without them (test). `.python-version` keeps 3.12 the default for development.
   - Acceptance:
     - `requires-python` of the harness is `>=3.12,<3.15`; `uv.lock` follows; the adapters' files are untouched.
     - CI runs the checks on 3.12 and 3.14.

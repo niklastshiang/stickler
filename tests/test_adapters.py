@@ -127,3 +127,16 @@ def test_timeout_kills_model_process_under_uv(registry, tmp_path):
     pid = int((out / "pid").read_text())
     time.sleep(0.5)
     assert not os.path.exists(f"/proc/{pid}"), "model process keeps running after the time limit"
+
+
+def test_harness_uv_settings_do_not_reach_the_adapters(registry, tmp_path, monkeypatch):
+    """The harness may run on another Python or in another environment (CI matrix, the GTK
+    app); the adapters keep their own pinned Python and environment."""
+    elsewhere = tmp_path / "harness-venv"
+    monkeypatch.setenv("UV_PYTHON", "3.14")
+    monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", str(elsewhere))
+    monkeypatch.setenv("VIRTUAL_ENV", str(elsewhere))
+    adapters.setup_adapter(registry["dummy"])
+    result = adapters.run_adapter(registry["dummy"], tmp_path / "in.wav", tmp_path / "out")
+    assert result.ok, result.error
+    assert not elsewhere.exists(), "an adapter environment was built in the harness's place"
