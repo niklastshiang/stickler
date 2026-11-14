@@ -288,7 +288,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest tests/test_api.py tests/test_cli.py -k progress` (Fast, a pipeline with a separator, a fully cached song); `uv run stickler notate` on a cached own song
   - Dependencies: none · Files: `src/stickler/{api,runner,cli}.py`, tests
 
-- [ ] **Task 34: Cancellation of an analysis** (M)
+- [x] **Task 34: Cancellation of an analysis** (M): done 2026-11-14. `CancelToken` is a `threading.Event` with `cancel()` (so `run_benchmark` accepts it too); a running adapter is polled every 50 ms and its group killed with SIGKILL, its cache folder removed; between steps the token stops the call before the next one starts. Noticed, not changed: Ctrl+C in `stickler notate` does not reach the adapter (own session), so the model keeps running after the CLI exits; the CLI could turn Ctrl+C into a cancel.
   - Acceptance:
     - `api.CancelToken` and `api.Cancelled`; `cancel` on `transcribe_song` and `notate`.
     - A set token ends the adapter's process group within 1 s; the cancelled step leaves nothing a later run takes for a result.

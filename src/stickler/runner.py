@@ -143,6 +143,7 @@ def cached_or_run(
     device: str,
     execute: bool,
     timeout: Timeout = None,
+    cancel: threading.Event | None = None,
 ) -> adapters.AdapterResult:
     out_dir = cache_dir_for(cache, spec, audio)
     output, meta = out_dir / spec.expected_output, out_dir / "meta.json"
@@ -156,7 +157,9 @@ def cached_or_run(
         model_input = audio_mod.readable(audio, cache)
     except RuntimeError as exc:
         return adapters.AdapterResult(False, None, None, f"{spec.id}: {exc}")
-    return adapters.run_adapter(spec, model_input, out_dir, device=device, timeout=limit)
+    return adapters.run_adapter(
+        spec, model_input, out_dir, device=device, timeout=limit, cancel=cancel
+    )
 
 
 def _separate(

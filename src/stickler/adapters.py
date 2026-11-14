@@ -14,13 +14,17 @@ version, the packages from the PyTorch CPU index at the same version from a CUDA
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
 import re
+import shutil
 import signal
 import subprocess
 import tempfile
+import threading
+import time
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -153,10 +157,34 @@ def adapter_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if k not in HARNESS_ONLY_ENV}
 
 
-def _run_group(cmd: list[str], timeout: float | None) -> subprocess.CompletedProcess | None:
-    """Starts the adapter in its own process group. On timeout the whole group is killed:
-    `uv run` starts the model as a grandchild process that would otherwise keep running.
-    Returns None on timeout."""
+class CancelToken(threading.Event):
+    """Set from any thread (`cancel()`) to stop a running call: the adapter's whole process
+    group is killed and the call raises Cancelled."""
+
+    def cancel(self) -> None:
+        self.set()
+
+
+class Cancelled(Exception):
+    """A call was stopped through its CancelToken."""
+
+
+CANCEL_POLL = 0.05  # seconds between looks at the cancel token while an adapter runs
+
+
+def _kill_group(proc: subprocess.Popen) -> None:
+    with contextlib.suppress(ProcessLookupError):  # the whole group may have just exited
+        os.killpg(proc.pid, signal.SIGKILL)
+    proc.communicate()
+
+
+def _run_group(
+    cmd: list[str], timeout: float | None, cancel: threading.Event | None = None
+) -> subprocess.CompletedProcess | None:
+    """Starts the adapter in its own process group. On timeout or cancel the whole group is
+    killed: `uv run` starts the model as a grandchild process that would otherwise keep
+    running. Returns None on timeout, raises Cancelled on cancel."""
+    deadline = None if timeout is None else time.monotonic() + timeout
     with subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -165,12 +193,21 @@ def _run_group(cmd: list[str], timeout: float | None) -> subprocess.CompletedPro
         start_new_session=True,
         env=adapter_env(),
     ) as proc:
-        try:
-            stdout, stderr = proc.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
-            proc.communicate()
-            return None
+        while True:
+            remaining = None if deadline is None else max(0.0, deadline - time.monotonic())
+            wait = remaining
+            if cancel is not None:
+                wait = CANCEL_POLL if remaining is None else min(CANCEL_POLL, remaining)
+            try:
+                stdout, stderr = proc.communicate(timeout=wait)
+                break
+            except subprocess.TimeoutExpired:  # retrying communicate loses no output
+                if cancel is not None and cancel.is_set():
+                    _kill_group(proc)
+                    raise Cancelled("cancelled") from None
+                if deadline is not None and time.monotonic() >= deadline:
+                    _kill_group(proc)
+                    return None
     return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
 
 
@@ -186,7 +223,10 @@ def run_adapter(
     out_dir: Path,
     device: str = "auto",
     timeout: float | None = None,
+    cancel: threading.Event | None = None,
 ) -> AdapterResult:
+    """Runs the adapter on `audio` into `out_dir`. A set `cancel` token kills it and raises
+    Cancelled; `out_dir` is then removed, so nothing half-written passes for a result."""
     if device not in DEVICES:
         raise ValueError(f"device must be one of {DEVICES}, not {device!r}")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -206,7 +246,11 @@ def run_adapter(
     args = ["--in", str(audio), "--out", str(out_dir), "--device", device]
     cmd = [*python, str(spec.path / "run.py"), *args]
     log.info("%s: %s", spec.id, audio.name)
-    proc = _run_group(cmd, timeout)
+    try:
+        proc = _run_group(cmd, timeout, cancel)
+    except Cancelled:
+        shutil.rmtree(out_dir, ignore_errors=True)
+        raise Cancelled(f"{spec.id}: cancelled") from None
     if proc is None:
         return _fail(out_dir, f"{spec.id}: time limit of {timeout} s exceeded")
     if proc.returncode != 0:

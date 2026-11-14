@@ -162,7 +162,7 @@ def test_stem_only_transcriber_skips_mix(setup):
 def test_timeout_is_passed_to_adapter(setup, monkeypatch):
     seen = {}
 
-    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None):
+    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None, cancel=None):
         seen["timeout"] = timeout
         return adapters.AdapterResult(False, None, None, "x")
 
@@ -174,7 +174,7 @@ def test_timeout_is_passed_to_adapter(setup, monkeypatch):
 def test_timeout_per_stage(setup, monkeypatch):
     seen = {}
 
-    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None):
+    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None, cancel=None):
         seen[spec.stage] = timeout
         if spec.stage == "separators":
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -199,7 +199,7 @@ def test_relative_timeout_uses_input_duration(setup, monkeypatch):
     write_wav(setup["tracks"]["fake"][0].mix, 2.0)
     seen = {}
 
-    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None):
+    def fake_run_adapter(spec, audio, out_dir, device="auto", timeout=None, cancel=None):
         seen["timeout"] = timeout
         return adapters.AdapterResult(False, None, None, "x")
 
@@ -279,7 +279,7 @@ def test_other_formats_reach_the_adapter_as_flac_but_keep_their_cache_key(tmp_pa
     monkeypatch.setattr(audio, "readable", lambda path, cache: decoded)
     seen = {}
 
-    def fake_run_adapter(spec, audio_in, out_dir, device="auto", timeout=None):
+    def fake_run_adapter(spec, audio_in, out_dir, device="auto", timeout=None, cancel=None):
         seen["audio"] = audio_in
         return adapters.AdapterResult(False, None, None, "x")
 

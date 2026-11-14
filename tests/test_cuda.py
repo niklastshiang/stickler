@@ -111,7 +111,7 @@ def test_run_adapter_uses_cuda_python(spec, monkeypatch, tmp_path):
     py = fake_cuda_env(spec)
     seen = []
 
-    def fake_run_group(cmd, timeout):
+    def fake_run_group(cmd, timeout, cancel=None):
         seen.append(cmd)
         return subprocess.CompletedProcess(cmd, 1, "", "on purpose")
 

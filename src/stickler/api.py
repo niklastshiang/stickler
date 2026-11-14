@@ -915,16 +915,29 @@ class Step:
 
 Progress = Callable[[Step], None]
 
+# Set from any thread to stop an analysis: the running model's process group is killed and the
+# call raises Cancelled; a cancelled step leaves no cache entry behind.
+CancelToken = adapters.CancelToken
+Cancelled = adapters.Cancelled
+
 
 class _Steps:
-    """Runs planned steps in order and reports them to `progress`."""
+    """Runs planned steps in order, reports them to `progress` and stops before the next step
+    once `cancel` is set."""
 
-    def __init__(self, plan: list[tuple[str, str | None]], progress: Progress | None):
-        self.plan, self.progress, self.done = plan, progress, 0
+    def __init__(
+        self,
+        plan: list[tuple[str, str | None]],
+        progress: Progress | None,
+        cancel: CancelToken | None,
+    ):
+        self.plan, self.progress, self.cancel, self.done = plan, progress, cancel, 0
 
     def run[T](self, work: Callable[[], tuple[T, bool]]) -> T:
         """Runs the next planned step; `work` returns its value and whether it was cached."""
         step_id, adapter = self.plan[self.done]
+        if self.cancel is not None and self.cancel.is_set():
+            raise Cancelled(f"{step_id}: cancelled")
         self.done += 1
         self._report(step_id, adapter, "started", False)
         value, cached = work()
@@ -1013,15 +1026,17 @@ def transcribe_song(
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
     progress: Progress | None = None,
+    cancel: CancelToken | None = None,
 ) -> SongTranscription:
     """Separation, transcription and beat tracking for one song (cached like the benchmark).
     `pipeline` ("separator+transcriber") overrides `mode`. In a mode with several parts, each
     part provides its classes; hits outside the five classes come from the first part.
     `drums`: also separate the drums if the mode itself does not (for the drum track export).
-    `progress` receives every step as it starts and ends (see Step)."""
+    `progress` receives every step as it starts and ends (see Step); setting `cancel` stops
+    the call with Cancelled."""
     registry = adapters.discover(adapters_root)
     plan = _analysis(pipeline, mode, drums, registry)
-    steps = _Steps(plan.steps, progress)
+    steps = _Steps(plan.steps, progress, cancel)
     return _transcribe(audio_path, pipeline or mode, plan, registry, steps, device, cache_dir)
 
 
@@ -1036,7 +1051,9 @@ def _transcribe(
 ) -> SongTranscription:
     def run(adapter: str, source: Path) -> Path:
         def work() -> tuple[Path, bool]:
-            result = runner.cached_or_run(registry[adapter], source, cache_dir, device, True)
+            result = runner.cached_or_run(
+                registry[adapter], source, cache_dir, device, True, cancel=steps.cancel
+            )
             return _result(result), result.cached
 
         return steps.run(work)
@@ -1085,15 +1102,19 @@ def notate(
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
     progress: Progress | None = None,
+    cancel: CancelToken | None = None,
 ) -> Notation:
     """Song → drum sheet music as MusicXML (default: next to the song, <song>.musicxml), plus a
     PDF next to it if MuseScore is installed. Title and artist default to the file's tags.
     For readability, `simplify` gives similar bars their common pattern and `repeats` writes
     runs of equal bars once between repeat signs (notation.to_musicxml). `progress` receives
-    every step as it starts and ends, including engraving and the PDF (see Step)."""
+    every step as it starts and ends, including engraving and the PDF (see Step); setting
+    `cancel` stops the call with Cancelled (a running model at once, otherwise before the
+    next step)."""
     registry = adapters.discover(adapters_root)
     plan = _analysis(pipeline, mode, drums, registry)
-    steps = _Steps([*plan.steps, ("engrave", None), *([("pdf", None)] if pdf else [])], progress)
+    planned = [*plan.steps, ("engrave", None), *([("pdf", None)] if pdf else [])]
+    steps = _Steps(planned, progress, cancel)
     t = _transcribe(audio_path, pipeline or mode, plan, registry, steps, device, cache_dir)
     target = out or audio_path.with_suffix(".musicxml")
 

@@ -503,7 +503,7 @@ def _fake_pipeline(tmp_path, monkeypatch):
     beats.write_text(json.dumps({"beats": [k * 0.5 for k in range(9)], "downbeats": [0.0, 2.0]}))
     calls = []
 
-    def fake(spec, audio_in, cache, device, execute, timeout=None):
+    def fake(spec, audio_in, cache, device, execute, timeout=None, cancel=None):
         calls.append((spec.id, audio_in))
         out = {"separators": stem, "transcribers": midi_path, "beats": beats}[spec.stage]
         return ad.AdapterResult(True, out, {}, None)
@@ -647,6 +647,78 @@ def test_runner_says_when_a_result_comes_from_the_cache(tmp_path):
     again = runner.cached_or_run(spec, audio, tmp_path / "cache", "cpu", True)
     assert first.ok and not first.cached
     assert again.ok and again.cached
+
+
+def test_a_token_set_beforehand_starts_nothing(tmp_path, monkeypatch):
+    audio, _, calls = _fake_pipeline(tmp_path, monkeypatch)
+    token, steps = api.CancelToken(), []
+    token.cancel()
+    with pytest.raises(api.Cancelled):
+        api.notate(audio, tmp_path / "o.musicxml", cache_dir=tmp_path, cancel=token)
+    with pytest.raises(api.Cancelled):
+        api.transcribe_song(audio, cache_dir=tmp_path, progress=steps.append, cancel=token)
+    assert calls == [] and steps == []
+    assert not (tmp_path / "o.musicxml").exists()
+
+
+def test_cancel_between_steps_stops_before_the_next_one(tmp_path, monkeypatch):
+    audio, _, calls = _fake_pipeline(tmp_path, monkeypatch)
+    token, steps = api.CancelToken(), []
+
+    def on_step(step):
+        steps.append(step)
+        if step.id == "transcribe" and step.state == "done":
+            token.cancel()
+
+    target = tmp_path / "o.musicxml"
+    with pytest.raises(api.Cancelled):
+        api.notate(audio, target, cache_dir=tmp_path, progress=on_step, cancel=token)
+    assert [s.id for s in steps] == ["transcribe", "transcribe"]
+    assert [c[0] for c in calls] == ["adtof"]
+    assert not target.exists()
+
+
+def test_cancelling_a_running_model_leaves_no_cache_entry(tmp_path):
+    """Sleepy hangs; the token is set once its process runs. The call raises within a second,
+    the step is never `done`, nothing is cached, and the next run starts the model again."""
+    import time
+
+    from stickler import adapters as ad
+
+    fixtures = Path(__file__).parent / "fixtures" / "adapters"
+    audio = tmp_path / "song.wav"
+    audio.write_bytes(b"x")
+    spec = ad.discover(fixtures)["sleepy"]
+    pid_file = runner.cache_dir_for(tmp_path / "cache", spec, audio) / "pid"
+    kw = {"cache_dir": tmp_path / "cache", "adapters_root": fixtures}
+
+    def cancelled_run() -> tuple[int, float, list]:
+        token, seen, steps = api.CancelToken(), {}, []
+        _cancel_when_running(pid_file, token, seen)
+        with pytest.raises(api.Cancelled):
+            api.transcribe_song(audio, "none+sleepy", progress=steps.append, cancel=token, **kw)
+        return seen["pid"], time.monotonic() - seen["at"], steps
+
+    first, took, steps = cancelled_run()
+    assert took < 1
+    assert [(s.id, s.state) for s in steps] == [("transcribe", "started")]
+    assert not runner.cached_or_run(spec, audio, tmp_path / "cache", "cpu", False).ok
+    second, _, _ = cancelled_run()
+    assert second != first  # the model ran again instead of a half result being taken
+
+
+def _cancel_when_running(pid_file, token, seen):
+    import threading
+    import time
+
+    def watch():
+        while not (pid_file.exists() and pid_file.read_text()):
+            time.sleep(0.01)
+        seen["pid"] = int(pid_file.read_text())
+        seen["at"] = time.monotonic()
+        token.cancel()
+
+    threading.Thread(target=watch, daemon=True).start()
 
 
 def test_unknown_mode_raises(tmp_path, monkeypatch):

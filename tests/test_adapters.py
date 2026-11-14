@@ -129,6 +129,68 @@ def test_timeout_kills_model_process_under_uv(registry, tmp_path):
     assert not os.path.exists(f"/proc/{pid}"), "model process keeps running after the time limit"
 
 
+def _cancel_when_running(pid_file: Path, token, seen: dict) -> None:
+    """Sets `token` once the model process has written its pid; records the pid, its process
+    group and the moment of cancelling in `seen`."""
+    import os
+    import threading
+    import time
+
+    def watch() -> None:
+        while not (pid_file.exists() and pid_file.read_text()):
+            time.sleep(0.01)
+        seen["pid"] = int(pid_file.read_text())
+        seen["group"] = os.getpgid(seen["pid"])
+        seen["at"] = time.monotonic()
+        token.cancel()
+
+    threading.Thread(target=watch, daemon=True).start()
+
+
+def _group_gone(group: int, within: float) -> bool:
+    import os
+    import time
+
+    deadline = time.monotonic() + within
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(group, 0)
+        except ProcessLookupError:
+            return True
+        time.sleep(0.01)
+    return False
+
+
+def test_cancel_ends_the_process_group_within_a_second(registry, tmp_path):
+    import time
+
+    out = tmp_path / "out"
+    token, seen = adapters.CancelToken(), {}
+    _cancel_when_running(out / "pid", token, seen)
+    with pytest.raises(adapters.Cancelled):
+        adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=30, cancel=token)
+    assert time.monotonic() - seen["at"] < 1
+    assert _group_gone(seen["group"], within=1), "a process of the adapter's group survived"
+
+
+def test_cancelled_run_leaves_no_output_behind(registry, tmp_path):
+    out = tmp_path / "out"
+    token, seen = adapters.CancelToken(), {}
+    _cancel_when_running(out / "pid", token, seen)
+    with pytest.raises(adapters.Cancelled):
+        adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=30, cancel=token)
+    assert not out.exists()
+
+
+def test_an_unset_token_changes_nothing(registry, tmp_path):
+    token = adapters.CancelToken()
+    result = adapters.run_adapter(
+        registry["dummy"], tmp_path / "in.wav", tmp_path / "out", device="cpu", cancel=token
+    )
+    assert result.ok, result.error
+    assert not token.is_set()
+
+
 def test_harness_uv_settings_do_not_reach_the_adapters(registry, tmp_path, monkeypatch):
     """The harness may run on another Python or in another environment (CI matrix, the GTK
     app); the adapters keep their own pinned Python and environment."""
