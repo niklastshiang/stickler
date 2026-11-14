@@ -215,9 +215,12 @@ studio-exact references).
    10 `est`, uniform at random, fixed seed, random order. The sample is never redrawn after
    listening.
 3. **Blind judgement.** For each spot the owner hears a ~4 s snippet (drum stem and mix around
-   the spot, once plain and once with a soft marker at the moment in question) and answers one
-   question: "Is there a <class> hit at the marker?" — *yes*, *no* or *unclear*. The owner is
-   not told whether reference or model claims it.
+   the spot, once plain and once with a click at the moment in question) and, as often as
+   needed, a 1.25 s loop of just the spot, also at half speed. The music is on the left
+   channel, the click alone on the right, as in `align`'s click.wav (trial on 2026-11-14: a soft
+   marker mixed into the music was inaudible; the loop at half speed made the spot judgeable).
+   The owner answers one question: "Is there a <class> hit at the marker?" — *yes*, *no* or
+   *unclear*. The owner is not told whether reference or model claims it.
 4. **Correction.** A `ref` spot judged *no* and an `est` spot judged *yes* are reference
    errors. Per class, the shares of reference errors among `ref` and `est` spots
    (r_ref, r_est) correct the counts of each pipeline: fn' = fn · (1 − r_ref),
@@ -234,8 +237,9 @@ studio-exact references).
 ```bash
 uv run stickler errors --config config/own.yaml   # breakdown → results/own/errors.csv + table
 uv run stickler listen                            # draw the sample once, then judge spot by spot
-                                                  # (keys: y / n / u, r = repeat, s = half speed,
-                                                  #  q = quit; resumes where it stopped)
+                                                  # (keys: y / n / u, r = repeat, l = loop the
+                                                  #  spot, s = loop at half speed, q = quit;
+                                                  #  resumes where it stopped)
 uv run stickler eval --config config/own.yaml     # also writes the corrected scores once
                                                   # verdicts exist → results/own/corrected.csv
 uv run stickler report                            # report.html shows breakdown and corrected F1

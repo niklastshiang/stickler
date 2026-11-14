@@ -765,3 +765,48 @@ def test_save_digests_writes_every_adapter(tmp_path):
     import json
 
     assert {"adtof", "demucs"} <= json.loads(out.read_text()).keys()
+
+
+def _own_song(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from test_audio import write_wav
+
+    mix = write_wav(tmp_path / "song.wav", 6.0)
+    song = SimpleNamespace(id="song", mix=mix)
+    monkeypatch.setattr(api, "load_tracks", lambda name, data_dir: [song])
+    return song
+
+
+def test_listening_snippet_from_the_cached_drum_stem(monkeypatch, tmp_path):
+    from test_audio import write_wav
+
+    from stickler import adapters as ad
+
+    song = _own_song(monkeypatch, tmp_path)
+    stem = write_wav(tmp_path / "drums.wav", 6.0)
+    asked = []
+
+    def cached(spec, audio_in, cache, device, execute, timeout=None):
+        asked.append((spec.id, audio_in, execute))
+        return ad.AdapterResult(True, stem, {}, None)
+
+    monkeypatch.setattr(api.runner, "cached_or_run", cached)
+    out = api.listening_snippet("song", 3.0, tmp_path / "spot.wav", cache_dir=tmp_path)
+    assert out.exists() and asked == [("demucs", song.mix, False)]
+    loop = api.listening_snippet("song", 3.0, tmp_path / "l.wav", cache_dir=tmp_path, loop=True)
+    seconds = api.listen.LOOP_BEFORE + api.listen.LOOP_AFTER
+    assert api.audio.duration(loop) == pytest.approx(seconds, abs=0.01)
+
+
+def test_listening_snippet_never_runs_a_model(monkeypatch, tmp_path):
+    from stickler import adapters as ad
+
+    _own_song(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        api.runner, "cached_or_run", lambda *a, **k: ad.AdapterResult(False, None, {}, "missing")
+    )
+    with pytest.raises(RuntimeError, match="stickler run"):
+        api.listening_snippet("song", 3.0, tmp_path / "spot.wav", cache_dir=tmp_path)
+    with pytest.raises(ValueError, match="nope"):
+        api.listening_snippet("nope", 3.0, tmp_path / "spot.wav", cache_dir=tmp_path)

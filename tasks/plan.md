@@ -44,7 +44,7 @@ be built while the owner listens, on synthetic verdicts) → report and release 
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Marker click masks or is mistaken for the hit | High | Snippet plays plain first, then with the marker; marker in a distinct timbre; owner tries 3 snippets before the sample is judged (Task 24) |
+| Marker click masks or is mistaken for the hit | High | Snippet plays plain first, then with the marker; marker in a distinct timbre; owner tries 3 snippets before the sample is judged (Task 24). Happened: a mixed-in tone was inaudible; fixed with the click in its own ear and a half-speed loop of the spot |
 | Demucs stem bleed makes a "no" sound like "yes" | Medium | Mix and stem together in the snippet; *unclear* is a valid answer and reported |
 | Few spots of a pipeline's own error set (Quality-only kick/snare/toms errors) | Medium | Report n per pipeline and class next to every corrected value; intervals by bootstrap |
 | Many *unclear* answers | Medium | Bounds with *unclear* counted either way; share reported |

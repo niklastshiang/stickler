@@ -24,6 +24,7 @@ from stickler import (
     errors,
     fusion,
     grid,
+    listen,
     musescore,
     notation,
     onsets,
@@ -363,6 +364,35 @@ def error_breakdowns(
     if unknown := [p for p in pipelines if p not in found]:
         raise ValueError(f"not in {config_path.name}: {', '.join(unknown)}")
     return out
+
+
+def listening_snippet(
+    song: str,
+    time: float,
+    out: Path,
+    *,
+    data_dir: Path = DATA_DIR,
+    cache_dir: Path = CACHE_DIR,
+    adapters_root: Path = ADAPTERS_ROOT,
+    loop: bool = False,
+) -> Path:
+    """Writes the snippet for judging the spot at `time` seconds of an own song by ear (see
+    stickler.listen), or with `loop` only the spot, to be played in a loop. Uses the cached
+    Demucs drum stem; never runs a model."""
+    track = next((t for t in load_tracks("own", data_dir) if t.id == song), None)
+    if track is None:
+        raise ValueError(f"unknown own song {song!r}")
+    spec = adapters.discover(adapters_root)[DRUM_TRACK_SEPARATOR]
+    res = runner.cached_or_run(spec, track.mix, cache_dir, "auto", False)
+    if not res.ok:
+        raise RuntimeError(
+            f"{song}: no cached drum stem, run `stickler run --config config/own.yaml` first"
+        )
+    render = listen.render_loop if loop else listen.render
+    snippet = render(
+        audio.load_mono(track.mix, listen.SR), audio.load_mono(res.output, listen.SR), time
+    )
+    return listen.write(out, snippet)
 
 
 def error_breakdown(

@@ -207,9 +207,9 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint E
 - [ ] Breakdown reviewed with the owner (largest error sources, top confusions), before any listening
 
-- [ ] **Task 24: Snippets** (M)
+- [x] **Task 24: Snippets** (M): trial on 2026-11-14 with 3 real spots: a soft marker tone mixed into the music was inaudible (2-4x quieter than the music, in the hi-hat range); now music left, click right (as `align`'s click.wav), plus a 1.25 s loop of just the spot, which the owner judged at half speed.
   - Acceptance:
-    - `listen.snippet(spot, mix, stem)` writes a WAV of ~4 s around the spot: drum stem and mix, played once plain and once with a soft marker of a distinct timbre at the spot.
+    - `listen.render` writes a WAV of ~4 s around the spot: drum stem and mix, played once plain and once with a click at the spot; `listen.render_loop` only the spot, for a loop.
     - Stems only from the cache; a missing stem is a clear error, never a model run.
   - Verify: tests on a generated WAV (length, marker position, levels); owner listens to 3 snippets and confirms the marker is clear and does not hide the hit
   - Dependencies: 22 · Files: `src/stickler/listen.py`, `src/stickler/api.py`, `tests/test_listen.py`
@@ -223,7 +223,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 - [ ] **Task 26: `stickler listen`** (M)
   - Acceptance:
-    - Asks spot by spot "Is there a <class> hit at the marker?" without saying who claims it; answers y / n / u, r = repeat, s = half speed, q = quit (a letter plus Enter).
+    - Asks spot by spot "Is there a <class> hit at the marker?" without saying who claims it; answers y / n / u, r = repeat the snippet, l = loop the spot, s = loop at half speed (a loop runs until Enter), q = quit (a letter plus Enter).
     - Verdicts appended to `data/own/_listening/verdicts.csv`; a new start resumes at the first unjudged spot; shows progress (k / 100).
     - The CLI only calls the API; the player (`ffplay`) is injected.
   - Verify: CliRunner tests with a fake player (answer, repeat, quit, resume); owner judges 3 spots as a trial
