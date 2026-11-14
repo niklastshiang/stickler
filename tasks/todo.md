@@ -273,7 +273,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run --python 3.14 pytest -q` and `scripts/check.sh task` (3.12) both green
   - Dependencies: none · Files: `pyproject.toml`, `uv.lock`, `.github/workflows/check.yml`, `SPEC.md` (Tech Stack)
 
-- [ ] **Task 32: Measure an interrupted setup** (S)
+- [x] **Task 32: Measure an interrupted setup** (S): done 2026-11-14, results in SPEC.md (`engine-api`, resolved question 2). `uv sync` resumes well enough; `torch.hub` restarts and leaves a `.partial`; readiness is misjudged after an interruption (now in Task 35); the Beat This! weight server returned HTTP 500 throughout, so the weight case was measured against a local server.
   - Acceptance:
     - On a copy of `adapters/beats/beat_this` in a scratch adapters root: `setup` is killed during `uv sync` and during the weight download; a second `setup` is timed against a fresh one, and the result works (`doctor`).
     - The result is written into SPEC.md (`engine-api`, resolved question 2): resumes, or starts over and what the fix would be.
@@ -298,8 +298,10 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 - [ ] **Task 35: Readiness** (S)
   - Acceptance:
     - `api.mode_ready(mode)` returns the adapters of the mode that are not set up (environment or weights missing).
+    - An environment counts only if `uv sync --check --offline` passes (a killed `uv sync` leaves an empty `.venv`); weights count only if `setup.py` finished, recorded by a marker the harness writes after it succeeds; `setup` removes stray `*.partial` files (Task 32). The marker lives outside the files that make up the cache key.
+    - `doctor` uses the same check.
     - `transcribe_song` raises `api.SetupMissing` naming them before any adapter is started.
-  - Verify: tests with dummy adapters with and without an environment; on the real checkout `mode_ready("fast")` is empty
+  - Verify: tests with dummy adapters: no environment, an empty `.venv`, weights with only a `.partial`, complete; on the real checkout `mode_ready("fast")` is empty after one `stickler setup --adapter beat_this` (writes the marker for an existing install)
   - Dependencies: none · Files: `src/stickler/{api,doctor}.py`, tests
 
 - [ ] **Task 36: Progress and cancellation for `setup_adapters`** (M)

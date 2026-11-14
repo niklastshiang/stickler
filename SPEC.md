@@ -559,8 +559,30 @@ marker.show(bar.written)
 
 1. **Setup progress in bytes:** this module reports steps only. `setup-assistant` later shows
    bytes on disk against the sizes in `docs/requirements.md`.
-2. **Resuming an interrupted setup:** measured in this module's first tasks (Task 32); if a
-   second `setup` starts over, the fix is specified before `setup-assistant`.
+2. **Resuming an interrupted setup:** measured on 2026-11-14 (Task 32) on a copy of
+   `beat_this` with its own empty uv cache, killed with SIGKILL (the worst case: power cut, or
+   cancelling as Task 34 will):
+   - **`uv sync`** (fresh: 13 s here, 0.86 GB, of which the PyTorch CPU wheel is 0.75 GB).
+     Killed after 3 s and after 7 s, a second `setup` succeeds (7–8 s) and leaves a working
+     environment and a clean uv cache. Packages finished before the kill are reused; a package
+     being downloaded starts over, so on a slow line an interruption can cost the whole
+     PyTorch download again. Acceptable; no fix needed.
+   - **Weights via `torch.hub`** (`beat_this`; ADTOF's weights ship in its package). The JKU
+     server was down during the test (HTTP 500 on every file, share page up), so the download
+     was rerun against a throttled local server with the same `torch.hub` call: a kill leaves
+     `<file>.<id>.partial` behind, which is never removed, and a second run downloads the whole
+     file again. Acceptable for 80 MB; the stray file is cleaned up by `setup`.
+   - **Readiness is misjudged** after an interruption. `doctor` calls an adapter ready when
+     `.venv` exists and `weights/` is not empty. A killed `uv sync` leaves a `.venv` without
+     packages, and a failed or killed download leaves `weights/hub/checkpoints/` with no
+     checkpoint or only a `.partial`, both of which pass. `uv sync --check --offline` tells a
+     broken environment from a complete one (exit 1 / 0, 16 ms). Weights count only when
+     `setup.py` has finished: the harness writes a marker after it succeeds. Both go into
+     Task 35, and `doctor` uses the same check.
+   - **The weights' host can be down.** First-run setup depends on third-party servers
+     (`cloud.cp.jku.at` for Beat This!, Hugging Face for others). `setup-assistant` must say
+     which server failed and offer to retry; whether to mirror the Beat This! checkpoint
+     depends on its licence (not checked).
 3. **Python:** the harness is widened to 3.12–3.14 now. Raising the adapters is planned for the
    future (`tasks/todo.md`, "Later"), together with a benchmark rerun, because it changes every
    cache key.
