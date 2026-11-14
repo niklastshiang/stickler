@@ -349,14 +349,14 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 9: GTK application, module `app-shell` (approved 2026-11-14, SPEC.md "Module `app-shell`")
 
-- [ ] **Task 41: Skeleton, app environment and checks** (M)
+- [x] **Task 41: Skeleton, app environment and checks** (M): done 2026-11-14. `gi.require_version` sits in `stickler_gtk/ui/__init__.py`, so no module needs an import after code; the `Adw.Application` lives in `ui/application.py` and `main.py` only calls it. `.venv-gtk`: Python 3.14.10, PyGObject 3.56.3, GTK 4.22.5, libadwaita 1.9.4; `UV_PYTHON` keeps `.python-version` (3.12) from rebuilding it. The dashed drop area of screen 4 comes with the drop itself (Task 43).
   - Acceptance:
     - `src/stickler_gtk/` with `logic/` and `ui/`; `stickler-gtk` (entry point) opens an `Adw.ApplicationWindow` with the ID `ng.tshia.Stickler` and the empty page of screen 4 (drop area and "Open a Song…", no function yet).
     - `scripts/gtk.sh` builds `.venv-gtk` on the system Python with `--system-site-packages`, installs the project with its locked dependencies into it, prints the versions of `gi`, GTK and libadwaita, and starts the app; `scripts/gtk.sh test` runs `pytest -m gtk`.
     - CONSTRAINTS.md: coverage counts `src/stickler_gtk/logic`; `src/stickler_gtk/ui` and `main.py` are excluded like `cli.py`. A test fails if `src/stickler` or `stickler_gtk/logic` imports `gi`.
-    - `data/ng.tshia.Stickler.desktop`.
+    - `packaging/ng.tshia.Stickler.desktop` (`data/` holds the datasets and is ignored).
   - Verify: `scripts/check.sh task`; `scripts/gtk.sh` shows the empty window; `scripts/gtk.sh test` (window opens)
-  - Dependencies: none · Files: `pyproject.toml`, `src/stickler_gtk/*`, `scripts/gtk.sh`, `CONSTRAINTS.md`, `tests/gtk/*`, `data/*`
+  - Dependencies: none · Files: `pyproject.toml`, `src/stickler_gtk/*`, `scripts/gtk.sh`, `CONSTRAINTS.md`, `tests/gtk/*`, `packaging/*`
 
 - [ ] **Task 42: Translations** (S)
   - Acceptance:

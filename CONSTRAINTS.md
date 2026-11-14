@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-11-12 by the project owner (interview: no further dimensions, violations block; coverage raised from 80% to 95% on 2026-11-12)
 
-Applies to the harness (`src/stickler/`, `tests/`, `scripts/`). Adapters under `adapters/` are thin wrappers around third-party model code. The floor and lint apply to them, but no coverage limit.
+Applies to the harness (`src/stickler/`, `tests/`, `scripts/`) and the GTK application (`src/stickler_gtk/`, from 2026-11-14). Adapters under `adapters/` are thin wrappers around third-party model code. The floor and lint apply to them, but no coverage limit.
 
 ## Floor (always enforced, no setup required)
 
@@ -23,7 +23,8 @@ Checked by `uv run python scripts/floor_guard.py` (diff-based, exit 0 clean / 1 
 | Format | Zero files needing reformat | `uv run ruff format --check .` | every edit, CI |
 | Floor | Zero floor violations in the diff | `uv run python scripts/floor_guard.py` (CI: `--base` = the state before the push) | every edit, CI |
 | Tests | All tests pass | `uv run pytest -q` | task end, pre-commit, CI |
-| Coverage | `src/stickler` line coverage >= 95% (excluding `cli.py`) | `uv run pytest -q --cov --cov-fail-under=95` | task end, pre-commit, CI |
+| Coverage | `src/stickler` and `src/stickler_gtk` line coverage >= 95% (excluding `cli.py`, `stickler_gtk/main.py` and `stickler_gtk/ui/`) | `uv run pytest -q --cov --cov-fail-under=95` | task end, pre-commit, CI |
+| GTK boundary | No `gi` import in `src/stickler` or `src/stickler_gtk/logic` | `tests/gtk/test_boundaries.py` | task end, pre-commit, CI |
 | Secrets | No secrets anywhere in the git history | `gitleaks git . --redact --no-banner` | CI (`.github/workflows/check.yml`) |
 
 Reasons:
@@ -31,6 +32,7 @@ Reasons:
 - **Raised to 95% (2026-11-12):** At the project owner's request, at a level of 97.5%. The margin to 100% leaves room for paths that only run with a real GPU or real models.
 - **Violations block:** The git hook `.githooks/pre-commit` runs `scripts/check.sh task`. A red check prevents the commit.
 - **CI (2026-11-13):** `.github/workflows/check.yml` runs the same checks on every push to main and every pull request, plus gitleaks over the whole history as a check that does not depend on our own tests.
+- **GTK application (2026-11-14, approved with the `app-shell` spec):** the app's decisions live in `stickler_gtk/logic`, which imports no GTK and counts for coverage like the harness; `stickler_gtk/ui` and `main.py` only show what the logic decides and are excluded like `cli.py`. Widget smoke tests need a display and run with `scripts/gtk.sh test`, not in CI.
 - **Time budget:** `scripts/check.sh fast` < 5 s, `scripts/check.sh task` < 90 s. Slow model tests (`pytest -m adapters`) are not part of the default run and run for tasks that concern adapters.
 
 ## Measured, not yet enforced

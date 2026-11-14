@@ -752,7 +752,7 @@ src/stickler_gtk/logic/            # no GTK: session.py (states), steps.py (labe
 src/stickler_gtk/ui/               # window.py, pages (empty, analysing, result, error),
                                    # export_menu.py, shortcuts.py
 po/POTFILES, po/stickler.pot, po/de.po
-data/ng.tshia.Stickler.desktop
+packaging/ng.tshia.Stickler.desktop   # later also metainfo, icon, Flatpak manifest
 scripts/gtk.sh, scripts/i18n.sh
 tests/gtk/                         # logic tests; test_widgets.py marked `gtk`
 ```
