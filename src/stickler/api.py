@@ -1007,6 +1007,28 @@ BarTime = notation.BarTime  # one song bar: start, end (seconds), number of its 
 
 
 @dataclass(frozen=True)
+class Corrections:
+    """The reader's fixes to a detected beat grid (notation.corrected_grid); the hits never
+    change. `tempo`: "half", "normal" or "double"; `beats_per_bar` overrides the detected
+    meter; `first_downbeat` (1-based, on the corrected beats) is the first "one", the beats
+    before it form the pickup. `simplify` and `repeats` as in notate."""
+
+    tempo: str = "normal"
+    beats_per_bar: int | None = None
+    first_downbeat: int | None = None
+    simplify: bool = True
+    repeats: bool = True
+
+    def __post_init__(self) -> None:  # fail before any model runs
+        if self.tempo not in notation.TEMPOS:
+            raise ValueError(f"tempo must be one of {notation.TEMPOS}, not {self.tempo!r}")
+        for name in ("beats_per_bar", "first_downbeat"):
+            value = getattr(self, name)
+            if value is not None and value < 1:
+                raise ValueError(f"{name} must be at least 1, not {value}")
+
+
+@dataclass(frozen=True)
 class Notation:
     musicxml: Path
     pdf: Path | None
@@ -1161,14 +1183,18 @@ def notate(
     adapters_root: Path = ADAPTERS_ROOT,
     progress: Progress | None = None,
     cancel: CancelToken | None = None,
+    corrections: Corrections | None = None,
 ) -> Notation:
     """Song → drum sheet music as MusicXML (default: next to the song, <song>.musicxml), plus a
     PDF next to it if MuseScore is installed. Title and artist default to the file's tags.
     For readability, `simplify` gives similar bars their common pattern and `repeats` writes
-    runs of equal bars once between repeat signs (notation.to_musicxml). `progress` receives
-    every step as it starts and ends, including engraving and the PDF (see Step); setting
-    `cancel` stops the call with Cancelled (a running model at once, otherwise before the
-    next step). Raises SetupMissing before anything runs if a model is not set up."""
+    runs of equal bars once between repeat signs (notation.to_musicxml). `corrections` fix the
+    beat grid (see Corrections) and, when given, take over `simplify` and `repeats`; on a
+    cached song they re-engrave without starting a model. `progress` receives every step as
+    it starts and ends, including engraving and the PDF (see Step); setting `cancel` stops the
+    call with Cancelled (a running model at once, otherwise before the next step). Raises
+    SetupMissing before anything runs if a model is not set up."""
+    fix = corrections or Corrections(simplify=simplify, repeats=repeats)
     registry = adapters.discover(adapters_root)
     plan = _planned(pipeline, mode, drums, registry, device)
     planned = [*plan.steps, ("engrave", None), *([("pdf", None)] if pdf else [])]
@@ -1179,14 +1205,21 @@ def notate(
     def engrave() -> tuple[list[BarTime], bool]:
         target.parent.mkdir(parents=True, exist_ok=True)
         found = audio.tags(audio_path) if title is None or artist is None else {}
-        engraving = notation.engrave(
-            t.hits,
+        beats, downbeats = notation.corrected_grid(
             t.beats,
             t.downbeats,
+            tempo=fix.tempo,
+            beats_per_bar=fix.beats_per_bar,
+            first_downbeat=fix.first_downbeat,
+        )
+        engraving = notation.engrave(
+            t.hits,
+            beats,
+            downbeats,
             title=title or found.get("title") or audio_path.stem,
             artist=artist if artist is not None else found.get("artist", ""),
-            simplify_bars=simplify,
-            repeats=repeats,
+            simplify_bars=fix.simplify,
+            repeats=fix.repeats,
         )
         target.write_text(engraving.musicxml, encoding="utf-8")
         return engraving.bars, False

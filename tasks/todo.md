@@ -320,7 +320,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest tests/test_notation.py -k bar_map`; Eye of the Tiger: 110 entries, times rise without gaps, written bars are exactly the 46 of the MusicXML, and the order matches Verovio's expanded timemap
   - Dependencies: none · Files: `src/stickler/{notation,api}.py`, tests
 
-- [ ] **Task 38: Corrections** (M)
+- [x] **Task 38: Corrections** (M): done 2026-11-14. Pure function `notation.corrected_grid`; `half` keeps the beats on the first downbeat's parity and adds one beat before the song when that drops beat 0, so no hit falls off the grid; `first_downbeat` is 1-based on the corrected beats. Given `corrections` take over `simplify`/`repeats`; impossible values raise in `Corrections` itself, before any model runs. Eye of the Tiger (cached): every correction 0.16–0.18 s, no adapter started, 1375 hits each time; `half`/`double` keep 110 bars (2 or 8 beats each), 3/4 gives 147, a downbeat on beat 2 gives 111 (pickup). The CLI has no correction options (not part of the task).
   - Acceptance:
     - `api.Corrections(tempo, beats_per_bar, first_downbeat, simplify, repeats)`; `notate(..., corrections=...)`; today's `simplify` and `repeats` parameters keep working.
     - A pure function gives the corrected beats and downbeats; the hits never change; the bar map follows the corrected grid.

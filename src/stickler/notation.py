@@ -338,6 +338,46 @@ def _repeat_blocks(measures: list[_Measure]) -> list[tuple[int, int, int]]:
     return blocks
 
 
+TEMPOS = ("half", "normal", "double")
+
+
+def corrected_grid(
+    beats: list[float],
+    downbeats: list[float],
+    *,
+    tempo: str = "normal",
+    beats_per_bar: int | None = None,
+    first_downbeat: int | None = None,
+) -> tuple[list[float], list[float]]:
+    """Beats and downbeats after the reader's corrections; the hits are not touched.
+    `tempo`: "half" keeps every second beat (those on the first downbeat's parity, plus one
+    beat before the song if that drops the first beat, so no hit falls off the grid);
+    "double" adds the midpoints. `beats_per_bar` overrides the detected meter;
+    `first_downbeat` (1-based, counted on the corrected beats) says which beat is the first
+    "one", so the beats before it form the pickup."""
+    if tempo not in TEMPOS:
+        raise ValueError(f"tempo must be one of {TEMPOS}, not {tempo!r}")
+    b = list(beats)
+    first = _nearest_index(np.asarray(b), downbeats[0]) if downbeats else 0
+    if tempo == "half" and len(b) > 1:
+        kept = b[first % 2 :: 2]
+        if first % 2:  # beat 0 would be dropped: extend the grid back by one (half) beat
+            kept.insert(0, b[1] - (b[3] - b[1]) if len(b) > 3 else 2 * b[1] - b[0])
+        b, first = kept, (first + 1) // 2
+    elif tempo == "double":
+        mids = [(x + y) / 2 for x, y in zip(b, b[1:], strict=False)]
+        b, first = [t for pair in zip(b, mids, strict=False) for t in pair] + b[-1:], 2 * first
+    if beats_per_bar is None and first_downbeat is None:
+        return b, list(downbeats)
+    if beats_per_bar is not None and beats_per_bar < 1:
+        raise ValueError(f"beats_per_bar must be at least 1, not {beats_per_bar}")
+    if first_downbeat is not None and not 1 <= first_downbeat <= len(b):
+        raise ValueError(f"first_downbeat must be a beat from 1 to {len(b)}, not {first_downbeat}")
+    num = beats_per_bar or time_signature(b, downbeats)[0]
+    start = first_downbeat - 1 if first_downbeat is not None else first
+    return b, b[start::num]
+
+
 @dataclass(frozen=True)
 class BarLayout:
     bars: list[list[int]]  # beat indices per bar, in order

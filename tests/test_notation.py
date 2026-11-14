@@ -423,3 +423,60 @@ def test_bar_map_expanded_along_the_written_bars_gives_back_every_song_bar():
     assert len(folded.bars) == len(plain) == 6
     for song_bar, bar in zip(plain, folded.bars, strict=True):
         assert pitches(written[bar.written]) == pitches(song_bar)
+
+
+def test_half_then_double_tempo_is_the_original_grid():
+    beats, downbeats = notation.corrected_grid(BEATS, DOWNBEATS, tempo="half")
+    assert beats == BEATS[::2] and downbeats == DOWNBEATS
+    beats, downbeats = notation.corrected_grid(beats, downbeats, tempo="double")
+    assert beats == pytest.approx(BEATS) and downbeats == DOWNBEATS
+
+
+def test_double_then_half_tempo_is_the_original_grid():
+    doubled = notation.corrected_grid(BEATS, DOWNBEATS, tempo="double")
+    assert len(doubled[0]) == 2 * len(BEATS) - 1
+    assert notation.corrected_grid(*doubled, tempo="half") == (BEATS, DOWNBEATS)
+
+
+def test_half_tempo_keeps_a_downbeat_on_an_odd_beat_and_loses_no_beat_at_the_start():
+    downbeats = BEATS[1:-1:4]
+    beats, _ = notation.corrected_grid(BEATS, downbeats, tempo="half")
+    assert beats[0] == -0.5 and beats[1:] == BEATS[1::2]  # one beat added before the song
+    layout = notation.bar_layout(beats, downbeats)
+    assert layout.num == 2 and layout.pickup == 1
+
+
+def test_meter_override_sets_the_beats_per_bar():
+    beats, downbeats = notation.corrected_grid(BEATS, DOWNBEATS, beats_per_bar=3)
+    assert beats == BEATS and downbeats == BEATS[0::3]
+    layout = notation.bar_layout(beats, downbeats)
+    assert (layout.num, layout.pickup) == (3, 0)
+
+
+def test_first_downbeat_override_sets_the_pickup():
+    _, downbeats = notation.corrected_grid(BEATS, DOWNBEATS, first_downbeat=2)
+    assert downbeats == BEATS[1::4]
+    layout = notation.bar_layout(BEATS, downbeats)
+    assert (layout.num, layout.pickup) == (4, 1)
+
+
+def test_corrections_combine_tempo_meter_and_downbeat():
+    beats, downbeats = notation.corrected_grid(
+        BEATS, DOWNBEATS, tempo="double", beats_per_bar=6, first_downbeat=3
+    )
+    assert downbeats == beats[2::6]
+    layout = notation.bar_layout(beats, downbeats)
+    assert (layout.num, layout.pickup) == (6, 2)
+
+
+def test_no_correction_keeps_the_grid():
+    assert notation.corrected_grid(BEATS, DOWNBEATS) == (BEATS, DOWNBEATS)
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [{"tempo": "triple"}, {"beats_per_bar": 0}, {"first_downbeat": 0}, {"first_downbeat": 99}],
+)
+def test_impossible_corrections_are_rejected(kw):
+    with pytest.raises(ValueError):
+        notation.corrected_grid(BEATS, DOWNBEATS, **kw)

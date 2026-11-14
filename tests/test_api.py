@@ -647,6 +647,77 @@ def test_notate_returns_the_bar_map(tmp_path, monkeypatch):
     assert [b.written for b in plain.bars] == [1, 2]
 
 
+def test_corrections_change_the_bars_but_never_the_hits(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)  # 8 beats of 0.5 s, 4/4
+    target = tmp_path / "o.musicxml"
+    plain = api.notate(audio, target, pdf=False, cache_dir=tmp_path)
+    fixed = api.Corrections(beats_per_bar=2, repeats=False)
+    corrected = api.notate(audio, target, pdf=False, cache_dir=tmp_path, corrections=fixed)
+    assert [(b.start, b.end, b.written) for b in corrected.bars] == [
+        (0.0, 1.0, 1),
+        (1.0, 2.0, 2),
+        (2.0, 3.0, 3),
+        (3.0, 4.0, 4),
+    ]
+    assert "<beats>2</beats>" in target.read_text()
+    assert corrected.transcription == plain.transcription
+
+
+def test_corrections_take_over_simplify_and_repeats(tmp_path, monkeypatch):
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    target = tmp_path / "o.musicxml"
+    by_parameter = api.notate(audio, target, pdf=False, repeats=False, cache_dir=tmp_path)
+    folded = api.notate(
+        audio, target, pdf=False, repeats=False, cache_dir=tmp_path, corrections=api.Corrections()
+    )
+    assert [b.written for b in by_parameter.bars] == [1, 2]
+    assert [b.written for b in folded.bars] == [1, 1]
+
+
+def test_a_correction_on_a_cached_song_starts_no_adapter(tmp_path, monkeypatch):
+    """Fast mode with both results in the cache: every correction re-engraves only."""
+    import json
+
+    import mido
+
+    from stickler import adapters as ad
+
+    root = tmp_path / "adapters"
+    specs = [
+        _plain_adapter(root, "transcribers", "adtof"),
+        _plain_adapter(root, "beats", "beat_this"),
+    ]
+    for spec in specs:
+        ad.setup_adapter(spec)
+    audio = tmp_path / "song.wav"
+    audio.write_bytes(b"x")
+    adtof_dir = runner.cache_dir_for(tmp_path / "cache", specs[0], audio)
+    beats_dir = runner.cache_dir_for(tmp_path / "cache", specs[1], audio)
+    for folder in (adtof_dir, beats_dir):
+        folder.mkdir(parents=True)
+        (folder / "meta.json").write_text("{}")
+    mid = mido.MidiFile(ticks_per_beat=480)
+    track = mido.MidiTrack()
+    mid.tracks.append(track)
+    track.extend(
+        mido.Message("note_on", channel=9, note=36, velocity=90, time=480) for _ in range(8)
+    )
+    mid.save(adtof_dir / "drums.mid")
+    beats = [k * 0.5 for k in range(17)]
+    (beats_dir / "beats.json").write_text(json.dumps({"beats": beats, "downbeats": beats[:-1:4]}))
+    monkeypatch.setattr(ad, "run_adapter", lambda *a, **kw: pytest.fail("an adapter was started"))
+    kw = {"pdf": False, "cache_dir": tmp_path / "cache", "adapters_root": root}
+    for c in (
+        api.Corrections(tempo="half"),
+        api.Corrections(tempo="double"),
+        api.Corrections(beats_per_bar=3),
+        api.Corrections(first_downbeat=2),
+        api.Corrections(simplify=False, repeats=False),
+    ):
+        result = api.notate(audio, tmp_path / "o.musicxml", corrections=c, **kw)
+        assert len(result.transcription.hits) == 8
+
+
 def test_runner_says_when_a_result_comes_from_the_cache(tmp_path):
     from stickler import adapters as ad
 
@@ -1251,3 +1322,9 @@ def test_finale_after_the_last_spot(monkeypatch, tmp_path):
     api.record_verdict(1, "yes", listening_dir=where)
     text = api.finale(**args)
     assert "SHOWDOWN" in text and "Badges:" in text
+
+
+@pytest.mark.parametrize("kw", [{"tempo": "triple"}, {"beats_per_bar": 0}, {"first_downbeat": -1}])
+def test_impossible_corrections_fail_before_any_model_runs(kw):
+    with pytest.raises(ValueError):
+        api.Corrections(**kw)
