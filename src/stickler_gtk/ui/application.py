@@ -32,6 +32,10 @@ ACCELS = {
     "win.zoom-in": ["<Control>plus", "<Control>equal", "<Control>KP_Add"],
     "win.zoom-out": ["<Control>minus", "<Control>KP_Subtract"],
     "win.zoom-reset": ["<Control>0", "<Control>KP_0"],
+    "win.play": ["space"],
+    "win.previous-bar": ["Left"],
+    "win.next-bar": ["Right"],
+    "win.to-start": ["Home"],
 }
 
 

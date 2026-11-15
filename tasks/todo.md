@@ -492,7 +492,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests (fake player: volumes per mode, seek target of a click in repeats, the marker after a position); by hand: clicks in time with the drums (owner)
   - Dependencies: 55, 57 · Files: `src/stickler_gtk/ui/{playbar,window,sheet}.py`, `po/*`, tests
 
-- [ ] **Task 59: Keyboard, narrow window, stopping** (S)
+- [x] **Task 59: Keyboard, narrow window, stopping** (S): done 2026-11-15. Space, Left, Right and Home are app accelerators (`win.play`, `win.previous-bar`, `win.next-bar`, `win.to-start`) and in the shortcuts dialog; the two-row bar came with Task 58; playback stops when the result page is left (another song, an export) and on close, which quitting goes through.
   - Acceptance:
     - Space, Left, Right, Home (in the shortcuts dialog); the bar in two rows below the narrow breakpoint; playback stops on a new song, close and quit; German complete.
   - Verify: widget tests (keys through actions, stop on close); by hand at 400 px

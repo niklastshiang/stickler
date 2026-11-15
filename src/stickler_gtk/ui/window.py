@@ -200,6 +200,9 @@ class Window(Adw.ApplicationWindow):
             ("export-drums", self.export_drums),
             ("close", self.close),
             ("play", self.playbar.toggle),
+            ("previous-bar", lambda: self.step_bars(-1)),
+            ("next-bar", lambda: self.step_bars(1)),
+            ("to-start", lambda: self.playbar.seek(0.0)),
             ("zoom-in", lambda: self.sheet.set_zoom(zoom.zoom_in(self.sheet.zoom))),
             ("zoom-out", lambda: self.sheet.set_zoom(zoom.zoom_out(self.sheet.zoom))),
             ("zoom-reset", lambda: self.sheet.set_zoom(1.0)),
@@ -311,6 +314,12 @@ class Window(Adw.ApplicationWindow):
         """Marks the bar sounding at `seconds` (for `playback`, which follows the song)."""
         if isinstance(self.state, session.Result):
             self.sheet.mark_time(self.state.notation.bars, seconds)
+
+    def step_bars(self, by: int) -> None:
+        """Left and Right: one song bar back or on."""
+        if isinstance(self.state, session.Result):
+            bars = self.state.notation.bars
+            self.playbar.seek(playback.step(bars, self.playbar.now(), by))
 
     def jump_to_bar(self, written: int) -> None:
         """A click on a bar: playback goes to its next pass (owner, 2026-11-15)."""
@@ -493,6 +502,9 @@ class Window(Adw.ApplicationWindow):
             "export-drums",
             "open-with",
             "play",
+            "previous-bar",
+            "next-bar",
+            "to-start",
         ):
             self.actions[name].set_enabled(is_result)
         if not is_result:

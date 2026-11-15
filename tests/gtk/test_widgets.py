@@ -267,9 +267,12 @@ def test_the_appearance_switch_applies_and_remembers_the_choice():
 def test_the_shortcuts_dialog_lists_every_shortcut_and_about_names_the_version():
     import stickler
     from stickler_gtk.ui import menu
+    from stickler_gtk.ui.application import ACCELS
 
-    assert len(menu.SHORTCUTS) == 10
-    assert {key for key, _title in menu.SHORTCUTS} >= {"<Control>o", "<Control>q", "F10"}
+    assert len(menu.SHORTCUTS) == 14
+    keys = {key for key, _title in menu.SHORTCUTS}
+    assert keys >= {"<Control>o", "<Control>q", "F10", "space", "Left", "Right", "Home"}
+    assert all(any(key in accels for accels in ACCELS.values()) for key in keys - {"F10"})
     assert menu.shortcuts_dialog() is not None
     assert menu.about_dialog().get_version() == stickler.__version__
 
@@ -617,3 +620,36 @@ def test_a_narrow_window_shows_the_playback_bar_in_two_rows(monkeypatch, tmp_pat
         assert _wait(lambda: not bar.narrow) and bar.bar.get_visible()
     finally:
         window.close()
+
+
+def test_the_keys_play_and_move_bar_by_bar(monkeypatch, tmp_path):
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        bar = window.playbar
+        window.activate_action("win.next-bar", None)
+        window.activate_action("win.next-bar", None)
+        assert bar.time.get_label() == "0:04" and window.sheet.marked == 3
+        window.activate_action("win.previous-bar", None)
+        assert bar.time.get_label() == "0:02"
+        window.activate_action("win.play", None)
+        player = _FakePlayer.made[-1]
+        assert player.at == 2.0  # playing starts where the keys went
+        window.activate_action("win.next-bar", None)
+        assert player.at == 4.0
+        window.activate_action("win.to-start", None)
+        assert player.at == 0.0 and player.is_playing
+    finally:
+        window.close()
+
+
+def test_playback_stops_for_another_song_and_on_close(monkeypatch, tmp_path):
+    window = _playing_window(monkeypatch, tmp_path)
+    window.activate_action("win.play", None)
+    player = _FakePlayer.made[-1]
+    window.open_song(tmp_path / "other.flac")
+    assert player.loaded is None and not player.is_playing
+    assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+    window.activate_action("win.play", None)
+    assert player.is_playing
+    window.close()
+    assert player.loaded is None and not player.is_playing
