@@ -644,13 +644,13 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 80 · Files: `src/stickler_gtk/ui/{menu,window,application}.py`, `po/*`, tests
 
 ### Checkpoint O
-- [ ] All 4 success criteria of SPEC.md `polish` met (the owner listens, prints and removes)
+- [x] All 4 success criteria of SPEC.md `polish` met (the owner listens, prints and removes; 2026-11-15). Found on the way and fixed: removal took the shipped model sources too (b5f5b78), libsndfile failed on some MP3s (e904c8e), the model download overshot its size (c07afbc)
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
-- [ ] **Later release: click volume follows the song** (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.
-- [ ] **Later release: "Remove Downloaded Models…" in the app** (owner, 2026-11-15): a menu entry that deletes the models, their environments and the results after asking, so an AppImage user need not know the folders.
-- [ ] **Later release: the band's name in the PDF** (owner, 2026-11-15): the engraved page shows the title but not the artist.
+- [x] **Later release: click volume follows the song** (done in module `polish`) (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.
+- [x] **Later release: "Remove Downloaded Models…" in the app** (done in module `polish`) (owner, 2026-11-15): a menu entry that deletes the models, their environments and the results after asking, so an AppImage user need not know the folders.
+- [x] **Later release: the band's name in the PDF** (done in module `polish`) (owner, 2026-11-15): the engraved page shows the title but not the artist.
 - [ ] **Lessons learned, once most of the project is done** (owner, 2026-11-15; first noted for after release 5): write down what building the app taught us (mistakes, detours, what worked), so a comparable project starts faster and more directly.
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
