@@ -20,3 +20,19 @@ Distinguishing major, minor and patch brings no benefit here. The project owner 
 ## Consequences
 - The version jump does not show whether a release is incompatible. What changed is stated in the release description.
 - A test checks that the version is an integer and that the package and `pyproject.toml` match.
+
+## Update 2026-11-15: releases of the app
+
+Stickler is no longer only a private tool: from release 5 on, every release ships the desktop app
+as a `.flatpak` and an AppImage (`.github/workflows/release.yml`). A release now also needs, before
+step 1:
+
+- the AppStream MetaInfo's `<release>` entry and `CITATION.cff`'s `version` and `date-released`;
+- `scripts/ai_usage.py` for the README's AI cost table, `scripts/badges.py` for the key figures;
+- every document checked against the state of the code (README, CONTRIBUTING, CLI guide,
+  requirements, SPEC statuses).
+
+After step 3 the workflow builds both files and attaches them to the release (a draft if none
+exists yet): check that both are there before publishing it, with release notes that say how to
+install each.
+

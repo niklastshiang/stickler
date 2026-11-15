@@ -2,7 +2,8 @@
 
 `stickler` turns songs into drum sheet music and benchmarks the models behind it. This guide
 covers every command; what you need on your machine is listed in the
-[requirements](requirements.md), the results in the [report](report.md).
+[requirements](requirements.md), the results in the [report](report.md). For the desktop app
+(no terminal needed), see the README's [install section](../README.md#-install-the-app).
 
 Inside the project folder, commands run as `uv run stickler …`. To use `stickler` from any folder,
 install it once as a tool (`--editable`: later changes to the code apply right away):
@@ -28,8 +29,8 @@ uv run stickler setup                    # every model's environment and weights
 uv run stickler doctor                   # what is still missing?
 ```
 
-`setup` builds one environment per model under `adapters/<stage>/<model>/` and downloads its
-weights; this takes a while and several GB (see [requirements](requirements.md)). Options:
+`setup` builds one environment per model under `adapters/<stage>/<model>/` (Python 3.14 for
+ADTOF, Beat This! and Demucs, which the app uses; 3.12 for the others) and downloads its weights; this takes a while and several GB (see [requirements](requirements.md)). Options:
 
 | Option | Meaning |
 |---|---|
@@ -265,7 +266,7 @@ git config core.hooksPath .githooks      # run `check.sh task` before every comm
 
 | Path | Content | In git |
 |---|---|---|
-| `config/` | benchmark configurations, class schemes | yes |
+| `config/` | benchmark configurations | yes |
 | `adapters/<stage>/<model>/` | one folder per model: `run.py`, `setup.py`, `pyproject.toml`, README | yes (environments and weights not) |
 | `references/own/` | descriptions of your own songs | yes |
 | `data/` | datasets, your recordings and scores, alignments | no |

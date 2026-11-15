@@ -67,7 +67,7 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
     return {
         "facts": [
             ("license", "license", "GPL-3.0"),
-            ("python", "python", "3.12"),
+            ("python", "python", "3.12 · 3.14"),
             ("uv", "environments", "uv"),
             ("models", "models", "7 adapters"),
             ("tests", "tests", f"{f['tests']} + {f['smoke']} smoke"),

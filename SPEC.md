@@ -594,15 +594,18 @@ marker.show(bar.written)
    - **The weights' host can be down.** First-run setup depends on third-party servers
      (`cloud.cp.jku.at` for Beat This!, Hugging Face for others). `setup-assistant` must say
      which server failed and offer to retry; whether to mirror the Beat This! checkpoint
-     depends on its licence (not checked).
+     depends on its licence (not checked). (Update 2026-11-15: MIT; the mirror release
+     `beat-this-final0` exists, see `setup-assistant`.)
 3. **Python:** the harness is widened to 3.12–3.14 now. Raising the adapters is planned for the
    future (`tasks/todo.md`, "Later"), together with a benchmark rerun, because it changes every
-   cache key.
+   cache key. (Update 2026-11-15: the app's three models moved to 3.14 in `packaging` without a
+   rerun, their results identical and the cache rekeyed; the other four stay on 3.12.)
 
 #### Open questions
 
 - Which Python the GNOME runtime ships at the time of `packaging` is not checked yet; the
-  3.12–3.14 range covers the development machine and is widened again if needed.
+  3.12–3.14 range covers the development machine and is widened again if needed. (Answered
+  2026-11-15: GNOME 51 ships Python 3.14.)
 
 ### Module `design`
 
@@ -670,8 +673,8 @@ is drawn here; a change of a screen is agreed on the canvas first and copied to 
 
 ### Module `app-shell`
 
-> Status: **approved** by the owner on 2026-11-14. Plan: `tasks/plan.md` ("GTK application:
-> `app-shell`"), tasks 41–48 in `tasks/todo.md`.
+> Status: **done** (Checkpoint I). Approved by the owner on 2026-11-14. Plan: `tasks/plan.md`
+> ("GTK application: `app-shell`"), tasks 41–48 in `tasks/todo.md`.
 
 #### Assumptions
 
@@ -864,8 +867,8 @@ def _on_progress(self, step: api.Step) -> None:  # called on the worker thread
 
 ### Module `sheet-view`
 
-> Status: **approved** by the owner on 2026-11-15 (Verovio as a new dependency of the app
-> included). Plan: `tasks/plan.md` ("GTK application: `sheet-view`"), tasks 49–54 in
+> Status: **done** (Checkpoint J). Approved by the owner on 2026-11-15 (Verovio as a new
+> dependency of the app included). Plan: `tasks/plan.md` ("GTK application: `sheet-view`"), tasks 49–54 in
 > `tasks/todo.md`.
 
 #### Assumptions
@@ -1413,7 +1416,7 @@ adapters/{transcribers/adtof,beats/beat_this,separators/demucs}/  # Python 3.14
 
 #### Success criteria
 
-1. A manual CI run produces `Stickler.flatpak` and `Stickler-x86_64.AppImage`; a release tag
+1. A manual CI run produces `Stickler-<version>.flatpak` and `Stickler-<version>-x86_64.AppImage`; a release tag
    attaches both to its release.
 2. The Flatpak installs on the owner's machine, the setup assistant sets up the models inside
    the sandbox, and a song can be opened, analysed, played and exported (owner).

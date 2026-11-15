@@ -10,6 +10,7 @@ later for quantization into notation.
 | Code | https://github.com/CPJKU/beat_this, PyPI `beat-this==1.1.0` (last push 2026-05-28) |
 | Weights | Checkpoint `final0` (library default), 78 MB, SHA-256 `8c328b45…8331`: from cloud.cp.jku.at, else from Stickler's copy of the same file in the release `beat-this-final0` (the JKU server was down on 2026-11-14 and 2026-11-15; `download.py`) |
 | License | MIT (code and weights) |
+| Python | 3.14 since 2026-11-15 (`.python-version`): the app uses this model, and the Flatpak runs it on the GNOME runtime's Python; results identical to 3.12 |
 
 ## Usage
 ```bash

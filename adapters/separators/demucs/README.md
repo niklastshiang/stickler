@@ -8,6 +8,7 @@ Hybrid Transformer Demucs (v4), variant `htdemucs_ft`, separates the drum stem f
 | Code | https://github.com/adefossez/demucs (maintained fork, ADR 0001), PyPI `demucs==4.1.0` (release 2026-07-11), as of commit `829d218` (2026-10-26) |
 | Weights | Hugging Face, loaded via `demucs.api` (since v4.1.0), stored in `weights/` |
 | License | MIT (code and weights) |
+| Python | 3.14 since 2026-11-15 (`.python-version`): the app uses this model, and the Flatpak runs it on the GNOME runtime's Python; results identical to 3.12 |
 | Stems | drums, bass, other, vocals. Only `drums` is used |
 
 ## Usage

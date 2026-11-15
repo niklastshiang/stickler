@@ -6,7 +6,8 @@ not part of that.
 
 ## Welcome: issues
 
-- **Bugs:** what you ran, what happened, and the output of `uv run stickler doctor`.
+- **Bugs:** what you ran, what happened, and the output of `uv run stickler doctor`. In the app:
+  its version (About Stickler), Flatpak or AppImage, and the error page's technical details.
 - **Model suggestions:** an open-source drum separation or transcription model worth testing,
   with a link, its licence and how actively it is maintained.
 - **Results on your music:** how Fast or Quality did on songs you know, what went wrong.

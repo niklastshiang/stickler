@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: GPL-3.0-or-later" /></a>
-  <img src="docs/badges/facts-python.svg" alt="python 3.12" />
+  <img src="docs/badges/facts-python.svg" alt="python 3.12 · 3.14" />
   <img src="docs/badges/facts-uv.svg" alt="environments: uv" />
   <img src="docs/badges/facts-models.svg" alt="7 model adapters" />
   <img src="docs/badges/facts-tests.svg" alt="tests" />
@@ -64,8 +64,9 @@ model lives in its own adapter with its own Python environment and competes agai
 references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms), on benchmark
 data and, above all, on real music. The answer is in: see [`> RESULTS`](#-results).
 
-**Next:** new candidate models; after them, the desktop application with a GTK 4 interface,
-shipped as Flatpak and AppImage.
+**The desktop app** writes the drums of a song as sheet music for drummers who never open a
+terminal: drop a song in, play along with the detected hits, export a PDF. It comes as a Flatpak
+and an AppImage with every release, see [`> INSTALL THE APP`](#-install-the-app).
 
 Stickler only uses open-source models from actively maintained projects. No cloud service; everything runs on your own machine.
 
@@ -92,7 +93,8 @@ A dream come true.
 > **⚠ NOT PERFECT.** About three in four hits come out right on real rock, metal and pop
 > recordings. The notes are a starting point to correct in MuseScore, not a finished score.
 
-> **⚠ MODEL LICENSES.** Stickler never ships model weights; `stickler setup` downloads them, and
+> **⚠ MODEL LICENSES.** Stickler never ships model weights; the app's first start (or
+> `stickler setup`) downloads them, and
 > each comes with its own license. Some are non-commercial (ADTOF, MuScriptor, presumably
 > BS-RoFormer), see [ADR 0002](docs/adr/0002-nc-lizenzen.md).
 
@@ -265,16 +267,24 @@ scripts/check.sh task
 - [x] Error analysis on real songs: confused, missed and invented hits, reference errors judged blind by ear (`stickler errors`, `stickler listen`, with badges)
 - [x] **Release 3:** honest numbers
 
+**Release 4**
+
+- [x] Groundwork for the app: progress, cancelling and setup for every long step
+
+**Release 5: the application**
+
+- [x] Design the interface together, following the GNOME Human Interface Guidelines
+- [x] Application with a GTK 4 and libadwaita interface: sheet music, playback with the detected hits, corrections, export of PDF, MusicXML and the separated drum track, app icon in GNOME style
+- [x] English, German and Spanish
+- [x] A first-run assistant that downloads the models
+- [x] Release pipeline: Flatpak and AppImage with every release
+
 **Next**
 
+- [ ] Click volume that follows the song's loudness; the band's name in the PDF; removing the models from the app
+- [ ] Quality mode in the app (today it runs Fast)
 - [ ] New candidate models: DrumSep with onset detection, MuScriptor large, models from 2026
-
-**Afterwards: the application**
-
 - [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
-- [ ] Design the interface together, following the GNOME Human Interface Guidelines
-- [ ] Application with a GTK 4 and libadwaita interface, Fast/Quality modes, app icon in GNOME style, export of the separated drum track
-- [ ] Release pipeline: Flatpak and AppImage with every release
 - [ ] Ultrareview of the finished application
 
 ---
@@ -323,7 +333,8 @@ rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler
 ### Prerequisites
 
 Stickler needs **`uv`** for the Python environments and **`ffmpeg`** to decode audio. Everything
-else, including Python 3.12 and PyTorch, `uv` fetches for each adapter itself.
+else, including Python (3.14 for ADTOF, Beat This! and Demucs, which the app uses; 3.12 for the
+four benchmark-only models) and PyTorch, `uv` fetches for each adapter itself.
 
 **Fedora, Bluefin and related**
 
@@ -411,15 +422,18 @@ On a subscription the real cost differs; this is what the same work would cost o
 ```
 stickler/
 ├── src/stickler/        # Harness: api, cli, runner, align, onsets, evaluate, datasets/
+├── src/stickler_gtk/    # the GTK app: logic/ (no GTK, tested) and ui/ (widgets)
 ├── adapters/            # one folder per model, each with its own uv environment
 │   ├── _common/         # shared helpers: device selection, meta.json, drum MIDI
 │   ├── separators/      # demucs, roformer
 │   ├── transcribers/    # adtof, adt_str, muscriptor_s, muscriptor_m
 │   └── beats/           # beat_this
 ├── config/              # benchmark, own and enst configs
+├── po/                  # translations (German, Spanish), po/LINGUAS lists them
+├── packaging/           # Flatpak manifest, AppStream MetaInfo, desktop file, icons, font
 ├── references/own/      # own songs: title, recording, manual exclusions
 ├── tests/               # pytest; smoke tests with real models under -m adapters
-├── scripts/             # check.sh, floor_guard.py
+├── scripts/             # check.sh, floor_guard.py, gtk.sh (run the app), appimage.sh, i18n.sh, …
 ├── docs/                # report, CLI guide, requirements; adr/: decision records
 ├── tasks/               # plan and task list
 └── data/ cache/ results/   # datasets, intermediate results, evaluation (not in the repo)
@@ -435,7 +449,8 @@ covers the harness, adapters, scripts, tests, the app and the documentation. You
 change and share it, also commercially; whoever passes on a changed version must pass it on under
 the same licence, with its source code. Copyright © 2026 Niklas Tshiang Tshiananga.
 
-**The models** are not affected by this. Stickler only downloads them on `stickler setup`; they
+**The models** are not affected by this. Stickler only downloads them when you agree on the
+app's first start or run `stickler setup`; they
 are not in the repository and come with their own licenses, see
 [`> CANDIDATES`](#-candidates). Some weights are non-commercial
 ([ADR 0002](docs/adr/0002-nc-lizenzen.md)): whoever downloads them is bound by those terms, and a

@@ -346,7 +346,10 @@ owner decided against fine-tuning.
 
 ## 9. Reproduce
 
-See the [CLI guide](cli.md) and the [requirements](requirements.md). In short:
+See the [CLI guide](cli.md) and the [requirements](requirements.md). The numbers here were measured
+with every model on Python 3.12. Since 2026-11-15 `stickler setup` builds ADTOF, Beat This! and
+Demucs on 3.14 (for the app); their results on Eye of the Tiger were identical, and Demucs differs
+from run to run anyway (its random shift). In short:
 
 ```console
 uv sync
