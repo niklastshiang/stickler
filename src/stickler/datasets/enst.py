@@ -24,6 +24,8 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
+from stickler import audio
+
 log = logging.getLogger(__name__)
 
 URL = "https://zenodo.org/records/21506051/files/enst_drums_v1_1.tar.zst?download=1"
@@ -127,7 +129,7 @@ def prepare(target: Path) -> int:
             "[d][a]amix=inputs=2:normalize=0:duration=longest"
         )
         cmd = ["ffmpeg", "-v", "error", "-y", "-i", str(wet), "-i", str(acc)]
-        subprocess.run(
+        audio.media_tool(
             [*cmd, "-filter_complex", mix, "-c:a", "pcm_s16le", str(tmp)],
             check=True,
             capture_output=True,

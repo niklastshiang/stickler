@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
 import wave
@@ -15,6 +16,12 @@ import numpy as np
 # Anything else ffmpeg can decode (M4A/AAC, WMA, …) is converted to FLAC first.
 MODEL_READABLE = {".wav", ".flac", ".mp3", ".ogg", ".oga", ".opus", ".aiff", ".aif"}
 DECODED_DIR = "_decoded"
+
+
+def media_tool(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
+    """Runs ffmpeg or ffprobe with C numbers: a localized build writes "245,640000" for 245.64
+    under a German locale (Arch's ffmpeg 9.0 in the AppImage did), which nothing could parse."""
+    return subprocess.run(cmd, env={**os.environ, "LC_ALL": "C"}, **kwargs)
 
 
 def readable(path: Path, cache: Path) -> Path:
@@ -30,7 +37,7 @@ def readable(path: Path, cache: Path) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_suffix(".part.flac")
     cmd = ["ffmpeg", "-v", "error", "-y", "-i", str(path), "-map", "0:a:0", "-c:a", "flac"]
-    proc = subprocess.run([*cmd, str(tmp)], capture_output=True, text=True)
+    proc = media_tool([*cmd, str(tmp)], capture_output=True, text=True)
     if proc.returncode != 0:
         tmp.unlink(missing_ok=True)
         raise RuntimeError(f"ffmpeg cannot decode {path.name}: {proc.stderr.strip()[-200:]}")
@@ -41,7 +48,7 @@ def readable(path: Path, cache: Path) -> Path:
 def duration(path: Path) -> float:
     """Duration in seconds; RuntimeError if ffprobe cannot read the file."""
     cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0"]
-    proc = subprocess.run([*cmd, str(path)], capture_output=True, text=True)
+    proc = media_tool([*cmd, str(path)], capture_output=True, text=True)
     try:
         return float(proc.stdout.strip())
     except ValueError:
@@ -53,13 +60,13 @@ def load_mono(path: Path, sr: int = 22050) -> np.ndarray:
     """Decodes any audio via ffmpeg to float32 at sample rate `sr` and averages the
     channels (ffmpeg's own downmixing preserves power, so it is louder than the mean)."""
     probe = ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries"]
-    info = subprocess.run(
+    info = media_tool(
         [*probe, "stream=channels", "-of", "default=nw=1:nk=1", str(path)],
         capture_output=True,
         text=True,
     )
     cmd = ["ffmpeg", "-v", "error", "-i", str(path), "-ar", str(sr), "-f", "f32le", "-"]
-    proc = subprocess.run(cmd, capture_output=True)
+    proc = media_tool(cmd, capture_output=True)
     # first integer only: with csv output, some MP3s (side data) yield "2," instead of "2"
     found = re.match(r"\s*(\d+)", info.stdout or "")
     if info.returncode != 0 or proc.returncode != 0 or not proc.stdout or not found:
@@ -110,7 +117,7 @@ def write_wav(path: Path, signal: np.ndarray, sr: int) -> Path:
 
 def tags(path: Path) -> dict[str, str]:
     """Title and artist from the file's tags (case-insensitive keys); {} if there are none."""
-    proc = subprocess.run(
+    proc = media_tool(
         ["ffprobe", "-v", "error", "-show_entries", "format_tags", "-of", "json", str(path)],
         capture_output=True,
         text=True,

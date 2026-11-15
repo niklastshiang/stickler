@@ -1286,7 +1286,7 @@ def export_drum_track(stem: Path, dest: Path) -> Path:
     if dest.suffix.lower() == ".wav":
         shutil.copyfile(stem, dest)
         return dest
-    proc = subprocess.run(
+    proc = audio.media_tool(
         ["ffmpeg", "-v", "error", "-y", "-i", str(stem), str(dest)], capture_output=True, text=True
     )
     if proc.returncode != 0:

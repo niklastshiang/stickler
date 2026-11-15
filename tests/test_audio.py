@@ -170,3 +170,30 @@ def test_clicks_past_the_end_or_before_the_start_are_dropped_or_cut():
     signal = audio.clicks([(-0.1, 0), (0.995, 1), (5.0, 2)], sr, sr)
     assert len(signal) == sr and signal[int(0.995 * sr) :].any()  # cut at the end, not dropped
     assert not signal[: int(0.9 * sr)].any()
+
+
+def test_ffprobe_and_ffmpeg_run_with_c_numbers(monkeypatch, tmp_path):
+    """Arch's ffprobe 9.0 wrote "245,640000" under a German locale, and the AppImage could not
+    read a song's length (owner, 2026-11-15)."""
+    import re
+    import subprocess
+    from pathlib import Path
+
+    seen = {}
+
+    def run(cmd, **kw):
+        seen.update(kw)
+        return subprocess.CompletedProcess(cmd, 0, stdout="245.640000\n", stderr="")
+
+    monkeypatch.setenv("LC_ALL", "de_DE.UTF-8")
+    monkeypatch.setattr(audio.subprocess, "run", run)
+    assert audio.duration(tmp_path / "song.flac") == 245.64
+    assert seen["env"]["LC_ALL"] == "C"
+    src = Path(audio.__file__).parent
+    direct = [
+        f"{path.name}:{n}"
+        for path in src.rglob("*.py")
+        for n, line in enumerate(path.read_text().splitlines(), 1)
+        if re.search(r"subprocess\.run\(\s*\[\s*\"ff(mpeg|probe)\"", line)
+    ]
+    assert direct == [], "call ffmpeg/ffprobe through audio.media_tool"
