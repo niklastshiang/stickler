@@ -474,7 +474,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/gtk/test_playback.py tests/gtk/test_settings.py`
   - Dependencies: none · Files: `src/stickler_gtk/logic/{playback,settings,paths}.py`, tests
 
-- [ ] **Task 56: The player** (M)
+- [x] **Task 56: The player** (M): done 2026-11-15. Each branch converts to one format (F32, 48 kHz, stereo) before the `audiomixer`; seeks are FLUSH | ACCURATE and wait for the pipeline to settle; a song without its clicks plays alone. Tested with a real pipeline on `fakesink` in real time.
   - Acceptance:
     - `ui/player.py`: one pipeline mixing the song and the clicks, with `load`, `play`, `pause`, `seek`, `position`, `duration`, `set_volumes`, `stop`; an error on the bus reaches a callback.
   - Verify: a widget test with `fakesink` and a generated song: plays, the position advances, a seek lands within 50 ms, `stop` leaves the pipeline NULL
