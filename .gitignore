@@ -18,3 +18,7 @@ tests/fixtures/**/.setup-done
 tests/fixtures/**/weights/
 .claude/worktrees/
 .venv-gtk/
+
+# AppImage build (scripts/appimage.sh)
+/AppDir/
+/dist/

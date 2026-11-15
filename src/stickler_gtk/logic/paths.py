@@ -67,6 +67,22 @@ def results_cache(env: Mapping[str, str] = os.environ) -> Path:
     return cache_home(env) / "results" if packaged(env) else api.CACHE_DIR
 
 
+def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
+    """What an AppImage sets for itself (the Flatpak's manifest sets the same): where its
+    adapters' sources are, and that uv uses a Python of its own, never the AppImage's, whose
+    path changes with every mount. Values already set stay."""
+    if packaged(env) != "appimage":
+        return {}
+    import stickler_gtk
+
+    wanted = {
+        "STICKLER_ADAPTER_SOURCES": str(stickler_gtk.prefix(env=env) / "share/stickler/adapters"),
+        "UV_PYTHON_PREFERENCE": "only-managed",
+        "UV_PYTHON_DOWNLOADS": "automatic",
+    }
+    return {key: value for key, value in wanted.items() if key not in env}
+
+
 def adapter_sources(env: Mapping[str, str] = os.environ) -> Path | None:
     """The adapters' sources a packaged app ships (read-only), set by its launcher."""
     shipped = env.get("STICKLER_ADAPTER_SOURCES")

@@ -106,3 +106,22 @@ def test_the_shipped_adapter_sources_are_copied_without_touching_environments(tm
     assert setup.sync_adapters(shipped, models) == 1
     assert (target / "uv.lock").read_text() == "lock 2"
     assert (target / ".venv").is_dir() and (target / "weights" / "model.ckpt").read_bytes() == b"w"
+
+
+def test_an_appimage_sets_where_its_files_are_and_keeps_uv_off_its_own_python():
+    """Inside an AppImage the data lie in its folder ($SHARUN_DIR) and its Python's path changes
+    with every mount, so uv must use a Python of its own (SPEC.md, module `packaging`)."""
+    import stickler_gtk
+
+    env = {"APPIMAGE": "/x/Stickler.AppImage", "SHARUN_DIR": "/tmp/.mount_x"}
+    assert stickler_gtk.prefix(env=env) == Path("/tmp/.mount_x")
+    added = paths.packaged_env(env)
+    assert added == {
+        "STICKLER_ADAPTER_SOURCES": "/tmp/.mount_x/share/stickler/adapters",
+        "UV_PYTHON_PREFERENCE": "only-managed",
+        "UV_PYTHON_DOWNLOADS": "automatic",
+    }
+    chosen = {**env, "UV_PYTHON_PREFERENCE": "system"}
+    assert "UV_PYTHON_PREFERENCE" not in paths.packaged_env(chosen)  # the user's choice stays
+    assert paths.packaged_env({"FLATPAK_ID": "ng.tshia.Stickler"}) == {}  # set by the manifest
+    assert paths.packaged_env({}) == {}
