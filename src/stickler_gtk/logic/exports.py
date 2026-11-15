@@ -10,6 +10,7 @@ from pathlib import Path
 
 from stickler import api
 from stickler_gtk.i18n import _, ngettext
+from stickler_gtk.logic import paths
 
 # Demucs on the development laptop's CPU (docs/requirements.md: real-time factor 1.84)
 SEPARATION_PER_SECOND = 1.84
@@ -70,8 +71,20 @@ def drum_track(
     """Sets up the separator if `setup`, separates the drums (the transcription and beats come
     from the cache) and writes them to `dest` (FLAC, WAV, OGG or MP3 by its suffix)."""
     if setup:
-        api.setup_adapters(api.DRUM_TRACK_SEPARATOR, progress=progress, cancel=cancel)
-    transcription = api.transcribe_song(song, drums=True, progress=progress, cancel=cancel)
+        api.setup_adapters(
+            api.DRUM_TRACK_SEPARATOR,
+            adapters_root=paths.adapters_root(),
+            progress=progress,
+            cancel=cancel,
+        )
+    transcription = api.transcribe_song(
+        song,
+        drums=True,
+        adapters_root=paths.adapters_root(),
+        cache_dir=paths.results_cache(),
+        progress=progress,
+        cancel=cancel,
+    )
     if transcription.stem is None:
         raise RuntimeError("no drum track was separated")
     return api.export_drum_track(transcription.stem, dest)

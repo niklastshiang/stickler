@@ -40,6 +40,7 @@ def analyse(
         cancel=cancel,
         corrections=corrections,
         adapters_root=paths.adapters_root(),
+        cache_dir=paths.results_cache(),
     )
     if clicks is not None:
         with contextlib.suppress(OSError, RuntimeError):

@@ -508,7 +508,8 @@ class Window(Adw.ApplicationWindow):
         result = self.state
         if not isinstance(result, session.Result):
             return
-        setup = api.DRUM_TRACK_SEPARATOR in api.mode_ready(drums=True)
+        missing = api.mode_ready(drums=True, adapters_root=paths.adapters_root())
+        setup = api.DRUM_TRACK_SEPARATOR in missing
         cost = exports.drum_track_cost(result.info.seconds, download=setup)
         alert = Adw.AlertDialog(heading=_("Save the Drum Track?"), body=cost.text)
         alert.add_response("cancel", _("Cancel"))
@@ -651,8 +652,14 @@ class Window(Adw.ApplicationWindow):
             elif page == "download":
                 self._start_setup(tuple(missing), None)
 
+        def check() -> list[str]:
+            shipped = paths.adapter_sources()
+            if shipped is not None:  # a packaged app: its models folder gets new sources first
+                setup.sync_adapters(shipped, root)
+            return api.mode_ready(adapters_root=root)
+
         worker.run(
-            lambda: api.mode_ready(adapters_root=root),
+            check,
             checked,
             lambda exc: self.toast(_("Could not check the models: {reason}").format(reason=exc)),
         )

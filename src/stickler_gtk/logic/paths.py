@@ -9,6 +9,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from stickler import api
+from stickler_gtk import APP_ID
 
 AUDIO_SUFFIXES = {".mp3", ".flac", ".wav", ".ogg", ".oga", ".opus", ".m4a", ".aac", ".aif", ".aiff"}
 
@@ -35,8 +36,38 @@ def hits_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
     return cache_home(env) / "hits" / f"{score_path(song, env).stem}.wav"
 
 
+def packaged(env: Mapping[str, str] = os.environ) -> str | None:
+    """ "flatpak" or "appimage" when installed as one; None when run from the checkout."""
+    if env.get("FLATPAK_ID") == APP_ID:
+        return "flatpak"
+    if env.get("APPIMAGE"):
+        return "appimage"
+    return None
+
+
+def _data_home(env: Mapping[str, str]) -> Path:
+    base = env.get("XDG_DATA_HOME") or str(
+        Path(env.get("HOME") or Path.home()) / ".local" / "share"
+    )
+    return Path(base) / "stickler"
+
+
 def adapters_root(env: Mapping[str, str] = os.environ) -> Path:
-    """Where the models are set up: $STICKLER_ADAPTERS, so a fresh setup can be tried without
-    touching the models in use, else the library's default."""
+    """Where the models are set up: $STICKLER_ADAPTERS (to try a fresh setup without touching
+    the models in use); in a packaged app its data folder (SPEC.md, module `packaging`); from
+    the checkout the library's folder, as before."""
     chosen = env.get("STICKLER_ADAPTERS")
-    return Path(chosen) if chosen else api.ADAPTERS_ROOT
+    if chosen:
+        return Path(chosen)
+    return _data_home(env) / "adapters" if packaged(env) else api.ADAPTERS_ROOT
+
+
+def results_cache(env: Mapping[str, str] = os.environ) -> Path:
+    """The models' cached results: the app's cache folder when packaged, else the library's."""
+    return cache_home(env) / "results" if packaged(env) else api.CACHE_DIR
+
+
+def adapter_sources(env: Mapping[str, str] = os.environ) -> Path | None:
+    """The adapters' sources a packaged app ships (read-only), set by its launcher."""
+    shipped = env.get("STICKLER_ADAPTER_SOURCES")
+    return Path(shipped) if shipped else None

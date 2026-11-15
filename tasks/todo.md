@@ -590,7 +590,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: per adapter, the comparison; `stickler doctor`; `scripts/check.sh task`
   - Dependencies: none · Files: `adapters/*/*/{pyproject.toml,uv.lock}`, `.python-version` if needed, README notes
 
-- [ ] **Task 73: Packaged paths** (S)
+- [x] **Task 73: Packaged paths** (S): done 2026-11-15. A packaged app is recognised by `FLATPAK_ID` (ours) or `APPIMAGE`; its launcher sets `STICKLER_ADAPTER_SOURCES`, whose files the start copies into the models folder where they differ. Analysis, drum export and both readiness checks get the folders. Which Python uv uses is set by the packages' environment (Tasks 75, 76): `UV_PYTHON` itself is dropped for adapters by the harness.
   - Acceptance: in a packaged app models live in `$XDG_DATA_HOME/stickler/adapters` (sources copied from the app, refreshed on a new version, environments and weights kept) and results in `$XDG_CACHE_HOME/stickler`; `uv` uses the runtime's Python in the Flatpak and its own in the AppImage; the checkout keeps today's folders.
   - Verify: logic tests for each case
   - Dependencies: 72 · Files: `src/stickler_gtk/logic/{paths,analysis,setup}.py`, `src/stickler_gtk/ui/window.py`, tests

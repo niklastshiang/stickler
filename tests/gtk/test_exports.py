@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from stickler import api
-from stickler_gtk.logic import exports, session, steps
+from stickler_gtk.logic import exports, paths, session, steps
 
 
 def _result(title="Eye of the Tiger", seconds=246.0):
@@ -41,11 +41,17 @@ def test_a_musicxml_export_is_a_copy_of_the_apps_file(tmp_path):
 def test_the_drum_track_job_sets_up_demucs_first_when_needed(monkeypatch, tmp_path):
     calls = []
     stem = tmp_path / "drums.wav"
-    monkeypatch.setattr(
-        api, "setup_adapters", lambda adapter, **kw: calls.append(("setup", adapter)) or [adapter]
-    )
+    folders = []
+
+    def setup_adapters(adapter, **kw):
+        folders.append(kw["adapters_root"])
+        calls.append(("setup", adapter))
+        return [adapter]
+
+    monkeypatch.setattr(api, "setup_adapters", setup_adapters)
 
     def transcribe(song, **kw):
+        folders.append((kw["adapters_root"], kw["cache_dir"]))
         calls.append(("transcribe", kw["drums"]))
         return api.SongTranscription(song, "fast", stem, [], [], [])
 
@@ -54,6 +60,7 @@ def test_the_drum_track_job_sets_up_demucs_first_when_needed(monkeypatch, tmp_pa
     token, dest = api.CancelToken(), tmp_path / "Eye (drums).flac"
     assert exports.drum_track(Path("eye.flac"), dest, print, token, setup=True) == dest
     assert calls == [("setup", api.DRUM_TRACK_SEPARATOR), ("transcribe", True), ("export", stem)]
+    assert folders == [paths.adapters_root(), (paths.adapters_root(), paths.results_cache())]
     calls.clear()
     exports.drum_track(Path("eye.flac"), dest, print, token, setup=False)
     assert calls[0] == ("transcribe", True)

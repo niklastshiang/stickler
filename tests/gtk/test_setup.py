@@ -73,3 +73,36 @@ def test_the_consent_is_remembered(tmp_path):
     assert settings.load(store).setup_agreed is True
     store.write_text('{"setup_agreed": "yes"}', encoding="utf-8")
     assert settings.load(store).setup_agreed is False
+
+
+def test_a_packaged_app_keeps_models_and_results_in_its_own_folders(tmp_path):
+    flatpak = {"FLATPAK_ID": "ng.tshia.Stickler", "XDG_DATA_HOME": "/d", "XDG_CACHE_HOME": "/c"}
+    appimage = {"APPIMAGE": "/x/Stickler.AppImage", "XDG_DATA_HOME": "/d", "XDG_CACHE_HOME": "/c"}
+    assert paths.packaged(flatpak) == "flatpak" and paths.packaged(appimage) == "appimage"
+    assert paths.packaged({"FLATPAK_ID": "org.other.App"}) is None and paths.packaged({}) is None
+    for env in (flatpak, appimage):
+        assert paths.adapters_root(env) == Path("/d/stickler/adapters")
+        assert paths.results_cache(env) == Path("/c/stickler/results")
+    assert paths.adapters_root({**flatpak, "STICKLER_ADAPTERS": "/try"}) == Path("/try")
+    assert paths.results_cache({}) == api.CACHE_DIR  # from the checkout: as before
+    assert paths.adapter_sources({"STICKLER_ADAPTER_SOURCES": "/app/a"}) == Path("/app/a")
+    assert paths.adapter_sources({}) is None
+
+
+def test_the_shipped_adapter_sources_are_copied_without_touching_environments(tmp_path):
+    shipped, models = tmp_path / "app" / "adapters", tmp_path / "data" / "adapters"
+    (shipped / "beats" / "beat_this" / "__pycache__").mkdir(parents=True)
+    (shipped / "beats" / "beat_this" / "run.py").write_text("print(1)")
+    (shipped / "beats" / "beat_this" / "uv.lock").write_text("lock 1")
+    (shipped / "beats" / "beat_this" / "__pycache__" / "x.pyc").write_bytes(b"x")
+    assert setup.sync_adapters(shipped, models) == 2
+    target = models / "beats" / "beat_this"
+    assert (target / "run.py").read_text() == "print(1)" and not (target / "__pycache__").exists()
+    (target / ".venv").mkdir()
+    (target / "weights").mkdir()
+    (target / "weights" / "model.ckpt").write_bytes(b"w")
+    assert setup.sync_adapters(shipped, models) == 0  # nothing changed
+    (shipped / "beats" / "beat_this" / "uv.lock").write_text("lock 2")  # a new app version
+    assert setup.sync_adapters(shipped, models) == 1
+    assert (target / "uv.lock").read_text() == "lock 2"
+    assert (target / ".venv").is_dir() and (target / "weights" / "model.ckpt").read_bytes() == b"w"

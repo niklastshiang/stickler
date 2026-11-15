@@ -126,3 +126,25 @@ def uv_cache(env: Mapping[str, str] = os.environ) -> Path:
         return Path(env["UV_CACHE_DIR"])
     base = env.get("XDG_CACHE_HOME") or str(Path(env.get("HOME") or Path.home()) / ".cache")
     return Path(base) / "uv"
+
+
+SKIPPED = {"__pycache__", ".venv", "weights", ".pytest_cache"}  # never shipped, never replaced
+
+
+def sync_adapters(shipped: Path, models: Path) -> int:
+    """Copies the adapters' sources a packaged app ships into its writable models folder, file
+    by file where they differ; the environments and weights there stay (uv sync and setup
+    bring them up to date). Returns how many files were copied."""
+    copied = 0
+    for source in sorted(shipped.rglob("*")):
+        relative = source.relative_to(shipped)
+        if any(part in SKIPPED or part.startswith(".venv") for part in relative.parts):
+            continue
+        target = models / relative
+        if source.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
+        elif not target.exists() or target.read_bytes() != source.read_bytes():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+            copied += 1
+    return copied

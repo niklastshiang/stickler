@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from stickler import api
-from stickler_gtk.logic import analysis, session
+from stickler_gtk.logic import analysis, paths, session
 
 
 def _notation():
@@ -109,6 +109,8 @@ def test_the_analysis_job_passes_progress_and_cancel_to_notate(monkeypatch):
     got = analysis.analyse(Path("eye.flac"), Path("eye.musicxml"), print, token)
     assert got == (info, _notation())
     assert seen["cancel"] is token and seen["progress"] is print and seen["pdf"] is False
+    assert seen["cache_dir"] == paths.results_cache()
+    assert seen["adapters_root"] == paths.adapters_root()
     assert (seen["title"], seen["artist"]) == ("Eye of the Tiger", "Survivor")
     half = api.Corrections(tempo="half")
     analysis.analyse(Path("eye.flac"), Path("eye.musicxml"), print, token, corrections=half)
