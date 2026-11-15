@@ -184,3 +184,14 @@ def test_the_app_speaks_the_language_it_finds(tmp_path, monkeypatch):
     assert i18n._("Open a Song…") == "Open a Song…"
     i18n.setup(tmp_path / "missing")
     assert isinstance(i18n.translation(), gettext.NullTranslations)
+
+
+def test_the_app_finds_its_files_under_the_prefix_it_is_installed_in():
+    """In the Flatpak the app is installed under /app while Python's own prefix is /usr."""
+    import stickler_gtk
+
+    installed = Path("/app/lib/python3.14/site-packages/stickler_gtk/__init__.py")
+    assert stickler_gtk.prefix(installed, sys_prefix="/usr") == Path("/app")
+    checkout = Path("/home/me/stickler/src/stickler_gtk/__init__.py")  # editable: Python's prefix
+    assert stickler_gtk.prefix(checkout, sys_prefix="/venv") == Path("/venv")
+    assert i18n.default_localedir() == stickler_gtk.prefix() / "share" / "locale"

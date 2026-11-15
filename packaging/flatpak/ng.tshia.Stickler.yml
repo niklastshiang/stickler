@@ -1,0 +1,69 @@
+# Stickler as a Flatpak (SPEC.md, module `packaging`), built from the committed state of `main`:
+#   flatpak run org.flatpak.Builder --user --install --force-clean build \
+#     packaging/flatpak/ng.tshia.Stickler.yml
+#   flatpak build-bundle ~/.local/share/flatpak/repo Stickler.flatpak ng.tshia.Stickler
+# The GNOME runtime brings Python 3.14, PyGObject, GTK, libadwaita, GStreamer and ffmpeg.
+id: ng.tshia.Stickler
+runtime: org.gnome.Platform
+runtime-version: "51"
+sdk: org.gnome.Sdk
+command: stickler-gtk
+finish-args:
+  # the permissions of SPEC.md, module `app-shell`, and no more (no file system access:
+  # songs come in and exports go out through portals)
+  - --share=network # downloading the models on first start; the analysis runs offline
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --socket=pulseaudio # playback
+  # the adapters' sources, copied into the app's data folder on start (packaging, Task 73)
+  - --env=STICKLER_ADAPTER_SOURCES=/app/share/stickler/adapters
+  # the models run on the runtime's Python 3.14; uv never downloads one
+  - --env=UV_PYTHON_PREFERENCE=only-system
+  - --env=UV_PYTHON_DOWNLOADS=never
+modules:
+  # numpy, PyYAML, mido, packaging, verovio: wheels from uv.lock (scripts/flatpak_deps.py)
+  - python-deps.json
+
+  - name: uv
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 uv /app/bin/uv
+      - install -Dm644 LICENSE-MIT /app/share/licenses/ng.tshia.Stickler/uv-LICENSE-MIT
+    sources:
+      - type: archive # the static release build, as the sandbox trial used (2026-11-15)
+        url: https://github.com/astral-sh/uv/releases/download/0.13.8/uv-x86_64-unknown-linux-musl.tar.gz
+        sha256: 61fb26dabc4f0cf1d050fc6c67d40e43e4fae2994af21ebc1e050b233bf2b5ed
+      - type: file
+        url: https://raw.githubusercontent.com/astral-sh/uv/0.13.8/LICENSE-MIT
+        sha256: 860e3d7a86b84e6a7012c7a635fc64df475cebc6cce34dfeb73a5982ec58176c
+
+  - name: stickler
+    buildsystem: simple
+    build-commands:
+      # pure Python: the two packages go straight into the app's site-packages
+      - |
+        site=$(python3 -c 'import sysconfig; print(sysconfig.get_path("purelib", vars={"base": "/app"}))')
+        mkdir -p "$site"
+        cp -r src/stickler src/stickler_gtk "$site/"
+      - install -Dm755 packaging/flatpak/stickler-gtk /app/bin/stickler-gtk
+      # the models' sources (code and locks only; environments and weights are made on setup)
+      - mkdir -p /app/share/stickler && cp -r adapters /app/share/stickler/
+      - install -Dm644 packaging/fonts/Leipzig.ttf /app/share/fonts/Leipzig.ttf
+      - install -Dm644 packaging/fonts/OFL.txt /app/share/licenses/ng.tshia.Stickler/Leipzig-OFL.txt
+      - install -Dm644 LICENSE /app/share/licenses/ng.tshia.Stickler/LICENSE
+      - install -Dm644 packaging/icons/ng.tshia.Stickler.svg /app/share/icons/hicolor/scalable/apps/ng.tshia.Stickler.svg
+      - install -Dm644 packaging/icons/ng.tshia.Stickler-symbolic.svg /app/share/icons/hicolor/symbolic/apps/ng.tshia.Stickler-symbolic.svg
+      - install -Dm644 packaging/ng.tshia.Stickler.desktop /app/share/applications/ng.tshia.Stickler.desktop
+      - install -Dm644 packaging/ng.tshia.Stickler.metainfo.xml /app/share/metainfo/ng.tshia.Stickler.metainfo.xml
+      - |
+        for po in po/*.po; do
+          lang=$(basename "$po" .po)
+          install -d "/app/share/locale/$lang/LC_MESSAGES"
+          msgfmt --check -o "/app/share/locale/$lang/LC_MESSAGES/stickler.mo" "$po"
+        done
+    sources:
+      - type: git
+        path: ../..
+        branch: main

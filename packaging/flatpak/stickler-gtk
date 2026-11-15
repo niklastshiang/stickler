@@ -1,0 +1,6 @@
+#!/usr/bin/python3
+"""Starts Stickler in the Flatpak (the runtime's Python finds the app under /app)."""
+
+from stickler_gtk.main import main
+
+raise SystemExit(main())

@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import signal
-import sys
 from pathlib import Path
 
 from gi.repository import Adw, Gdk, Gio, GLib, GLibUnix, Gtk
 
+import stickler_gtk
 from stickler_gtk import APP_ID
 from stickler_gtk.logic import settings
 from stickler_gtk.ui import menu
@@ -44,7 +44,7 @@ def register_icons() -> None:
     """The app's icons live in its prefix (the app environment, or /app in the Flatpak);
     GTK finds them there as the window's and the About dialog's icon."""
     theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
-    theme.add_search_path(str(Path(sys.prefix) / "share" / "icons"))
+    theme.add_search_path(str(stickler_gtk.prefix() / "share" / "icons"))
     Gtk.Window.set_default_icon_name(APP_ID)
 
 

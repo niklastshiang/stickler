@@ -9,7 +9,6 @@ the same functions."""
 from __future__ import annotations
 
 import gettext
-import sys
 from pathlib import Path
 
 DOMAIN = "stickler"
@@ -18,7 +17,9 @@ _translation: gettext.NullTranslations = gettext.NullTranslations()
 
 
 def default_localedir() -> Path:
-    return Path(sys.prefix) / "share" / "locale"
+    import stickler_gtk
+
+    return stickler_gtk.prefix() / "share" / "locale"
 
 
 def setup(localedir: Path | None = None) -> None:
