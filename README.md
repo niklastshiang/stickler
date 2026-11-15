@@ -357,6 +357,18 @@ guardrails apply:
 - **Measure, don't assert.** Every model choice is justified by measurements, even when the
   result is inconvenient.
 
+**What the AI cost.** Claude Code logs the tokens of every response;
+[`scripts/ai_usage.py`](scripts/ai_usage.py) sums them and prices them with Anthropic's
+[API prices](https://platform.claude.com/docs/en/about-claude/pricing). The logs reach back to
+13 November 2026; the first two days of the project (the command line tool's start) are missing.
+On a subscription the real cost differs; this is what the same work would cost on the API.
+
+| Period | Model | Responses | Output tokens | Cache read | API cost |
+|---|---|---:|---:|---:|---:|
+| 13–15 Nov 2026 | Claude Opus 5.5 (the work) | 1,216 | 1.3 M | 509 M | 152 USD |
+| 13–15 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
+| | **Total** | | | | **about 160 USD** |
+
 ---
 
 ## `> REPOSITORY LAYOUT`

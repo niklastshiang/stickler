@@ -615,6 +615,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: a manual run
   - Dependencies: 75, 76 · Files: `.github/workflows/release.yml`, `docs/` release notes
 
+- [ ] **Before every release: the AI's tokens and cost** (owner, 2026-11-15): run `scripts/ai_usage.py` and update the table in README `> ORIGIN`.
 - [ ] **Before release 5: every document checked** (owner, 2026-11-15): README, CONTRIBUTING, CITATION.cff, docs/cli.md, docs/report.md, SPEC.md, CONSTRAINTS.md, the AppStream MetaInfo and the release notes agree with the app, the GPL (ADR 0007), Python 3.14 for the app's models and the packages.
 
 ### Checkpoint N
