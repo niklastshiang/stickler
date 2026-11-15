@@ -653,3 +653,42 @@ def test_playback_stops_for_another_song_and_on_close(monkeypatch, tmp_path):
     assert player.is_playing
     window.close()
     assert player.loaded is None and not player.is_playing
+
+
+def test_the_corrections_panel_shows_values_and_reports_each_change():
+    from stickler import api
+    from stickler_gtk.ui.corrections import CorrectionsPanel
+
+    changes = []
+    panel = CorrectionsPanel(on_change=changes.append)
+    panel.show_values(api.Corrections(), beats_per_bar=4, first_one=1)
+    assert panel.tempo.get_active_name() == "normal" and changes == []
+    assert panel.beats.get_value() == 4 and panel.first_one.get_label() == "Beat 1"
+    assert panel.simplify.get_active() and panel.repeats.get_active()
+    assert not panel.back.get_sensitive()
+    panel.beats.set_value(3)
+    assert changes[-1] == api.Corrections(beats_per_bar=3)
+    panel.later.emit("clicked")
+    assert changes[-1].first_downbeat == 2
+    panel.tempo.set_active_name("half")
+    assert changes[-1].tempo == "half"
+    panel.simplify.set_active(False)
+    assert changes[-1].simplify is False
+    panel.show_values(changes[-1], beats_per_bar=3, first_one=1)
+    assert panel.back.get_sensitive()
+    count = len(changes)
+    panel.back.emit("clicked")
+    assert changes[-1] == api.Corrections() and len(changes) == count + 1
+
+
+def test_f9_opens_and_closes_the_corrections_sidebar(monkeypatch, tmp_path):
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        assert not window.split.get_show_sidebar() and window.corrections_button.get_visible()
+        window.activate_action("win.corrections", None)
+        assert window.split.get_show_sidebar() and window.corrections_button.get_active()
+        assert window.panel.beats.get_value() == 4
+        window.activate_action("win.corrections", None)
+        assert not window.split.get_show_sidebar()
+    finally:
+        window.close()

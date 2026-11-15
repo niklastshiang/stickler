@@ -516,7 +516,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/gtk/test_session.py tests/gtk/test_analysis_errors.py`
   - Dependencies: 60 · Files: `src/stickler_gtk/logic/{analysis,session}.py`, tests
 
-- [ ] **Task 62: The sidebar** (M)
+- [x] **Task 62: The sidebar** (M): done 2026-11-15. `ui/corrections.py` (`CorrectionsPanel`) shows `Result.wanted` and the engraved meter and first one; an `Adw.OverlaySplitView` at the end with a header toggle bound to it and F9.
   - Acceptance:
     - `ui/corrections.py` with the controls of design screen 7, showing a result's values; an `Adw.OverlaySplitView` with the sidebar at the end, a header toggle and F9, closed at first.
   - Verify: widget tests (values shown, F9 toggles); by hand at 1000 px

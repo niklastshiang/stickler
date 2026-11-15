@@ -36,6 +36,7 @@ ACCELS = {
     "win.previous-bar": ["Left"],
     "win.next-bar": ["Right"],
     "win.to-start": ["Home"],
+    "win.corrections": ["F9"],
 }
 
 

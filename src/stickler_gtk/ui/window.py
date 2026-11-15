@@ -7,7 +7,7 @@ import contextlib
 import threading
 from pathlib import Path
 
-from gi.repository import Adw, Gdk, Gio, Gtk
+from gi.repository import Adw, Gdk, Gio, GObject, Gtk
 
 from stickler import api
 from stickler_gtk import APP_NAME
@@ -24,6 +24,7 @@ from stickler_gtk.logic import (
     zoom,
 )
 from stickler_gtk.logic.steps import StepRow
+from stickler_gtk.ui import corrections as corrections_ui
 from stickler_gtk.ui import menu, pdf, worker
 from stickler_gtk.ui.playbar import PlayBar
 from stickler_gtk.ui.sheet import Sheet
@@ -104,6 +105,12 @@ class Window(Adw.ApplicationWindow):
         self.export_box.append(self.export_wide)
         self.export_box.append(self.export_narrow)
         header.pack_end(menu.main_menu(self.zoom_label))
+        self.corrections_button = Gtk.ToggleButton(
+            icon_name="sidebar-show-right-symbolic",
+            tooltip_text=_("Corrections"),
+            visible=False,
+        )
+        header.pack_end(self.corrections_button)
         header.pack_end(self.export_box)
         self.open_wide = Gtk.Button(
             child=Adw.ButtonContent(icon_name="document-open-symbolic", label=_("Open…")),
@@ -173,7 +180,26 @@ class Window(Adw.ApplicationWindow):
         result_page.append(self.sheet)
         result_page.append(Gtk.Separator())
         result_page.append(self.playbar)
-        self.pages.add_named(result_page, "result")
+        self.panel = corrections_ui.CorrectionsPanel(on_change=self.change_corrections)
+        self.split = Adw.OverlaySplitView(
+            content=result_page,
+            sidebar=Gtk.ScrolledWindow(
+                child=self.panel,
+                hscrollbar_policy=Gtk.PolicyType.NEVER,
+                propagate_natural_width=True,
+            ),
+            sidebar_position=Gtk.PackType.END,
+            show_sidebar=False,
+            min_sidebar_width=corrections_ui.WIDTH,
+            max_sidebar_width=corrections_ui.WIDTH,
+        )
+        self.split.bind_property(
+            "show-sidebar",
+            self.corrections_button,
+            "active",
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+        self.pages.add_named(self.split, "result")
         self.pages.add_named(self.error, "error")
 
         self.toasts = Adw.ToastOverlay(child=self.pages)
@@ -200,6 +226,10 @@ class Window(Adw.ApplicationWindow):
             ("export-drums", self.export_drums),
             ("close", self.close),
             ("play", self.playbar.toggle),
+            (
+                "corrections",
+                lambda: self.split.set_show_sidebar(not self.split.get_show_sidebar()),
+            ),
             ("previous-bar", lambda: self.step_bars(-1)),
             ("next-bar", lambda: self.step_bars(1)),
             ("to-start", lambda: self.playbar.seek(0.0)),
@@ -314,6 +344,9 @@ class Window(Adw.ApplicationWindow):
         """Marks the bar sounding at `seconds` (for `playback`, which follows the song)."""
         if isinstance(self.state, session.Result):
             self.sheet.mark_time(self.state.notation.bars, seconds)
+
+    def change_corrections(self, fix: api.Corrections) -> None:
+        """A change in the sidebar (applied from Task 63 on)."""
 
     def step_bars(self, by: int) -> None:
         """Left and Right: one song bar back or on."""
@@ -502,6 +535,7 @@ class Window(Adw.ApplicationWindow):
             "export-drums",
             "open-with",
             "play",
+            "corrections",
             "previous-bar",
             "next-bar",
             "to-start",
@@ -510,6 +544,7 @@ class Window(Adw.ApplicationWindow):
         if not is_result:
             self.playbar.stop()
         self.export_box.set_visible(is_result)
+        self.corrections_button.set_visible(is_result)
         self.actions["cancel"].set_enabled(isinstance(state, session.Analysing | session.Exporting))
         if isinstance(state, session.Exporting):
             self.heading.set_title(state.previous.title)
@@ -533,6 +568,11 @@ class Window(Adw.ApplicationWindow):
                     state.info.seconds,
                     state.notation.bars,
                 )
+            self.panel.show_values(
+                state.wanted,
+                beats_per_bar=state.notation.meter[0],
+                first_one=state.notation.first_downbeat,
+            )
             self.pages.set_visible_child_name("result")
         elif isinstance(state, session.Failed):
             self.heading.set_title(state.song.stem)
