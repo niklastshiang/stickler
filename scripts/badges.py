@@ -68,9 +68,6 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
         "facts": [
             ("license", "license", "GPL-3.0"),
             ("python", "python", "3.12 · 3.14"),
-            ("uv", "environments", "uv"),
-            ("models", "models", "7 adapters"),
-            ("tests", "tests", f"{f['tests']} + {f['smoke']} smoke"),
             ("coverage", "coverage", f"{f['coverage']}%"),
             ("version", "version", f["version"]),
             ("local", "runs", "100% local"),
@@ -81,9 +78,6 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
             ("rocket-science", "rocket science", "no"),
             ("drummer", "drummer", "beginner"),
             ("burgers", "burgers received", "0"),
-            ("neighbours", "neighbours", "annoyed"),
-            ("jazz", "jazz", "it's complicated"),
-            ("ears", "ears", "certified"),
         ],
         "origin": [
             ("built-with", "built with", "Claude Code"),

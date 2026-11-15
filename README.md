@@ -10,9 +10,6 @@
 <p align="center">
   <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: GPL-3.0-or-later" /></a>
   <img src="docs/badges/facts-python.svg" alt="python 3.12 · 3.14" />
-  <img src="docs/badges/facts-uv.svg" alt="environments: uv" />
-  <img src="docs/badges/facts-models.svg" alt="7 model adapters" />
-  <img src="docs/badges/facts-tests.svg" alt="tests" />
   <img src="docs/badges/facts-coverage.svg" alt="coverage" />
   <img src="docs/badges/facts-version.svg" alt="version" />
   <img src="docs/badges/facts-local.svg" alt="runs 100% local" />
@@ -24,9 +21,6 @@
   <img src="docs/badges/fun-rocket-science.svg" alt="rocket science" />
   <img src="docs/badges/fun-drummer.svg" alt="drummer" />
   <img src="docs/badges/fun-burgers.svg" alt="burgers" />
-  <img src="docs/badges/fun-neighbours.svg" alt="neighbours" />
-  <img src="docs/badges/fun-jazz.svg" alt="jazz" />
-  <img src="docs/badges/fun-ears.svg" alt="ears: certified" />
 </p>
 
 <p align="center"><sub>Badges: <a href="scripts/badges.py">scripts/badges.py</a>, rendered with <a href="https://shieldcn.dev">shieldcn</a>.</sub></p>
