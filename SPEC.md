@@ -393,7 +393,7 @@ only in its first version.
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | done, below |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | done, below |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | done, below |
-| `packaging` | Flatpak and AppImage with every release | all | – |
+| `packaging` | Flatpak and AppImage with every release | all | draft, below |
 
 Build order: `engine-api`, `design` (in parallel) → `app-shell` → `sheet-view` → `playback`,
 `corrections` → `setup-assistant` → `packaging`.
@@ -1298,6 +1298,124 @@ tests/gtk/test_setup.py
    benchmark's own songs unchanged).
 6. German complete; every page fits 360 px; `scripts/check.sh task` green, `stickler_gtk/logic`
    at ≥ 95% coverage.
+
+#### Open questions
+
+- None.
+
+### Module `packaging`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-15).
+
+#### Assumptions
+
+1. **Where it goes** (owner, 2026-11-15): every release gets a `.flatpak` file and an AppImage
+   attached, both built by GitHub Actions. No store, after a search on 2026-11-15:
+   - Flathub's "Generative AI policy" requires the manifest to be free of AI-generated or
+     AI-assisted content and forbids AI tools from opening or writing the submission PR; other
+     AI-generated code must be disclosed and may be rejected; machine-generated translations
+     are not allowed ([requirements](https://docs.flathub.org/docs/for-app-authors/requirements)).
+     Flathub stays a later idea that needs the owner's hand-written manifest and submission.
+     German is checked by the owner (a native speaker); Spanish is not checked yet.
+   - elementary AppCenter allows no AI-generated content at all; Fedora Flatpaks carry
+     Fedora-built packages only. A signed repository of our own on GitHub Pages stays possible
+     later (a GPG key in GitHub's secrets).
+2. **The Flatpak** (`packaging/flatpak/ng.tshia.Stickler.yml`):
+   - Runtime `org.gnome.Platform//51` (current, released 2026-09-16; 49–51 not end of life).
+     It brings Python 3.14, PyGObject, GTK, libadwaita, GStreamer with its decoders, and
+     `ffmpeg`/`ffprobe` 8.1 with MP3, AAC, FLAC, Opus and Vorbis (checked 2026-11-15): no
+     ffmpeg module is needed.
+   - The app's Python packages (numpy, pyyaml, mido, typer, verovio) are vendored with
+     `flatpak-pip-generator` (flatpak-builder-tools, maintained) as wheels; the build has no
+     network.
+   - `uv` is the static release binary (version and SHA-256 pinned), as the sandbox trial used.
+   - The Leipzig font, icons, desktop file, MetaInfo and the `.mo` files go into `/app`.
+   - Permissions exactly as the table in `app-shell` (network, PulseAudio, Wayland/X11, IPC,
+     DRI); no file system access.
+3. **The AppImage** is built with `quick-sharun` (pkgforge-dev Anylinux-AppImages, MIT, active:
+   last commit 2026-11-15), pinned to a commit, inside an Arch Linux container: it bundles
+   Python, GTK 4, libadwaita, GStreamer, `ffmpeg`/`ffprobe`, `uv` and glibc, so it runs on any
+   x86_64 distribution and needs no FUSE. Gradia (Python, GTK 4, libadwaita) is built this way.
+   Estimated 70–90 MB. It carries update information (zsync) for AppImage update tools.
+4. **Where the models live** in a packaged app: `$XDG_DATA_HOME/stickler/adapters` (in the
+   Flatpak `~/.var/app/ng.tshia.Stickler/data/...`). The adapters' sources ship read-only with
+   the app and are copied there; a new app version refreshes the copy, keeping environments and
+   weights, and `uv sync` updates what changed. The result cache goes to
+   `$XDG_CACHE_HOME/stickler`. Running from the checkout (`scripts/gtk.sh`) keeps today's folders;
+   `STICKLER_ADAPTERS` still overrides.
+5. **Python 3.14 for all seven models** (owner, 2026-11-15). ADTOF and Beat This! were checked:
+   every package has a 3.14 wheel, no version changes, and Eye of the Tiger gives identical
+   results (1375 hits, byte-identical MIDI; 441 beats). The other five are checked the same way;
+   identical results are rekeyed (CLAUDE.md), different ones recomputed when next needed (they
+   matter only to the benchmark, owner). In the Flatpak, `uv` uses the runtime's Python 3.14 (no
+   download); a runtime with another Python makes the environments invalid, and the setup
+   assistant rebuilds them from uv's cache. In the AppImage, `uv` downloads its own Python 3.14
+   (its bundled Python moves with every mount).
+6. **The app stops importing the benchmark's code** (`mir_eval`, and with it scipy), so neither
+   package has to ship.
+7. **AppStream MetaInfo** (`packaging/ng.tshia.Stickler.metainfo.xml`): name, summary,
+   description, screenshots, releases, OARS, licence (MIT; the metadata CC0-1.0), developer
+   `ng.tshia`; validated with `appstreamcli` in CI, so GNOME Software shows the bundle properly.
+8. **Releases:** pushing a release tag builds both files and attaches them; a manual run builds
+   them without a release, for testing. Release notes say how to install each.
+9. **x86_64 only.** M4A/AAC songs are not promised: Beat This! reads audio with soundfile (MP3,
+   FLAC, WAV, OGG), as the empty window already says.
+
+#### Objective
+
+A drummer downloads one file from a release, opens it, and Stickler runs: the Flatpak through
+GNOME Software (or `flatpak install`), the AppImage by making it executable and starting it.
+
+#### Commands
+
+```bash
+flatpak-builder --user --install --force-clean build packaging/flatpak/ng.tshia.Stickler.yml
+flatpak build-bundle ~/.local/share/flatpak/repo Stickler.flatpak ng.tshia.Stickler
+scripts/appimage.sh                     # in the Arch container, as CI runs it
+appstreamcli validate packaging/ng.tshia.Stickler.metainfo.xml
+scripts/check.sh task
+```
+
+#### Project structure (additions)
+
+```
+packaging/flatpak/ng.tshia.Stickler.yml    # the manifest
+packaging/flatpak/python-deps.json         # generated by flatpak-pip-generator
+packaging/ng.tshia.Stickler.metainfo.xml
+scripts/appimage.sh                        # quick-sharun build
+.github/workflows/release.yml              # both files for a release tag or by hand
+src/stickler_gtk/logic/paths.py            # + packaged: models and cache in XDG folders
+adapters/*/*/pyproject.toml, uv.lock       # Python 3.14
+```
+
+#### Testing strategy
+
+- Logic: where models and cache go (checkout, Flatpak, AppImage, `STICKLER_ADAPTERS`); the
+  refreshed copy keeps environments and weights; the app imports no benchmark module.
+- Each model on 3.14: lock, wheels, one song compared with 3.12.
+- CI: `appstreamcli validate`, the manifest builds, the AppImage builds and starts
+  (`quick-sharun --test`).
+- By hand (owner): install the `.flatpak`, set up the models, analyse, play and export a song;
+  start the AppImage on the same machine.
+
+#### Boundaries
+
+- **Always:** pinned versions and checksums for everything downloaded at build time; the
+  `app-shell` permissions and no more; both files from CI, not from a developer's machine.
+- **Ask first:** a store or an own repository; more permissions; another architecture;
+  dropping a model.
+- **Never:** ship ADTOF's weights; add file system permissions; let an AI tool submit to Flathub.
+
+#### Success criteria
+
+1. A manual CI run produces `Stickler.flatpak` and `Stickler-x86_64.AppImage`; a release tag
+   attaches both to its release.
+2. The Flatpak installs on the owner's machine, the setup assistant sets up the models inside
+   the sandbox, and a song can be opened, analysed, played and exported (owner).
+3. The AppImage does the same on the owner's machine (owner).
+4. All seven models run on Python 3.14; each was compared on one song.
+5. The app no longer imports scipy or mir_eval.
+6. The MetaInfo validates; `scripts/check.sh task` is green.
 
 #### Open questions
 
