@@ -404,7 +404,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: logic tests (settings, damaged file); `scripts/gtk.sh test`; by hand: dark is kept after a restart, every action works without the mouse
   - Dependencies: 43 · Files: `src/stickler_gtk/logic/settings.py`, `src/stickler_gtk/ui/*`, tests
 
-- [ ] **Task 48: Narrow windows and the German check** (S)
+- [x] **Task 48: Narrow windows and the German check** (S): done 2026-11-15 (owner's look at the window is part of Checkpoint I). Breakpoint `max-width: 550sp`: the header swaps its labelled Open and Export buttons for icon buttons; minimum window size 360 × 294 (HIG). A test measures every page's minimum width in English and German: the error page needed 368 px in German, so its buttons now wrap (`Adw.WrapBox`). German: 72 strings, complete, informal ("du").
   - Acceptance:
     - Breakpoint at 400 px: the header keeps icon buttons, every page of this module fits without horizontal scrolling (screens 10/11 apply where the module has the parts).
     - `po/de.po` complete; every visible string German with `LANGUAGE=de`; German addresses the user informally ("du", owner 2026-11-14).

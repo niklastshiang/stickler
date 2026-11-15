@@ -222,10 +222,10 @@ def test_the_drum_track_export_runs_with_steps_and_returns_to_the_result(monkeyp
     monkeypatch.setattr(api, "transcribe_song", transcribe)
     monkeypatch.setattr(api, "export_drum_track", lambda s, d: d.write_bytes(s.read_bytes()) or d)
     window = Window()
-    assert not window.export_button.get_visible()
+    assert not window.export_box.get_visible()
     window.open_song(tmp_path / "eye.flac")
     assert _wait(lambda: window.pages.get_visible_child_name() == "result")
-    assert window.export_button.get_visible()
+    assert window.export_box.get_visible()
     dest = tmp_path / "out" / "Eye of the Tiger (drums).flac"
     dest.parent.mkdir()
     window._start_drums(window.state, dest, setup=False)
@@ -260,3 +260,42 @@ def test_the_shortcuts_dialog_lists_every_shortcut_and_about_names_the_version()
     assert {key for key, _title in menu.SHORTCUTS} >= {"<Control>o", "<Control>q", "F10"}
     assert menu.shortcuts_dialog() is not None
     assert menu.about_dialog().get_version() == stickler.__version__
+
+
+def test_a_narrow_window_keeps_icon_buttons_in_the_header():
+    from stickler_gtk.ui.window import Window
+
+    window = Window()
+    assert window.get_size_request() == (360, 294)
+    assert window.open_wide.get_visible() and not window.open_narrow.get_visible()
+    window.set_default_size(400, 700)
+    window.present()
+    try:
+        assert _wait(lambda: window.open_narrow.get_visible())
+        assert not window.open_wide.get_visible()
+        assert window.export_narrow.get_icon_name() == "document-save-symbolic"
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("language", ["en", "de"])
+def test_every_page_fits_the_narrowest_window(monkeypatch, language):
+    """No page needs more than the minimum width, so nothing scrolls sideways (SPEC
+    app-shell, criterion 7); German texts are longer, so both languages are measured."""
+    from gi.repository import Gtk
+
+    from stickler_gtk import i18n
+    from stickler_gtk.ui.window import MINIMUM_SIZE, Window
+
+    monkeypatch.setenv("LANGUAGE", language)
+    i18n.setup()
+    try:
+        window = Window()
+        widths = {}
+        for name in ("empty", "analysing", "result", "error"):
+            page = window.pages.get_child_by_name(name)
+            widths[name] = page.measure(Gtk.Orientation.HORIZONTAL, -1)[0]
+    finally:
+        monkeypatch.setenv("LANGUAGE", "en")
+        i18n.setup()
+    assert all(w <= MINIMUM_SIZE[0] for w in widths.values()), widths

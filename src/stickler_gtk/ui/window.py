@@ -16,6 +16,8 @@ from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import menu, worker
 
 DEFAULT_SIZE = (1000, 700)
+MINIMUM_SIZE = (360, 294)  # GNOME HIG: the smallest a window should get
+NARROW = "max-width: 550sp"  # below this the header keeps icon buttons only
 
 
 def _open_button(label: str) -> Gtk.Button:
@@ -42,6 +44,14 @@ def _empty_page(recent_songs: Gtk.Widget) -> Gtk.Widget:
     return page
 
 
+def _children(widget: Gtk.Widget) -> list[Gtk.Widget]:
+    found, child = [], widget.get_first_child()
+    while child is not None:
+        found.append(child)
+        child = child.get_next_sibling()
+    return found
+
+
 def _step_row(step: StepRow) -> Adw.ActionRow:
     row = Adw.ActionRow(title=step.label, subtitle=step.detail)
     if step.state == "done":
@@ -61,22 +71,45 @@ class Window(Adw.ApplicationWindow):
     def __init__(self, **kwargs) -> None:
         super().__init__(title=APP_NAME, **kwargs)
         self.set_default_size(*DEFAULT_SIZE)
+        self.set_size_request(*MINIMUM_SIZE)
         self.state: session.State = session.Empty()
 
         self.heading = Adw.WindowTitle(title=APP_NAME)
         header = Adw.HeaderBar(title_widget=self.heading)
-        self.export_button = Gtk.MenuButton(
-            label=_("Export"), popover=self._export_menu(), visible=False
+        # Wide windows show labelled buttons, narrow ones icon buttons (design screen 10)
+        self.export_wide = Gtk.MenuButton(label=_("Export"), popover=self._export_menu())
+        self.export_narrow = Gtk.MenuButton(
+            icon_name="document-save-symbolic",
+            popover=self._export_menu(),
+            tooltip_text=_("Export"),
+            visible=False,
         )
+        self.export_box = Gtk.Box(visible=False)
+        self.export_box.append(self.export_wide)
+        self.export_box.append(self.export_narrow)
         header.pack_end(menu.main_menu())
-        header.pack_end(self.export_button)
-        header.pack_start(
-            Gtk.Button(
-                child=Adw.ButtonContent(icon_name="document-open-symbolic", label=_("Open…")),
-                action_name="win.open",
-                tooltip_text=_("Open a Song"),
-            )
+        header.pack_end(self.export_box)
+        self.open_wide = Gtk.Button(
+            child=Adw.ButtonContent(icon_name="document-open-symbolic", label=_("Open…")),
+            action_name="win.open",
+            tooltip_text=_("Open a Song"),
         )
+        self.open_narrow = Gtk.Button(
+            icon_name="document-open-symbolic",
+            action_name="win.open",
+            tooltip_text=_("Open a Song"),
+            visible=False,
+        )
+        header.pack_start(self.open_wide)
+        header.pack_start(self.open_narrow)
+        narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse(NARROW))
+        for wide_one, narrow_one in (
+            (self.open_wide, self.open_narrow),
+            (self.export_wide, self.export_narrow),
+        ):
+            narrow.add_setter(wide_one, "visible", False)
+            narrow.add_setter(narrow_one, "visible", True)
+        self.add_breakpoint(narrow)
 
         self.steps = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
         cancel_button = Gtk.Button(
@@ -97,7 +130,8 @@ class Window(Adw.ApplicationWindow):
         self.retry_button.add_css_class("suggested-action")
         other_button = Gtk.Button(label=_("Open Another Song…"), action_name="win.open")
         other_button.add_css_class("pill")
-        buttons = Gtk.Box(spacing=12, halign=Gtk.Align.CENTER)
+        # side by side, or one under the other in a narrow window
+        buttons = Adw.WrapBox(child_spacing=12, line_spacing=12, align=0.5)
         buttons.append(other_button)
         buttons.append(self.retry_button)
         error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
@@ -136,7 +170,7 @@ class Window(Adw.ApplicationWindow):
             ("open", self.choose_song),
             ("cancel", self.cancel),
             ("retry", self.retry),
-            ("export", lambda: self.export_button.popup()),
+            ("export", self._open_export_menu),
             ("export-musicxml", self.export_musicxml),
             ("export-drums", self.export_drums),
             ("close", self.close),
@@ -163,9 +197,15 @@ class Window(Adw.ApplicationWindow):
             text.append(Gtk.Label(label=title, xalign=0))
             text.append(Gtk.Label(label=detail, xalign=0, css_classes=["caption", "dim-label"]))
             button = Gtk.Button(child=text, action_name=action, css_classes=["flat"])
-            button.connect("clicked", lambda _b: self.export_button.popdown())
             box.append(button)
-        return Gtk.Popover(child=box)
+        popover = Gtk.Popover(child=box)
+        for button in _children(box):
+            button.connect("clicked", lambda _b: popover.popdown())
+        return popover
+
+    def _open_export_menu(self) -> None:
+        wide = self.export_wide.get_visible()
+        (self.export_wide if wide else self.export_narrow).popup()
 
     # what the user does
 
@@ -373,7 +413,7 @@ class Window(Adw.ApplicationWindow):
         is_result = isinstance(state, session.Result)
         for name in ("export", "export-musicxml", "export-drums"):
             self.actions[name].set_enabled(is_result)
-        self.export_button.set_visible(is_result)
+        self.export_box.set_visible(is_result)
         self.actions["cancel"].set_enabled(isinstance(state, session.Analysing | session.Exporting))
         if isinstance(state, session.Exporting):
             self.heading.set_title(state.previous.title)

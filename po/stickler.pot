@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-15 09:47+0100\n"
+"POT-Creation-Date: 2026-11-15 09:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -166,7 +166,7 @@ msgstr ""
 msgid "Dark Style"
 msgstr ""
 
-#: src/stickler_gtk/ui/menu.py:71 src/stickler_gtk/ui/window.py:30
+#: src/stickler_gtk/ui/menu.py:71 src/stickler_gtk/ui/window.py:32
 msgid "Open a Song…"
 msgstr ""
 
@@ -182,12 +182,13 @@ msgstr ""
 msgid "Main Menu"
 msgstr ""
 
-#: src/stickler_gtk/ui/menu.py:83 src/stickler_gtk/ui/window.py:77
-#: src/stickler_gtk/ui/window.py:177
+#: src/stickler_gtk/ui/menu.py:83 src/stickler_gtk/ui/window.py:95
+#: src/stickler_gtk/ui/window.py:100 src/stickler_gtk/ui/window.py:217
 msgid "Open a Song"
 msgstr ""
 
-#: src/stickler_gtk/ui/menu.py:84 src/stickler_gtk/ui/window.py:69
+#: src/stickler_gtk/ui/menu.py:84 src/stickler_gtk/ui/window.py:80
+#: src/stickler_gtk/ui/window.py:84
 msgid "Export"
 msgstr ""
 
@@ -207,123 +208,123 @@ msgstr ""
 msgid "Writes the drums of a song as sheet music, so you can play along."
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:34
+#: src/stickler_gtk/ui/window.py:36
 msgid "Drop a Song Here"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:36
+#: src/stickler_gtk/ui/window.py:38
 msgid ""
 "Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV "
 "or OGG; a song takes about 15 seconds."
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:48
+#: src/stickler_gtk/ui/window.py:58
 msgid "Done"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:56
+#: src/stickler_gtk/ui/window.py:66
 msgid "Waiting"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:75
+#: src/stickler_gtk/ui/window.py:93
 msgid "Open…"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:83 src/stickler_gtk/ui/window.py:253
+#: src/stickler_gtk/ui/window.py:116 src/stickler_gtk/ui/window.py:293
 msgid "Cancel"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:89 src/stickler_gtk/ui/window.py:386
+#: src/stickler_gtk/ui/window.py:122 src/stickler_gtk/ui/window.py:426
 msgid "Writing the Drum Part"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:93 src/stickler_gtk/ui/window.py:399
+#: src/stickler_gtk/ui/window.py:126 src/stickler_gtk/ui/window.py:439
 msgid "Technical Details"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:95
+#: src/stickler_gtk/ui/window.py:128
 msgid "Try Again"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:98
+#: src/stickler_gtk/ui/window.py:131
 msgid "Open Another Song…"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:109
+#: src/stickler_gtk/ui/window.py:143
 msgid "The Notes Are Ready"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:110
+#: src/stickler_gtk/ui/window.py:144
 msgid "The sheet music will be shown here."
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:115
+#: src/stickler_gtk/ui/window.py:149
 msgid "Recent"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:157
+#: src/stickler_gtk/ui/window.py:191
 msgid "MusicXML…"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:158
+#: src/stickler_gtk/ui/window.py:192
 msgid "To edit in MuseScore or another notation program"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:160
+#: src/stickler_gtk/ui/window.py:194
 msgid "Drum Track…"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:160
+#: src/stickler_gtk/ui/window.py:194
 msgid "Only the drums, as FLAC or WAV"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:173
+#: src/stickler_gtk/ui/window.py:213
 msgid "Songs"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:192
+#: src/stickler_gtk/ui/window.py:232
 msgid "Not an audio file"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:219
+#: src/stickler_gtk/ui/window.py:259
 msgid "Save As"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:240
+#: src/stickler_gtk/ui/window.py:280
 #, python-brace-format
 msgid "Could not save: {reason}"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:252
+#: src/stickler_gtk/ui/window.py:292
 msgid "Save the Drum Track?"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:254
+#: src/stickler_gtk/ui/window.py:294
 msgid "Choose Where to Save…"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:288
+#: src/stickler_gtk/ui/window.py:328
 msgid "Open"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:288
+#: src/stickler_gtk/ui/window.py:328
 #, python-brace-format
 msgid "Saved “{name}”"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:310
+#: src/stickler_gtk/ui/window.py:350
 #, python-brace-format
 msgid "Recent songs could not be saved: {reason}"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:323
+#: src/stickler_gtk/ui/window.py:363
 msgid "Remove from the List"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:381
+#: src/stickler_gtk/ui/window.py:421
 msgid "Saving the Drum Track"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:399
+#: src/stickler_gtk/ui/window.py:439
 msgid "Commands"
 msgstr ""
