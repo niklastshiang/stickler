@@ -89,8 +89,9 @@ def zoom_row(label: Gtk.Label) -> Gtk.Widget:
     return row
 
 
-def main_menu(zoom_label: Gtk.Label) -> Gtk.MenuButton:
-    """The primary menu: F10 opens it (GtkMenuButton:primary)."""
+def main_menu(zoom_label: Gtk.Label, *, removable: bool = False) -> Gtk.MenuButton:
+    """The primary menu: F10 opens it (GtkMenuButton:primary). `removable`: the installed app
+    offers to remove its downloaded models (SPEC.md, module `polish`)."""
     menu = Gio.Menu()
     for custom in ("style-switcher", "zoom"):
         item = Gio.MenuItem()
@@ -101,6 +102,10 @@ def main_menu(zoom_label: Gtk.Label) -> Gtk.MenuButton:
     items.append(_("Keyboard Shortcuts"), "app.shortcuts")
     items.append(_("About Stickler"), "app.about")
     menu.append_section(None, items)
+    if removable:
+        models = Gio.Menu()
+        models.append(_("Remove Downloaded Models…"), "win.remove-models")
+        menu.append_section(None, models)
     popover = Gtk.PopoverMenu.new_from_model(menu)
     popover.add_child(_style_switcher(), "style-switcher")
     popover.add_child(zoom_row(zoom_label), "zoom")

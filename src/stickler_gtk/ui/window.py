@@ -21,6 +21,7 @@ from stickler_gtk.logic import (
     paths,
     playback,
     recent,
+    removal,
     session,
     settings,
     setup,
@@ -110,7 +111,7 @@ class Window(Adw.ApplicationWindow):
         self.export_box = Gtk.Box(visible=False)
         self.export_box.append(self.export_wide)
         self.export_box.append(self.export_narrow)
-        header.pack_end(menu.main_menu(self.zoom_label))
+        header.pack_end(menu.main_menu(self.zoom_label, removable=paths.packaged() is not None))
         self.corrections_button = Gtk.ToggleButton(
             icon_name="sidebar-show-right-symbolic",
             tooltip_text=_("Corrections"),
@@ -258,6 +259,7 @@ class Window(Adw.ApplicationWindow):
             ("setup-download", self.agree_to_setup),
             ("setup-later", lambda: self.show(session.Empty())),
             ("setup-retry", self.retry_setup),
+            ("remove-models", self.ask_to_remove_models),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())
@@ -265,6 +267,7 @@ class Window(Adw.ApplicationWindow):
             self.actions[name] = action
         self.connect("close-request", self._on_close)
         self._sampling = 0  # the timer that measures a download
+        self._removing = False  # models being removed
         self._consent_for: tuple[str, ...] = ()
         self._step_rows: list[tuple[StepRow, Adw.ActionRow]] = []  # what the step list shows
         self._free_before = 0
@@ -653,6 +656,68 @@ class Window(Adw.ApplicationWindow):
         self._step_rows = kept
         self.pages.set_visible_child_name("analysing")
 
+    # removing the downloaded models (SPEC.md, module `polish`)
+
+    def ask_to_remove_models(self) -> None:
+        """Measures what would go (in the worker), then asks."""
+        worker.run(
+            lambda: (
+                removal.size(removal.targets(everything=False)),
+                removal.size(removal.targets(everything=True)),
+            ),
+            lambda sizes: self._ask_to_remove(*sizes),
+            lambda exc: self.toast(_("Could not check the models: {reason}").format(reason=exc)),
+        )
+
+    def _ask_to_remove(self, models: int, everything: int) -> None:
+        def body(all_of_it: bool) -> str:
+            freed = GLib.format_size(everything if all_of_it else models)
+            return _(
+                "This frees {size}. Stickler asks before it downloads the models again."
+            ).format(size=freed)
+
+        also = Gtk.CheckButton(label=_("Also remove settings, recent songs and corrections"))
+        alert = Adw.AlertDialog(
+            heading=_("Remove Downloaded Models?"), body=body(False), extra_child=also
+        )
+        also.connect("toggled", lambda b: alert.set_body(body(b.get_active())))
+        alert.add_response("cancel", _("Cancel"))
+        alert.add_response("remove", _("Remove"))
+        alert.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+        alert.set_default_response("cancel")
+        alert.set_close_response("cancel")
+        alert.connect(
+            "response",
+            lambda _a, answer: answer == "remove" and self.remove_models_now(also.get_active()),
+        )
+        alert.present(self)
+
+    def remove_models_now(self, everything: bool) -> None:
+        self._stop_job()
+        self.playbar.stop()
+        self._removing = True
+        self.show(session.Empty())
+        chosen = removal.targets(everything=everything)
+
+        def done(_result) -> None:
+            self._removing = False
+            if everything:
+                self.recent = []
+                self._show_recent()
+            else:
+                with contextlib.suppress(OSError):  # asks again before the next download
+                    settings.update(settings.store_path(), setup_agreed=False)
+            self._shown = self._shown_info = None
+            self.show(session.Empty())
+            self.toast(_("The downloaded models are removed"))
+
+        def failed(exc: BaseException) -> None:
+            self._removing = False
+            self.show(session.Empty())
+            self.toast(_("Could not remove everything: {reason}").format(reason=exc))
+
+        self.job_thread = worker.run(lambda: removal.remove(chosen), done, failed)
+
     # the setup assistant (SPEC.md, module `setup-assistant`)
 
     def _check_setup(self) -> None:
@@ -766,6 +831,9 @@ class Window(Adw.ApplicationWindow):
         self.corrections_button.set_visible(is_result)
         busy = session.Analysing | session.Exporting | session.SettingUp
         self.actions["cancel"].set_enabled(isinstance(state, busy))
+        self.actions["remove-models"].set_enabled(
+            paths.packaged() is not None and not isinstance(state, busy) and not self._removing
+        )
         self.analysing.set_description("")
         if isinstance(state, session.Consent):
             self.heading.set_title(APP_NAME)

@@ -910,3 +910,57 @@ def test_progress_updates_keep_the_running_steps_row_so_its_spinner_runs_on():
         assert window.steps.get_row_at_index(1) is not None
     finally:
         window.close()
+
+
+def _menu_actions(button):
+    model = button.get_popover().get_menu_model()
+    found = []
+    for i in range(model.get_n_items()):
+        section = model.get_item_link(i, "section")
+        if section is not None:
+            for k in range(section.get_n_items()):
+                found.append(section.get_item_attribute_value(k, "action", None))
+    return [a.get_string() for a in found if a is not None]
+
+
+def test_the_remove_entry_shows_only_in_the_installed_app():
+    from gi.repository import Gtk
+
+    from stickler_gtk.ui import menu
+
+    assert "win.remove-models" in _menu_actions(menu.main_menu(Gtk.Label(), removable=True))
+    assert "win.remove-models" not in _menu_actions(menu.main_menu(Gtk.Label(), removable=False))
+
+
+def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
+    monkeypatch, tmp_path
+):
+    import os
+    from pathlib import Path
+
+    from stickler_gtk.logic import paths, recent, session, settings
+    from stickler_gtk.ui.window import Window
+
+    monkeypatch.setenv("APPIMAGE", "/x/Stickler.AppImage")
+    monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
+    weights = paths.adapters_root() / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    (weights / "final0.ckpt").write_bytes(b"x" * 2048)
+    settings.update(settings.store_path(), setup_agreed=True, zoom=1.25)
+    recent.save(recent.store_path(), [recent.opened_now(Path("/m/a.flac"), "A", "")])
+    window = Window()
+    try:
+        assert window.actions["remove-models"].get_enabled()
+        window.show(session.start_setup(("environment:adtof",), None, ("adtof",)))
+        assert not window.actions["remove-models"].get_enabled()  # not while downloading
+        window.show(session.Empty())
+        window.remove_models_now(everything=False)
+        assert _wait(lambda: not paths.adapters_root().exists())
+        stored = settings.load(settings.store_path())
+        assert (stored.setup_agreed, stored.zoom) == (False, 1.25)  # asks again, keeps the rest
+        assert recent.load(recent.store_path()) and window.pages.get_visible_child_name() == "empty"
+        window.remove_models_now(everything=True)
+        assert _wait(lambda: not settings.store_path().exists())
+        assert not os.path.exists(recent.store_path()) and window.recent == []
+    finally:
+        window.close()

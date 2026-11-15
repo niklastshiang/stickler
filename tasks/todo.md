@@ -638,7 +638,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/gtk/test_removal.py`
   - Dependencies: none · Files: `src/stickler_gtk/logic/removal.py`, tests
 
-- [ ] **Task 81: "Remove Downloaded Models…"** (M)
+- [x] **Task 81: "Remove Downloaded Models…"** (M): done 2026-11-15. The entry only in the installed app, disabled while a job, a download or a removal runs; the alert shows the size for either choice and switches it with the check box; afterwards the consent is reset (everything: the recent list too). msgmerge had pre-filled the new texts with wrong fuzzy translations; all seven are translated by hand in German and Spanish.
   - Acceptance: the main menu entry only when packaged, disabled while a job runs; an alert with the size and the check box; the deletion in the worker; afterwards the empty window and the consent asked again; German and Spanish.
   - Verify: widget tests (packaged and not, the alert's choices); by hand in the Flatpak or AppImage (owner)
   - Dependencies: 80 · Files: `src/stickler_gtk/ui/{menu,window,application}.py`, `po/*`, tests
