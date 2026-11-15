@@ -25,3 +25,8 @@ def test_a_pinch_scales_the_zoom_it_started_from_within_the_limits():
     assert zoom.pinched(2.0, 0.5) == pytest.approx(1.0)
     assert zoom.pinched(2.0, 10.0) == zoom.LARGEST
     assert zoom.pinched(1.0, 0.1) == zoom.SMALLEST
+
+
+def test_the_menu_shows_the_zoom_as_a_rounded_percentage():
+    assert zoom.percent(1.0) == "100%"
+    assert zoom.percent(1.25 * 1.25) == "156%"

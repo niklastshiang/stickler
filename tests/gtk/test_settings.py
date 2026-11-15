@@ -27,3 +27,20 @@ def test_settings_live_in_the_xdg_config_folder(tmp_path):
 
 def test_only_the_three_appearances_exist():
     assert settings.APPEARANCES == ("system", "light", "dark")
+
+
+def test_the_note_size_is_remembered_next_to_the_appearance(tmp_path):
+    store = tmp_path / "settings.json"
+    assert settings.load(store).zoom == 1.0
+    settings.update(store, zoom=1.25)
+    settings.update(store, appearance="dark")
+    assert settings.load(store) == settings.Settings(appearance="dark", zoom=1.25)
+
+
+def test_a_note_size_out_of_range_falls_back_to_the_window_width(tmp_path):
+    store = tmp_path / "settings.json"
+    for text in ('{"zoom": 40}', '{"zoom": "big"}', '{"appearance": "light", "zoom": -1}'):
+        store.write_text(text, encoding="utf-8")
+        assert settings.load(store).zoom == 1.0
+    store.write_text('{"appearance": "light", "zoom": -1}', encoding="utf-8")
+    assert settings.load(store).appearance == "light"  # one bad value spoils only itself

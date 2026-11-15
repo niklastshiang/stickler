@@ -441,3 +441,17 @@ def test_a_pinch_zooms_once_the_fingers_pause(monkeypatch, tmp_path):
         assert _wait(lambda: window.sheet.pages[0].bars[1].height > normal * 1.4)
     finally:
         window.close()
+
+
+def test_the_note_size_is_shown_in_the_menu_and_kept_for_the_next_song():
+    from stickler_gtk.logic import settings
+    from stickler_gtk.ui.window import Window
+
+    window = Window()
+    assert window.zoom_label.get_label() == "100%"
+    window.activate_action("win.zoom-in", None)  # works before any song, too
+    assert window.zoom_label.get_label() == "125%"
+    assert settings.load(settings.store_path()).zoom == 1.25
+    assert Window().sheet.zoom == 1.25  # the next window starts at the chosen size
+    window.activate_action("win.zoom-reset", None)
+    assert settings.load(settings.store_path()).zoom == 1.0

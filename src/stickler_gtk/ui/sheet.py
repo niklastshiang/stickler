@@ -63,12 +63,13 @@ class PageView(Gtk.DrawingArea):
 
 
 class Sheet(Gtk.ScrolledWindow):
-    def __init__(self) -> None:
+    def __init__(self, zoom_level: float = 1.0, on_zoom=None) -> None:
         # EXTERNAL: no sideways scroll bar, and the pages' width is not the window's minimum,
         # so the window can shrink and the pages are laid out anew for it (NEVER kept it wide)
         super().__init__(hscrollbar_policy=Gtk.PolicyType.EXTERNAL, vexpand=True, hexpand=True)
         self.musicxml: str | None = None
-        self.zoom = 1.0
+        self.zoom = zoom_level
+        self.on_zoom = on_zoom  # told every new zoom (the window remembers it)
         self.pages: list[engraving.Page] = []
         self.views: list[PageView] = []
         self.marked: int | None = None  # the written bar shown in blue
@@ -102,12 +103,18 @@ class Sheet(Gtk.ScrolledWindow):
     def set_zoom(self, value: float) -> None:
         if value != self.zoom:
             self.zoom = value
+            self._zoomed()
             self.relayout()
+
+    def _zoomed(self) -> None:
+        if self.on_zoom is not None:
+            self.on_zoom(self.zoom)
 
     def pinch(self, scale: float) -> None:
         """Follows a pinch: the zoom is set at once, the new layout once the fingers pause
         (Verovio for every step of the gesture would stutter)."""
         self.zoom = zoom.pinched(self._pinch_from, scale)
+        self._zoomed()
         self._relayout_soon()
 
     def _relayout_soon(self) -> None:

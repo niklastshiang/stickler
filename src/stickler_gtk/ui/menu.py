@@ -40,7 +40,7 @@ def apply_appearance(appearance: str) -> None:
 
 def choose_appearance(appearance: str) -> None:
     apply_appearance(appearance)
-    settings.save(settings.store_path(), settings.Settings(appearance))
+    settings.update(settings.store_path(), appearance=appearance)
 
 
 def _style_switcher() -> Gtk.Widget:
@@ -68,12 +68,34 @@ def _style_switcher() -> Gtk.Widget:
     return box
 
 
-def main_menu() -> Gtk.MenuButton:
+def zoom_row(label: Gtk.Label) -> Gtk.Widget:
+    """ "−  100 %  +" (design screen 9): the note size for every song; the percentage resets it."""
+    row = Gtk.Box(spacing=6, halign=Gtk.Align.FILL, margin_start=12, margin_end=12)
+    smaller = Gtk.Button(
+        icon_name="zoom-out-symbolic", action_name="win.zoom-out", tooltip_text=_("Zoom Out")
+    )
+    reset = Gtk.Button(
+        child=label,
+        action_name="win.zoom-reset",
+        tooltip_text=_("Fit the Window's Width"),
+        hexpand=True,
+    )
+    larger = Gtk.Button(
+        icon_name="zoom-in-symbolic", action_name="win.zoom-in", tooltip_text=_("Zoom In")
+    )
+    for button in (smaller, reset, larger):
+        button.add_css_class("flat")
+        row.append(button)
+    return row
+
+
+def main_menu(zoom_label: Gtk.Label) -> Gtk.MenuButton:
     """The primary menu: F10 opens it (GtkMenuButton:primary)."""
     menu = Gio.Menu()
-    switcher = Gio.MenuItem()
-    switcher.set_attribute_value("custom", GLib.Variant.new_string("style-switcher"))
-    menu.append_item(switcher)
+    for custom in ("style-switcher", "zoom"):
+        item = Gio.MenuItem()
+        item.set_attribute_value("custom", GLib.Variant.new_string(custom))
+        menu.append_item(item)
     items = Gio.Menu()
     items.append(_("Open a Song…"), "win.open")
     items.append(_("Keyboard Shortcuts"), "app.shortcuts")
@@ -81,6 +103,7 @@ def main_menu() -> Gtk.MenuButton:
     menu.append_section(None, items)
     popover = Gtk.PopoverMenu.new_from_model(menu)
     popover.add_child(_style_switcher(), "style-switcher")
+    popover.add_child(zoom_row(zoom_label), "zoom")
     return Gtk.MenuButton(
         icon_name="open-menu-symbolic", popover=popover, primary=True, tooltip_text=_("Main Menu")
     )

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import threading
 from pathlib import Path
 
@@ -11,7 +12,16 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 from stickler import api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
-from stickler_gtk.logic import analysis, engraving, exports, paths, recent, session, zoom
+from stickler_gtk.logic import (
+    analysis,
+    engraving,
+    exports,
+    paths,
+    recent,
+    session,
+    settings,
+    zoom,
+)
 from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import menu, pdf, worker
 from stickler_gtk.ui.sheet import Sheet
@@ -75,6 +85,8 @@ class Window(Adw.ApplicationWindow):
         self.set_size_request(*MINIMUM_SIZE)
         self.state: session.State = session.Empty()
 
+        self.note_size = settings.load(settings.store_path()).zoom
+        self.zoom_label = Gtk.Label(label=zoom.percent(self.note_size))
         self.heading = Adw.WindowTitle(title=APP_NAME)
         header = Adw.HeaderBar(title_widget=self.heading)
         # Wide windows show labelled buttons, narrow ones icon buttons (design screen 10)
@@ -88,7 +100,7 @@ class Window(Adw.ApplicationWindow):
         self.export_box = Gtk.Box(visible=False)
         self.export_box.append(self.export_wide)
         self.export_box.append(self.export_narrow)
-        header.pack_end(menu.main_menu())
+        header.pack_end(menu.main_menu(self.zoom_label))
         header.pack_end(self.export_box)
         self.open_wide = Gtk.Button(
             child=Adw.ButtonContent(icon_name="document-open-symbolic", label=_("Open…")),
@@ -139,7 +151,7 @@ class Window(Adw.ApplicationWindow):
         error_box.append(Adw.Clamp(maximum_size=560, child=self.error_expander))
         error_box.append(buttons)
         self.error = Adw.StatusPage(icon_name="dialog-warning-symbolic", child=error_box)
-        self.sheet = Sheet()
+        self.sheet = Sheet(self.note_size, on_zoom=self._zoom_changed)
         self.pages = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
         self.recent_store = recent.store_path()
         self.recent = recent.load(self.recent_store)
@@ -272,6 +284,13 @@ class Window(Adw.ApplicationWindow):
                 then(Path(chosen.get_path()))
 
         dialog.save(self, None, saved)
+
+    def _zoom_changed(self, value: float) -> None:
+        """Every song is shown at the chosen note size; the menu shows it."""
+        self.zoom_label.set_label(zoom.percent(value))
+        # unsaved, the size still works for this session; a toast on every zoom step would nag
+        with contextlib.suppress(OSError):
+            settings.update(settings.store_path(), zoom=value)
 
     def show_position(self, seconds: float) -> None:
         """Marks the bar sounding at `seconds` (for `playback`, which follows the song)."""
@@ -449,9 +468,6 @@ class Window(Adw.ApplicationWindow):
             "export-musicxml",
             "export-drums",
             "open-with",
-            "zoom-in",
-            "zoom-out",
-            "zoom-reset",
         ):
             self.actions[name].set_enabled(is_result)
         self.export_box.set_visible(is_result)

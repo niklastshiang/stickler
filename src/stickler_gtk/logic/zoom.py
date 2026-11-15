@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from stickler_gtk.i18n import _
+
 SMALLEST, LARGEST = 0.5, 3.0
 STEP = 1.25  # one Ctrl+plus or Ctrl+minus
 
@@ -26,3 +28,9 @@ def scrolled(current: float, dy: float) -> float:
 def pinched(start: float, scale: float) -> float:
     """A pinch on a touchpad or touchscreen: the zoom it began at times the gesture's scale."""
     return _clamp(start * scale)
+
+
+def percent(current: float) -> str:
+    """The note size for the main menu: "156%" in English, "156 %" in German."""
+    # Translators: a percentage; German puts a no-break space before the sign
+    return _("{percent}%").format(percent=round(current * 100))
