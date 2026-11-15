@@ -7,6 +7,7 @@ Read CONSTRAINTS.md before writing code. Do not weaken it to make a change pass.
 - Decisions: docs/adr/
 - Everything in English: code, comments, docstrings, messages, documentation and commit messages (since 2026-11-12). Talk to the user in German.
 - Adapter cache keys hash `run.py`, `setup.py` and `pyproject.toml` without comments and docstrings. Any other edit (strings, TOML values) invalidates cached results. For an edit that does not change behaviour, run `stickler cache-digests <file>` before it and `stickler cache-migrate --rekey-from <file>` after it; never rekey after a real code change.
+- Subagents (owner, 2026-11-15): use them where they help, e.g. a fresh-context review of a finished task, independent research, or work that splits into independent parts. That is allowed even when it takes longer, but only when the quality does not suffer: no hand-off of work that needs this conversation's context or decisions, and every subagent result is checked before it is used.
 - Check: `scripts/check.sh fast` after changes, `scripts/check.sh task` before every commit (also runs as the pre-commit hook).
 - Only open-source models from actively maintained projects; each adapter README states the source (README/paper, version/commit). Check maintenance status and licence on the web before recommending a project, not from memory (e.g. Demucs is maintained in the fork adefossez/demucs). Non-commercial weights are fine; Stickler never ships them.
 - Releases are numbered 1, 2, 3 … (+1 per release, no SemVer, ADR 0006); every release counts, fixes included.
