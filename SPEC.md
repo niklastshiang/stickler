@@ -391,7 +391,7 @@ only in its first version.
 | `app-shell` | Window, open or drop a song, analysis with a step display, export (MusicXML, drum track; PDF with `sheet-view`), recent songs | `engine-api`, `design` | done, below |
 | `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | done, below |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | done, below |
-| `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | draft, below |
+| `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | approved, below |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
 | `packaging` | Flatpak and AppImage with every release | all | – |
 
@@ -1073,7 +1073,8 @@ tests/gtk/test_playback.py
 
 ### Module `corrections`
 
-> Status: **draft**, waiting for the owner's approval (2026-11-15).
+> Status: **approved** by the owner on 2026-11-15. Plan: `tasks/plan.md` ("GTK application:
+> `corrections`"), tasks 60–64 in `tasks/todo.md`.
 
 #### Assumptions
 
@@ -1118,8 +1119,9 @@ without running anything again (design screens 7 and 11).
    exports follow it.
 3. A song opened again shows its corrections; "Back to Detected" restores the detected sheet.
 
-Not part of this module: correcting single notes or hits, a tempo other than half or double,
-undo beyond "Back to Detected", changes to the models.
+Not part of this module: a tempo other than half or double, undo beyond "Back to Detected",
+changes to the models. Correcting single notes or hits is not part of the app at all (owner,
+2026-11-15).
 
 #### Commands
 

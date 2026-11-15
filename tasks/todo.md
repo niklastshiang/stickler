@@ -501,6 +501,42 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint K
 - [x] All 8 success criteria of SPEC.md `playback` met; the owner listens to Eye of the Tiger with the clicks. Done 2026-11-15: the clicks follow the marks, switching Song / Hits / Both is smooth; the first clicks were too quiet, the fuller ones are "much better to hear" (owner).
 
+## Phase 12: GTK application, module `corrections` (approved 2026-11-15, SPEC.md "Module `corrections`")
+
+- [ ] **Task 60: Corrections logic and store** (S)
+  - Acceptance:
+    - `logic/corrections.py`: each control's change with its range (beats 1–12, the first "one" within the bar, kept there when the beats shrink); "anything corrected?"; the texts "Beat n".
+    - The store: per song by absolute path, round trip, bad entries dropped one by one, a missing file is empty, atomic save.
+  - Verify: `uv run pytest -q tests/gtk/test_corrections.py`
+  - Dependencies: none · Files: `src/stickler_gtk/logic/corrections.py`, tests
+
+- [ ] **Task 61: Jobs and session for a correction** (S)
+  - Acceptance:
+    - `analyse` passes corrections to `notate`; `Result` holds the corrections and the detected meter; `correcting` and `corrected` show only the newest correction's result; a failed correction keeps the result.
+  - Verify: `uv run pytest -q tests/gtk/test_session.py tests/gtk/test_analysis_errors.py`
+  - Dependencies: 60 · Files: `src/stickler_gtk/logic/{analysis,session}.py`, tests
+
+- [ ] **Task 62: The sidebar** (M)
+  - Acceptance:
+    - `ui/corrections.py` with the controls of design screen 7, showing a result's values; an `Adw.OverlaySplitView` with the sidebar at the end, a header toggle and F9, closed at first.
+  - Verify: widget tests (values shown, F9 toggles); by hand at 1000 px
+  - Dependencies: 60 · Files: `src/stickler_gtk/ui/{corrections,window,application,menu}.py`, `po/*`, tests
+
+- [ ] **Task 63: Applying, remembering, Back to Detected** (M)
+  - Acceptance:
+    - A change re-notates after 250 ms in the worker and shows the new sheet, title, bar map; exports use it; the song's corrections are stored and applied when it is opened again; "Back to Detected" clears them and is insensitive while nothing is corrected.
+  - Verify: widget tests with the fake analysis (a change reaches `notate`, the title follows, reopening applies the stored ones); by hand: Eye of the Tiger at half tempo, the longest own song timed
+  - Dependencies: 61, 62 · Files: `src/stickler_gtk/ui/{window,corrections}.py`, tests
+
+- [ ] **Task 64: Bottom sheet, shortcuts, German** (S)
+  - Acceptance:
+    - Below the narrow breakpoint the controls sit in an `Adw.BottomSheet` (design screen 11); F9 in the shortcuts dialog; every page still fits 360 px; German complete.
+  - Verify: widget tests (narrow window shows the bottom sheet, the width test); by hand at 400 px
+  - Dependencies: 63 · Files: `src/stickler_gtk/ui/*`, `po/*`, tests
+
+### Checkpoint L
+- [ ] All 8 success criteria of SPEC.md `corrections` met; the owner corrects Eye of the Tiger
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.

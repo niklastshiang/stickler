@@ -179,6 +179,36 @@ marker, bar clicks (58) → keyboard, narrow, stopping, German (59).
 | No audio device (CI, a broken setup) | Medium | The real-pipeline test uses `fakesink`; the app shows an error toast instead of crashing when the sink fails |
 | The pipeline keeps playing after the window closed | Medium | `stop()` sets it to NULL on close, quit and a new song; a test checks the state |
 
+## GTK application: `corrections` (approved 2026-11-15, SPEC.md "Module `corrections`")
+
+Fix the beat and make the sheet easier to read, applied at once and remembered per song.
+
+Design decisions:
+- **`logic/corrections.py` owns the values:** `api.Corrections` plus the detected meter it
+  started from; pure functions for each control (`with_tempo`, `with_beats`, `with_first_one`,
+  `with_simplify`, `with_repeats`, `detected`) that keep the values in range, and a JSON store
+  keyed by the song's absolute path.
+- **One job function for both:** `analysis.analyse(..., corrections)` notates with the given
+  corrections; a correction runs the same function (song info is cheap, the transcription
+  cached), so there is one path to test.
+- **Session:** `Result` gains `corrections` and the `detected` meter; `correcting(result)` opens
+  a job number on a `Result` without leaving it (the sheet stays), `corrected(state, job, ...)`
+  replaces the notation only for the newest job.
+- **The window applies a change after 250 ms of quiet**, in the worker; the store is written
+  when a correction is shown, removed by "Back to Detected".
+- **Sidebar and bottom sheet share one controls widget**, moved between them by the narrow
+  breakpoint, as the playback bar regroups.
+
+Order: logic and store (60) → jobs and session (61) → the sidebar with its controls (62) →
+applying, remembering, Back to Detected (63) → bottom sheet, keys, German (64).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Several quick changes race each other | Medium | Debounce plus job numbers: only the newest result is shown |
+| A correction makes the marker point at bars that no longer exist | Medium | The bar map comes with each notation; `Result` always holds the matching pair |
+| Re-engraving with Verovio blocks the main loop on long songs | Low | Measured with notate at 0.2 s; Verovio runs as today on a result; measure on the longest own song in Task 63 |
+| A stored correction no longer fits (song changed) | Low | Values are validated on load; an invalid entry is dropped alone |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
