@@ -392,7 +392,7 @@ only in its first version.
 | `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | done, below |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | done, below |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | done, below |
-| `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
+| `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | draft, below |
 | `packaging` | Flatpak and AppImage with every release | all | – |
 
 Build order: `engine-api`, `design` (in parallel) → `app-shell` → `sheet-view` → `playback`,
@@ -400,6 +400,10 @@ Build order: `engine-api`, `design` (in parallel) → `app-shell` → `sheet-vie
 
 Out of order on purpose: the Flatpak sandbox trial (can `uv` build a model environment inside
 the sandbox?) belongs to `packaging` but runs early, because a failure changes `setup-assistant`.
+**Done 2026-11-15, passed** (details in `setup-assistant`, assumption 1): in `org.gnome.Platform//51`
+with only the network and one folder, a static `uv` 0.13.8 fetched Python 3.12 itself and built
+ADTOF's and Beat This!'s environments; both ran on a clip. ADTOF needs its git dependency as a
+GitHub archive, because the runtime has no git.
 
 ### Decisions for all modules (owner, 2026-11-14)
 
@@ -1174,6 +1178,121 @@ tests/gtk/test_corrections.py
 6. Corrections come back after closing and reopening the song; "Back to Detected" clears them.
 7. F9 and the header button open and close the sidebar; the narrow window shows a bottom sheet.
 8. German complete; `scripts/check.sh task` green, `stickler_gtk/logic` at ≥ 95% coverage.
+
+#### Open questions
+
+- None.
+
+### Module `setup-assistant`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-15).
+
+#### Assumptions
+
+1. **The sandbox trial passed** (2026-11-15, `org.gnome.Platform//51`, only `--share=network`
+   and the trial folder, the static `uv` 0.13.8 from the uv release, checksum checked):
+   - `uv` downloads Python 3.12 itself (113 MB); neither the runtime's Python 3.14 nor a
+     compiler is needed (the runtime has neither git nor gcc).
+   - ADTOF fetches `adtof-pytorch` with git, which the runtime lacks. The same commit as a
+     GitHub archive (`.../archive/<commit>.tar.gz`) installs without git or a compiler, with the
+     same 42 package versions as today's lock; `uv sync` 18 s, 30 s of music in 3 s.
+   - Beat This! runs (4 s on the clip). Its checkpoint server answered HTTP 500 from the
+     sandbox and from the host alike: down again, not the sandbox.
+2. **ADTOF's git source becomes the archive URL** of the same commit. Results cannot change, so
+   its cached results are rekeyed (`stickler cache-digests` before, `cache-migrate
+   --rekey-from` after, CLAUDE.md).
+3. **A mirror for Beat This!'s checkpoint** (owner, 2026-11-15): its code and weights are MIT
+   ([CPJKU/beat_this](https://github.com/CPJKU/beat_this) README, checked 2026-11-15), and its
+   only host, `cloud.cp.jku.at`, was down on 2026-11-14 and 2026-11-15. A copy of `final0.ckpt`
+   with the MIT licence goes into a GitHub release of Stickler; Beat This!'s `setup.py` tries
+   JKU first and the copy only when JKU fails, and checks the file's SHA-256 either way. Its
+   cached results are rekeyed as in assumption 2. Publishing the release is the owner's step
+   (or mine with the owner's go at that moment).
+4. **When the assistant shows** (owner, 2026-11-15): at start, if Fast is not set up
+   (`api.mode_ready`, checked in the worker), the window opens on the consent page (design
+   screen 1). "Not Now" shows the empty window; opening a song then asks again instead of
+   analysing. Once agreed, the consent is remembered (settings), so an interrupted download goes
+   on by itself at the next start, as screen 2 promises.
+5. **The download** (design screen 2) runs `api.setup_adapters` for each missing Fast adapter
+   in the worker, with the step list of `app-shell` (programs and model per adapter: done,
+   running, waiting). A running step also shows its bytes: what has grown on disk (the adapter's
+   folder and uv's cache) against the sizes in `docs/requirements.md`, never past 99 % before
+   the step ends. Cancel stops it at once (`CancelToken`); what is done stays.
+6. **A failed step** (design screen 3) names its server: the Python package servers (pypi.org,
+   download.pytorch.org, github.com) for the programs, JKU Linz and Stickler's copy for Beat
+   This!'s model; it keeps what is done, shows the technical details (the error's last lines),
+   and offers "Try Again" and "Later" (the empty window).
+7. **Where the models live** does not change here: the app uses `api.ADAPTERS_ROOT` as today.
+   `packaging` moves it into the app's data folder and ships `uv`; the trial shows both work.
+8. **The page for missing models** of `app-shell` (the `stickler setup` commands) goes: a
+   missing model now leads to the consent page.
+9. **The drum track's Demucs** stays with the export (its cost dialog and steps, `app-shell`).
+
+#### Objective
+
+A drummer who never used a terminal starts Stickler, agrees once, waits a few minutes, and can
+analyse songs (design screens 1–3).
+
+1. First start: the consent page names both models, what each does, its size and licence
+   (ADTOF's model non-commercial only), the total on disk, and "Not Now" / "Download 2.2 GB".
+2. The download shows each step and its progress; it can be cancelled and resumes later.
+3. A server that does not answer is named; "Try Again" goes on from where it failed.
+4. Afterwards the empty window appears and a song can be opened.
+
+Not part of this module: Quality mode's models (the app runs Fast), GPU environments,
+moving the models' folder and shipping `uv` (`packaging`).
+
+#### Commands
+
+```bash
+scripts/gtk.sh                          # the app; STICKLER_ADAPTERS=<copy> for a fresh setup
+uv run pytest -q tests/gtk              # logic tests
+scripts/gtk.sh test                     # widget tests (headless)
+scripts/check.sh task                   # before every commit
+```
+
+#### Project structure (additions)
+
+```
+src/stickler_gtk/logic/setup.py         # when to ask, the steps, bytes against sizes, servers
+src/stickler_gtk/logic/settings.py      # + the consent
+src/stickler_gtk/ui/setup.py            # consent, download and error pages
+adapters/transcribers/adtof/            # git source → archive URL (same commit), lock
+adapters/beats/beat_this/setup.py       # JKU first, then Stickler's copy, SHA-256 checked
+tests/gtk/test_setup.py
+```
+
+#### Testing strategy
+
+- Logic: when to show consent, download or the empty window (ready, not agreed, agreed but
+  unfinished); the steps for what is missing; bytes against sizes (capped); which server a
+  failed step names.
+- Beat This!'s download: JKU answering, JKU failing with the copy answering, a wrong checksum
+  (rejected), both failing (the error names both).
+- Widgets with a fake `setup_adapters`: consent → download → empty window; "Not Now" and the
+  question coming back with a song; cancel; a failure, then "Try Again".
+- By hand: a fresh setup into a copy of the adapters on the development machine, timed, and
+  interrupted once.
+
+#### Boundaries
+
+- **Always:** the consent before any download; ADTOF's licence named before agreeing; the
+  checksum of the mirrored checkpoint checked; what is done kept on failure or cancel.
+- **Ask first:** publishing the mirror release; any other mirrored file; changing a model or its
+  version.
+- **Never:** download anything before consent; ship ADTOF's weights; hide which server failed.
+
+#### Success criteria
+
+1. A fresh setup of Fast from the app works on the development machine (owner) and takes a
+   few minutes on a home connection.
+2. Interrupted (cancel, or the app killed), the next start goes on and finishes.
+3. With JKU down, Beat This!'s model comes from the copy; with both down, screen 3 names them.
+4. "Not Now" opens the empty window; opening a song asks again.
+5. ADTOF from the archive gives the same results as before (cached results rekeyed, the
+   benchmark's own songs unchanged).
+6. German complete; every page fits 360 px; `scripts/check.sh task` green, `stickler_gtk/logic`
+   at ≥ 95% coverage.
 
 #### Open questions
 
