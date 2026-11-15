@@ -391,7 +391,7 @@ only in its first version.
 | `app-shell` | Window, open or drop a song, analysis with a step display, export (MusicXML, drum track; PDF with `sheet-view`), recent songs | `engine-api`, `design` | done, below |
 | `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | done, below |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | done, below |
-| `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | – |
+| `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | draft, below |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
 | `packaging` | Flatpak and AppImage with every release | all | – |
 
@@ -1066,6 +1066,112 @@ tests/gtk/test_playback.py
 6. Space, Left, Right and Home work; the narrow window shows the bar in two rows.
 7. Closing the window or quitting during playback stops the sound at once; nothing keeps running.
 8. `scripts/check.sh task` is green, `stickler_gtk/logic` at ≥ 95% coverage.
+
+#### Open questions
+
+- None.
+
+### Module `corrections`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-15).
+
+#### Assumptions
+
+1. **Corrections are parameters of `notate`** (`api.Corrections`, engine-api): tempo half / as
+   detected / double, beats per bar, the first "one", simplify, repeat signs. The transcription
+   is cached, so no model runs: measured on Eye of the Tiger 2026-11-15, `notate` takes
+   0.17–0.2 s with any correction; Verovio's engraving follows.
+2. **Every change applies at once**, without an "Apply" button: the window notates anew in the
+   worker thread after a short pause (250 ms, so a few quick clicks on a stepper make one run),
+   then engraves. The sheet stays shown meanwhile; a newer change makes an older run's result
+   stale (job numbers, as in `app-shell`). A failed run keeps the last sheet and shows a toast.
+3. **What follows a correction:** the window title (tempo and meter), the bar map, so the marker
+   and the bar clicks of `playback` fit the new bars, and every export (they use the current
+   notation). Playback keeps running at the same time; the clicks do not change, because the
+   hits do not.
+4. **Remembered per song** (owner, 2026-11-15): `$XDG_DATA_HOME/stickler/corrections.json`, next
+   to the recent songs, keyed by the song's path. Opening a song notates it with its stored
+   corrections; "Back to Detected" removes them. Values that are no longer valid are dropped
+   one by one, as in the settings.
+5. **The controls** (design screens 7 and 11):
+   - Tempo: Half / As Detected / Double (`Adw.ToggleGroup`).
+   - Beats per bar: a stepper from 1 to 12, showing the detected number until it is changed.
+   - The first "one": a stepper over the beats of the first bar ("Beat 1" … "Beat n", n the
+     beats per bar), with the line "Beats before it are a pickup".
+   - Simplify ("Nearly equal bars get one pattern") and Repeat signs ("Equal bars are written
+     once") as switches.
+   - "Back to Detected", insensitive while nothing is corrected.
+6. **Where it sits:** a sidebar at the end of the window (`Adw.OverlaySplitView`), opened and
+   closed with a header button and F9 (HIG "side pane"), closed at first; below the narrow
+   breakpoint a bottom sheet (`Adw.BottomSheet`) instead (design screen 11).
+7. **The logic is apart from GTK:** `logic/corrections.py` holds the corrections of a song, the
+   changes the controls make (ranges, the first "one" kept within the bar), whether anything is
+   corrected, and the store.
+
+#### Objective
+
+Fix what the analysis got wrong about the beat, and make the sheet easier to read, in a second,
+without running anything again (design screens 7 and 11).
+
+1. The sidebar (or bottom sheet) shows the controls of assumption 5 with the current values.
+2. A change shows the corrected sheet within about a second; title, marker, bar clicks and the
+   exports follow it.
+3. A song opened again shows its corrections; "Back to Detected" restores the detected sheet.
+
+Not part of this module: correcting single notes or hits, a tempo other than half or double,
+undo beyond "Back to Detected", changes to the models.
+
+#### Commands
+
+```bash
+scripts/gtk.sh                          # the app with the corrections
+uv run pytest -q tests/gtk              # logic tests
+scripts/gtk.sh test                     # widget tests
+scripts/check.sh task                   # before every commit
+```
+
+#### Project structure (additions)
+
+```
+src/stickler_gtk/logic/corrections.py   # a song's corrections, the controls' changes, the store
+src/stickler_gtk/logic/analysis.py      # + notate with corrections; a re-notate job
+src/stickler_gtk/logic/session.py       # + a correction in flight on a Result
+src/stickler_gtk/ui/corrections.py      # the sidebar's controls
+src/stickler_gtk/ui/window.py           # split view, bottom sheet, F9, applying a change
+tests/gtk/test_corrections.py
+```
+
+#### Testing strategy
+
+- Logic: each control's change and its range; the first "one" kept within the bar when the
+  beats per bar shrink; "corrected or not"; the store (round trip, per song, bad values dropped,
+  a missing file).
+- The job: `analyse` passes the stored corrections to `notate`; a re-notate passes the new ones.
+- Session: a change's result is shown; an older change finishing late is ignored.
+- Widgets with the fake analysis: a change re-engraves and updates the title; "Back to Detected"
+  is insensitive until something changes; F9 opens the sidebar; a narrow window shows the
+  bottom sheet; the corrections are back after reopening the song.
+- By hand: Eye of the Tiger at half tempo and with the first "one" moved, by eye and by ear.
+
+#### Boundaries
+
+- **Always:** corrections only through `api.Corrections`; the transcription never rerun; the
+  notation in the worker thread.
+- **Ask first:** more correction kinds (single notes, other tempo factors); storing corrections
+  next to the song file instead of in the app's data.
+- **Never:** block the main loop on `notate` or Verovio longer than one engraving; lose a
+  stored correction because another song's entry is broken.
+
+#### Success criteria
+
+1. Each control changes the sheet within about a second on Eye of the Tiger (owner).
+2. Half and Double change tempo and bars as expected; the title shows the new tempo and meter.
+3. Beats per bar and the first "one" give the expected meter and pickup.
+4. Simplify and Repeat signs switch on and off as on the CLI (`stickler notate`).
+5. The marker, bar clicks and exports use the corrected bars.
+6. Corrections come back after closing and reopening the song; "Back to Detected" clears them.
+7. F9 and the header button open and close the sidebar; the narrow window shows a bottom sheet.
+8. German complete; `scripts/check.sh task` green, `stickler_gtk/logic` at ≥ 95% coverage.
 
 #### Open questions
 
