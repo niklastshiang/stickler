@@ -8,6 +8,8 @@ import os
 from collections.abc import Mapping
 from pathlib import Path
 
+from stickler import api
+
 AUDIO_SUFFIXES = {".mp3", ".flac", ".wav", ".ogg", ".oga", ".opus", ".m4a", ".aac", ".aif", ".aiff"}
 
 
@@ -31,3 +33,10 @@ def score_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
 def hits_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
     """The detected hits of a song as clicks (api.render_hits), next to its score's name."""
     return cache_home(env) / "hits" / f"{score_path(song, env).stem}.wav"
+
+
+def adapters_root(env: Mapping[str, str] = os.environ) -> Path:
+    """Where the models are set up: $STICKLER_ADAPTERS, so a fresh setup can be tried without
+    touching the models in use, else the library's default."""
+    chosen = env.get("STICKLER_ADAPTERS")
+    return Path(chosen) if chosen else api.ADAPTERS_ROOT

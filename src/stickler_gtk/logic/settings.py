@@ -21,6 +21,7 @@ class Settings:
     zoom: float = 1.0  # note size: 1.0 is the window's width
     song_volume: float = 0.7  # playback, 0 to 1; a little down, so the clicks stand out
     hits_volume: float = 1.0
+    setup_agreed: bool = False  # the models may be downloaded (setup-assistant, screen 1)
 
 
 def store_path(env: Mapping[str, str] = os.environ) -> Path:
@@ -42,6 +43,7 @@ def load(store: Path) -> Settings:
         _number(raw.get("zoom"), zoom.SMALLEST, zoom.LARGEST, Settings.zoom),
         _number(raw.get("song_volume"), 0.0, 1.0, Settings.song_volume),
         _number(raw.get("hits_volume"), 0.0, 1.0, Settings.hits_volume),
+        raw.get("setup_agreed") is True,
     )
 
 

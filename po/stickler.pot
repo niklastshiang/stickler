@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-15 12:40+0100\n"
+"POT-Creation-Date: 2026-11-15 13:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -104,6 +104,33 @@ msgstr ""
 
 #: src/stickler_gtk/logic/session.py:187
 msgid "The Analysis Failed"
+msgstr ""
+
+#: src/stickler_gtk/logic/setup.py:50
+#, python-brace-format
+msgid "{size:n} GB"
+msgstr ""
+
+#: src/stickler_gtk/logic/setup.py:51
+#, python-brace-format
+msgid "{size:n} MB"
+msgstr ""
+
+#: src/stickler_gtk/logic/setup.py:60
+#, python-brace-format
+msgid "{done} of {total}"
+msgstr ""
+
+#: src/stickler_gtk/logic/setup.py:67
+msgid "the Python package servers (pypi.org, download.pytorch.org, github.com)"
+msgstr ""
+
+#: src/stickler_gtk/logic/setup.py:69
+msgid "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)"
+msgstr ""
+
+#: src/stickler_gtk/logic/setup.py:70
+msgid "the model’s server"
 msgstr ""
 
 #: src/stickler_gtk/logic/steps.py:13

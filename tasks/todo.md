@@ -551,7 +551,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests against a local HTTP server (JKU answering; failing with the copy answering; wrong checksum; both failing)
   - Dependencies: none · Files: `adapters/beats/beat_this/{setup.py,common.py}`, tests
 
-- [ ] **Task 67: Setup logic** (S)
+- [x] **Task 67: Setup logic** (S): done 2026-11-15. Sizes per step from `docs/requirements.md`; bytes are uv's cache plus the adapter's folder, links not counted.
   - Acceptance:
     - `logic/setup.py`: at start consent, download or nothing; the step rows of what is missing; a step's bytes against its size, capped at 99 %; the server a failed step names. `settings` remembers the consent; `STICKLER_ADAPTERS` sets the adapters folder.
   - Verify: `uv run pytest -q tests/gtk/test_setup.py tests/gtk/test_settings.py`
