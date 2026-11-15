@@ -437,7 +437,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: tests; Eye of the Tiger: every song bar's start time marks the bar map's written bar (110), song bar 3 marks written bar 1
   - Dependencies: 50 · Files: `src/stickler_gtk/logic/marker.py`, tests
 
-- [ ] **Task 52: The page in the window** (M)
+- [x] **Task 52: The page in the window** (M): done 2026-11-15. Eye of the Tiger: the page is drawn 0.2 s after the result, at 1000 and 360 px (one bar per line there). Found on the way: under GTK's German locale Verovio wrote "scale(0,72, 0,72)" and librsvg dropped every notehead, rest and clef; Verovio now runs with `LC_NUMERIC=C` (`engraving.c_numbers`, tested where a comma locale exists). Zoom steps are `logic/zoom.py` (0.5–3×, ×1.25 per step). In a screenshot taken right after switching to dark the header looked empty; to be checked by the owner at Checkpoint J.
   - Acceptance:
     - The result page shows the pages under one another (librsvg), as wide as the window; re-engraved after resizing pauses; Ctrl+plus/minus, Ctrl+scroll, Ctrl+0; dark style inverts the page.
   - Verify: widget tests (page appears after a fake analysis, zoom changes the layout); by hand: Eye of the Tiger within 1 s of the result, at 360 px and 1000 px

@@ -28,6 +28,9 @@ ACCELS = {
     "win.close": ["<Control>w"],
     "app.shortcuts": ["<Control>question"],
     "app.quit": ["<Control>q"],
+    "win.zoom-in": ["<Control>plus", "<Control>equal", "<Control>KP_Add"],
+    "win.zoom-out": ["<Control>minus", "<Control>KP_Subtract"],
+    "win.zoom-reset": ["<Control>0", "<Control>KP_0"],
 }
 
 

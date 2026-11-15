@@ -7,8 +7,11 @@ No GTK here, so all of it is tested without a display."""
 
 from __future__ import annotations
 
+import contextlib
+import locale
 import re
 import xml.etree.ElementTree as ET
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 
 import verovio
@@ -64,13 +67,28 @@ def engrave(musicxml: str, width: float, zoom: float = 1.0) -> list[Page]:
     return render(musicxml, options(page_width, PAGE_HEIGHT, scale))
 
 
+@contextlib.contextmanager
+def c_numbers() -> Iterator[None]:
+    """Verovio (C++) writes numbers in the process's locale. GTK sets the user's, and under
+    German Verovio wrote "scale(0,72, 0,72)", which librsvg rejects: every notehead was lost.
+    Inside this block numbers have a decimal point."""
+    before = locale.setlocale(locale.LC_NUMERIC)
+    locale.setlocale(locale.LC_NUMERIC, "C")
+    try:
+        yield
+    finally:
+        locale.setlocale(locale.LC_NUMERIC, before)
+
+
 def render(musicxml: str, settings: dict) -> list[Page]:
     verovio.enableLog(verovio.LOG_ERROR)  # layout warnings (tight bars) are not the user's
-    toolkit = verovio.toolkit()
-    toolkit.setOptions(settings)
-    toolkit.loadData(musicxml)
-    numbers = _measure_numbers(toolkit.getMEI())
-    return [_page(toolkit.renderToSVG(k), numbers) for k in range(1, toolkit.getPageCount() + 1)]
+    with c_numbers():
+        toolkit = verovio.toolkit()
+        toolkit.setOptions(settings)
+        toolkit.loadData(musicxml)
+        numbers = _measure_numbers(toolkit.getMEI())
+        svgs = [toolkit.renderToSVG(k) for k in range(1, toolkit.getPageCount() + 1)]
+    return [_page(svg, numbers) for svg in svgs]
 
 
 def _measure_numbers(mei: str) -> dict[str, int]:

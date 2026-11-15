@@ -95,3 +95,25 @@ def test_repeated_bars_are_engraved_once():
 def test_a_tiny_width_still_engraves():
     pages = engraving.engrave(_xml(), width=120)
     assert sum(len(p.bars) for p in pages) == 8
+
+
+def test_verovio_writes_numbers_with_a_point_whatever_the_users_locale():
+    """GTK sets the user's locale; under German Verovio wrote "scale(0,72, 0,72)", which
+    librsvg rejects, so every notehead was lost. Engraving runs Verovio in the C locale."""
+    import locale
+
+    before = locale.setlocale(locale.LC_NUMERIC)
+    with engraving.c_numbers():
+        assert locale.setlocale(locale.LC_NUMERIC) == "C"
+    assert locale.setlocale(locale.LC_NUMERIC) == before
+    for comma in ("de_DE.UTF-8", "de_DE.utf8", "fr_FR.UTF-8", "fr_FR.utf8"):
+        try:
+            locale.setlocale(locale.LC_NUMERIC, comma)
+        except locale.Error:
+            continue  # not installed here (CI has few locales); the guard above still holds
+        try:
+            svg = engraving.engrave(_xml(), width=800)[0].svg
+        finally:
+            locale.setlocale(locale.LC_NUMERIC, before)
+        assert "scale(0.72, 0.72)" in svg and "scale(0,72" not in svg
+        break

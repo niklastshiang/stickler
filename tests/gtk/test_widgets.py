@@ -71,6 +71,15 @@ def _wait(predicate, seconds=5.0) -> bool:
     return False
 
 
+def _groove_score():
+    """Eight bars of a plain groove, engraved like the app's own results."""
+    from stickler import notation
+
+    beats = [k * 0.5 for k in range(33)]
+    notes = [(b * 2.0 + k * 0.5, 36 + (b % 2) * 2, 100) for b in range(8) for k in range(4)]
+    return notation.engrave(notes, beats, beats[:-1:4], repeats=False)
+
+
 def _fake_analysis(monkeypatch, tmp_path):
     """stickler.api without models: three steps, then a result in 4/4 at 109."""
     from pathlib import Path
@@ -85,8 +94,11 @@ def _fake_analysis(monkeypatch, tmp_path):
                 step = api.Step(step_id, i, 3, state, False, None)
                 seen.append(step)
                 progress(step)
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        engraved = _groove_score()
+        Path(out).write_text(engraved.musicxml, encoding="utf-8")
         t = api.SongTranscription(song, "fast", None, [], [], [])
-        return api.Notation(Path(out), None, None, t, [], 109, (4, 4))
+        return api.Notation(Path(out), None, None, t, engraved.bars, 109, (4, 4))
 
     monkeypatch.setattr(
         api, "song_info", lambda p: api.SongInfo("Eye of the Tiger", "Survivor", 246.0)
@@ -256,7 +268,7 @@ def test_the_shortcuts_dialog_lists_every_shortcut_and_about_names_the_version()
     import stickler
     from stickler_gtk.ui import menu
 
-    assert len(menu.SHORTCUTS) == 7
+    assert len(menu.SHORTCUTS) == 10
     assert {key for key, _title in menu.SHORTCUTS} >= {"<Control>o", "<Control>q", "F10"}
     assert menu.shortcuts_dialog() is not None
     assert menu.about_dialog().get_version() == stickler.__version__
@@ -314,3 +326,27 @@ def test_the_about_dialog_names_what_the_app_ships_from_others():
 
     assert [title for title, *_rest in menu.LEGAL] == ["Verovio", "Leipzig"]
     assert menu.about_dialog() is not None
+
+
+def test_the_result_page_shows_the_sheet_as_wide_as_the_window_and_zooms(monkeypatch, tmp_path):
+    from stickler_gtk.ui.sheet import GUTTER
+    from stickler_gtk.ui.window import Window
+
+    _fake_analysis(monkeypatch, tmp_path)
+    window = Window()
+    window.set_default_size(900, 700)
+    window.present()
+    try:
+        window.open_song(tmp_path / "eye.flac")
+        assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+        assert _wait(lambda: bool(window.sheet.views))
+        page = window.sheet.pages[0]
+        assert abs(page.width - (window.sheet.get_width() - 2 * GUTTER)) <= 1
+        assert len(page.bars) == 8
+        normal = page.bars[1].height
+        window.activate_action("win.zoom-in", None)
+        assert window.sheet.pages[0].bars[1].height > normal
+        window.activate_action("win.zoom-reset", None)
+        assert abs(window.sheet.pages[0].bars[1].height - normal) < 0.5
+    finally:
+        window.close()

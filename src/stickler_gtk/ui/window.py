@@ -11,9 +11,10 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 from stickler import api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
-from stickler_gtk.logic import analysis, exports, paths, recent, session
+from stickler_gtk.logic import analysis, exports, paths, recent, session, zoom
 from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import menu, worker
+from stickler_gtk.ui.sheet import Sheet
 
 DEFAULT_SIZE = (1000, 700)
 MINIMUM_SIZE = (360, 294)  # GNOME HIG: the smallest a window should get
@@ -138,11 +139,7 @@ class Window(Adw.ApplicationWindow):
         error_box.append(Adw.Clamp(maximum_size=560, child=self.error_expander))
         error_box.append(buttons)
         self.error = Adw.StatusPage(icon_name="dialog-warning-symbolic", child=error_box)
-        self.result = Adw.StatusPage(
-            icon_name="emblem-ok-symbolic",
-            title=_("The Notes Are Ready"),
-            description=_("The sheet music will be shown here."),
-        )
+        self.sheet = Sheet()
         self.pages = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
         self.recent_store = recent.store_path()
         self.recent = recent.load(self.recent_store)
@@ -151,7 +148,7 @@ class Window(Adw.ApplicationWindow):
         self._show_recent()
         self.pages.add_named(_empty_page(self.recent_group), "empty")
         self.pages.add_named(self.analysing, "analysing")
-        self.pages.add_named(self.result, "result")
+        self.pages.add_named(self.sheet, "result")
         self.pages.add_named(self.error, "error")
 
         self.toasts = Adw.ToastOverlay(child=self.pages)
@@ -164,6 +161,7 @@ class Window(Adw.ApplicationWindow):
         self.pages.add_controller(drop)
 
         self.token: api.CancelToken | None = None
+        self._shown: Path | None = None  # the MusicXML on the sheet
         self.job_thread: threading.Thread | None = None
         self.actions: dict[str, Gio.SimpleAction] = {}
         for name, handler in (
@@ -174,6 +172,9 @@ class Window(Adw.ApplicationWindow):
             ("export-musicxml", self.export_musicxml),
             ("export-drums", self.export_drums),
             ("close", self.close),
+            ("zoom-in", lambda: self.sheet.set_zoom(zoom.zoom_in(self.sheet.zoom))),
+            ("zoom-out", lambda: self.sheet.set_zoom(zoom.zoom_out(self.sheet.zoom))),
+            ("zoom-reset", lambda: self.sheet.set_zoom(1.0)),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())
@@ -411,7 +412,14 @@ class Window(Adw.ApplicationWindow):
         self.state = state
         self.actions["retry"].set_enabled(isinstance(state, session.Failed) and state.can_retry)
         is_result = isinstance(state, session.Result)
-        for name in ("export", "export-musicxml", "export-drums"):
+        for name in (
+            "export",
+            "export-musicxml",
+            "export-drums",
+            "zoom-in",
+            "zoom-out",
+            "zoom-reset",
+        ):
             self.actions[name].set_enabled(is_result)
         self.export_box.set_visible(is_result)
         self.actions["cancel"].set_enabled(isinstance(state, session.Analysing | session.Exporting))
@@ -428,6 +436,9 @@ class Window(Adw.ApplicationWindow):
         elif isinstance(state, session.Result):
             self.heading.set_title(state.title)
             self.heading.set_subtitle(state.subtitle)
+            if self.sheet.musicxml is None or state.notation.musicxml != self._shown:
+                self._shown = state.notation.musicxml
+                self.sheet.show_musicxml(state.notation.musicxml.read_text(encoding="utf-8"))
             self.pages.set_visible_child_name("result")
         elif isinstance(state, session.Failed):
             self.heading.set_title(state.song.stem)
