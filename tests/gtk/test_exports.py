@@ -15,10 +15,12 @@ def _result(title="Eye of the Tiger", seconds=246.0):
     return session.finished(state, state.job, api.SongInfo(title, "Survivor", seconds), notation)
 
 
-def test_the_save_dialog_proposes_names_from_the_title():
-    assert exports.musicxml_name("Eye of the Tiger") == "Eye of the Tiger.musicxml"
-    assert exports.drum_track_name("Eye of the Tiger") == "Eye of the Tiger (drums).flac"
-    assert exports.musicxml_name("AC/DC: T.N.T.") == "AC-DC: T.N.T..musicxml"
+def test_the_save_dialog_proposes_the_opened_files_name():
+    """Named like the file that was opened, not its tags' title (owner, 2026-11-15)."""
+    song = Path("/music/Survivor - Eye of the Tiger.flac")
+    assert exports.musicxml_name(song) == "Survivor - Eye of the Tiger.musicxml"
+    assert exports.drum_track_name(song) == "Survivor - Eye of the Tiger (drums).flac"
+    assert exports.musicxml_name(Path("AC-DC - T.N.T..mp3")) == "AC-DC - T.N.T..musicxml"
 
 
 def test_the_drum_track_names_its_cost_before_it_starts():
@@ -107,5 +109,7 @@ def test_a_failed_export_says_so_and_does_not_offer_to_analyse_again():
     assert isinstance(missing, session.Consent) and missing.missing == ("demucs",)
 
 
-def test_the_pdf_is_named_after_the_title():
-    assert exports.pdf_name("Eye of the Tiger") == "Eye of the Tiger.pdf"
+def test_the_pdf_is_named_like_the_opened_file():
+    assert exports.pdf_name(Path("/music/Survivor - Eye of the Tiger.flac")) == (
+        "Survivor - Eye of the Tiger.pdf"
+    )

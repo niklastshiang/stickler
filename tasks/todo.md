@@ -600,7 +600,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `appstreamcli validate --pedantic`
   - Dependencies: none · Files: `packaging/*`, `docs/screenshots/*`, `.github/workflows/check.yml`
 
-- [ ] **Task 75: The Flatpak** (M)
+- [x] **Task 75: The Flatpak** (M): done 2026-11-15. Built locally with org.flatpak.Builder; the owner set up the models in the sandbox, analysed, played and exported a PDF. Found on the way: `classes.yaml` lay next to the repository, not in the package (an installed app has no repository: the first analysis failed); the step list rebuilt every row on each report, so the spinner stuttered; the app finds its files under the prefix it is installed in (/app). Python packages come from uv.lock through `scripts/flatpak_deps.py` (no build backend needed: Stickler is copied in).
   - Acceptance: the manifest builds offline from pinned sources (Python wheels from flatpak-pip-generator, uv with SHA-256); installed locally, the app starts, the setup assistant sets up the models inside the sandbox, a song is analysed and played.
   - Verify: `flatpak-builder --install`; by hand with Eye of the Tiger
   - Dependencies: 71, 73, 74 · Files: `packaging/flatpak/*`
@@ -622,6 +622,8 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
+- [ ] **Later release: click volume follows the song** (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.
+- [ ] **Later release: the band's name in the PDF** (owner, 2026-11-15): the engraved page shows the title but not the artist.
 - [ ] **After release 5: lessons learned** (owner, 2026-11-15): write down what building the app taught us (mistakes, detours, what worked), so a comparable project starts faster and more directly.
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.

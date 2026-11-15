@@ -482,7 +482,7 @@ class Window(Adw.ApplicationWindow):
                 return
             self._saved(dest)
 
-        self._save_dialog(exports.pdf_name(result.title), save)
+        self._save_dialog(exports.pdf_name(result.song), save)
 
     def open_with(self) -> None:
         """The system's app chooser for the MusicXML (OpenURI portal in the Flatpak)."""
@@ -503,7 +503,7 @@ class Window(Adw.ApplicationWindow):
                 return
             self._saved(dest)
 
-        self._save_dialog(exports.musicxml_name(result.title), save)
+        self._save_dialog(exports.musicxml_name(result.song), save)
 
     def export_drums(self) -> None:
         result = self.state
@@ -520,7 +520,7 @@ class Window(Adw.ApplicationWindow):
 
         def answered(_alert, response: str) -> None:
             if response == "save":
-                name = exports.drum_track_name(result.title)
+                name = exports.drum_track_name(result.song)
                 self._save_dialog(name, lambda dest: self._start_drums(result, dest, setup))
 
         alert.connect("response", answered)

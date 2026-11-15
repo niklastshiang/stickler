@@ -17,20 +17,23 @@ SEPARATION_PER_SECOND = 1.84
 SEPARATOR_DOWNLOAD_GB = 1.2  # environment and weights of Demucs
 
 
-def _file_name(title: str) -> str:
-    return title.replace("/", "-").replace("\0", "").strip() or "Stickler"
+# the save dialogs propose the opened file's name (owner, 2026-11-15), not the tags' title
 
 
-def musicxml_name(title: str) -> str:
-    return f"{_file_name(title)}.musicxml"
+def _file_name(song: Path) -> str:
+    return song.stem.strip() or "Stickler"
 
 
-def pdf_name(title: str) -> str:
-    return f"{_file_name(title)}.pdf"
+def musicxml_name(song: Path) -> str:
+    return f"{_file_name(song)}.musicxml"
 
 
-def drum_track_name(title: str) -> str:
-    return _("{title} (drums)").format(title=_file_name(title)) + ".flac"
+def pdf_name(song: Path) -> str:
+    return f"{_file_name(song)}.pdf"
+
+
+def drum_track_name(song: Path) -> str:
+    return _("{title} (drums)").format(title=_file_name(song)) + ".flac"
 
 
 @dataclass(frozen=True)
