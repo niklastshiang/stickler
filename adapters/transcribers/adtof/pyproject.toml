@@ -17,7 +17,7 @@ package = false
 [tool.uv.sources]
 stickler-adapter = { path = "../../_common", editable = true }
 # Not on PyPI; pinned to the state of 2025-11-11 (weights included in the package)
-adtof-pytorch = { git = "https://github.com/xavriley/ADTOF-pytorch", rev = "85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9" }
+adtof-pytorch = { url = "https://github.com/xavriley/ADTOF-pytorch/archive/85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9.tar.gz" }
 torch = { index = "pytorch-cpu" }
 
 [[tool.uv.index]]

@@ -539,7 +539,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 13: GTK application, module `setup-assistant` (approved 2026-11-15, SPEC.md "Module `setup-assistant`")
 
-- [ ] **Task 65: ADTOF from a GitHub archive** (S)
+- [x] **Task 65: ADTOF from a GitHub archive** (S): done 2026-11-15. The lock changed only the source (plus the archive's SHA-256); 423 cache entries rekeyed. Eye of the Tiger transcribed fresh: the same 1375 hits, the MIDI file byte-identical to the cached one.
   - Acceptance:
     - `adtof-pytorch` comes from the archive of commit 85c192e…; `uv.lock` updated with the same package versions; cached ADTOF results rekeyed (`cache-digests` before, `cache-migrate --rekey-from` after).
   - Verify: the environment rebuilt; one own song transcribed: the same hits as the cached result

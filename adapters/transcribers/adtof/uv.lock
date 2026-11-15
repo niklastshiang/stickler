@@ -9,7 +9,7 @@ resolution-markers = [
 [[package]]
 name = "adtof-pytorch"
 version = "0.1.0"
-source = { git = "https://github.com/xavriley/ADTOF-pytorch?rev=85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9#85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9" }
+source = { url = "https://github.com/xavriley/ADTOF-pytorch/archive/85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9.tar.gz" }
 dependencies = [
     { name = "librosa" },
     { name = "numpy" },
@@ -17,6 +17,17 @@ dependencies = [
     { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
+sdist = { hash = "sha256:28602a3bd89836240d519396b566966c52b6439e2f3cda61d8a674433b350b56" }
+
+[package.metadata]
+requires-dist = [
+    { name = "librosa" },
+    { name = "matplotlib", marker = "extra == 'dev'", specifier = ">=3.5" },
+    { name = "numpy" },
+    { name = "pretty-midi" },
+    { name = "torch" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "certifi"
@@ -521,7 +532,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adtof-pytorch", git = "https://github.com/xavriley/ADTOF-pytorch?rev=85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9" },
+    { name = "adtof-pytorch", url = "https://github.com/xavriley/ADTOF-pytorch/archive/85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9.tar.gz" },
     { name = "numpy" },
     { name = "pretty-midi" },
     { name = "stickler-adapter", editable = "../../_common" },

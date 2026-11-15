@@ -6,7 +6,7 @@ ADTOF Frame_RNN: CNN + bidirectional GRUs on a spectrogram, trained on the ADTOF
 |---|---|
 | Papers | Zehren, Alunno, Bientinesi: *ADTOF: A large dataset of non-synthetic music for ADT*, ISMIR 2021. *High-Quality and Reproducible ADT from Crowdsourced Data*, Signals 4 (2023) |
 | Original | https://github.com/MZehren/ADTOF (TensorFlow/Keras + madmom) |
-| Port | https://github.com/xavriley/ADTOF-pytorch, commit `85c192e` (2025-11-11). Weights converted from the original; according to the port, −0.2% F-measure on MDBDrums++ |
+| Port | https://github.com/xavriley/ADTOF-pytorch, commit `85c192e` (2025-11-11), installed from its GitHub archive (no git needed, so it builds in the Flatpak sandbox). Weights converted from the original; according to the port, −0.2% F-measure on MDBDrums++ |
 | License | Original: CC BY-NC-SA 4.0. The port has **no LICENSE file of its own**, so the original's license applies (ADR 0002) |
 | Classes | 5: Kick 35, Snare 38, Toms 47, Hi-Hat 42, Cymbals/Ride 49 |
 | Input | Mix or drum stem. Trained on real songs, therefore no `input = "stem"` |
