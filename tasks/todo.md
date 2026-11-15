@@ -528,7 +528,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests with the fake analysis (a change reaches `notate`, the title follows, reopening applies the stored ones); by hand: Eye of the Tiger at half tempo, the longest own song timed
   - Dependencies: 61, 62 · Files: `src/stickler_gtk/ui/{window,corrections}.py`, tests
 
-- [ ] **Task 64: Bottom sheet, shortcuts, German** (S)
+- [x] **Task 64: Bottom sheet, shortcuts, German** (S): done 2026-11-15. One `CorrectionsPanel` moves between the sidebar and an `Adw.BottomSheet` at the narrow breakpoint, staying open or closed; the header toggle and F9 open whichever is in use. Timed on the longest own song (Zombie, 308 s): a correction notates in 0.18–0.22 s and engraves in 0.11–0.16 s.
   - Acceptance:
     - Below the narrow breakpoint the controls sit in an `Adw.BottomSheet` (design screen 11); F9 in the shortcuts dialog; every page still fits 360 px; German complete.
   - Verify: widget tests (narrow window shows the bottom sheet, the width test); by hand at 400 px

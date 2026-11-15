@@ -273,9 +273,9 @@ def test_the_shortcuts_dialog_lists_every_shortcut_and_about_names_the_version()
     from stickler_gtk.ui import menu
     from stickler_gtk.ui.application import ACCELS
 
-    assert len(menu.SHORTCUTS) == 14
+    assert len(menu.SHORTCUTS) == 15
     keys = {key for key, _title in menu.SHORTCUTS}
-    assert keys >= {"<Control>o", "<Control>q", "F10", "space", "Left", "Right", "Home"}
+    assert keys >= {"<Control>o", "<Control>q", "F10", "space", "Left", "Right", "Home", "F9"}
     assert all(any(key in accels for accels in ACCELS.values()) for key in keys - {"F10"})
     assert menu.shortcuts_dialog() is not None
     assert menu.about_dialog().get_version() == stickler.__version__
@@ -739,5 +739,25 @@ def test_quick_changes_make_one_run(monkeypatch, tmp_path):
             window.panel.beats.set_value(beats)
         assert _wait(lambda: window.state.pending is None and len(_fake_analysis.corrected) > runs)
         assert _fake_analysis.corrected[runs:] == [api.Corrections(beats_per_bar=6)]
+    finally:
+        window.close()
+
+
+def test_a_narrow_window_shows_the_corrections_in_a_bottom_sheet(monkeypatch, tmp_path):
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        window.activate_action("win.corrections", None)  # open in the wide window
+        window.set_default_size(400, 700)
+        assert _wait(lambda: window.playbar.narrow)
+        assert window.bottom_sheet.get_open() and not window.split.get_show_sidebar()
+        assert window.panel.get_parent().get_parent() is window.sheet_scroller
+        window.activate_action("win.corrections", None)
+        assert not window.bottom_sheet.get_open() and not window.corrections_button.get_active()
+        window.corrections_button.set_active(True)
+        assert window.bottom_sheet.get_open()
+        window.set_default_size(1000, 700)
+        assert _wait(lambda: not window.playbar.narrow)
+        assert window.split.get_show_sidebar() and not window.bottom_sheet.get_open()
+        assert window.panel.get_parent().get_parent() is window.sidebar_scroller
     finally:
         window.close()

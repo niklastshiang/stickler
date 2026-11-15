@@ -7,7 +7,7 @@ import contextlib
 import threading
 from pathlib import Path
 
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from stickler import api
 from stickler_gtk import APP_NAME
@@ -134,8 +134,8 @@ class Window(Adw.ApplicationWindow):
         ):
             narrow.add_setter(wide_one, "visible", False)
             narrow.add_setter(narrow_one, "visible", True)
-        narrow.connect("apply", lambda _b: self.playbar.set_narrow(True))
-        narrow.connect("unapply", lambda _b: self.playbar.set_narrow(False))
+        narrow.connect("apply", lambda _b: self._set_narrow(True))
+        narrow.connect("unapply", lambda _b: self._set_narrow(False))
         self.add_breakpoint(narrow)
 
         self.steps = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
@@ -183,24 +183,31 @@ class Window(Adw.ApplicationWindow):
         result_page.append(Gtk.Separator())
         result_page.append(self.playbar)
         self.panel = corrections_ui.CorrectionsPanel(on_change=self.change_corrections)
+        # One set of controls: in the sidebar, or in a narrow window in a bottom sheet
+        # (design screens 7 and 11); the header toggle and F9 open whichever is in use.
+        self.sidebar_scroller = Gtk.ScrolledWindow(
+            child=self.panel,
+            hscrollbar_policy=Gtk.PolicyType.NEVER,
+            propagate_natural_width=True,
+        )
+        self.sheet_scroller = Gtk.ScrolledWindow(
+            hscrollbar_policy=Gtk.PolicyType.NEVER, propagate_natural_height=True
+        )
+        self.bottom_sheet = Adw.BottomSheet(content=result_page, sheet=self.sheet_scroller)
         self.split = Adw.OverlaySplitView(
-            content=result_page,
-            sidebar=Gtk.ScrolledWindow(
-                child=self.panel,
-                hscrollbar_policy=Gtk.PolicyType.NEVER,
-                propagate_natural_width=True,
-            ),
+            content=self.bottom_sheet,
+            sidebar=self.sidebar_scroller,
             sidebar_position=Gtk.PackType.END,
             show_sidebar=False,
             min_sidebar_width=corrections_ui.WIDTH,
             max_sidebar_width=corrections_ui.WIDTH,
         )
-        self.split.bind_property(
-            "show-sidebar",
-            self.corrections_button,
-            "active",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        self.corrections_narrow = False
+        self.corrections_button.connect(
+            "toggled", lambda b: self.set_corrections_open(b.get_active())
         )
+        for widget, prop in ((self.split, "show-sidebar"), (self.bottom_sheet, "open")):
+            widget.connect(f"notify::{prop}", lambda *_a: self._sync_corrections_button())
         self.pages.add_named(self.split, "result")
         self.pages.add_named(self.error, "error")
 
@@ -232,7 +239,7 @@ class Window(Adw.ApplicationWindow):
             ("play", self.playbar.toggle),
             (
                 "corrections",
-                lambda: self.split.set_show_sidebar(not self.split.get_show_sidebar()),
+                lambda: self.set_corrections_open(not self.corrections_open()),
             ),
             ("previous-bar", lambda: self.step_bars(-1)),
             ("next-bar", lambda: self.step_bars(1)),
@@ -355,6 +362,36 @@ class Window(Adw.ApplicationWindow):
         """Marks the bar sounding at `seconds` (for `playback`, which follows the song)."""
         if isinstance(self.state, session.Result):
             self.sheet.mark_time(self.state.notation.bars, seconds)
+
+    def _set_narrow(self, narrow: bool) -> None:
+        self.playbar.set_narrow(narrow)
+        if narrow == self.corrections_narrow:
+            return
+        was_open = self.corrections_open()
+        self.split.set_show_sidebar(False)
+        self.bottom_sheet.set_open(False)
+        viewport = self.panel.get_parent()  # the scroller wraps the panel in a viewport
+        viewport.set_child(None)
+        (self.sidebar_scroller if narrow else self.sheet_scroller).set_child(None)
+        self.corrections_narrow = narrow
+        (self.sheet_scroller if narrow else self.sidebar_scroller).set_child(self.panel)
+        self.set_corrections_open(was_open)
+
+    def corrections_open(self) -> bool:
+        if self.corrections_narrow:
+            return self.bottom_sheet.get_open()
+        return self.split.get_show_sidebar()
+
+    def set_corrections_open(self, open_it: bool) -> None:
+        if self.corrections_narrow:
+            self.bottom_sheet.set_open(open_it)
+        else:
+            self.split.set_show_sidebar(open_it)
+        self._sync_corrections_button()
+
+    def _sync_corrections_button(self) -> None:
+        if self.corrections_button.get_active() != self.corrections_open():
+            self.corrections_button.set_active(self.corrections_open())
 
     def change_corrections(self, fix: api.Corrections) -> None:
         """A change in the sidebar: the controls show it at once, the sheet follows once the

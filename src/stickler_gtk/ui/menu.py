@@ -117,6 +117,7 @@ SHORTCUTS = (
     ("Left", N_("Previous Bar")),
     ("Right", N_("Next Bar")),
     ("Home", N_("Go to the Start")),
+    ("F9", N_("Corrections")),
     ("<Control>plus", N_("Zoom In")),
     ("<Control>minus", N_("Zoom Out")),
     ("<Control>0", N_("Fit the Window's Width")),
