@@ -615,11 +615,11 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: a manual run
   - Dependencies: 75, 76 · Files: `.github/workflows/release.yml`, `docs/` release notes
 
-- [ ] **Before every release: the AI's tokens and cost** (owner, 2026-11-15): run `scripts/ai_usage.py` and update the table in README `> ORIGIN`.
-- [ ] **Before release 5: every document checked** (owner, 2026-11-15): README, CONTRIBUTING, CITATION.cff, docs/cli.md, docs/report.md, SPEC.md, CONSTRAINTS.md, the AppStream MetaInfo and the release notes agree with the app, the GPL (ADR 0007), Python 3.14 for the app's models and the packages.
+- [x] **Before every release: the AI's tokens and cost** (owner, 2026-11-15; done for release 5, and from now on as a release step, ADR 0006): run `scripts/ai_usage.py` and update the table in README `> ORIGIN`.
+- [x] **Before release 5: every document checked** (owner, 2026-11-15; a fresh-context subagent compared the documents with the code, about 20 fixes; a second one reviewed the packaging code, its fixes went in): README, CONTRIBUTING, CITATION.cff, docs/cli.md, docs/report.md, SPEC.md, CONSTRAINTS.md, the AppStream MetaInfo and the release notes agree with the app, the GPL (ADR 0007), Python 3.14 for the app's models and the packages.
 
 ### Checkpoint N
-- [ ] All 6 success criteria of SPEC.md `packaging` met; the owner installs the Flatpak and the AppImage from a CI run
+- [x] All 6 success criteria of SPEC.md `packaging` met; the owner installs the Flatpak and the AppImage from a CI run. Done 2026-11-15: the owner tested both (built locally, the same scripts CI runs); CI built both twice; attaching them is confirmed with release 5.
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 

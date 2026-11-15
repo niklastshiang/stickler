@@ -393,7 +393,7 @@ only in its first version.
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | done, below |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | done, below |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | done, below |
-| `packaging` | Flatpak and AppImage with every release | all | approved, below |
+| `packaging` | Flatpak and AppImage with every release | all | done, below |
 
 Build order: `engine-api`, `design` (in parallel) → `app-shell` → `sheet-view` → `playback`,
 `corrections` → `setup-assistant` → `packaging`.
@@ -1308,7 +1308,7 @@ tests/gtk/test_setup.py
 
 ### Module `packaging`
 
-> Status: **approved** by the owner on 2026-11-15. Plan: `tasks/plan.md` ("GTK application:
+> Status: **done** (Checkpoint N, release 5, 2026-11-15). Approved by the owner on 2026-11-15. Plan: `tasks/plan.md` ("GTK application:
 > `packaging`"), tasks 71–77 in `tasks/todo.md`.
 
 #### Assumptions

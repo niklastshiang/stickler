@@ -82,6 +82,18 @@
   </keywords>
 
   <releases>
+    <release version="5" date="2026-11-15">
+      <description>
+        <p>The desktop app: drop a song in and get its drum part as sheet music.</p>
+        <ul>
+          <li>Play the song, the detected hits as clicks, or both, while the bar is marked</li>
+          <li>Fix the tempo, the beats per bar or the first beat in a second</li>
+          <li>Export PDF, MusicXML or the drum track as FLAC or WAV</li>
+          <li>A first-run assistant downloads the models once</li>
+          <li>In English, German and Spanish</li>
+        </ul>
+      </description>
+    </release>
     <release version="4" date="2026-11-14">
       <description>
         <p>Groundwork for the app: progress, cancelling and setup for every long step.</p>

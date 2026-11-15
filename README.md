@@ -211,18 +211,20 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 4, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 521,
+  "tests": 657,
+  "app_widget_tests": 45,
   "smoke_tests_with_models": 8,
-  "coverage_percent": 97,
+  "coverage_percent": 98,
   "coverage_minimum": 95,
-  "adrs": 6,
-  "version": 4,
-  "status": "release 4: groundwork for the app"
+  "adrs": 7,
+  "version": 5,
+  "status": "release 5: the desktop app"
 }
 ```
 
 | Key | Meaning |
 |---|---|
+| `app_widget_tests` | The GTK app's windows, on an invisible screen: `scripts/gtk.sh test` |
 | `smoke_tests_with_models` | Runs real models, therefore not part of the default run: `uv run pytest -m adapters` |
 | `coverage_minimum` | Below this, the pre-commit hook blocks. Limit and rules in [`CONSTRAINTS.md`](CONSTRAINTS.md) |
 | `own_songs` | Described in `references/own/`. Only songs that pass the quality criteria enter the scoring |
@@ -268,6 +270,7 @@ scripts/check.sh task
 - [x] English, German and Spanish
 - [x] A first-run assistant that downloads the models
 - [x] Release pipeline: Flatpak and AppImage with every release
+- [x] **Release 5:** the desktop app
 
 **Next**
 
@@ -403,9 +406,9 @@ On a subscription the real cost differs; this is what the same work would cost o
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–15 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 1,338 | 1.4 M | 567 M | 167 USD |
+| 13–15 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 1,350 | 1.4 M | 576 M | 169 USD |
 | 13–15 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
-| | **Total** | | | | **about 176 USD** |
+| | **Total, release 5** | | | | **about 178 USD** |
 
 ---
 
