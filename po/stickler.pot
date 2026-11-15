@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-14 16:14+0100\n"
+"POT-Creation-Date: 2026-11-15 09:41+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,28 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: src/stickler_gtk/logic/recent.py:78
+msgid "opened today"
+msgstr ""
+
+#: src/stickler_gtk/logic/recent.py:80
+msgid "opened yesterday"
+msgstr ""
+
+#: src/stickler_gtk/logic/recent.py:82
+msgid "%-d %B"
+msgstr ""
+
+#. Translators: a date in strftime format, as in "12 November"
+#: src/stickler_gtk/logic/recent.py:82
+#, python-brace-format
+msgid "opened {date}"
+msgstr ""
+
+#: src/stickler_gtk/logic/recent.py:95
+msgid "file not found"
+msgstr ""
 
 #: src/stickler_gtk/logic/session.py:102
 #, python-brace-format
@@ -87,71 +109,84 @@ msgid "To print or to read on a tablet"
 msgstr ""
 
 #: src/stickler_gtk/ui/window.py:30
+msgid "Open a Song…"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:34
 msgid "Drop a Song Here"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:32
+#: src/stickler_gtk/ui/window.py:36
 msgid ""
 "Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV "
 "or OGG; a song takes about 15 seconds."
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:35
-msgid "Open a Song…"
-msgstr ""
-
-#: src/stickler_gtk/ui/window.py:44
+#: src/stickler_gtk/ui/window.py:48
 msgid "Done"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:52
+#: src/stickler_gtk/ui/window.py:56
 msgid "Waiting"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:66
+#: src/stickler_gtk/ui/window.py:70
 msgid "Open…"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:68 src/stickler_gtk/ui/window.py:139
+#: src/stickler_gtk/ui/window.py:72 src/stickler_gtk/ui/window.py:149
 msgid "Open a Song"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:74
+#: src/stickler_gtk/ui/window.py:78
 msgid "Cancel"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:80
+#: src/stickler_gtk/ui/window.py:84
 msgid "Writing the Drum Part"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:84 src/stickler_gtk/ui/window.py:215
+#: src/stickler_gtk/ui/window.py:88 src/stickler_gtk/ui/window.py:278
 msgid "Technical Details"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:86
+#: src/stickler_gtk/ui/window.py:90
 msgid "Try Again"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:89
+#: src/stickler_gtk/ui/window.py:93
 msgid "Open Another Song…"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:100
+#: src/stickler_gtk/ui/window.py:104
 msgid "The Notes Are Ready"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:101
+#: src/stickler_gtk/ui/window.py:105
 msgid "The sheet music will be shown here."
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:135
+#: src/stickler_gtk/ui/window.py:110
+msgid "Recent"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:145
 msgid "Songs"
 msgstr ""
 
-#: src/stickler_gtk/ui/window.py:154
+#: src/stickler_gtk/ui/window.py:164
 msgid "Not an audio file"
 msgstr ""
 
+#: src/stickler_gtk/ui/window.py:202
+#, python-brace-format
+msgid "Recent songs could not be saved: {reason}"
+msgstr ""
+
 #: src/stickler_gtk/ui/window.py:215
+msgid "Remove from the List"
+msgstr ""
+
+#: src/stickler_gtk/ui/window.py:278
 msgid "Commands"
 msgstr ""

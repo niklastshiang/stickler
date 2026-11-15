@@ -11,7 +11,7 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 from stickler import api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
-from stickler_gtk.logic import analysis, paths, session
+from stickler_gtk.logic import analysis, paths, recent, session
 from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import worker
 
@@ -25,7 +25,10 @@ def _open_button(label: str) -> Gtk.Button:
     return button
 
 
-def _empty_page() -> Gtk.Widget:
+def _empty_page(recent_songs: Gtk.Widget) -> Gtk.Widget:
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=36)
+    box.append(_open_button(_("Open a Song…")))
+    box.append(Adw.Clamp(maximum_size=560, child=recent_songs))
     page = Adw.StatusPage(
         icon_name="audio-x-generic-symbolic",
         title=_("Drop a Song Here"),
@@ -33,7 +36,7 @@ def _empty_page() -> Gtk.Widget:
             "Stickler listens to the drums and writes them as sheet music. "
             "MP3, FLAC, WAV or OGG; a song takes about 15 seconds."
         ),
-        child=_open_button(_("Open a Song…")),
+        child=box,
     )
     page.add_css_class("drop-area")
     return page
@@ -102,7 +105,12 @@ class Window(Adw.ApplicationWindow):
             description=_("The sheet music will be shown here."),
         )
         self.pages = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
-        self.pages.add_named(_empty_page(), "empty")
+        self.recent_store = recent.store_path()
+        self.recent = recent.load(self.recent_store)
+        self.recent_group = Adw.PreferencesGroup(title=_("Recent"))
+        self.recent_rows: list[Gtk.Widget] = []
+        self._show_recent()
+        self.pages.add_named(_empty_page(self.recent_group), "empty")
         self.pages.add_named(self.analysing, "analysing")
         self.pages.add_named(self.result, "result")
         self.pages.add_named(self.error, "error")
@@ -179,6 +187,48 @@ class Window(Adw.ApplicationWindow):
         self.wait_for_job(2.0)  # a cancel takes well under a second
         return False  # close
 
+    def _finished(self, job: int, info: api.SongInfo, notation: api.Notation) -> None:
+        state = session.finished(self.state, job, info, notation)
+        if isinstance(state, session.Result):
+            entry = recent.opened_now(state.song, info.title, info.artist)
+            self._set_recent(recent.add(self.recent, entry))
+        self.show(state)
+
+    def _set_recent(self, songs: list[recent.Recent]) -> None:
+        self.recent = songs
+        try:
+            recent.save(self.recent_store, songs)
+        except OSError as exc:  # the list still works for this session
+            self.toast(_("Recent songs could not be saved: {reason}").format(reason=exc.strerror))
+        self._show_recent()
+
+    def _show_recent(self) -> None:
+        for row in self.recent_rows:
+            self.recent_group.remove(row)
+        self.recent_rows = []
+        for entry in recent.rows(self.recent):
+            row = Adw.ActionRow(title=entry.title, subtitle=entry.detail)
+            if entry.missing:
+                row.add_css_class("dim-label")
+                button = Gtk.Button(
+                    icon_name="user-trash-symbolic",
+                    tooltip_text=_("Remove from the List"),
+                    valign=Gtk.Align.CENTER,
+                    css_classes=["flat"],
+                )
+                button.connect(
+                    "clicked",
+                    lambda _b, path=entry.path: self._set_recent(recent.remove(self.recent, path)),
+                )
+                row.add_suffix(button)
+            else:
+                row.set_activatable(True)
+                row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
+                row.connect("activated", lambda _r, path=entry.path: self.open_song(path))
+            self.recent_group.add(row)
+            self.recent_rows.append(row)
+        self.recent_group.set_visible(bool(self.recent_rows))
+
     def wait_for_job(self, seconds: float) -> None:
         """Cancels the running job and waits until it has cleaned up (its half-written cache
         folder removed), so that quitting leaves nothing behind."""
@@ -194,7 +244,7 @@ class Window(Adw.ApplicationWindow):
         report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, job, step)))
         self.job_thread = worker.run(
             lambda: analysis.analyse(song, paths.score_path(song), report, token),
-            lambda done: self.show(session.finished(self.state, job, *done)),
+            lambda done: self._finished(job, *done),
             lambda exc: self.show(session.failed(self.state, job, exc)),
         )
 

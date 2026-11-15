@@ -45,6 +45,16 @@ def test_the_window_speaks_german(monkeypatch):
     assert "Song öffnen …" in labels
 
 
+def _find(widget, predicate) -> list:
+    """Every widget below `widget` (itself included) for which `predicate` holds."""
+    found = [widget] if predicate(widget) else []
+    child = widget.get_first_child()
+    while child is not None:
+        found += _find(child, predicate)
+        child = child.get_next_sibling()
+    return found
+
+
 def _wait(predicate, seconds=5.0) -> bool:
     """Runs the main loop until `predicate()` holds (the worker reports through it)."""
     import time
@@ -163,3 +173,34 @@ def test_cancel_returns_at_once_and_stops_the_job(monkeypatch, tmp_path):
     assert _wait(lambda: stopped == [True], seconds=1)
     assert time.monotonic() - start < 1
     assert not window.actions["cancel"].get_enabled()
+
+
+def test_recent_songs_open_or_can_be_removed(monkeypatch, tmp_path):
+    import os
+    from datetime import date
+    from pathlib import Path
+
+    from stickler_gtk.logic import recent
+    from stickler_gtk.ui.window import Window
+
+    there = tmp_path / "there.flac"
+    there.write_bytes(b"x")
+    store = recent.store_path()
+    recent.save(
+        store,
+        [
+            recent.Recent(there, "There", "Band", date.today()),
+            recent.Recent(tmp_path / "gone.flac", "Gone", "", date.today()),
+        ],
+    )
+    seen = _fake_analysis(monkeypatch, tmp_path)
+    window = Window()
+    assert [r.get_title() for r in window.recent_rows] == ["There", "Gone"]
+    (remove,) = _find(window.recent_rows[1], lambda w: "flat" in w.get_css_classes())
+    remove.emit("clicked")
+    assert [s.title for s in recent.load(store)] == ["There"]
+    window.recent_rows[0].emit("activated")
+    assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+    assert seen and os.path.samefile(recent.load(store)[0].path, there)
+    assert recent.load(store)[0].title == "Eye of the Tiger"  # the analysis's own title
+    assert Path(store).parent.is_relative_to(tmp_path)

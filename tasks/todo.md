@@ -382,7 +382,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: logic tests for every error state; `scripts/gtk.sh test` (fake analysis cancelled, fake failure); by hand: cancel during ADTOF, `pgrep -f run.py` finds nothing
   - Dependencies: 43 · Files: `src/stickler_gtk/logic/session.py`, `src/stickler_gtk/ui/*`, tests
 
-- [ ] **Task 45: Recent songs** (S)
+- [x] **Task 45: Recent songs** (S): done 2026-11-15. A song joins the list once its analysis has finished, with the analysis's title and artist; the list is written atomically. Dates older than yesterday use a translatable `strftime` pattern (German "12. November"). The app's tests point all XDG folders at a temporary folder (`tests/gtk/conftest.py`), so they never touch the user's data. Real app: Eye of the Tiger lands in `~/.local/share/stickler/recent.json`.
   - Acceptance:
     - `logic/recent.py`: the newest ten, a song opened again moves to the top, a missing file is marked and can be removed, a damaged JSON file starts an empty list; stored under the XDG data folder.
     - The empty window lists them (screen 4); a click opens the song (a cached one at once).
