@@ -266,6 +266,7 @@ class Window(Adw.ApplicationWindow):
         self.connect("close-request", self._on_close)
         self._sampling = 0  # the timer that measures a download
         self._consent_for: tuple[str, ...] = ()
+        self._step_rows: list[tuple[StepRow, Adw.ActionRow]] = []  # what the step list shows
         self._free_before = 0
         self.show(self.state)
         self._check_setup()
@@ -631,9 +632,25 @@ class Window(Adw.ApplicationWindow):
         self.toasts.add_toast(Adw.Toast(title=text))
 
     def _show_steps(self, rows) -> None:
-        self.steps.remove_all()
-        for step in rows:
-            self.steps.append(_step_row(step))
+        """Rows whose step and state stay are kept, so a running spinner is not restarted by
+        each progress report (the download reports twice a second); only their line changes."""
+        shown = self._step_rows
+        if [r.id for r in rows] != [r.id for r, _w in shown]:
+            self.steps.remove_all()
+            shown = []
+        kept = []
+        for k, step in enumerate(rows):
+            if k < len(shown) and shown[k][0].state == step.state:
+                widget = shown[k][1]
+                if widget.get_subtitle() != step.detail:
+                    widget.set_subtitle(step.detail)
+            else:
+                widget = _step_row(step)
+                if k < len(shown):
+                    self.steps.remove(shown[k][1])
+                self.steps.insert(widget, k)
+            kept.append((step, widget))
+        self._step_rows = kept
         self.pages.set_visible_child_name("analysing")
 
     # the setup assistant (SPEC.md, module `setup-assistant`)

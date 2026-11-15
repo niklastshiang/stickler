@@ -887,3 +887,26 @@ def test_an_agreed_setup_goes_on_by_itself_and_can_be_cancelled(monkeypatch):
         assert window.pages.get_visible_child_name() == "empty"
     finally:
         window.close()
+
+
+def test_progress_updates_keep_the_running_steps_row_so_its_spinner_runs_on():
+    """The owner saw the spinner stutter during the download: every report rebuilt the list."""
+    from stickler import api
+    from stickler_gtk.logic import session
+    from stickler_gtk.ui.window import Window
+
+    window = Window()
+    try:
+        state = session.start_setup(("environment:adtof", "weights:beat_this"), None, ("adtof",))
+        step = api.Step("environment:adtof", 1, 2, "started", False, None)
+        window.show(session.on_setup_step(state, state.job, step))
+        row = window.steps.get_row_at_index(0)
+        window.show(session.setup_grew(window.state, state.job, 650_000_000))
+        assert window.steps.get_row_at_index(0) is row  # the same row, its spinner untouched
+        assert "650 MB" in row.get_subtitle()
+        done = api.Step("environment:adtof", 1, 2, "done", False, None)
+        window.show(session.on_setup_step(window.state, state.job, done))
+        assert window.steps.get_row_at_index(0) is not row  # done: a check mark instead
+        assert window.steps.get_row_at_index(1) is not None
+    finally:
+        window.close()
