@@ -522,7 +522,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests (values shown, F9 toggles); by hand at 1000 px
   - Dependencies: 60 · Files: `src/stickler_gtk/ui/{corrections,window,application,menu}.py`, `po/*`, tests
 
-- [ ] **Task 63: Applying, remembering, Back to Detected** (M)
+- [x] **Task 63: Applying, remembering, Back to Detected** (M): done 2026-11-15. The window tells a correction from a new analysis by the `SongInfo` it keeps, so playback goes on with the new bar map (`PlayBar.set_bars`); it compares notations, not MusicXML paths, because a correction rewrites the same file. Found on the way: `session.on_step` rebuilt `Analysing` and dropped its corrections; it now keeps every field.
   - Acceptance:
     - A change re-notates after 250 ms in the worker and shows the new sheet, title, bar map; exports use it; the song's corrections are stored and applied when it is opened again; "Back to Detected" clears them and is insensitive while nothing is corrected.
   - Verify: widget tests with the fake analysis (a change reaches `notate`, the title follows, reopening applies the stored ones); by hand: Eye of the Tiger at half tempo, the longest own song timed

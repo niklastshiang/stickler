@@ -7,13 +7,14 @@ import contextlib
 import threading
 from pathlib import Path
 
-from gi.repository import Adw, Gdk, Gio, GObject, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from stickler import api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
 from stickler_gtk.logic import (
     analysis,
+    corrections,
     engraving,
     exports,
     paths,
@@ -30,6 +31,7 @@ from stickler_gtk.ui.playbar import PlayBar
 from stickler_gtk.ui.sheet import Sheet
 
 DEFAULT_SIZE = (1000, 700)
+CORRECT_AFTER_MS = 250  # a correction waits for the changes to pause
 MINIMUM_SIZE = (360, 294)  # GNOME HIG: the smallest a window should get
 NARROW = "max-width: 550sp"  # below this the header keeps icon buttons only
 
@@ -212,7 +214,9 @@ class Window(Adw.ApplicationWindow):
         self.pages.add_controller(drop)
 
         self.token: api.CancelToken | None = None
-        self._shown: Path | None = None  # the MusicXML on the sheet
+        self._shown: api.Notation | None = None  # the notation on the sheet
+        self._shown_info: api.SongInfo | None = None  # a correction keeps it, a new analysis not
+        self._correcting = 0  # the timer of a correction waiting for a quiet moment
         self.job_thread: threading.Thread | None = None
         self.actions: dict[str, Gio.SimpleAction] = {}
         for name, handler in (
@@ -299,11 +303,18 @@ class Window(Adw.ApplicationWindow):
         return True
 
     def open_song(self, song: Path) -> None:
-        self._start(session.open_song(song, self.state))
+        self._start(session.open_song(song, self.state, self._stored(song)))
 
     def retry(self) -> None:
         if isinstance(self.state, session.Failed) and self.state.can_retry:
-            self._start(session.retry(self.state))
+            song = self.state.song
+            self._start(session.open_song(song, self.state.previous, self._stored(song)))
+
+    @staticmethod
+    def _stored(song: Path) -> api.Corrections:
+        """The song's remembered corrections (SPEC.md, module `corrections`)."""
+        stored = corrections.load(corrections.store_path())
+        return stored.get(song.absolute(), corrections.DETECTED)
 
     def cancel(self) -> None:
         self._stop_job()
@@ -346,7 +357,50 @@ class Window(Adw.ApplicationWindow):
             self.sheet.mark_time(self.state.notation.bars, seconds)
 
     def change_corrections(self, fix: api.Corrections) -> None:
-        """A change in the sidebar (applied from Task 63 on)."""
+        """A change in the sidebar: the controls show it at once, the sheet follows once the
+        changes pause (a few quick clicks make one run)."""
+        if not isinstance(self.state, session.Result):
+            return
+        self.state = session.correct(self.state, fix)
+        if self._correcting:
+            GLib.source_remove(self._correcting)
+        self._correcting = GLib.timeout_add(CORRECT_AFTER_MS, self._start_correction)
+
+    def _start_correction(self) -> bool:
+        self._correcting = 0
+        result = self.state
+        if not isinstance(result, session.Result) or result.pending is None:
+            return GLib.SOURCE_REMOVE
+        job, fix, song = result.pending.job, result.pending.corrections, result.song
+        self._stop_job()
+        self.token = token = api.CancelToken()
+
+        def done(finished: tuple[api.SongInfo, api.Notation]) -> None:
+            state = session.corrected(self.state, job, finished[1])
+            if state is not self.state:
+                self.show(state)
+                self._remember(song, fix)
+
+        def failed(exc: BaseException) -> None:
+            state = session.correction_failed(self.state, job)
+            if state is not self.state:
+                self.show(state)
+                self.toast(_("The correction did not work: {reason}").format(reason=exc))
+
+        self.job_thread = worker.run(
+            lambda: analysis.analyse(
+                song, paths.score_path(song), lambda _step: None, token, corrections=fix
+            ),
+            done,
+            failed,
+        )
+        return GLib.SOURCE_REMOVE
+
+    def _remember(self, song: Path, fix: api.Corrections) -> None:
+        try:
+            corrections.remember(corrections.store_path(), song.absolute(), fix)
+        except OSError as exc:  # the correction still shows for this session
+            self.toast(_("The correction could not be saved: {reason}").format(reason=exc.strerror))
 
     def step_bars(self, by: int) -> None:
         """Left and Right: one song bar back or on."""
@@ -507,7 +561,12 @@ class Window(Adw.ApplicationWindow):
         report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, job, step)))
         self.job_thread = worker.run(
             lambda: analysis.analyse(
-                song, paths.score_path(song), report, token, paths.hits_path(song)
+                song,
+                paths.score_path(song),
+                report,
+                token,
+                paths.hits_path(song),
+                state.corrections,
             ),
             lambda done: self._finished(job, *done),
             lambda exc: self.show(session.failed(self.state, job, exc)),
@@ -559,15 +618,19 @@ class Window(Adw.ApplicationWindow):
         elif isinstance(state, session.Result):
             self.heading.set_title(state.title)
             self.heading.set_subtitle(state.subtitle)
-            if self.sheet.musicxml is None or state.notation.musicxml != self._shown:
-                self._shown = state.notation.musicxml
+            if state.notation is not self._shown:
+                corrected = state.info is self._shown_info  # same analysis, new notation
+                self._shown, self._shown_info = state.notation, state.info
                 self.sheet.show_musicxml(state.notation.musicxml.read_text(encoding="utf-8"))
-                self.playbar.set_song(
-                    state.song,
-                    paths.hits_path(state.song),
-                    state.info.seconds,
-                    state.notation.bars,
-                )
+                if corrected:  # the music goes on; the marker follows the new bars
+                    self.playbar.set_bars(state.notation.bars)
+                else:
+                    self.playbar.set_song(
+                        state.song,
+                        paths.hits_path(state.song),
+                        state.info.seconds,
+                        state.notation.bars,
+                    )
             self.panel.show_values(
                 state.wanted,
                 beats_per_bar=state.notation.meter[0],

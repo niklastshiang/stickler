@@ -122,6 +122,11 @@ class PlayBar(Gtk.Box):
         self.length.set_label(playback.clock(seconds))
         self._show(0.0)
 
+    def set_bars(self, bars) -> None:
+        """A corrected notation of the same song: playing goes on, the bars are new."""
+        self.bars = list(bars)
+        self._show(self.now())
+
     def toggle(self) -> None:
         if self.song is None:
             return

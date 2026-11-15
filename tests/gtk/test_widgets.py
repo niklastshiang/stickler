@@ -87,6 +87,7 @@ def _fake_analysis(monkeypatch, tmp_path):
     from stickler import api
 
     seen = []
+    corrected = _fake_analysis.corrected = []
 
     def notate(song, out, *, progress, **kw):
         for i, step_id in enumerate(("transcribe", "beats", "engrave"), 1):
@@ -98,7 +99,10 @@ def _fake_analysis(monkeypatch, tmp_path):
         engraved = _groove_score()
         Path(out).write_text(engraved.musicxml, encoding="utf-8")
         t = api.SongTranscription(song, "fast", None, [], [], [])
-        return api.Notation(Path(out), None, None, t, engraved.bars, 109, (4, 4))
+        fix = kw.get("corrections") or api.Corrections()
+        corrected.append(fix)
+        tempo = {"half": 54, "normal": 109, "double": 218}[fix.tempo]
+        return api.Notation(Path(out), None, None, t, engraved.bars, tempo, (4, 4))
 
     monkeypatch.setattr(
         api, "song_info", lambda p: api.SongInfo("Eye of the Tiger", "Survivor", 246.0)
@@ -690,5 +694,50 @@ def test_f9_opens_and_closes_the_corrections_sidebar(monkeypatch, tmp_path):
         assert window.panel.beats.get_value() == 4
         window.activate_action("win.corrections", None)
         assert not window.split.get_show_sidebar()
+    finally:
+        window.close()
+
+
+def test_a_correction_applies_at_once_is_remembered_and_can_be_taken_back(monkeypatch, tmp_path):
+    from stickler import api
+    from stickler_gtk.logic import corrections
+
+    window = _playing_window(monkeypatch, tmp_path)
+    song = tmp_path / "eye.flac"
+    try:
+        window.activate_action("win.play", None)
+        player = _FakePlayer.made[-1]
+        window.panel.tempo.set_active_name("half")
+        assert _wait(lambda: "♩ = 54" in window.heading.get_subtitle())
+        assert _fake_analysis.corrected[-1] == api.Corrections(tempo="half")
+        assert player.is_playing and player.loaded is not None  # the music goes on
+        assert window.state.corrections == api.Corrections(tempo="half")
+        stored = corrections.load(corrections.store_path())
+        assert stored == {song: api.Corrections(tempo="half")}
+        assert window.panel.back.get_sensitive()
+
+        window.open_song(song)  # opened again: with its corrections
+        assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+        assert _fake_analysis.corrected[-1] == api.Corrections(tempo="half")
+        assert "♩ = 54" in window.heading.get_subtitle()
+
+        window.panel.back.emit("clicked")
+        assert _wait(lambda: "♩ = 109" in window.heading.get_subtitle())
+        assert corrections.load(corrections.store_path()) == {}
+        assert not window.panel.back.get_sensitive()
+    finally:
+        window.close()
+
+
+def test_quick_changes_make_one_run(monkeypatch, tmp_path):
+    from stickler import api
+
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        runs = len(_fake_analysis.corrected)
+        for beats in (3, 5, 6):
+            window.panel.beats.set_value(beats)
+        assert _wait(lambda: window.state.pending is None and len(_fake_analysis.corrected) > runs)
+        assert _fake_analysis.corrected[runs:] == [api.Corrections(beats_per_bar=6)]
     finally:
         window.close()

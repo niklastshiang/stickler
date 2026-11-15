@@ -113,7 +113,7 @@ def on_step(state: State, job: int, step: api.Step) -> State:
         return state
     if isinstance(state, Exporting):
         return replace(state, steps=steps.report_by_id(state.steps, step))
-    return Analysing(state.song, steps.report(state.steps, step), job, state.previous)
+    return replace(state, steps=steps.report(state.steps, step))
 
 
 def exported(state: State, job: int) -> State:
