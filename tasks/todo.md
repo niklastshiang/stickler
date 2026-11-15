@@ -467,7 +467,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 11: GTK application, module `playback` (approved 2026-11-15, SPEC.md "Module `playback`")
 
-- [ ] **Task 55: Playback logic** (S)
+- [x] **Task 55: Playback logic** (S): done 2026-11-15. A bar click goes to the bar's first pass that starts after the current song bar's start, else its first pass (so inside its only pass: its start). The arrow keys step song bars, kept inside the song.
   - Acceptance:
     - `logic/playback.py`: the volume of song and clicks for Song / Hits / Both; the time a click on a written bar jumps to (its next pass from now, else its first); the previous and next song bar for the arrow keys; the texts "0:06" and "Bar 2 of 110".
     - `settings`: the two volumes, remembered, bad values fall back; `paths`: where a song's clicks WAV goes.

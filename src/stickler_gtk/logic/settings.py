@@ -19,6 +19,8 @@ APPEARANCES = ("system", "light", "dark")
 class Settings:
     appearance: str = "system"  # follow the system's light or dark style
     zoom: float = 1.0  # note size: 1.0 is the window's width
+    song_volume: float = 1.0  # playback, 0 to 1
+    hits_volume: float = 1.0
 
 
 def store_path(env: Mapping[str, str] = os.environ) -> Path:
@@ -35,12 +37,17 @@ def load(store: Path) -> Settings:
     if not isinstance(raw, dict):
         return Settings()
     appearance = raw.get("appearance")
-    size = raw.get("zoom")
-    valid_size = isinstance(size, int | float) and zoom.SMALLEST <= size <= zoom.LARGEST
     return Settings(
         appearance if appearance in APPEARANCES else Settings.appearance,
-        float(size) if valid_size else Settings.zoom,
+        _number(raw.get("zoom"), zoom.SMALLEST, zoom.LARGEST, Settings.zoom),
+        _number(raw.get("song_volume"), 0.0, 1.0, Settings.song_volume),
+        _number(raw.get("hits_volume"), 0.0, 1.0, Settings.hits_volume),
     )
+
+
+def _number(value: object, lowest: float, highest: float, default: float) -> float:
+    valid = isinstance(value, int | float) and not isinstance(value, bool)
+    return float(value) if valid and lowest <= value <= highest else default
 
 
 def save(store: Path, chosen: Settings) -> None:

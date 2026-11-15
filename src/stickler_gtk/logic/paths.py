@@ -26,3 +26,8 @@ def score_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
     name in different folders apart."""
     key = hashlib.sha1(str(song.absolute()).encode()).hexdigest()[:10]
     return cache_home(env) / "scores" / f"{song.stem}-{key}.musicxml"
+
+
+def hits_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
+    """The detected hits of a song as clicks (api.render_hits), next to its score's name."""
+    return cache_home(env) / "hits" / f"{score_path(song, env).stem}.wav"
