@@ -211,14 +211,14 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 4, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 657,
-  "app_widget_tests": 45,
+  "tests": 667,
+  "app_widget_tests": 48,
   "smoke_tests_with_models": 8,
   "coverage_percent": 98,
   "coverage_minimum": 95,
   "adrs": 7,
-  "version": 5,
-  "status": "release 5: the desktop app"
+  "version": 6,
+  "status": "release 6: polish for the app"
 }
 ```
 
@@ -272,9 +272,13 @@ scripts/check.sh task
 - [x] Release pipeline: Flatpak and AppImage with every release
 - [x] **Release 5:** the desktop app
 
+**Release 6**
+
+- [x] Click volume that follows the song's loudness; the band's name in the PDF; removing the models from the app
+- [x] **Release 6:** polish for the app
+
 **Next**
 
-- [ ] Click volume that follows the song's loudness; the band's name in the PDF; removing the models from the app
 - [ ] Quality mode in the app (today it runs Fast)
 - [ ] New candidate models: DrumSep with onset detection, MuScriptor large, models from 2026
 - [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
@@ -292,17 +296,21 @@ that it runs offline.
 Software, or install it in a terminal; the GNOME runtime comes from Flathub:
 
 ```bash
-flatpak install --user Stickler-5.flatpak
+flatpak install --user Stickler-6.flatpak
 ```
 
 **AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
 and start it.
 
 ```bash
-chmod +x Stickler-5-x86_64.AppImage && ./Stickler-5-x86_64.AppImage
+chmod +x Stickler-6-x86_64.AppImage && ./Stickler-6-x86_64.AppImage
 ```
 
 ### Removing it
+
+To free the models' space but keep the app, choose **Remove Downloaded Models…** in its main
+menu (Flatpak and AppImage); a check box there removes the settings, recent songs and
+corrections too.
 
 **Flatpak:** one command removes the app with its models, results and settings:
 
@@ -406,9 +414,9 @@ On a subscription the real cost differs; this is what the same work would cost o
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–15 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 1,350 | 1.4 M | 576 M | 169 USD |
+| 13–15 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 1,478 | 1.5 M | 629 M | 183 USD |
 | 13–15 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
-| | **Total, release 5** | | | | **about 178 USD** |
+| | **Total, release 6** | | | | **about 192 USD** |
 
 ---
 

@@ -82,6 +82,17 @@
   </keywords>
 
   <releases>
+    <release version="6" date="2026-11-15">
+      <description>
+        <p>Polish after the first app release.</p>
+        <ul>
+          <li>The clicks follow each song's loudness</li>
+          <li>The PDF names the band under the title</li>
+          <li>The menu can remove the downloaded models again</li>
+          <li>MP3s that some models could not read now work</li>
+        </ul>
+      </description>
+    </release>
     <release version="5" date="2026-11-15">
       <description>
         <p>The desktop app: drop a song in and get its drum part as sheet music.</p>
