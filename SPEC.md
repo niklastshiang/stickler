@@ -390,7 +390,7 @@ only in its first version.
 | `design` | Mockups of every screen, made with the owner, following the GNOME HIG; no code | – | approved, below |
 | `app-shell` | Window, open or drop a song, analysis with a step display, export (MusicXML, drum track; PDF with `sheet-view`), recent songs | `engine-api`, `design` | done, below |
 | `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | done, below |
-| `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | – |
+| `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | draft, below |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | – |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
 | `packaging` | Flatpak and AppImage with every release | all | – |
@@ -966,6 +966,107 @@ tests/gtk/test_engraving.py, test_marker.py
 
 - Whether Verovio's default engraving options read well for drums at small widths (system
   breaks, spacing) is only seen on screen; the owner looks at it in this module's checkpoint.
+
+### Module `playback`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-15).
+
+#### Assumptions
+
+1. **GStreamer through PyGObject** (1.28 on the development machine and in the GNOME runtime 51;
+   every element and decoder needed checked 2026-11-15: `uridecodebin`, `audioconvert`,
+   `audioresample`, `volume`, `audiomixer`, `autoaudiosink`, decoders for FLAC, MP3, Ogg Vorbis,
+   Opus, WAV and AAC). One pipeline mixes two sources: the song and the detected hits as clicks.
+   Because it is one pipeline, play, pause and seek always move both together.
+2. **The clicks** are `api.render_hits` (engine-api): a mono WAV as long as the song, written
+   into the app's cache when a result appears (0.18 s for Eye of the Tiger). Drum samples instead
+   of clicks stay a later decision.
+3. **Song / Hits / Both** mute one source or none; the volume button holds one slider per source
+   (design screen 6). The two volumes are remembered for every song (owner, 2026-11-15), like
+   the note size; what to hear starts at "Both".
+4. **The position drives the marker:** while playing, the window asks the pipeline for its
+   position about 20 times a second and calls `show_position` (sheet-view), which marks the
+   bar and scrolls it into view.
+5. **A click on a bar jumps there** (owner, 2026-11-15): to the start of that written bar's next
+   occurrence after the current position; after its last occurrence, back to its first. When
+   stopped, the click jumps the same way and does not start playing.
+6. **The logic is apart from GStreamer:** `logic/playback.py` holds what to hear and how loud,
+   which song bar a jump goes to, and the texts of the bar ("0:06", "Bar 2 of 110"); the
+   GStreamer pipeline is a thin wrapper in `ui/player.py`.
+7. **Sound in the Flatpak** needs `--socket=pulseaudio` (PipeWire through its PulseAudio
+   interface), already listed in `app-shell`'s permission table for this module.
+
+#### Objective
+
+Hear whether the notes are right (design screen 6, narrow screen 10): the song, the detected
+hits as clicks, or both, while the marker follows bar by bar.
+
+1. The playback bar under the sheet: play/pause, the time, a position slider to seek, the
+   song's length, "Bar n of N", the volume button, and Song / Hits / Both. In a narrow window it
+   takes two rows.
+2. Song / Hits / Both and the volumes change what is heard at once, without restarting.
+3. The marker follows the bar that sounds; a click on a bar jumps there (assumption 5).
+4. Keyboard: Space plays and pauses, Left and Right go one bar back or on, Home goes to the start.
+5. At the end of the song playback stops; Space plays it from the start again. Opening another
+   song, closing the window or quitting stops the pipeline.
+
+Not part of this module: loops, slower playback, muting single drums (practice tools, "Not
+Doing"), drum samples.
+
+#### Commands
+
+```bash
+scripts/gtk.sh                          # the app with playback
+uv run pytest -q tests/gtk              # logic tests, no GStreamer needed
+scripts/gtk.sh test                     # widget tests and one real pipeline (fake sink)
+scripts/check.sh task                   # before every commit
+```
+
+#### Project structure (additions)
+
+```
+src/stickler_gtk/logic/playback.py    # hear mode and volumes, bar jumps, bar and time texts
+src/stickler_gtk/logic/paths.py       # + where the clicks WAV of a song goes
+src/stickler_gtk/logic/settings.py    # + the two volumes
+src/stickler_gtk/ui/player.py         # the GStreamer pipeline: two sources, a mixer, a sink
+src/stickler_gtk/ui/playbar.py        # the playback bar and the volume popover
+tests/gtk/test_playback.py
+```
+
+#### Testing strategy
+
+- Logic without GStreamer: the volumes of each source for Song / Hits / Both; the jump target
+  for a written bar from any position, across repeats and after the last occurrence; the bar
+  and time texts; remembered volumes (missing or bad values fall back).
+- A real pipeline in a widget test, with a fake audio sink and a generated song: it plays, its
+  position advances, a seek lands within 50 ms, and setting it to NULL leaves nothing running.
+- Widgets: the bar's controls drive a fake player; a click on a bar seeks to the expected time.
+- By hand: Eye of the Tiger with clicks, by ear; Space, arrows, Home; the narrow window.
+
+#### Boundaries
+
+- **Always:** one pipeline for both sources; GStreamer only in `ui/player.py`; the pipeline set to
+  NULL on stop, close and quit.
+- **Ask first:** drum samples instead of clicks; any practice feature (loop, speed); another
+  audio library.
+- **Never:** decode or mix audio in the main loop by hand; leave a pipeline playing after the
+  window closed.
+
+#### Success criteria
+
+1. Eye of the Tiger plays with its clicks in time with the drums (owner, by ear); pause, resume
+   and seeking with the slider work.
+2. Song / Hits / Both and both volume sliders change what is heard without a gap or restart.
+3. The marker follows the sounding bar within 0.1 s and keeps it in view.
+4. A click on a bar inside repeat signs jumps to its next pass; after the last pass to the first.
+5. The volumes are the same after a restart.
+6. Space, Left, Right and Home work; the narrow window shows the bar in two rows.
+7. Closing the window or quitting during playback stops the sound at once; nothing keeps running.
+8. `scripts/check.sh task` is green, `stickler_gtk/logic` at ≥ 95% coverage.
+
+#### Open questions
+
+- None.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
