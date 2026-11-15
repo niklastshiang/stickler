@@ -19,10 +19,12 @@ def analyse(
     progress: Callable[[api.Step], None],
     cancel: api.CancelToken,
     clicks: Path | None = None,
+    corrections: api.Corrections | None = None,
 ) -> tuple[api.SongInfo, api.Notation]:
     """Fast mode without PDF, the MusicXML at `out`, the detected hits as clicks at `clicks`
     (for playback); raises Unreadable, api.SetupMissing, api.Cancelled or the analysis's own
-    error. Clicks that cannot be written are left out: the song still plays on its own."""
+    error. Clicks that cannot be written are left out: the song still plays on its own.
+    `corrections` fix the beat (SPEC.md, module `corrections`); the transcription is cached."""
     try:
         info = api.song_info(song)
     except RuntimeError as exc:
@@ -35,6 +37,7 @@ def analyse(
         pdf=False,
         progress=progress,
         cancel=cancel,
+        corrections=corrections,
     )
     if clicks is not None:
         with contextlib.suppress(OSError, RuntimeError):

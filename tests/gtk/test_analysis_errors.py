@@ -98,6 +98,9 @@ def test_the_analysis_job_passes_progress_and_cancel_to_notate(monkeypatch):
     assert got == (info, _notation())
     assert seen["cancel"] is token and seen["progress"] is print and seen["pdf"] is False
     assert (seen["title"], seen["artist"]) == ("Eye of the Tiger", "Survivor")
+    half = api.Corrections(tempo="half")
+    analysis.analyse(Path("eye.flac"), Path("eye.musicxml"), print, token, corrections=half)
+    assert seen["corrections"] == half
 
 
 def test_the_analysis_job_writes_the_clicks_and_goes_on_without_them(monkeypatch, tmp_path):

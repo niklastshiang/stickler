@@ -13,6 +13,7 @@ from stickler_gtk.i18n import _
 from stickler_gtk.logic import analysis, steps
 
 _jobs = itertools.count(1)
+DETECTED = api.Corrections()  # nothing corrected
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,15 @@ class Analysing:
     steps: tuple[steps.StepRow, ...]
     job: int
     previous: State  # where "Cancel" goes back to
+    corrections: api.Corrections = DETECTED  # the song's stored ones
+
+
+@dataclass(frozen=True)
+class Pending:
+    """A correction being notated: its job number and the values the controls show."""
+
+    job: int
+    corrections: api.Corrections
 
 
 @dataclass(frozen=True)
@@ -33,6 +43,13 @@ class Result:
     song: Path
     info: api.SongInfo
     notation: api.Notation
+    corrections: api.Corrections = DETECTED  # what `notation` was made with
+    pending: Pending | None = None
+
+    @property
+    def wanted(self) -> api.Corrections:
+        """What the controls show: the newest change, even before its sheet is ready."""
+        return self.pending.corrections if self.pending else self.corrections
 
     @property
     def title(self) -> str:
@@ -74,10 +91,10 @@ class Failed:
 State = Empty | Analysing | Result | Exporting | Failed
 
 
-def open_song(song: Path, previous: State) -> Analysing:
+def open_song(song: Path, previous: State, corrections: api.Corrections = DETECTED) -> Analysing:
     if isinstance(previous, Analysing | Exporting | Failed):
         previous = previous.previous
-    return Analysing(song, steps.planned(steps.FAST), next(_jobs), previous)
+    return Analysing(song, steps.planned(steps.FAST), next(_jobs), previous, corrections)
 
 
 def export_drums(result: Result, dest: Path, *, setup: bool) -> Exporting:
@@ -106,7 +123,28 @@ def exported(state: State, job: int) -> State:
 def finished(state: State, job: int, info: api.SongInfo, notation: api.Notation) -> State:
     if not _current(state, job):
         return state
-    return Result(state.song, info, notation)
+    return Result(state.song, info, notation, state.corrections)
+
+
+def correct(result: Result, corrections: api.Corrections) -> Result:
+    """A change in the sidebar: the sheet stays until the new one is ready."""
+    return replace(result, pending=Pending(next(_jobs), corrections))
+
+
+def _correcting(state: State, job: int) -> bool:
+    return isinstance(state, Result) and state.pending is not None and state.pending.job == job
+
+
+def corrected(state: State, job: int, notation: api.Notation) -> State:
+    """The newest correction's sheet; an older one finishing late changes nothing."""
+    if not _correcting(state, job):
+        return state
+    return replace(state, notation=notation, corrections=state.pending.corrections, pending=None)
+
+
+def correction_failed(state: State, job: int) -> State:
+    """The last sheet stays, and so do the values it was made with."""
+    return replace(state, pending=None) if _correcting(state, job) else state
 
 
 def cancel(state: State) -> State:

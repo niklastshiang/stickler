@@ -89,3 +89,36 @@ def test_scores_go_to_the_apps_cache_one_per_song(tmp_path):
     assert paths.score_path(Path("/music/a/Song.flac"), {"HOME": str(tmp_path)}).is_relative_to(
         tmp_path / ".cache" / "stickler"
     )
+
+
+def _shown(fix=None):
+    state = session.open_song(Path("eye.flac"), session.Empty(), fix or api.Corrections())
+    t = api.SongTranscription(Path("eye.flac"), "fast", None, [], [], [])
+    notation = api.Notation(Path("eye.musicxml"), None, None, t, [], 109, (4, 4))
+    return session.finished(state, state.job, api.SongInfo("Eye", "", 246.0), notation)
+
+
+def test_a_song_opens_with_its_stored_corrections():
+    half = api.Corrections(tempo="half")
+    result = _shown(half)
+    assert result.corrections == half and result.wanted == half and result.pending is None
+
+
+def test_only_the_newest_correction_is_shown_and_a_failed_one_keeps_the_sheet():
+    from dataclasses import replace
+
+    result = _shown()
+    half, double = api.Corrections(tempo="half"), api.Corrections(tempo="double")
+    first = session.correct(result, half)
+    second = session.correct(first, double)
+    assert second.wanted == double and second.corrections == result.corrections
+    halved = replace(result.notation, tempo=54)
+    assert session.corrected(second, first.pending.job, halved) is second  # stale: ignored
+    doubled = replace(result.notation, tempo=218)
+    done = session.corrected(second, second.pending.job, doubled)
+    assert (done.notation.tempo, done.corrections, done.pending) == (218, double, None)
+    again = session.correct(done, half)
+    kept = session.correction_failed(again, again.pending.job)
+    assert (kept.notation.tempo, kept.wanted, kept.pending) == (218, double, None)
+    assert session.correction_failed(kept, 999) is kept
+    assert session.corrected(session.Empty(), 1, doubled) == session.Empty()

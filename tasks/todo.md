@@ -510,7 +510,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/gtk/test_corrections.py`
   - Dependencies: none · Files: `src/stickler_gtk/logic/corrections.py`, tests
 
-- [ ] **Task 61: Jobs and session for a correction** (S)
+- [x] **Task 61: Jobs and session for a correction** (S): done 2026-11-15. `Analysing` carries the song's stored corrections into its `Result`; a change is a `Pending` (job number and values) on the `Result`, whose `wanted` the controls show. No detected meter is kept: `Notation` carries the current meter and first one (Task 60).
   - Acceptance:
     - `analyse` passes corrections to `notate`; `Result` holds the corrections and the detected meter; `correcting` and `corrected` show only the newest correction's result; a failed correction keeps the result.
   - Verify: `uv run pytest -q tests/gtk/test_session.py tests/gtk/test_analysis_errors.py`
