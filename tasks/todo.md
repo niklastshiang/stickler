@@ -605,12 +605,12 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `flatpak-builder --install`; by hand with Eye of the Tiger
   - Dependencies: 71, 73, 74 · Files: `packaging/flatpak/*`
 
-- [ ] **Task 76: The AppImage** (M)
+- [x] **Task 76: The AppImage** (M): done 2026-11-15. quick-sharun pinned to a commit, in the Anylinux Arch image with its debloated packages (Arch's mesa pulls in LLVM); about 133 MB. The owner analysed, played and exported in it. Found on the way: quick-sharun leaves out the app's own translations (now copied and checked); GTK_CLASS_FIX preloads a library that prints into ffprobe's output (dropped); Arch's ffprobe 9.0 writes localized numbers, so every ffmpeg/ffprobe call now runs with LC_ALL=C; a headless test in a private D-Bus session unmounted the owner's document portal (never again).
   - Acceptance: `scripts/appimage.sh` builds `Stickler-x86_64.AppImage` with quick-sharun (pinned) in an Arch container; it starts, sets up, analyses and plays.
   - Verify: the script in a local container; `quick-sharun --test`; by hand
   - Dependencies: 71, 73, 74 · Files: `scripts/appimage.sh`, `packaging/appimage/*`
 
-- [ ] **Task 77: Release workflow** (M)
+- [x] **Task 77: Release workflow** (M): done 2026-11-15. A manual run built both (Flatpak 30 MB, AppImage 127 MB); attaching them to a release is confirmed with release 5. The Flatpak is built with Ubuntu's flatpak-builder (Flathub's action has had no commit since April 2025), whose git source needed `branch: HEAD`.
   - Acceptance: `.github/workflows/release.yml` builds both on a release tag and attaches them, and on a manual run uploads them as artifacts; the release notes template says how to install each.
   - Verify: a manual run
   - Dependencies: 75, 76 · Files: `.github/workflows/release.yml`, `docs/` release notes
