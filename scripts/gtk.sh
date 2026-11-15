@@ -58,6 +58,28 @@ EOF
 
 if [[ "${1:-}" == "test" ]]; then
   shift
-  exec .venv-gtk/bin/python -m pytest -q -m gtk -p no:cacheprovider tests/gtk "$@"
+  # The widget tests open real windows. They run on an invisible screen of their own (a headless
+  # mutter on its own D-Bus session), so they never pop up on the desktop; STICKLER_TEST_VISIBLE=1
+  # shows them, which is also the fallback when mutter is missing.
+  if command -v mutter >/dev/null && command -v dbus-run-session >/dev/null \
+      && [[ -z "${STICKLER_TEST_VISIBLE:-}" ]]; then
+    screen="stickler-test-$$"
+    pidfile=$(mktemp)
+    # mutter writes its own PID: ending dbus-run-session alone would leave it running
+    dbus-run-session -- sh -c 'echo $$ > "$1"; shift; exec "$@"' sh "$pidfile" \
+      mutter --headless --wayland --no-x11 --virtual-monitor 1280x800 \
+      --wayland-display "$screen" >/dev/null 2>&1 &
+    compositor=$!
+    trap 'kill "$(cat "$pidfile")" 2>/dev/null; wait "$compositor" 2>/dev/null; rm -f "$pidfile"' EXIT
+    for _ in $(seq 200); do
+      [[ -S "${XDG_RUNTIME_DIR:-/run/user/$UID}/$screen" ]] && break
+      sleep 0.05
+    done
+    [[ -S "${XDG_RUNTIME_DIR:-/run/user/$UID}/$screen" ]] || { echo "headless mutter did not start" >&2; exit 1; }
+    export WAYLAND_DISPLAY="$screen" GDK_BACKEND=wayland
+    unset DISPLAY
+  fi
+  .venv-gtk/bin/python -m pytest -q -m gtk -p no:cacheprovider tests/gtk "$@"
+  exit
 fi
 exec .venv-gtk/bin/stickler-gtk "$@"
