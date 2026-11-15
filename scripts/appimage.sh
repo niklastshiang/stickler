@@ -84,8 +84,9 @@ export GTK_DIR=gtk-4.0
 export DEPLOY_GSTREAMER=1
 export DEPLOY_PULSE=1
 export DEPLOY_LOCALE=1
-export STARTUPWMCLASS=ng.tshia.Stickler # Wayland's app ID; GTK_CLASS_FIX makes X11 use it too
-export GTK_CLASS_FIX=1
+export STARTUPWMCLASS=ng.tshia.Stickler # Wayland's app ID
+# No GTK_CLASS_FIX: its preloaded library prints a line in every process, ffprobe's too, and the
+# app reads ffprobe's output (an AppImage analysis failed: "ffprobe: …: Setting window class").
 rm -rf ./AppDir ./dist
 quick-sharun /usr/bin/stickler-gtk \
 	/usr/lib/libgirepository* \
@@ -95,6 +96,21 @@ quick-sharun /usr/bin/stickler-gtk \
 mkdir -p ./AppDir/share/stickler ./AppDir/share/fonts
 cp -r /usr/share/stickler/adapters ./AppDir/share/stickler/
 cp -r /usr/share/fonts/stickler ./AppDir/share/fonts/
+# quick-sharun keeps the translations of the libraries it knows, not the app's own
+for po in po/*.po; do
+	lang=$(basename "$po" .po)
+	install -Dm644 "/usr/share/locale/$lang/LC_MESSAGES/stickler.mo" \
+		"./AppDir/share/locale/$lang/LC_MESSAGES/stickler.mo"
+done
+# every file the app looks for under its prefix must be there
+for needed in share/stickler/adapters/_common/pyproject.toml share/fonts/stickler/Leipzig.ttf \
+	share/icons/hicolor/scalable/apps/ng.tshia.Stickler.svg; do
+	[ -f "./AppDir/$needed" ] || { echo "missing in the AppImage: $needed" >&2; exit 1; }
+done
+for po in po/*.po; do
+	mo="./AppDir/share/locale/$(basename "$po" .po)/LC_MESSAGES/stickler.mo"
+	[ -f "$mo" ] || { echo "missing in the AppImage: $mo" >&2; exit 1; }
+done
 quick-sharun --make-appimage
 for built in dist/*.AppImage; do
 	mv "$built" "dist/Stickler-$VERSION-x86_64.AppImage"

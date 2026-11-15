@@ -65,5 +65,6 @@ modules:
           msgfmt --check -o "/app/share/locale/$lang/LC_MESSAGES/stickler.mo" "$po"
         done
     sources:
-      - type: git # the checked-out commit (HEAD): a release tag in CI, main locally
+      - type: git # the checked-out commit: a release tag in CI, main locally
         path: ../..
+        branch: HEAD # explicit: without it, older flatpak-builder versions look for "master"
