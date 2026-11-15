@@ -1,7 +1,9 @@
 """Renders the README badges with shieldcn.dev into docs/badges/*.svg.
 
 The SVGs live in the repository, so the README does not depend on the service being up.
-Each row is a rainbow: every badge's gradient starts where the previous one ends. Hues run from
+Each row is a rainbow: every badge's gradient starts where the previous one ends; the two rows at
+the top (facts, then the shimmering burger) share one rainbow, so the second row goes on where
+the first stops. Hues run from
 the project's orange over pink, violet and blue to cyan; yellow and green are left out because
 white text is hard to read on them. Test count and coverage are measured by running the tests.
 The value (second half) is set bold: shieldcn has no font weight, so the value's glyph path
@@ -90,7 +92,7 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
             ("built-with", "built with", "Claude Code"),
             ("code", "code", "100% AI"),
             ("decisions", "decisions", "100% human"),
-            ("ai-cost", "AI cost (API prices)", f["ai_cost"]),
+            ("ai-cost", "AI cost", f["ai_cost"]),  # at API prices, see README > ORIGIN
             ("tokens", "tokens", f["ai_tokens"]),
         ],
     }
@@ -123,10 +125,21 @@ def bold_value(svg: bytes, file: str) -> bytes:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, badges in rows(facts()).items():
-        step = (HUE_END - HUE_START) / len(badges)
+    all_rows = rows(facts())
+    top = len(all_rows["facts"]) + len(all_rows["fun"])  # one rainbow over the two top rows
+    for name, badges in all_rows.items():
+        count, offset = (
+            (top, len(all_rows["facts"]) if name == "fun" else 0)
+            if name
+            in (
+                "facts",
+                "fun",
+            )
+            else (len(badges), 0)
+        )
+        step = (HUE_END - HUE_START) / count
         for i, (file, label, message) in enumerate(badges):
-            start = HUE_START + i * step
+            start = HUE_START + (offset + i) * step
             link = url(label, message, start, start + step, shimmer=name == "fun")
             request = urllib.request.Request(link, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(request, timeout=30) as response:
