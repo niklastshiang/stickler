@@ -716,7 +716,13 @@ class Window(Adw.ApplicationWindow):
             self.show(session.Empty())
             self.toast(_("Could not remove everything: {reason}").format(reason=exc))
 
-        self.job_thread = worker.run(lambda: removal.remove(chosen), done, failed)
+        def remove() -> None:
+            removal.remove(chosen)
+            shipped = paths.adapter_sources()
+            if shipped is not None:  # the models' sources went too; without them no song runs
+                setup.sync_adapters(shipped, paths.adapters_root())
+
+        self.job_thread = worker.run(remove, done, failed)
 
     # the setup assistant (SPEC.md, module `setup-assistant`)
 

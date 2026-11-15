@@ -964,3 +964,30 @@ def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
         assert not os.path.exists(recent.store_path()) and window.recent == []
     finally:
         window.close()
+
+
+def test_after_removing_the_models_a_song_asks_for_them_instead_of_failing(monkeypatch, tmp_path):
+    """The shipped model sources went with the models, so the next song failed with "unknown
+    transcriber 'adtof'" until a restart (owner, 2026-11-15)."""
+    from stickler_gtk.logic import paths, session
+    from stickler_gtk.ui.window import Window
+
+    monkeypatch.setenv("APPIMAGE", "/x/Stickler.AppImage")
+    monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
+    shipped = tmp_path / "mount" / "share" / "stickler" / "adapters"
+    (shipped / "transcribers" / "adtof").mkdir(parents=True)
+    (shipped / "transcribers" / "adtof" / "run.py").write_text("print('adtof')\n")
+    monkeypatch.setenv("STICKLER_ADAPTER_SOURCES", str(shipped))
+    source = paths.adapters_root() / "transcribers" / "adtof" / "run.py"
+    window = Window()
+    try:
+        assert _wait(source.is_file)  # copied at start
+        window.show(session.Empty())
+        window.remove_models_now(everything=False)
+        assert _wait(lambda: not window._removing)
+        assert source.is_file()  # copied again: the next song finds its models missing
+        window.remove_models_now(everything=True)
+        assert _wait(lambda: not window._removing)
+        assert source.is_file()
+    finally:
+        window.close()
