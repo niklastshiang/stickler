@@ -5,10 +5,11 @@ and which server a failed step names."""
 from __future__ import annotations
 
 import os
+import shutil
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 
-from stickler_gtk.i18n import _
+from stickler_gtk.i18n import N_, _
 
 # what a step adds on disk, from docs/requirements.md (uv's cache and the adapter's folder)
 SIZES = {
@@ -75,16 +76,48 @@ def details(error: str) -> str:
     return "\n".join(lines[-DETAIL_LINES:])
 
 
-def disk_bytes(folders: Iterable[Path]) -> int:
-    """The size of the files below `folders` (links not followed; missing folders count 0)."""
-    total = 0
-    for folder in folders:
-        for root, _dirs, files in os.walk(folder):
-            for name in files:
-                path = Path(root) / name
-                if not path.is_symlink():
-                    total += path.stat().st_size
-    return total
+def free_space(path: Path) -> int:
+    """Free bytes on the disk that holds `path` (or its nearest existing parent). What a step
+    used is the free space it took: cheap enough for twice a second, unlike walking uv's cache;
+    other programs writing at the same time make it a little off, hence MOST."""
+    while not path.exists() and path != path.parent:
+        path = path.parent
+    return shutil.disk_usage(path).free
+
+
+# design screen 1: what each model does and its licence
+MODELS = {
+    "adtof": (
+        N_("detects the hits"),
+        N_("Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0)."),
+    ),
+    "beat_this": (
+        N_("finds the beat and the bars"),
+        N_("MIT licence. Its model comes from the JKU Linz server."),
+    ),
+}
+
+
+def model_text(adapter: str) -> tuple[str, str]:
+    does, licence = MODELS.get(adapter, ("", ""))
+    return (_(does) if does else "", _(licence) if licence else "")
+
+
+def _model_bytes(adapter: str) -> int:
+    return sum(size for step, size in SIZES.items() if step.endswith(f":{adapter}"))
+
+
+def _gb(n: float) -> str:
+    """Sizes on the consent page are in GB, as design screen 1 has them."""
+    return _("{size:n} GB").format(size=round(n / 1e9, 1))
+
+
+def model_size(adapter: str) -> str:
+    return _gb(_model_bytes(adapter))
+
+
+def total_size(missing: Iterable[str]) -> str:
+    return _gb(sum(_model_bytes(a) for a in missing))
 
 
 def uv_cache(env: Mapping[str, str] = os.environ) -> Path:

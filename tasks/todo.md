@@ -557,7 +557,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/gtk/test_setup.py tests/gtk/test_settings.py`
   - Dependencies: none · Files: `src/stickler_gtk/logic/{setup,settings,paths}.py`, tests
 
-- [ ] **Task 68: Consent and download pages** (M)
+- [x] **Task 68: Consent and download pages** (M): done 2026-11-15. `Consent` and `SettingUp` are session states; the download uses the analysing page's step list. Progress is the free disk space a step used, sampled every 0.5 s (walking uv's cache would be too slow), capped at 99 %. The consent page lists only the missing models.
   - Acceptance:
     - Design screens 1 and 2; Download runs `api.setup_adapters` in the worker with steps and bytes; Cancel stops it; done → the empty window; an agreed but unfinished setup goes on at the next start.
   - Verify: widget tests with a fake `setup_adapters`

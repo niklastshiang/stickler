@@ -7,6 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from stickler import api
+from stickler_gtk.logic import paths
 
 
 class Unreadable(Exception):
@@ -38,6 +39,7 @@ def analyse(
         progress=progress,
         cancel=cancel,
         corrections=corrections,
+        adapters_root=paths.adapters_root(),
     )
     if clicks is not None:
         with contextlib.suppress(OSError, RuntimeError):

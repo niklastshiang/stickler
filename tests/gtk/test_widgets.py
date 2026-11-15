@@ -761,3 +761,77 @@ def test_a_narrow_window_shows_the_corrections_in_a_bottom_sheet(monkeypatch, tm
         assert window.panel.get_parent().get_parent() is window.sidebar_scroller
     finally:
         window.close()
+
+
+def _fake_setup(monkeypatch, missing=("adtof", "beat_this"), block=None):
+    """api without downloads: `missing` are not set up; setup_adapters reports its steps."""
+    from stickler import api
+
+    done = []
+    monkeypatch.setattr(api, "mode_ready", lambda *a, **kw: [m for m in missing if m not in done])
+
+    def setup_adapters(adapter, device="cpu", adapters_root=None, *, progress, cancel):
+        ids = [f"environment:{adapter}"] + (["weights:beat_this"] if adapter == "beat_this" else [])
+        for i, step_id in enumerate(ids, 1):
+            progress(api.Step(step_id, i, len(ids), "started", False, None))
+            if block is not None:
+                while not cancel.is_set():
+                    block.wait(0.01)
+                raise api.Cancelled()
+            progress(api.Step(step_id, i, len(ids), "done", False, None))
+        done.append(adapter)
+        return [adapter]
+
+    monkeypatch.setattr(api, "setup_adapters", setup_adapters)
+    return done
+
+
+def test_the_first_start_asks_then_downloads_then_shows_the_empty_window(monkeypatch):
+    from stickler_gtk.logic import settings, setup
+    from stickler_gtk.ui.window import Window
+
+    done = _fake_setup(monkeypatch)
+    window = Window()
+    try:
+        assert _wait(lambda: window.pages.get_visible_child_name() == "consent")
+        labels = _labels(window.pages.get_child_by_name("consent"))
+        size = setup.total_size(["adtof", "beat_this"])  # "2.2 GB", "2,2 GB" by the locale
+        assert f"Download {size}" in labels and "Not Now" in labels
+        window.activate_action("win.setup-download", None)
+        assert _wait(lambda: window.pages.get_visible_child_name() == "empty")
+        assert done == ["adtof", "beat_this"]
+        assert settings.load(settings.store_path()).setup_agreed
+    finally:
+        window.close()
+
+
+def test_not_now_shows_the_empty_window(monkeypatch):
+    from stickler_gtk.ui.window import Window
+
+    _fake_setup(monkeypatch)
+    window = Window()
+    try:
+        assert _wait(lambda: window.pages.get_visible_child_name() == "consent")
+        window.activate_action("win.setup-later", None)
+        assert window.pages.get_visible_child_name() == "empty"
+    finally:
+        window.close()
+
+
+def test_an_agreed_setup_goes_on_by_itself_and_can_be_cancelled(monkeypatch):
+    import threading
+
+    from stickler_gtk.logic import settings
+    from stickler_gtk.ui.window import Window
+
+    settings.update(settings.store_path(), setup_agreed=True)
+    _fake_setup(monkeypatch, block=threading.Event())
+    window = Window()
+    try:
+        assert _wait(lambda: window.pages.get_visible_child_name() == "analysing")
+        assert window.analysing.get_title() == "Downloading the Models"
+        assert _wait(lambda: window.state.steps[0].state == "running")
+        window.activate_action("win.cancel", None)
+        assert window.pages.get_visible_child_name() == "empty"
+    finally:
+        window.close()

@@ -9,3 +9,11 @@ def _private_xdg_folders(tmp_path, monkeypatch):
         folder = tmp_path / name.lower()
         folder.mkdir()
         monkeypatch.setenv(name, str(folder))
+
+
+@pytest.fixture(autouse=True)
+def _models_set_up(monkeypatch):
+    """The models count as set up (CI has none); setup tests say otherwise."""
+    from stickler import api
+
+    monkeypatch.setattr(api, "mode_ready", lambda *a, **kw: [])

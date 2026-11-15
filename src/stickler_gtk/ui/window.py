@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import contextlib
 import threading
+from dataclasses import replace
 from pathlib import Path
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
-from stickler import api
+from stickler import adapters, api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
 from stickler_gtk.logic import (
@@ -22,15 +23,18 @@ from stickler_gtk.logic import (
     recent,
     session,
     settings,
+    setup,
     zoom,
 )
 from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import corrections as corrections_ui
 from stickler_gtk.ui import menu, pdf, worker
+from stickler_gtk.ui import setup as setup_ui
 from stickler_gtk.ui.playbar import PlayBar
 from stickler_gtk.ui.sheet import Sheet
 
 DEFAULT_SIZE = (1000, 700)
+SAMPLE_MS = 500  # how often a download's progress is measured
 CORRECT_AFTER_MS = 250  # a correction waits for the changes to pause
 MINIMUM_SIZE = (360, 294)  # GNOME HIG: the smallest a window should get
 NARROW = "max-width: 550sp"  # below this the header keeps icon buttons only
@@ -210,6 +214,8 @@ class Window(Adw.ApplicationWindow):
             widget.connect(f"notify::{prop}", lambda *_a: self._sync_corrections_button())
         self.pages.add_named(self.split, "result")
         self.pages.add_named(self.error, "error")
+        self.consent = Adw.Bin()  # filled with the missing models (design screen 1)
+        self.pages.add_named(self.consent, "consent")
 
         self.toasts = Adw.ToastOverlay(child=self.pages)
         view = Adw.ToolbarView(content=self.toasts)
@@ -247,13 +253,19 @@ class Window(Adw.ApplicationWindow):
             ("zoom-in", lambda: self.sheet.set_zoom(zoom.zoom_in(self.sheet.zoom))),
             ("zoom-out", lambda: self.sheet.set_zoom(zoom.zoom_out(self.sheet.zoom))),
             ("zoom-reset", lambda: self.sheet.set_zoom(1.0)),
+            ("setup-download", self.agree_to_setup),
+            ("setup-later", lambda: self.show(session.Empty())),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())
             self.add_action(action)
             self.actions[name] = action
         self.connect("close-request", self._on_close)
+        self._sampling = 0  # the timer that measures a download
+        self._consent_for: tuple[str, ...] = ()
+        self._free_before = 0
         self.show(self.state)
+        self._check_setup()
 
     def _export_menu(self) -> Gtk.Popover:
         """Design screen 8: each export with a line on what it is for."""
@@ -620,6 +632,85 @@ class Window(Adw.ApplicationWindow):
             self.steps.append(_step_row(step))
         self.pages.set_visible_child_name("analysing")
 
+    # the setup assistant (SPEC.md, module `setup-assistant`)
+
+    def _check_setup(self) -> None:
+        """At start, in the worker: are the models there? (a few uv checks, under 0.1 s)"""
+        root = paths.adapters_root()
+
+        def checked(missing: list[str]) -> None:
+            if not isinstance(self.state, session.Empty):
+                return  # the reader has started something meanwhile
+            agreed = settings.load(settings.store_path()).setup_agreed
+            page = setup.start_page(missing, agreed=agreed)
+            if page == "consent":
+                self.show(session.consent(tuple(missing)))
+            elif page == "download":
+                self._start_setup(tuple(missing), None)
+
+        worker.run(
+            lambda: api.mode_ready(adapters_root=root),
+            checked,
+            lambda exc: self.toast(_("Could not check the models: {reason}").format(reason=exc)),
+        )
+
+    def agree_to_setup(self) -> None:
+        if not isinstance(self.state, session.Consent):
+            return
+        with contextlib.suppress(OSError):  # unsaved, the download still runs now
+            settings.update(settings.store_path(), setup_agreed=True)
+        self._start_setup(self.state.missing, self.state.song)
+
+    def _start_setup(self, missing: tuple[str, ...], song: Path | None) -> None:
+        root = paths.adapters_root()
+        registry = adapters.discover(root)
+        ids = setup.step_ids(list(missing), lambda a: adapters.needs_weights(registry[a]))
+        self._stop_job()
+        self.token = token = api.CancelToken()
+        state = session.start_setup(ids, song)
+        job = state.job
+        self.show(state)
+
+        def step(reported: api.Step) -> None:
+            if reported.state == "started":
+                self._free_before = setup.free_space(root)
+            self.show(session.on_setup_step(self.state, job, reported))
+
+        def sample() -> bool:
+            if not (isinstance(self.state, session.SettingUp) and self.state.job == job):
+                self._sampling = 0
+                return GLib.SOURCE_REMOVE
+            grown = self._free_before - setup.free_space(root)
+            self.show(session.setup_grew(self.state, job, grown))
+            return GLib.SOURCE_CONTINUE
+
+        def done(_ids) -> None:
+            state = session.setup_done(self.state, job)
+            if state is not self.state:
+                self.show(state)
+                if song is not None:
+                    self.open_song(song)
+
+        def run_setup() -> list[str]:
+            report = worker.on_main_loop(step)
+            for adapter in missing:
+                api.setup_adapters(adapter, "cpu", root, progress=report, cancel=token)
+            return list(missing)
+
+        if not self._sampling:
+            self._sampling = GLib.timeout_add(SAMPLE_MS, sample)
+        self.job_thread = worker.run(
+            run_setup, done, lambda exc: self.show(session.failed(self.state, job, exc))
+        )
+
+    def _setup_rows(self, state: session.SettingUp):
+        """The running step shows how much it has downloaded."""
+        rows = []
+        for row in state.steps:
+            amount = setup.amount(row.id, state.grown) if row.state == "running" else ""
+            rows.append(replace(row, detail=amount) if amount else row)
+        return rows
+
     def show(self, state: session.State) -> None:
         self.state = state
         self.actions["retry"].set_enabled(isinstance(state, session.Failed) and state.can_retry)
@@ -641,8 +732,28 @@ class Window(Adw.ApplicationWindow):
             self.playbar.stop()
         self.export_box.set_visible(is_result)
         self.corrections_button.set_visible(is_result)
-        self.actions["cancel"].set_enabled(isinstance(state, session.Analysing | session.Exporting))
-        if isinstance(state, session.Exporting):
+        busy = session.Analysing | session.Exporting | session.SettingUp
+        self.actions["cancel"].set_enabled(isinstance(state, busy))
+        self.analysing.set_description("")
+        if isinstance(state, session.Consent):
+            self.heading.set_title(APP_NAME)
+            self.heading.set_subtitle("")
+            if self.consent.get_child() is None or self._consent_for != state.missing:
+                self._consent_for = state.missing
+                self.consent.set_child(setup_ui.consent_page(state.missing))
+            self.pages.set_visible_child_name("consent")
+        elif isinstance(state, session.SettingUp):
+            self.heading.set_title(APP_NAME)
+            self.heading.set_subtitle("")
+            self.analysing.set_title(_("Downloading the Models"))
+            self.analysing.set_description(
+                _(
+                    "If this is interrupted, Stickler picks up where it stopped the next time "
+                    "you open it."
+                )
+            )
+            self._show_steps(self._setup_rows(state))
+        elif isinstance(state, session.Exporting):
             self.heading.set_title(state.previous.title)
             self.heading.set_subtitle(state.previous.subtitle)
             self.analysing.set_title(_("Saving the Drum Track"))

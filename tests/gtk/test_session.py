@@ -122,3 +122,18 @@ def test_only_the_newest_correction_is_shown_and_a_failed_one_keeps_the_sheet():
     assert (kept.notation.tempo, kept.wanted, kept.pending) == (218, double, None)
     assert session.correction_failed(kept, 999) is kept
     assert session.corrected(session.Empty(), 1, doubled) == session.Empty()
+
+
+def test_the_setup_runs_its_steps_and_then_opens_the_song_it_was_for():
+    asked = session.consent(("adtof", "beat_this"), Path("eye.flac"))
+    running = session.start_setup(("environment:adtof", "weights:beat_this"), asked.song)
+    assert [r.state for r in running.steps] == ["waiting", "waiting"]
+    step = api.Step("environment:adtof", 1, 1, "started", False, None)
+    running = session.on_setup_step(running, running.job, step)
+    assert running.steps[0].state == "running" and running.grown == 0
+    running = session.setup_grew(running, running.job, 5_000)
+    assert running.grown == 5_000 and session.setup_grew(running, 999, 1) is running
+    assert session.setup_done(running, 999) is running
+    assert session.setup_done(running, running.job) == session.Empty()
+    assert session.cancel(running) == session.Empty()
+    assert session.failed(running, running.job, api.Cancelled()) == session.Empty()

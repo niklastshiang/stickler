@@ -44,12 +44,18 @@ def test_the_details_are_the_errors_last_lines():
     assert setup.details("  short\n\n") == "short"
 
 
-def test_what_grew_counts_files_below_the_folders(tmp_path):
-    (tmp_path / "a" / "b").mkdir(parents=True)
-    (tmp_path / "a" / "one").write_bytes(b"x" * 10)
-    (tmp_path / "a" / "b" / "two").write_bytes(b"x" * 5)
-    (tmp_path / "a" / "link").symlink_to(tmp_path / "a" / "one")
-    assert setup.disk_bytes([tmp_path / "a", tmp_path / "missing"]) == 15
+def test_what_grew_is_the_free_space_a_step_used(tmp_path):
+    """Cheap enough for twice a second, unlike walking uv's cache."""
+    free = setup.free_space(tmp_path)
+    assert free > 0 and setup.free_space(tmp_path / "not" / "there") == free
+
+
+def test_the_consent_lists_the_missing_models_with_their_sizes():
+    assert setup.model_size("adtof") == "1.3 GB" and setup.model_size("beat_this") == "0.9 GB"
+    assert setup.total_size(["adtof", "beat_this"]) == "2.2 GB"
+    assert setup.total_size(["beat_this"]) == "0.9 GB"
+    assert "detects the hits" in setup.model_text("adtof")[0]
+    assert "non-commercial" in setup.model_text("adtof")[1]
 
 
 def test_uvs_cache_and_the_adapters_folder_follow_the_environment(tmp_path):

@@ -88,7 +88,25 @@ class Failed:
         return self.kind == "analysis"
 
 
-State = Empty | Analysing | Result | Exporting | Failed
+@dataclass(frozen=True)
+class Consent:
+    """Design screen 1: may the models be downloaded?"""
+
+    missing: tuple[str, ...]  # the adapters not set up
+    song: Path | None = None  # opened once they are
+
+
+@dataclass(frozen=True)
+class SettingUp:
+    """Design screen 2: the models are downloaded."""
+
+    steps: tuple[steps.StepRow, ...]
+    job: int
+    song: Path | None = None
+    grown: int = 0  # bytes the running step has used so far
+
+
+State = Empty | Analysing | Result | Exporting | Failed | Consent | SettingUp
 
 
 def open_song(song: Path, previous: State, corrections: api.Corrections = DETECTED) -> Analysing:
@@ -105,7 +123,30 @@ def export_drums(result: Result, dest: Path, *, setup: bool) -> Exporting:
 
 
 def _current(state: State, job: int) -> bool:
-    return isinstance(state, Analysing | Exporting) and state.job == job
+    return isinstance(state, Analysing | Exporting | SettingUp) and state.job == job
+
+
+def consent(missing: tuple[str, ...], song: Path | None = None) -> Consent:
+    return Consent(tuple(missing), song)
+
+
+def start_setup(ids: tuple[str, ...], song: Path | None = None) -> SettingUp:
+    return SettingUp(steps.planned(ids), next(_jobs), song)
+
+
+def on_setup_step(state: State, job: int, step: api.Step) -> State:
+    if not _current(state, job):
+        return state
+    return replace(state, steps=steps.report_by_id(state.steps, step), grown=0)
+
+
+def setup_grew(state: State, job: int, grown: int) -> State:
+    return replace(state, grown=grown) if _current(state, job) else state
+
+
+def setup_done(state: State, job: int) -> State:
+    """Set up: the empty window (the window then opens the song it was for, if any)."""
+    return Empty() if _current(state, job) else state
 
 
 def on_step(state: State, job: int, step: api.Step) -> State:
@@ -148,12 +189,17 @@ def correction_failed(state: State, job: int) -> State:
 
 
 def cancel(state: State) -> State:
+    """What is done stays; a cancelled setup goes on at the next start."""
+    if isinstance(state, SettingUp):
+        return Empty()
     return state.previous if isinstance(state, Analysing | Exporting) else state
 
 
 def failed(state: State, job: int, error: BaseException) -> State:
     if not _current(state, job):
         return state
+    if isinstance(state, SettingUp):
+        return Empty()  # Task 69: the page that names the server
     if isinstance(error, api.Cancelled):
         return state.previous
     name = state.song.name
