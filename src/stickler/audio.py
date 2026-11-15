@@ -13,8 +13,9 @@ from pathlib import Path
 import numpy as np
 
 # Formats every model adapter reads itself (libsndfile, checked on 2026-11-13 with all models).
-# Anything else ffmpeg can decode (M4A/AAC, WMA, …) is converted to FLAC first.
-MODEL_READABLE = {".wav", ".flac", ".mp3", ".ogg", ".oga", ".opus", ".aiff", ".aif"}
+# Anything else ffmpeg can decode (M4A/AAC, WMA, …) is converted to FLAC first. MP3 too:
+# libsndfile gives up on some (a Lyrics3 tag, a damaged frame) where ffmpeg goes on.
+MODEL_READABLE = {".wav", ".flac", ".ogg", ".oga", ".opus", ".aiff", ".aif"}
 DECODED_DIR = "_decoded"
 
 

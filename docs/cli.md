@@ -78,8 +78,8 @@ is printed as it runs, e.g. `[2/4] beats (beat_this) … cached`.
 
 | Format | How it is handled |
 |---|---|
-| WAV, FLAC, MP3, Ogg Vorbis, Opus, AIFF | read directly by every model |
-| M4A/AAC, WMA and anything else `ffmpeg` decodes | converted to FLAC once (`cache/_decoded/`), then read by every model |
+| WAV, FLAC, Ogg Vorbis, Opus, AIFF | read directly by every model |
+| MP3, M4A/AAC, WMA and anything else `ffmpeg` decodes | converted to FLAC once (`cache/_decoded/`), then read by every model; MP3 since libsndfile gave up on some files (a Lyrics3 tag, a damaged frame) that `ffmpeg` reads |
 
 Cache entries belong to the original file's content, so the conversion never changes results.
 

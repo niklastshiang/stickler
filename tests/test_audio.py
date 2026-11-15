@@ -119,10 +119,24 @@ def _tone(path, seconds=0.5, sr=8000):
 
 
 def test_formats_every_model_reads_are_passed_on_unchanged(tmp_path):
-    for suffix in (".wav", ".flac", ".mp3", ".ogg", ".opus", ".aiff", ".WAV"):
+    for suffix in (".wav", ".flac", ".ogg", ".opus", ".aiff", ".WAV"):
         f = tmp_path / f"song{suffix}"
         f.write_bytes(b"x")
         assert audio.readable(f, tmp_path / "cache") == f
+
+
+def test_mp3s_are_decoded_by_ffmpeg_because_libsndfile_gives_up_on_some(tmp_path):
+    """libsndfile (mpg123) stopped with "Unspecified internal error" on MP3s with a Lyrics3 tag
+    or a damaged frame, 18 of 1738 in the owner's music; ffmpeg reads them (owner, 2026-11-15)."""
+    import subprocess
+
+    wav = _tone(tmp_path / "tone.wav", seconds=2.0)
+    mp3 = tmp_path / "song.mp3"
+    subprocess.run(["ffmpeg", "-v", "error", "-i", str(wav), str(mp3)], check=True)
+    with mp3.open("ab") as f:  # a Lyrics3 v2 tag after the audio, as in the failing songs
+        f.write(b"LYRICSBEGININD0000210" + b"000033LYRICS200")
+    flac = audio.readable(mp3, tmp_path / "cache")
+    assert flac.suffix == ".flac" and audio.duration(flac) == pytest.approx(2.0, abs=0.1)
 
 
 def test_other_formats_are_decoded_once_to_flac(tmp_path):
