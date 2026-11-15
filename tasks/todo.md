@@ -569,7 +569,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests; by hand: a fresh setup with `STICKLER_ADAPTERS` pointing at a copy
   - Dependencies: 68 · Files: `src/stickler_gtk/ui/*`, `src/stickler_gtk/logic/session.py`, `po/*`, tests
 
-- [ ] **Task 70: Spanish as a third language** (S) (owner, 2026-11-15: the owner's drum teacher is from Peru)
+- [x] **Task 70: Spanish as a third language** (S): done 2026-11-15. 134 strings; `po/LINGUAS` drives `scripts/i18n.sh` and the tests (complete, placeholders kept, width). The sheet's instrument name "Drumset" comes from the MusicXML and stays English in every language. (owner, 2026-11-15: the owner's drum teacher is from Peru)
   - Acceptance:
     - `po/es.po` complete, neutral Latin American Spanish, informal "tú" (as German "du"); built and installed like German; the tests check every language's catalogue, not only German; the width test also measures Spanish; SPEC.md records the third language.
   - Verify: `uv run pytest -q tests/gtk/test_translations.py`; `scripts/gtk.sh test`; by hand: `LANGUAGE=es scripts/gtk.sh`

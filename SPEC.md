@@ -412,6 +412,10 @@ GitHub archive, because the runtime has no git.
 - **Languages:** English and German in the first version; strings are translatable from the
   start. How translations are contributed and kept up to date later needs its own answer (no
   outside pull requests today); it is specified in `app-shell`.
+  **Spanish is the third language** (owner, 2026-11-15, for the owner's drum teacher from Peru):
+  neutral Latin American Spanish, informal "tú" as German "du", drum words as used there
+  (bombo, redoblante, platillos). `po/LINGUAS` lists the languages; the tests check every one
+  for completeness, kept placeholders and the 360 px width.
 - **Coverage:** the app's logic is kept apart from its widgets and falls under the 95% rule;
   pure widget code is excluded like `cli.py`. CONSTRAINTS.md is extended accordingly when
   `app-shell` fixes the paths.

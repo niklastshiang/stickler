@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Collects the app's texts into po/stickler.pot and merges them into every po/<lang>.po.
-# Run it after changing a text; then translate the new or fuzzy entries in po/de.po.
+# Run it after changing a text; then translate the new or fuzzy entries in each po/<lang>.po
+# (the languages are listed in po/LINGUAS).
 # Needs gettext (xgettext, msgmerge, msginit). Later Weblate commits the .po files itself.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -12,7 +13,8 @@ xgettext --language=Python --from-code=UTF-8 --keyword=_ --keyword=N_ --keyword=
   --output=po/stickler.pot "${sources[@]}"
 sed -i 's/charset=CHARSET/charset=UTF-8/' po/stickler.pot
 
-for lang in ${STICKLER_LANGUAGES:-de}; do
+mapfile -t languages < <(grep -v '^#' po/LINGUAS)  # one language code per line
+for lang in "${languages[@]}"; do
   if [[ ! -f "po/$lang.po" ]]; then
     msginit --no-translator --locale="$lang" --input=po/stickler.pot --output-file="po/$lang.po"
   fi

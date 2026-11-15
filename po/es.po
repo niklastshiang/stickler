@@ -1,0 +1,575 @@
+# Spanish translations for Stickler package.
+# Copyright (C) 2026 THE Stickler'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Stickler package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Stickler\n"
+"Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
+"POT-Creation-Date: 2026-11-15 13:17+0100\n"
+"PO-Revision-Date: 2026-11-15 13:17+0100\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/stickler_gtk/logic/corrections.py:56
+msgid "Beat {number}"
+msgstr "Tiempo {number}"
+
+#: src/stickler_gtk/logic/exports.py:32
+msgid "{title} (drums)"
+msgstr "{title} (batería)"
+
+#: src/stickler_gtk/logic/exports.py:45
+msgid "Separating the drums takes about {minutes} minute on this computer."
+msgid_plural ""
+"Separating the drums takes about {minutes} minutes on this computer."
+msgstr[0] "Separar la batería tarda aproximadamente {minutes} minuto en esta computadora."
+msgstr[1] "Separar la batería tarda aproximadamente {minutes} minutos en esta computadora."
+
+#: src/stickler_gtk/logic/exports.py:50
+msgid "Before that, Demucs is downloaded once (about {size:n} GB)."
+msgstr "Antes, Demucs se descarga una sola vez (aproximadamente {size:n} GB)."
+
+#: src/stickler_gtk/logic/playback.py:57
+msgid "Bar {number} of {total}"
+msgstr "Compás {number} de {total}"
+
+#: src/stickler_gtk/logic/recent.py:78
+msgid "opened today"
+msgstr "abierto hoy"
+
+#: src/stickler_gtk/logic/recent.py:80
+msgid "opened yesterday"
+msgstr "abierto ayer"
+
+#: src/stickler_gtk/logic/recent.py:82
+msgid "%-d %B"
+msgstr "%-d de %B"
+
+#. Translators: a date in strftime format, as in "12 November"
+#: src/stickler_gtk/logic/recent.py:82
+msgid "opened {date}"
+msgstr "abierto el {date}"
+
+#: src/stickler_gtk/logic/recent.py:95
+msgid "file not found"
+msgstr "archivo no encontrado"
+
+#: src/stickler_gtk/logic/session.py:228
+msgid "“{name}” cannot be read. Is it a complete sound file?"
+msgstr "No se puede leer «{name}». ¿Es un archivo de audio completo?"
+
+#: src/stickler_gtk/logic/session.py:232
+msgid "Cannot Read This File"
+msgstr "No se puede leer este archivo"
+
+#: src/stickler_gtk/logic/session.py:238
+msgid "Saving the drum track of “{name}” did not work."
+msgstr "No se pudo guardar la pista de batería de «{name}»."
+
+#: src/stickler_gtk/logic/session.py:240
+msgid "The Export Failed"
+msgstr "La exportación falló"
+
+#: src/stickler_gtk/logic/session.py:242
+msgid "Something went wrong while listening to “{name}”."
+msgstr "Algo salió mal al escuchar «{name}»."
+
+#: src/stickler_gtk/logic/session.py:244
+msgid "The Analysis Failed"
+msgstr "El análisis falló"
+
+#: src/stickler_gtk/logic/setup.py:51 src/stickler_gtk/logic/setup.py:112
+msgid "{size:n} GB"
+msgstr "{size:n} GB"
+
+#: src/stickler_gtk/logic/setup.py:52
+msgid "{size:n} MB"
+msgstr "{size:n} MB"
+
+#: src/stickler_gtk/logic/setup.py:61
+msgid "{done} of {total}"
+msgstr "{done} de {total}"
+
+#: src/stickler_gtk/logic/setup.py:68
+msgid "the Python package servers (pypi.org, download.pytorch.org, github.com)"
+msgstr "los servidores de paquetes de Python (pypi.org, download.pytorch.org, github.com)"
+
+#: src/stickler_gtk/logic/setup.py:70
+msgid "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)"
+msgstr "la JKU Linz (cloud.cp.jku.at) y la copia de Stickler (github.com)"
+
+#: src/stickler_gtk/logic/setup.py:71
+msgid "the model’s server"
+msgstr "el servidor del modelo"
+
+#: src/stickler_gtk/logic/setup.py:91
+msgid "detects the hits"
+msgstr "detecta los golpes"
+
+#: src/stickler_gtk/logic/setup.py:92
+msgid ""
+"Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0)."
+msgstr "Su modelo entrenado es libre solo para uso no comercial (CC BY-NC-SA 4.0)."
+
+#: src/stickler_gtk/logic/setup.py:95
+msgid "finds the beat and the bars"
+msgstr "encuentra el pulso y los compases"
+
+#: src/stickler_gtk/logic/setup.py:96
+msgid "MIT licence. Its model comes from the JKU Linz server."
+msgstr "Licencia MIT. Su modelo viene del servidor de la JKU Linz."
+
+#: src/stickler_gtk/logic/steps.py:13
+msgid "Only the drum track, without the band"
+msgstr "Solo la pista de batería, sin la banda"
+
+#: src/stickler_gtk/logic/steps.py:13
+msgid "Separate the drums"
+msgstr "Separar la batería"
+
+#: src/stickler_gtk/logic/steps.py:14
+msgid "Detect the hits"
+msgstr "Detectar los golpes"
+
+#: src/stickler_gtk/logic/steps.py:14
+msgid "Kick, snare, toms, hi-hat, cymbals"
+msgstr "Bombo, redoblante, toms, hi-hat, platillos"
+
+#: src/stickler_gtk/logic/steps.py:15
+msgid "Find the beat and the bars"
+msgstr "Encontrar el pulso y los compases"
+
+#: src/stickler_gtk/logic/steps.py:15
+msgid "Tempo, time signature, the first “one”"
+msgstr "Tempo, tipo de compás, el primer «uno»"
+
+#: src/stickler_gtk/logic/steps.py:16
+msgid "Bars, repeats, beams"
+msgstr "Compases, repeticiones, barras"
+
+#: src/stickler_gtk/logic/steps.py:16
+msgid "Write the notes"
+msgstr "Escribir las notas"
+
+#: src/stickler_gtk/logic/steps.py:17
+msgid "Make the PDF"
+msgstr "Crear el PDF"
+
+#: src/stickler_gtk/logic/steps.py:17 src/stickler_gtk/ui/window.py:277
+msgid "To print or to read on a tablet"
+msgstr "Para imprimir o leer en una tableta"
+
+#: src/stickler_gtk/logic/steps.py:48
+msgid "Download the programs for {model}"
+msgstr "Descargar los programas de {model}"
+
+#: src/stickler_gtk/logic/steps.py:49
+msgid "Once; later songs use them too"
+msgstr "Una sola vez; las próximas canciones también los usan"
+
+#: src/stickler_gtk/logic/steps.py:51
+msgid "Download the {model} model"
+msgstr "Descargar el modelo {model}"
+
+#: src/stickler_gtk/logic/steps.py:52
+msgid "Once; later songs use it too"
+msgstr "Una sola vez; las próximas canciones también lo usan"
+
+#. Translators: a percentage; German puts a no-break space before the sign
+#: src/stickler_gtk/logic/zoom.py:36
+msgid "{percent}%"
+msgstr "{percent} %"
+
+#: src/stickler_gtk/ui/corrections.py:35 src/stickler_gtk/ui/corrections.py:52
+msgid "Tempo"
+msgstr "Tempo"
+
+#: src/stickler_gtk/ui/corrections.py:37
+msgid "Half"
+msgstr "Mitad"
+
+#: src/stickler_gtk/ui/corrections.py:38
+msgid "As Detected"
+msgstr "Como se detectó"
+
+#: src/stickler_gtk/ui/corrections.py:39
+msgid "Double"
+msgstr "Doble"
+
+#: src/stickler_gtk/ui/corrections.py:57
+msgid "Beats per bar"
+msgstr "Tiempos por compás"
+
+#: src/stickler_gtk/ui/corrections.py:62
+msgid "Earlier first one"
+msgstr "Primer «uno» antes"
+
+#: src/stickler_gtk/ui/corrections.py:68
+msgid "Later first one"
+msgstr "Primer «uno» después"
+
+#: src/stickler_gtk/ui/corrections.py:76
+msgid "Beats before it are a pickup"
+msgstr "Los tiempos anteriores son una anacrusa"
+
+#: src/stickler_gtk/ui/corrections.py:76
+msgid "First “one”"
+msgstr "Primer «uno»"
+
+#: src/stickler_gtk/ui/corrections.py:81
+msgid "Beat"
+msgstr "Pulso"
+
+#: src/stickler_gtk/ui/corrections.py:86
+msgid "Nearly equal bars get one pattern"
+msgstr "Los compases casi iguales reciben un mismo patrón"
+
+#: src/stickler_gtk/ui/corrections.py:86
+msgid "Simplify"
+msgstr "Simplificar"
+
+#: src/stickler_gtk/ui/corrections.py:89
+msgid "Equal bars are written once"
+msgstr "Los compases iguales se escriben una sola vez"
+
+#: src/stickler_gtk/ui/corrections.py:89
+msgid "Repeat signs"
+msgstr "Signos de repetición"
+
+#: src/stickler_gtk/ui/corrections.py:93
+msgid "Easier to Read"
+msgstr "Más fácil de leer"
+
+#: src/stickler_gtk/ui/corrections.py:97
+msgid "Back to Detected"
+msgstr "Volver a lo detectado"
+
+#: src/stickler_gtk/ui/menu.py:49
+msgid "Follow System Style"
+msgstr "Seguir el estilo del sistema"
+
+#: src/stickler_gtk/ui/menu.py:50
+msgid "Light Style"
+msgstr "Estilo claro"
+
+#: src/stickler_gtk/ui/menu.py:51
+msgid "Dark Style"
+msgstr "Estilo oscuro"
+
+#: src/stickler_gtk/ui/menu.py:75 src/stickler_gtk/ui/menu.py:122
+msgid "Zoom Out"
+msgstr "Alejar"
+
+#: src/stickler_gtk/ui/menu.py:80 src/stickler_gtk/ui/menu.py:123
+msgid "Fit the Window's Width"
+msgstr "Ajustar al ancho de la ventana"
+
+#: src/stickler_gtk/ui/menu.py:84 src/stickler_gtk/ui/menu.py:121
+msgid "Zoom In"
+msgstr "Acercar"
+
+#: src/stickler_gtk/ui/menu.py:100 src/stickler_gtk/ui/window.py:52
+msgid "Open a Song…"
+msgstr "Abrir una canción…"
+
+#: src/stickler_gtk/ui/menu.py:101 src/stickler_gtk/ui/menu.py:125
+msgid "Keyboard Shortcuts"
+msgstr "Atajos de teclado"
+
+#: src/stickler_gtk/ui/menu.py:102
+msgid "About Stickler"
+msgstr "Acerca de Stickler"
+
+#: src/stickler_gtk/ui/menu.py:108 src/stickler_gtk/ui/menu.py:124
+msgid "Main Menu"
+msgstr "Menú principal"
+
+#: src/stickler_gtk/ui/menu.py:113 src/stickler_gtk/ui/window.py:124
+#: src/stickler_gtk/ui/window.py:129 src/stickler_gtk/ui/window.py:307
+msgid "Open a Song"
+msgstr "Abrir una canción"
+
+#: src/stickler_gtk/ui/menu.py:114 src/stickler_gtk/ui/window.py:103
+#: src/stickler_gtk/ui/window.py:107
+msgid "Export"
+msgstr "Exportar"
+
+#: src/stickler_gtk/ui/menu.py:115
+msgid "Cancel the Analysis or Export"
+msgstr "Cancelar el análisis o la exportación"
+
+#: src/stickler_gtk/ui/menu.py:116
+msgid "Play or Pause"
+msgstr "Reproducir o pausar"
+
+#: src/stickler_gtk/ui/menu.py:117
+msgid "Previous Bar"
+msgstr "Compás anterior"
+
+#: src/stickler_gtk/ui/menu.py:118
+msgid "Next Bar"
+msgstr "Compás siguiente"
+
+#: src/stickler_gtk/ui/menu.py:119
+msgid "Go to the Start"
+msgstr "Ir al inicio"
+
+#: src/stickler_gtk/ui/menu.py:120 src/stickler_gtk/ui/window.py:116
+msgid "Corrections"
+msgstr "Correcciones"
+
+#: src/stickler_gtk/ui/menu.py:126
+msgid "Close the Window"
+msgstr "Cerrar la ventana"
+
+#: src/stickler_gtk/ui/menu.py:127
+msgid "Quit"
+msgstr "Salir"
+
+#: src/stickler_gtk/ui/menu.py:165
+msgid "Writes the drums of a song as sheet music, so you can play along."
+msgstr "Escribe la batería de una canción como partitura, para que puedas tocar junto a ella."
+
+#: src/stickler_gtk/ui/playbar.py:42 src/stickler_gtk/ui/playbar.py:210
+msgid "Play"
+msgstr "Reproducir"
+
+#: src/stickler_gtk/ui/playbar.py:48
+msgid "Position"
+msgstr "Posición"
+
+#: src/stickler_gtk/ui/playbar.py:53
+msgid "What to Hear"
+msgstr "Qué escuchar"
+
+#: src/stickler_gtk/ui/playbar.py:54
+msgid "Both"
+msgstr "Ambos"
+
+#: src/stickler_gtk/ui/playbar.py:54
+msgid "Hits"
+msgstr "Golpes"
+
+#: src/stickler_gtk/ui/playbar.py:54 src/stickler_gtk/ui/playbar.py:107
+msgid "Song"
+msgstr "Canción"
+
+#: src/stickler_gtk/ui/playbar.py:63
+msgid "Volume"
+msgstr "Volumen"
+
+#: src/stickler_gtk/ui/playbar.py:107
+msgid "Detected hits"
+msgstr "Golpes detectados"
+
+#: src/stickler_gtk/ui/playbar.py:148
+msgid "Pause"
+msgstr "Pausar"
+
+#: src/stickler_gtk/ui/setup.py:18
+msgid ""
+"To hear the drums, Stickler needs a trained model. It is downloaded once; "
+"after that, everything runs on this computer, offline."
+msgid_plural ""
+"To hear the drums, Stickler needs {count} trained models. They are "
+"downloaded once; after that, everything runs on this computer, offline."
+msgstr[0] "Para escuchar la batería, Stickler necesita un modelo entrenado. Se descarga una sola vez; después, todo funciona en esta computadora, sin internet."
+msgstr[1] "Para escuchar la batería, Stickler necesita {count} modelos entrenados. Se descargan una sola vez; después, todo funciona en esta computadora, sin internet."
+
+#: src/stickler_gtk/ui/setup.py:31
+msgid "Together, on disk"
+msgstr "En total, en el disco"
+
+#: src/stickler_gtk/ui/setup.py:34
+msgid "about {size}"
+msgstr "aproximadamente {size}"
+
+#: src/stickler_gtk/ui/setup.py:45
+msgid ""
+"By downloading, you accept that ADTOF’s model is used for non-commercial "
+"purposes only."
+msgstr "Al descargar, aceptas que el modelo de ADTOF se use solo con fines no comerciales."
+
+#: src/stickler_gtk/ui/setup.py:53
+msgid "Not Now"
+msgstr "Ahora no"
+
+#: src/stickler_gtk/ui/setup.py:55
+msgid "Download {size}"
+msgstr "Descargar {size}"
+
+#: src/stickler_gtk/ui/setup.py:65
+msgid "Welcome to Stickler"
+msgstr "Te damos la bienvenida a Stickler"
+
+#: src/stickler_gtk/ui/setup.py:80
+msgid "Ready"
+msgstr "Listo"
+
+#: src/stickler_gtk/ui/setup.py:83
+msgid "Not reached"
+msgstr "Pendiente"
+
+#: src/stickler_gtk/ui/setup.py:86 src/stickler_gtk/ui/window.py:157
+msgid "Technical Details"
+msgstr "Detalles técnicos"
+
+#: src/stickler_gtk/ui/setup.py:87
+msgid "Later"
+msgstr "Más tarde"
+
+#: src/stickler_gtk/ui/setup.py:89 src/stickler_gtk/ui/window.py:159
+msgid "Try Again"
+msgstr "Intentar de nuevo"
+
+#: src/stickler_gtk/ui/setup.py:102
+msgid "A Download Server Is Not Answering"
+msgstr "Un servidor de descarga no responde"
+
+#: src/stickler_gtk/ui/setup.py:104
+msgid ""
+"Stickler could not reach {server}. Everything that is done stays downloaded."
+msgstr "Stickler no pudo conectarse con {server}. Todo lo que ya está listo queda descargado."
+
+#: src/stickler_gtk/ui/window.py:56
+msgid "Drop a Song Here"
+msgstr "Suelta una canción aquí"
+
+#: src/stickler_gtk/ui/window.py:58
+msgid ""
+"Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV "
+"or OGG; a song takes about 15 seconds."
+msgstr "Stickler escucha la batería y la escribe como partitura. MP3, FLAC, WAV u OGG; una canción tarda unos 15 segundos."
+
+#: src/stickler_gtk/ui/window.py:78
+msgid "Done"
+msgstr "Listo"
+
+#: src/stickler_gtk/ui/window.py:86
+msgid "Waiting"
+msgstr "En espera"
+
+#: src/stickler_gtk/ui/window.py:122
+msgid "Open…"
+msgstr "Abrir…"
+
+#: src/stickler_gtk/ui/window.py:147 src/stickler_gtk/ui/window.py:514
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/stickler_gtk/ui/window.py:153 src/stickler_gtk/ui/window.py:780
+msgid "Writing the Drum Part"
+msgstr "Escribiendo la parte de batería"
+
+#: src/stickler_gtk/ui/window.py:162
+msgid "Open Another Song…"
+msgstr "Abrir otra canción…"
+
+#: src/stickler_gtk/ui/window.py:176
+msgid "Recent"
+msgstr "Recientes"
+
+#: src/stickler_gtk/ui/window.py:182
+msgid "The song cannot be played: {reason}"
+msgstr "No se puede reproducir la canción: {reason}"
+
+#: src/stickler_gtk/ui/window.py:277
+msgid "Sheet Music (PDF)…"
+msgstr "Partitura (PDF)…"
+
+#: src/stickler_gtk/ui/window.py:280
+msgid "MusicXML…"
+msgstr "MusicXML…"
+
+#: src/stickler_gtk/ui/window.py:281
+msgid "To edit in MuseScore or another notation program"
+msgstr "Para editar en MuseScore u otro programa de notación"
+
+#: src/stickler_gtk/ui/window.py:283
+msgid "As FLAC or WAV"
+msgstr "Como FLAC o WAV"
+
+#: src/stickler_gtk/ui/window.py:283
+msgid "Drum Track…"
+msgstr "Pista de batería…"
+
+#: src/stickler_gtk/ui/window.py:284
+msgid "Open With…"
+msgstr "Abrir con…"
+
+#: src/stickler_gtk/ui/window.py:284
+msgid "The MusicXML in another program"
+msgstr "El MusicXML en otro programa"
+
+#: src/stickler_gtk/ui/window.py:303
+msgid "Songs"
+msgstr "Canciones"
+
+#: src/stickler_gtk/ui/window.py:322
+msgid "Not an audio file"
+msgstr "No es un archivo de audio"
+
+#: src/stickler_gtk/ui/window.py:357
+msgid "Save As"
+msgstr "Guardar como"
+
+#: src/stickler_gtk/ui/window.py:440
+msgid "The correction did not work: {reason}"
+msgstr "La corrección no funcionó: {reason}"
+
+#: src/stickler_gtk/ui/window.py:455
+msgid "The correction could not be saved: {reason}"
+msgstr "No se pudo guardar la corrección: {reason}"
+
+#: src/stickler_gtk/ui/window.py:480 src/stickler_gtk/ui/window.py:501
+msgid "Could not save: {reason}"
+msgstr "No se pudo guardar: {reason}"
+
+#: src/stickler_gtk/ui/window.py:513
+msgid "Save the Drum Track?"
+msgstr "¿Guardar la pista de batería?"
+
+#: src/stickler_gtk/ui/window.py:515
+msgid "Choose Where to Save…"
+msgstr "Elegir dónde guardar…"
+
+#: src/stickler_gtk/ui/window.py:549
+msgid "Open"
+msgstr "Abrir"
+
+#: src/stickler_gtk/ui/window.py:549
+msgid "Saved “{name}”"
+msgstr "Se guardó «{name}»"
+
+#: src/stickler_gtk/ui/window.py:571
+msgid "Recent songs could not be saved: {reason}"
+msgstr "No se pudieron guardar las canciones recientes: {reason}"
+
+#: src/stickler_gtk/ui/window.py:584
+msgid "Remove from the List"
+msgstr "Quitar de la lista"
+
+#: src/stickler_gtk/ui/window.py:657
+msgid "Could not check the models: {reason}"
+msgstr "No se pudieron revisar los modelos: {reason}"
+
+#: src/stickler_gtk/ui/window.py:764
+msgid "Downloading the Models"
+msgstr "Descargando los modelos"
+
+#: src/stickler_gtk/ui/window.py:767
+msgid ""
+"If this is interrupted, Stickler picks up where it stopped the next time you "
+"open it."
+msgstr "Si esto se interrumpe, Stickler continúa donde se quedó la próxima vez que lo abras."
+
+#: src/stickler_gtk/ui/window.py:775
+msgid "Saving the Drum Track"
+msgstr "Guardando la pista de batería"

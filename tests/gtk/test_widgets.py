@@ -342,7 +342,7 @@ def test_a_narrow_window_keeps_icon_buttons_in_the_header():
         window.close()
 
 
-@pytest.mark.parametrize("language", ["en", "de"])
+@pytest.mark.parametrize("language", ["en", "de", "es"])
 def test_every_page_fits_the_narrowest_window(monkeypatch, language):
     """No page needs more than the minimum width, so nothing scrolls sideways (SPEC
     app-shell, criterion 7); German texts are longer, so both languages are measured. The

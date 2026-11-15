@@ -1,9 +1,12 @@
-"""Every text the app shows is translatable, extracted and translated into German."""
+"""Every text the app shows is translatable, extracted and translated into each language."""
 
 import ast
 import gettext
+import re
 import struct
 from pathlib import Path
+
+import pytest
 
 from stickler_gtk import i18n
 
@@ -118,11 +121,34 @@ def test_the_template_holds_every_marked_string():
     assert marked - template == set(), "po/stickler.pot is out of date: run scripts/i18n.sh"
 
 
-def test_german_translates_every_string_of_the_template():
+LANGUAGES = [line for line in (PO / "LINGUAS").read_text().split() if not line.startswith("#")]
+PLACEHOLDER = re.compile(r"\{[^{}]*\}|%-?[a-zA-Z]")
+
+
+def test_every_language_listed_has_a_catalogue_and_none_is_left_out():
+    assert LANGUAGES == ["de", "es"]  # German, and Spanish for the owner's drum teacher
+    assert sorted(p.stem for p in PO.glob("*.po")) == sorted(LANGUAGES)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_each_language_translates_every_string_of_the_template(language):
     template = set(_po_entries(PO / "stickler.pot")) - {""}
-    german = _po_entries(PO / "de.po")
-    missing = sorted(m for m in template if m not in german or not german[m][0] or german[m][1])
-    assert missing == [], f"po/de.po lacks or has fuzzy translations: {missing}"
+    found = _po_entries(PO / f"{language}.po")
+    missing = sorted(m for m in template if m not in found or not found[m][0] or found[m][1])
+    assert missing == [], f"po/{language}.po lacks or has fuzzy translations: {missing}"
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_each_translation_keeps_the_placeholders(language):
+    """A lost {size} or %B would crash the format call or show the wrong text."""
+    found = _po_entries(PO / f"{language}.po")
+    wrong = {
+        msgid: text
+        for msgid, (text, _fuzzy) in found.items()
+        if msgid
+        and sorted(set(PLACEHOLDER.findall(msgid))) != sorted(set(PLACEHOLDER.findall(text)))
+    }
+    assert wrong == {}, f"po/{language}.po changes placeholders: {wrong}"
 
 
 def _write_mo(path: Path, messages: dict[str, str]) -> None:
