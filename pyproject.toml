@@ -1,7 +1,7 @@
 [project]
 name = "stickler"
 version = "4"  # sequential: +1 with every release (ADR 0006)
-license = "MIT"
+license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 description = "Benchmark für automatische Schlagzeug-Transkription mit Open-Source-Modellen"
 readme = "README.md"

@@ -22,7 +22,8 @@ response times.
 
 ## Building on it
 
-The code is under the [MIT license](LICENSE): fork it and change it as you like. How it works:
+The code is under the [GPL-3.0-or-later](LICENSE): fork it and change it as you like; what you pass
+on stays under the same licence. How it works:
 [CLI guide](docs/cli.md), [benchmark report](docs/report.md), decisions in [`docs/adr/`](docs/adr/).
 The rules the code follows are in [`CONSTRAINTS.md`](CONSTRAINTS.md); `scripts/check.sh task`
 runs all checks.

@@ -66,7 +66,7 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
     """(file name, label, message) per row; the joke row shimmers."""
     return {
         "facts": [
-            ("license", "license", "MIT"),
+            ("license", "license", "GPL-3.0"),
             ("python", "python", "3.12"),
             ("uv", "environments", "uv"),
             ("models", "models", "7 adapters"),

@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: MIT" /></a>
+  <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: GPL-3.0-or-later" /></a>
   <img src="docs/badges/facts-python.svg" alt="python 3.12" />
   <img src="docs/badges/facts-uv.svg" alt="environments: uv" />
   <img src="docs/badges/facts-models.svg" alt="7 model adapters" />
@@ -382,9 +382,11 @@ stickler/
 
 ## `> LICENSE`
 
-**The code of Stickler** is under [**MIT**](LICENSE). This covers the harness, adapters, scripts,
-tests and documentation. Using, modifying, redistributing and selling it is permitted, as long as
-the copyright notice stays intact.
+**The code of Stickler** is under the [**GNU General Public License, version 3 or later**](LICENSE)
+(GPL-3.0-or-later), from release 5 on; releases 1–4 were published under MIT and stay so. This
+covers the harness, adapters, scripts, tests, the app and the documentation. You may use, study,
+change and share it, also commercially; whoever passes on a changed version must pass it on under
+the same licence, with its source code. Copyright © 2026 Niklas Tshiang Tshiananga.
 
 **The models** are not affected by this. Stickler only downloads them on `stickler setup`; they
 are not in the repository and come with their own licenses, see

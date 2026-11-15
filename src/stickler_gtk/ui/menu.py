@@ -163,7 +163,7 @@ def _about() -> Adw.AboutDialog:
         version=stickler.__version__,
         developer_name="Niklas Tshiang Tshiananga",
         comments=_("Writes the drums of a song as sheet music, so you can play along."),
-        license_type=Gtk.License.MIT_X11,
+        license_type=Gtk.License.GPL_3_0,
         website=WEBSITE,
         issue_url=f"{WEBSITE}/issues",
     )

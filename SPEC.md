@@ -1357,7 +1357,7 @@ tests/gtk/test_setup.py
 6. **The app stops importing the benchmark's code** (`mir_eval`, and with it scipy), so neither
    package has to ship.
 7. **AppStream MetaInfo** (`packaging/ng.tshia.Stickler.metainfo.xml`): name, summary,
-   description, screenshots, releases, OARS, licence (MIT; the metadata CC0-1.0), developer
+   description, screenshots, releases, OARS, licence (GPL-3.0-or-later; the metadata CC0-1.0), developer
    `ng.tshia`; validated with `appstreamcli` in CI, so GNOME Software shows the bundle properly.
 8. **Releases:** pushing a release tag builds both files and attaches them; a manual run builds
    them without a release, for testing. Release notes say how to install each.
@@ -1431,6 +1431,7 @@ adapters/{transcribers/adtof,beats/beat_this,separators/demucs}/  # Python 3.14
 - [0004 RoFormer checkpoint BS-Roformer-SW](docs/adr/0004-roformer-checkpoint.md)
 - [0005 YourMT3+ variant PS](docs/adr/0005-yourmt3-variante.md)
 - [0006 Sequential version numbers](docs/adr/0006-versionierung.md)
+- [0007 GPL-3.0-or-later instead of MIT](docs/adr/0007-gpl.md)
 
 ## Resolved Questions
 1. MuScriptor: the user accepts the license on Hugging Face and logs in with `uvx hf auth login`.

@@ -9,7 +9,7 @@ authors:
   - given-names: Niklas
     family-names: Tshiang Tshiananga
 repository-code: "https://github.com/niklastshiang/stickler"
-license: MIT
+license: GPL-3.0-or-later
 version: "0"
 keywords:
   - automatic drum transcription
