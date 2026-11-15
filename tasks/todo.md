@@ -189,7 +189,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 - [x] **Measure the end product** (`grid` in configs, stickler.grid, scored as `@grid`): notes snapped to the Beat This! grid like the sheet music. Snapping costs almost nothing on the own songs (quality 0.815 → 0.812, ADTOF on the mix 0.788 → 0.793) and ~0.02 on MDB (swing, jazz timing).
 - [x] **Consensus across repeated bars** (`consensus` in configs, scored as `@rep`): no gain. Best setting on MDB (similarity 0.6, add at 2/3, never remove) +0.002 on MDB, ±0.001 on the own songs. Diagnosis on the own songs: 357 hits added in 1562 bars, only 31 % correct; what one of several similar bars lacks is mostly a real variation (hi-hat left out before a fill, crash instead of hi-hat), while the models' errors repeat in every bar. Not used in the configs; the bar similarity may still serve the repeat signs in the sheet music.
 - [ ] **More reference songs in the owner's genres** (rock/metal): with 10 songs, tuning on them is not possible without overfitting; with ~30 they could be split for tuning and testing.
-- [ ] **Finer classes for notation** (owner, 2026-11-13: later): open/closed hi-hat, ride/crash; ADTOF does not distinguish them, MuScriptor does.
+- [ ] **Finer classes for notation** (owner, 2026-11-13: later): open/closed hi-hat, ride/crash; ADTOF does not distinguish them, MuScriptor does. Measured 2026-11-15 on the cached results: on the own songs MuScriptor M's open hi-hats are right half the time and it finds 10 % of the rides; ADTOF timing + MuScriptor's kind is no better than always "closed" (82 %). Waits for a new model that is measurably better (owner, 2026-11-15).
 
 ## Phase 7: Release 3, error analysis (approved 2026-11-14, SPEC.md "Release 3")
 

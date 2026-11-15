@@ -1516,6 +1516,92 @@ src/stickler_gtk/ui/menu.py, window.py # the menu entry and its alert
 
 - None.
 
+### Module `legend`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-15). The owner's wish after
+> release 6: "a legend, so that untrained readers can check in the exported sheet what it means".
+
+#### Assumptions
+
+1. **Finer classes wait for a better model** (owner, 2026-11-15, after a measurement on the
+   cached results). ADTOF, the app's model, writes every hi-hat as closed and every cymbal as
+   crash (0 of 2172 open hi-hats and 0 of 845 ride hits in the own songs). MuScriptor M names
+   them, but on the own songs only half of its open hi-hats are right and it finds 10 % of the
+   rides; taking ADTOF's timing with MuScriptor's kind is no better there than always writing
+   "closed" (82 % either way). The finer classes go with the item "new candidate models": in
+   only when a model is measurably better on the own songs. This module adds no model.
+2. **The legend is in the PDF the app exports, at the top of page 1,** under the title and the
+   band: one short staff with each instrument the song uses, in its place on the staff, with its
+   notehead and its name below (e.g. crash, hi-hat, tom, snare, bass drum, from top to
+   bottom). Only the instruments the sheet uses, so it stays short and matches the page; the
+   same positions and noteheads as `notation.STAFF`, so it can never disagree with the music.
+3. **It says honestly what is not told apart:** when the song has a hi-hat or a cymbal, a line
+   under the staff says that open and closed hi-hat, and ride and crash, are written alike.
+4. **Where it comes from:** the legend is a small score of its own, engraved by Verovio like the
+   sheet (the same font and noteheads). Room for it on page 1 comes from the page header:
+   each header line pushes only page 1's music down (checked with Verovio on 2026-11-15;
+   pages 2 and later keep their layout). Then the legend is drawn into that room when the
+   PDF is written.
+5. **The names are in the app's language** (English, German, Spanish; the Spanish ones for the
+   teacher's review with the rest).
+6. **Not in this module:**
+   - The MusicXML export: notation programs show their own drum key.
+   - The command line's PDF: MuseScore engraves that one.
+   - The app's sheet view: the window is for playing along. If the owner wants the legend there
+     too, it is a small follow-up, since the legend's SVG already exists then.
+7. **The logic is apart from GTK:** which instruments a sheet uses, the legend's MusicXML, and
+   the room it needs. These are tested without a display.
+
+#### Objective
+
+Someone who has never read drum notation can open the exported PDF and see on the first page
+which line and which notehead is which drum, and what the sheet does not distinguish.
+
+#### Commands
+
+```bash
+uv run pytest -q                       # library and logic tests
+scripts/gtk.sh test                    # widget tests (headless)
+scripts/check.sh task                  # before every commit
+```
+
+#### Project structure (additions)
+
+```
+src/stickler/notation.py               # the instruments a sheet uses; the legend's MusicXML
+src/stickler_gtk/logic/engraving.py    # the legend engraved, room for it on page 1
+src/stickler_gtk/ui/pdf.py             # the legend drawn on page 1
+po/*.po                                # the instrument names
+```
+
+#### Testing strategy
+
+- The instruments of a sheet: a sheet with kick, snare and hi-hat lists those three, in staff
+  order from top to bottom; an empty sheet has no legend.
+- The legend's MusicXML uses the same step, octave and notehead as `notation.STAFF` for each
+  instrument, and has the "written alike" line only with a hi-hat or a cymbal.
+- Page 1 of an A4 engraving with the legend starts its music lower, and pages 2 and later are
+  the same as without it. The first page's SVG holds the names.
+- The written PDF has the legend on page 1 only (widget test).
+
+#### Boundaries
+
+- **Always:** the legend follows `notation.STAFF`; it names only what the sheet uses.
+- **Ask first:** a legend on every page; the legend in the app's sheet view.
+- **Never:** claim open/closed or ride/crash where the model does not tell them apart; change
+  how the music itself is engraved.
+
+#### Success criteria
+
+1. The exported PDF of a song shows the legend on page 1, under title and band, with the right
+   names for the sheet's instruments (owner, with two songs).
+2. Pages 2 and later look as before.
+3. German and Spanish complete; `scripts/check.sh task` and the widget tests green.
+
+#### Open questions
+
+- None.
+
 ## Release 7: New candidates
 
 > Status: **approved** by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
