@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Stickler's AppStream metadata (SPEC.md, module `packaging`): what GNOME Software shows. -->
+<component type="desktop-application">
+  <id>ng.tshia.Stickler</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>Stickler</name>
+  <summary>Write the drums of a song as sheet music</summary>
+  <developer id="ng.tshia">
+    <name>Niklas Tshiang Tshiananga</name>
+  </developer>
+
+  <description>
+    <p>
+      Stickler listens to the drums of a song and writes them down as sheet music, so you can
+      play along. Drop a song in, and after about 15 seconds the drum part is on the screen.
+    </p>
+    <ul>
+      <li>Kick, snare, toms, hi-hat and cymbals in drum notation, with bars and repeats</li>
+      <li>Play the song, the detected hits as clicks, or both, while the bar is marked</li>
+      <li>Fix the tempo, the time signature or the first beat in a second</li>
+      <li>Export the sheet music as PDF or MusicXML, or the drum track as FLAC or WAV</li>
+    </ul>
+    <p>
+      Everything runs on your computer. On first start, Stickler asks to download its two
+      trained models once (about 2.2 GB). The model that detects the hits, ADTOF, is free for
+      non-commercial use only.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">ng.tshia.Stickler.desktop</launchable>
+  <translation type="gettext">stickler</translation>
+
+  <url type="homepage">https://github.com/niklastshiang/stickler</url>
+  <url type="bugtracker">https://github.com/niklastshiang/stickler/issues</url>
+  <url type="vcs-browser">https://github.com/niklastshiang/stickler</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#cdab8f</color>
+    <color type="primary" scheme_preference="dark">#865e3c</color>
+  </branding>
+
+  <content_rating type="oars-1.1"/>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+    <internet>first-run</internet>
+  </requires>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </supports>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Music</category>
+  </categories>
+  <keywords>
+    <keyword>drums</keyword>
+    <keyword>drummer</keyword>
+    <keyword>sheet music</keyword>
+    <keyword>transcription</keyword>
+    <keyword>MusicXML</keyword>
+  </keywords>
+
+  <releases>
+    <release version="4" date="2026-11-14">
+      <description>
+        <p>Groundwork for the app: progress, cancelling and setup for every long step.</p>
+      </description>
+    </release>
+    <release version="3" date="2026-11-14">
+      <description>
+        <p>Honest numbers: the benchmark measures each model on the same footing.</p>
+      </description>
+    </release>
+    <release version="2" date="2026-11-13">
+      <description>
+        <p>Readable sheet music: bars, repeats and simplified patterns.</p>
+      </description>
+    </release>
+    <release version="1" date="2026-11-13">
+      <description>
+        <p>The command line tool.</p>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -8,4 +8,4 @@ Terminal=false
 StartupNotify=true
 Categories=AudioVideo;Audio;Music;
 Keywords=drums;drummer;sheet music;transcription;MusicXML;
-MimeType=audio/mpeg;audio/flac;audio/x-flac;audio/wav;audio/x-wav;audio/ogg;audio/x-vorbis+ogg;audio/mp4;
+MimeType=audio/mpeg;audio/flac;audio/x-flac;audio/wav;audio/x-wav;audio/ogg;audio/x-vorbis+ogg;

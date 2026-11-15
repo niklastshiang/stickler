@@ -39,6 +39,16 @@ jobs:
             uv run python scripts/floor_guard.py --base "$BASE"
           fi
 
+  metadata:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Desktop file and AppStream MetaInfo (what GNOME Software shows)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq appstream desktop-file-utils
+          desktop-file-validate packaging/ng.tshia.Stickler.desktop
+          appstreamcli validate --no-net --explain packaging/ng.tshia.Stickler.metainfo.xml
+
   secrets:
     runs-on: ubuntu-26.04
     steps:
