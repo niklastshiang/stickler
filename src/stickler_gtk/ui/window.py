@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import contextlib
 import threading
+from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 
@@ -270,7 +271,7 @@ class Window(Adw.ApplicationWindow):
         self._removing = False  # models being removed
         self._consent_for: tuple[str, ...] = ()
         self._step_rows: list[tuple[StepRow, Adw.ActionRow]] = []  # what the step list shows
-        self._free_before = 0
+        self._grown: Callable[[], int] = lambda: 0  # what the running setup step has added
         self.show(self.state)
         self._check_setup()
 
@@ -775,16 +776,16 @@ class Window(Adw.ApplicationWindow):
         self.show(state)
 
         def step(reported: api.Step) -> None:
-            if reported.state == "started":
-                self._free_before = setup.free_space(root)
+            if reported.state == "started" and reported.adapter in registry:
+                folder = registry[reported.adapter].path
+                self._grown = setup.meter(reported.id, root, folder)
             self.show(session.on_setup_step(self.state, job, reported))
 
         def sample() -> bool:
             if not (isinstance(self.state, session.SettingUp) and self.state.job == job):
                 self._sampling = 0
                 return GLib.SOURCE_REMOVE
-            grown = self._free_before - setup.free_space(root)
-            self.show(session.setup_grew(self.state, job, grown))
+            self.show(session.setup_grew(self.state, job, self._grown()))
             return GLib.SOURCE_CONTINUE
 
         def done(_ids) -> None:

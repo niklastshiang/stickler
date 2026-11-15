@@ -50,6 +50,22 @@ def test_what_grew_is_the_free_space_a_step_used(tmp_path):
     assert free > 0 and setup.free_space(tmp_path / "not" / "there") == free
 
 
+def test_the_model_download_counts_its_own_files_not_the_free_space(tmp_path):
+    """The free space also counted Python's first bytecode (21 MB), so Beat This! showed
+    "78 of 78 MB" while its checkpoint was half-way (owner, 2026-11-15)."""
+    adapter = tmp_path / "beats" / "beat_this"
+    checkpoints = adapter / "weights" / "hub" / "checkpoints"
+    grown = setup.meter("weights:beat_this", tmp_path, adapter)
+    assert grown() == 0  # no weights folder yet
+    checkpoints.mkdir(parents=True)
+    (checkpoints / "beat_this-final0.ckpt.partial").write_bytes(b"x" * 3000)
+    (adapter / ".venv" / "lib").mkdir(parents=True)
+    (adapter / ".venv" / "lib" / "torch.pyc").write_bytes(b"y" * 5000)  # not the model
+    assert grown() == 3000
+    environment = setup.meter("environment:beat_this", tmp_path, adapter)
+    assert environment() == pytest.approx(0, abs=10_000_000)  # the free space it took
+
+
 def test_the_consent_lists_the_missing_models_with_their_sizes():
     assert setup.model_size("adtof") == "1.3 GB" and setup.model_size("beat_this") == "0.9 GB"
     assert setup.total_size(["adtof", "beat_this"]) == "2.2 GB"

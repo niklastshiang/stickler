@@ -85,6 +85,17 @@ def free_space(path: Path) -> int:
     return shutil.disk_usage(path).free
 
 
+def meter(step_id: str, root: Path, adapter_dir: Path) -> Callable[[], int]:
+    """What a step has added so far, measured from when it starts. The programs: the free space
+    they took. The model: the files under the adapter's weights/, since the free space also
+    counted Python's first bytecode and showed "78 of 78 MB" half-way (owner, 2026-11-15)."""
+    if step_id.startswith("weights:"):
+        weights = adapter_dir / "weights"
+        return lambda: sum(f.stat().st_size for f in weights.rglob("*") if f.is_file())
+    before = free_space(root)
+    return lambda: before - free_space(root)
+
+
 # design screen 1: what each model does and its licence
 MODELS = {
     "adtof": (
