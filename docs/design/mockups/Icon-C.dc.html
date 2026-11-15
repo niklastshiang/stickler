@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Icon draft C: drumhead with staff</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 760px; height: 340px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; background: #ffffff; font-family: Inter, sans-serif; color: rgba(0,0,6,.8);">
+  <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
+    <defs>
+      <linearGradient id="c-wood" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="#cdab8f"/><stop offset="1" stop-color="#b5835a"/>
+      </linearGradient><linearGradient id="c-shell" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#1a5fb4"/><stop offset="0.35" stop-color="#3584e4"/>
+        <stop offset="0.7" stop-color="#1c71d8"/><stop offset="1" stop-color="#1a5fb4"/></linearGradient>
+      <linearGradient id="c-rim" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#9a9996"/><stop offset="0.4" stop-color="#f6f5f4"/>
+        <stop offset="1" stop-color="#9a9996"/></linearGradient>
+      <symbol id="c-icon" viewBox="0 0 128 128">
+        <path d="M14 64v22c0 16 22 28 50 28s50-12 50-28V64z" fill="url(#c-shell)"/>
+        <ellipse cx="64" cy="64" rx="50" ry="40" fill="url(#c-rim)"/>
+        <ellipse cx="64" cy="62" rx="46" ry="36" fill="#f6f5f4"/>
+        <g stroke="#9a9996" stroke-width="2"><path d="M24 50h80M20 56h88M19 62h90M20 68h88M24 74h80"/></g>
+        <g stroke="#241f31" stroke-width="2.6" stroke-linecap="round">
+          <path d="M36 41l4 4M40 41l-4 4M58 41l4 4M62 41l-4 4M80 41l4 4M84 41l-4 4M41 43v20M63 43v20M85 43v20M41 43h22"/></g>
+        <g fill="#241f31"><ellipse cx="38" cy="71" rx="4" ry="3"/><ellipse cx="82" cy="71" rx="4" ry="3"/></g>
+        <path d="M70 105.5L120 31.5" stroke="#865e3c" stroke-width="8" stroke-linecap="round"/><path d="M70 104L120 30" stroke="url(#c-wood)" stroke-width="7" stroke-linecap="round"/><circle cx="120" cy="30" r="4.6" fill="#cdab8f"/>
+      </symbol>
+      <symbol id="c-symbolic" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M8 2c3.9 0 7 2 7 4.6v3.8C15 13 11.9 15 8 15s-7-2-7-4.6V6.6C1 4 4.1 2 8 2zm0 1.5C5 3.5 2.6 4.9 2.6 6.6S5 9.7 8 9.7s5.4-1.4 5.4-3.1S11 3.5 8 3.5zM4 5.5h8v1H4zm0 2h8v1H4z"/>
+      </symbol>
+    </defs>
+  </svg>
+  <div style="display: flex; align-items: baseline; gap: 12px;">
+    <strong style="font-size: 18px;">C · Drumhead with staff</strong>
+    <span style="font-size: 13px; color: rgba(0,0,6,.56);">A drum seen from above, its head carrying the staff, a stick resting on it: the drum writes.</span>
+  </div>
+  <div style="display: flex; gap: 14px; flex-grow: 1;">
+    <div style="flex: 1 1 0; border-radius: 12px; background: #fafafb; box-shadow: inset 0 0 0 1px rgba(0,0,6,.08); display: flex; align-items: center; justify-content: space-evenly;">
+      <svg width="128" height="128" role="img" aria-label="Draft C at 128 pixels"><use href="#c-icon"/></svg>
+      <svg width="64" height="64" role="img" aria-label="Draft C at 64 pixels"><use href="#c-icon"/></svg>
+      <svg width="32" height="32" role="img" aria-label="Draft C at 32 pixels"><use href="#c-icon"/></svg>
+    </div>
+    <div style="flex: 1 1 0; border-radius: 12px; background: #222226; display: flex; align-items: center; justify-content: space-evenly;">
+      <svg width="128" height="128" role="img" aria-label="Draft C on dark at 128 pixels"><use href="#c-icon"/></svg>
+      <svg width="64" height="64" role="img" aria-label="Draft C on dark at 64 pixels"><use href="#c-icon"/></svg>
+      <svg width="32" height="32" role="img" aria-label="Draft C on dark at 32 pixels"><use href="#c-icon"/></svg>
+    </div>
+    <div style="width: 120px; border-radius: 12px; background: #fafafb; box-shadow: inset 0 0 0 1px rgba(0,0,6,.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #241f31;">
+      <svg width="32" height="32" role="img" aria-label="Symbolic, enlarged"><use href="#c-symbolic"/></svg>
+      <svg width="16" height="16" role="img" aria-label="Symbolic at 16 pixels"><use href="#c-symbolic"/></svg>
+      <span style="font-size: 12px; color: rgba(0,0,6,.56);">symbolic</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":340}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

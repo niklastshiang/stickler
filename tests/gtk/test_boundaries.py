@@ -62,3 +62,13 @@ def test_one_app_id_for_the_app_and_its_desktop_file():
 def test_stickler_gtk_is_an_installed_command():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert project["project"]["scripts"]["stickler-gtk"] == "stickler_gtk.main:main"
+
+
+def test_the_app_icon_and_its_symbolic_variant_ship_in_packaging():
+    """GNOME HIG: a 128 x 128 icon and a 16 x 16 symbolic one, named after the app ID."""
+    import xml.etree.ElementTree as ET
+
+    icons = ROOT / "packaging" / "icons"
+    for name, size in ((stickler_gtk.APP_ID, "128"), (f"{stickler_gtk.APP_ID}-symbolic", "16")):
+        root = ET.parse(icons / f"{name}.svg").getroot()
+        assert (root.get("width"), root.get("height")) == (size, size)

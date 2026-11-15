@@ -472,3 +472,14 @@ def test_a_pinch_scales_the_drawn_pages_at_once_and_lays_them_out_after(monkeypa
         assert abs(window.sheet.views[0].get_content_width() - width) <= 2  # as wide again
     finally:
         window.close()
+
+
+def test_the_app_finds_its_own_icon():
+    from gi.repository import Gdk, Gtk
+
+    from stickler_gtk import APP_ID
+    from stickler_gtk.ui import application
+
+    application.register_icons()
+    theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+    assert theme.has_icon(APP_ID) and theme.has_icon(f"{APP_ID}-symbolic")

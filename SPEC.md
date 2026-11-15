@@ -625,6 +625,11 @@ is drawn here; a change of a screen is agreed on the canvas first and copied to 
   buttons, toggle groups); no colours or styles of our own.
 - **Appearance:** follows the system by default; the main menu has the three-way switch
   (follow system, light, dark), as GNOME's own apps do. No preferences window for it.
+- **App icon (owner, 2026-11-15):** draft B, a page of drum notation with two drumsticks crossed
+  over it, drawn to the GNOME HIG (128 px, a darker bottom profile, palette colours, a symbolic
+  variant): `packaging/icons/`. Its parts are separate layers (paper, staff, notes, sticks), so a
+  macOS icon (square layers on a background, masked to a rounded rectangle by the system) can
+  reuse them; other platforms' variants are made when a release for them comes.
 - **Note size (owner, 2026-11-15):** a "−  100 %  +" row under the appearance switch in the
   main menu, as in GNOME Text Editor; the percentage resets to the window's width. The size
   holds for every song and is remembered. Still no preferences window.

@@ -22,6 +22,7 @@ the live copy; when a screen changes there, the files here are replaced with the
 | `Narrow-Sheet.dc.html` | 10 · Narrow window: sheet music |
 | `Narrow-Corrections.dc.html` | 11 · Narrow window: corrections as a bottom sheet |
 | `SheetPage.dc.html` | The engraved page, a stand-in for Verovio's SVG (used by 6–11) |
+| `Icon-A.dc.html` … `Icon-D.dc.html` | App icon drafts A–D; B was chosen (`packaging/icons/`) |
 
 Each screen has light and dark variants (the canvas's `dark` switch); the page is inverted in
 dark mode. Fonts in the mockups: Inter stands in for Adwaita Sans.

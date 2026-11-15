@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import signal
+import sys
 from pathlib import Path
 
 from gi.repository import Adw, Gdk, Gio, GLib, GLibUnix, Gtk
@@ -34,12 +35,21 @@ ACCELS = {
 }
 
 
+def register_icons() -> None:
+    """The app's icons live in its prefix (the app environment, or /app in the Flatpak);
+    GTK finds them there as the window's and the About dialog's icon."""
+    theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+    theme.add_search_path(str(Path(sys.prefix) / "share" / "icons"))
+    Gtk.Window.set_default_icon_name(APP_ID)
+
+
 class Application(Adw.Application):
     def __init__(self) -> None:
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_OPEN)
 
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
+        register_icons()
         css = Gtk.CssProvider()
         css.load_from_string(STYLE + menu.STYLE)
         Gtk.StyleContext.add_provider_for_display(

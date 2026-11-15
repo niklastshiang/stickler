@@ -1,22 +1,142 @@
 {
   "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-11-14T15:40:00Z"},
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-14T15:40:00Z"
+  },
   "title": "Stickler app screens",
-  "launch": {"view": "canvas"},
+  "launch": {
+    "view": "canvas"
+  },
   "pages": [],
   "boards": {
-    "Setup-Consent.dc.html": {"x": 0, "y": 0, "w": 1000, "h": 700, "title": "1 · First start: consent", "radius": 12},
-    "Setup-Download.dc.html": {"x": 1080, "y": 0, "w": 1000, "h": 700, "title": "2 · First start: download", "radius": 12},
-    "Setup-Error.dc.html": {"x": 2160, "y": 0, "w": 1000, "h": 700, "title": "3 · First start: a server is down", "radius": 12},
-    "Main.dc.html": {"x": 0, "y": 1120, "w": 1000, "h": 700, "title": "4 · Empty window: drop or open a song", "radius": 12},
-    "Analysing.dc.html": {"x": 1080, "y": 1120, "w": 1000, "h": 700, "title": "5 · Analysis with steps", "radius": 12},
-    "Sheet.dc.html": {"x": 2160, "y": 1120, "w": 1000, "h": 700, "title": "6 · Sheet music, playing, volume", "radius": 12},
-    "Corrections.dc.html": {"x": 3240, "y": 1120, "w": 1000, "h": 700, "title": "7 · Corrections panel", "radius": 12},
-    "Export.dc.html": {"x": 4320, "y": 1120, "w": 1000, "h": 700, "title": "8 · Export menu", "radius": 12},
-    "Menu.dc.html": {"x": 5400, "y": 1120, "w": 1000, "h": 700, "title": "9 · Main menu: appearance", "radius": 12},
-    "Narrow-Sheet.dc.html": {"x": 0, "y": 2240, "w": 400, "h": 860, "title": "10 · Narrow: sheet music", "radius": 12},
-    "Narrow-Corrections.dc.html": {"x": 480, "y": 2240, "w": 400, "h": 860, "title": "11 · Narrow: corrections as a bottom sheet", "radius": 12},
-    "SheetPage.dc.html": {"x": 0, "y": 3520, "w": 640, "h": 560, "title": "Part: the engraved page (Verovio stand-in)"}
+    "Setup-Consent.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1000,
+      "h": 700,
+      "title": "1 · First start: consent",
+      "radius": 12
+    },
+    "Setup-Download.dc.html": {
+      "x": 1080,
+      "y": 0,
+      "w": 1000,
+      "h": 700,
+      "title": "2 · First start: download",
+      "radius": 12
+    },
+    "Setup-Error.dc.html": {
+      "x": 2160,
+      "y": 0,
+      "w": 1000,
+      "h": 700,
+      "title": "3 · First start: a server is down",
+      "radius": 12
+    },
+    "Main.dc.html": {
+      "x": 0,
+      "y": 1120,
+      "w": 1000,
+      "h": 700,
+      "title": "4 · Empty window: drop or open a song",
+      "radius": 12
+    },
+    "Analysing.dc.html": {
+      "x": 1080,
+      "y": 1120,
+      "w": 1000,
+      "h": 700,
+      "title": "5 · Analysis with steps",
+      "radius": 12
+    },
+    "Sheet.dc.html": {
+      "x": 2160,
+      "y": 1120,
+      "w": 1000,
+      "h": 700,
+      "title": "6 · Sheet music, playing, volume",
+      "radius": 12
+    },
+    "Corrections.dc.html": {
+      "x": 3240,
+      "y": 1120,
+      "w": 1000,
+      "h": 700,
+      "title": "7 · Corrections panel",
+      "radius": 12
+    },
+    "Export.dc.html": {
+      "x": 4320,
+      "y": 1120,
+      "w": 1000,
+      "h": 700,
+      "title": "8 · Export menu",
+      "radius": 12
+    },
+    "Menu.dc.html": {
+      "x": 5400,
+      "y": 1120,
+      "w": 1000,
+      "h": 700,
+      "title": "9 · Main menu: appearance",
+      "radius": 12
+    },
+    "Narrow-Sheet.dc.html": {
+      "x": 0,
+      "y": 2240,
+      "w": 400,
+      "h": 860,
+      "title": "10 · Narrow: sheet music",
+      "radius": 12
+    },
+    "Narrow-Corrections.dc.html": {
+      "x": 480,
+      "y": 2240,
+      "w": 400,
+      "h": 860,
+      "title": "11 · Narrow: corrections as a bottom sheet",
+      "radius": 12
+    },
+    "SheetPage.dc.html": {
+      "x": 0,
+      "y": 3520,
+      "w": 640,
+      "h": 560,
+      "title": "Part: the engraved page (Verovio stand-in)"
+    },
+    "Icon-A.dc.html": {
+      "x": 0,
+      "y": 4500,
+      "w": 760,
+      "h": 340,
+      "title": "Icon draft A",
+      "radius": 12
+    },
+    "Icon-B.dc.html": {
+      "x": 840,
+      "y": 4500,
+      "w": 760,
+      "h": 340,
+      "title": "Icon draft B",
+      "radius": 12
+    },
+    "Icon-C.dc.html": {
+      "x": 1680,
+      "y": 4500,
+      "w": 760,
+      "h": 340,
+      "title": "Icon draft C",
+      "radius": 12
+    },
+    "Icon-D.dc.html": {
+      "x": 2520,
+      "y": 4500,
+      "w": 760,
+      "h": 340,
+      "title": "Icon draft D",
+      "radius": 12
+    }
   },
   "order": [
     "Setup-Consent.dc.html",
@@ -30,13 +150,48 @@
     "Menu.dc.html",
     "Narrow-Sheet.dc.html",
     "Narrow-Corrections.dc.html",
-    "SheetPage.dc.html"
+    "SheetPage.dc.html",
+    "Icon-A.dc.html",
+    "Icon-B.dc.html",
+    "Icon-C.dc.html",
+    "Icon-D.dc.html"
   ],
   "notes": {
-    "row-setup": {"x": 0, "y": -300, "text": "First start (setup-assistant)", "kind": "title1", "maxW": 3160},
-    "row-song": {"x": 0, "y": 820, "text": "A song (app-shell, sheet-view, playback, corrections)", "kind": "title1", "maxW": 6400},
-    "row-narrow": {"x": 0, "y": 1940, "text": "Narrow window", "kind": "title1", "maxW": 880},
-    "row-parts": {"x": 0, "y": 3220, "text": "Parts", "kind": "title1", "maxW": 1600}
+    "row-setup": {
+      "x": 0,
+      "y": -300,
+      "text": "First start (setup-assistant)",
+      "kind": "title1",
+      "maxW": 3160
+    },
+    "row-song": {
+      "x": 0,
+      "y": 820,
+      "text": "A song (app-shell, sheet-view, playback, corrections)",
+      "kind": "title1",
+      "maxW": 6400
+    },
+    "row-narrow": {
+      "x": 0,
+      "y": 1940,
+      "text": "Narrow window",
+      "kind": "title1",
+      "maxW": 880
+    },
+    "row-parts": {
+      "x": 0,
+      "y": 3220,
+      "text": "Parts",
+      "kind": "title1",
+      "maxW": 1600
+    },
+    "row-icon": {
+      "x": 0,
+      "y": 4220,
+      "text": "App icon (drafts, GNOME HIG)",
+      "kind": "title1",
+      "maxW": 3280
+    }
   },
   "designSystems": []
 }

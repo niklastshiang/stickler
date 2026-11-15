@@ -463,7 +463,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Owner, 2026-11-15: the window could not be made smaller while the sheet was shown; the pages' width was the window's minimum (`hscrollbar_policy` NEVER). Fixed with EXTERNAL; a test measures it.
 
 ### Next: the app icon (owner, 2026-11-15: right after `sheet-view`)
-- [ ] Design round on the canvas with the owner: a few drafts in the GNOME style (Daudix's icons as the reference), then the chosen one as SVG plus its symbolic variant, named `ng.tshia.Stickler`; see "App icon in GNOME style" under Later.
+- [x] Done 2026-11-15: draft B of four (page and drumsticks), `packaging/icons/ng.tshia.Stickler.svg` and `-symbolic.svg`, installed by `scripts/gtk.sh`, used for the window and the About dialog. Design round on the canvas with the owner: a few drafts in the GNOME style (Daudix's icons as the reference), then the chosen one as SVG plus its symbolic variant, named `ng.tshia.Stickler`; see "App icon in GNOME style" under Later.
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
@@ -513,7 +513,7 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Wish (2026-11-12): a button in the app that exports the separated drum stem ("can't hurt to have it").
   - Implementation: the stem already exists as an intermediate result. `transcribe_song` should return its path, and the GUI saves it as WAV or FLAC (FLAC via ffmpeg).
 
-- [ ] **App icon in GNOME style**
+- [x] **App icon in GNOME style** (done 2026-11-15, see Phase 10)
   - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
   - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.
 

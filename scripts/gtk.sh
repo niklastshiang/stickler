@@ -27,6 +27,11 @@ for po in po/*.po; do
   msgfmt --check --output-file="$dir/stickler.mo" "$po"
 done
 
+# the app icon and its symbolic variant, in the app environment's icon theme
+mkdir -p .venv-gtk/share/icons/hicolor/scalable/apps .venv-gtk/share/icons/hicolor/symbolic/apps
+cp -u packaging/icons/ng.tshia.Stickler.svg .venv-gtk/share/icons/hicolor/scalable/apps/
+cp -u packaging/icons/ng.tshia.Stickler-symbolic.svg .venv-gtk/share/icons/hicolor/symbolic/apps/
+
 # the Leipzig music font for librsvg, which finds fonts through fontconfig only (packaging/fonts)
 mkdir -p .venv-gtk/share/fonts
 cp -u packaging/fonts/Leipzig.ttf .venv-gtk/share/fonts/

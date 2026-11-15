@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Icon draft A: snare and sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 760px; height: 340px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; background: #ffffff; font-family: Inter, sans-serif; color: rgba(0,0,6,.8);">
+  <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
+    <defs>
+      <linearGradient id="a-shell" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#a51d2d"/><stop offset="0.35" stop-color="#e01b24"/>
+        <stop offset="0.7" stop-color="#c01c28"/><stop offset="1" stop-color="#a51d2d"/>
+      </linearGradient>
+      <linearGradient id="a-rim" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#9a9996"/><stop offset="0.4" stop-color="#f6f5f4"/>
+        <stop offset="1" stop-color="#9a9996"/>
+      </linearGradient>
+      <symbol id="a-icon" viewBox="0 0 128 128">
+        <!-- the sheet behind: flat, its front profile darker -->
+        <g transform="rotate(-8 64 50)">
+          <rect x="30" y="14" width="68" height="76" rx="4" fill="#deddda"/>
+          <rect x="30" y="10" width="68" height="76" rx="4" fill="#ffffff"/>
+          <g stroke="#9a9996" stroke-width="2">
+            <path d="M38 26h52M38 32h52M38 38h52M38 44h52M38 50h52"/>
+          </g>
+          <g stroke="#241f31" stroke-width="2.4" stroke-linecap="round">
+            <path d="M44 21l4 4M48 21l-4 4M58 21l4 4M62 21l-4 4M72 21l4 4M76 21l-4 4"/>
+            <path d="M49 23v14M63 23v14M77 23v14"/>
+          </g>
+          <g fill="#241f31"><ellipse cx="46" cy="47" rx="3.6" ry="2.8"/><ellipse cx="74" cy="47" rx="3.6" ry="2.8"/></g>
+        </g>
+        <!-- the snare in front: a curved shell, so a gradient -->
+        <path d="M20 84v20c0 6 20 12 44 12s44-6 44-12V84z" fill="url(#a-shell)"/>
+        <path d="M20 100c0 6 20 12 44 12s44-6 44-12v4c0 6-20 12-44 12s-44-6-44-12z" fill="url(#a-rim)"/>
+        <g fill="#c0bfbc">
+          <rect x="31" y="88" width="4" height="18" rx="2"/><rect x="51" y="91" width="4" height="18" rx="2"/>
+          <rect x="73" y="91" width="4" height="18" rx="2"/><rect x="93" y="88" width="4" height="18" rx="2"/>
+        </g>
+        <ellipse cx="64" cy="84" rx="44" ry="12" fill="url(#a-rim)"/>
+        <ellipse cx="64" cy="82" rx="41" ry="10" fill="#f6f5f4"/>
+      </symbol>
+      <symbol id="a-symbolic" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M5 1h7a1 1 0 0 1 1 1v6h-2V3H6v2H4V2a1 1 0 0 1 1-1zm2 3h3v1H7zm0 2h3v1H7zM8 8c3.3 0 6 1 6 2.2v2.6C14 14 11.3 15 8 15s-6-1-6-2.2v-2.6C2 9 4.7 8 8 8zm0 1.4c-2.4 0-4.2.6-4.4 1 .2.4 2 1 4.4 1s4.2-.6 4.4-1c-.2-.4-2-1-4.4-1z"/>
+      </symbol>
+    </defs>
+  </svg>
+  <div style="display: flex; align-items: baseline; gap: 12px;">
+    <strong style="font-size: 18px;">A · Snare and sheet</strong>
+    <span style="font-size: 13px; color: rgba(0,0,6,.56);">A snare drum in front of a page of drum notation: what goes in, what comes out.</span>
+  </div>
+  <div style="display: flex; gap: 14px; flex-grow: 1;">
+    <div style="flex: 1 1 0; border-radius: 12px; background: #fafafb; box-shadow: inset 0 0 0 1px rgba(0,0,6,.08); display: flex; align-items: center; justify-content: space-evenly;">
+      <svg width="128" height="128" role="img" aria-label="Draft A at 128 pixels"><use href="#a-icon"/></svg>
+      <svg width="64" height="64" role="img" aria-label="Draft A at 64 pixels"><use href="#a-icon"/></svg>
+      <svg width="32" height="32" role="img" aria-label="Draft A at 32 pixels"><use href="#a-icon"/></svg>
+    </div>
+    <div style="flex: 1 1 0; border-radius: 12px; background: #222226; display: flex; align-items: center; justify-content: space-evenly;">
+      <svg width="128" height="128" role="img" aria-label="Draft A on dark at 128 pixels"><use href="#a-icon"/></svg>
+      <svg width="64" height="64" role="img" aria-label="Draft A on dark at 64 pixels"><use href="#a-icon"/></svg>
+      <svg width="32" height="32" role="img" aria-label="Draft A on dark at 32 pixels"><use href="#a-icon"/></svg>
+    </div>
+    <div style="width: 120px; border-radius: 12px; background: #fafafb; box-shadow: inset 0 0 0 1px rgba(0,0,6,.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #241f31;">
+      <svg width="32" height="32" role="img" aria-label="Symbolic, enlarged"><use href="#a-symbolic"/></svg>
+      <svg width="16" height="16" role="img" aria-label="Symbolic at 16 pixels"><use href="#a-symbolic"/></svg>
+      <span style="font-size: 12px; color: rgba(0,0,6,.56);">symbolic</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":340}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
