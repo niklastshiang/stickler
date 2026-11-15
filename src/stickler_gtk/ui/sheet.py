@@ -20,15 +20,22 @@ MARK_RADIUS = 6
 
 
 class PageView(Gtk.DrawingArea):
+    """One page. It is drawn once into a picture (at the screen's pixel density, inverted in
+    dark style); drawing the widget only paints that picture, scaled while a zoom gesture
+    runs, so zooming and scrolling stay smooth."""
+
     def __init__(self, page: engraving.Page, on_click) -> None:
         super().__init__(content_width=round(page.width), content_height=round(page.height))
         self.page = page
+        self.scale = 1.0  # shown size / laid-out size, while a zoom waits for a new layout
         self.mark: engraving.Box | None = None
         self.handle = Rsvg.Handle.new_from_data(page.svg.encode())
+        self._picture: cairo.ImageSurface | None = None
+        self._picture_for: tuple[bool, int] | None = None  # (dark, pixel density)
         self.add_css_class("card")
         self.set_draw_func(self._draw)
         click = Gtk.GestureClick()
-        click.connect("released", lambda _g, _n, x, y: on_click(x, y))
+        click.connect("released", lambda _g, _n, x, y: on_click(x / self.scale, y / self.scale))
         self.add_controller(click)
 
     def set_mark(self, box: engraving.Box | None) -> None:
@@ -36,18 +43,47 @@ class PageView(Gtk.DrawingArea):
             self.mark = box
             self.queue_draw()
 
-    def _draw(self, _area, cr: cairo.Context, width: int, height: int) -> None:
+    def set_scale(self, scale: float) -> None:
+        self.scale = scale
+        self.set_content_width(round(self.page.width * scale))
+        self.set_content_height(round(self.page.height * scale))
+        self.queue_draw()
+
+    def restyle(self) -> None:
+        self._picture = None
+        self.queue_draw()
+
+    def _render(self) -> cairo.ImageSurface:
+        dark = Adw.StyleManager.get_default().get_dark()
+        density = self.get_scale_factor()
+        if self._picture is not None and self._picture_for == (dark, density):
+            return self._picture
+        width, height = math.ceil(self.page.width), math.ceil(self.page.height)
+        picture = cairo.ImageSurface(cairo.FORMAT_RGB24, width * density, height * density)
+        cr = cairo.Context(picture)
+        cr.scale(density, density)
         cr.set_source_rgb(1, 1, 1)
         cr.paint()
         viewport = Rsvg.Rectangle()
         viewport.x, viewport.y, viewport.width, viewport.height = 0, 0, width, height
         self.handle.render_document(cr, viewport)
-        if Adw.StyleManager.get_default().get_dark():  # light notes on a dark page
+        if dark:  # light notes on a dark page
             cr.set_operator(cairo.OPERATOR_DIFFERENCE)
             cr.set_source_rgb(0.88, 0.88, 0.89)
             cr.paint()
-            cr.set_operator(cairo.OPERATOR_OVER)
-        if self.mark is not None:  # drawn after inverting, so blue in both styles
+        self._picture, self._picture_for = picture, (dark, density)
+        return picture
+
+    def _draw(self, _area, cr: cairo.Context, _width: int, _height: int) -> None:
+        picture = self._render()
+        cr.save()
+        cr.scale(self.scale / self.get_scale_factor(), self.scale / self.get_scale_factor())
+        cr.set_source_surface(picture, 0, 0)
+        cr.get_source().set_filter(cairo.FILTER_GOOD)
+        cr.paint()
+        cr.restore()
+        if self.mark is not None:  # over the inverted page, so blue in both styles
+            cr.scale(self.scale, self.scale)
             box = self.mark
             cr.new_sub_path()
             for cx, cy, start in (
@@ -69,6 +105,7 @@ class Sheet(Gtk.ScrolledWindow):
         super().__init__(hscrollbar_policy=Gtk.PolicyType.EXTERNAL, vexpand=True, hexpand=True)
         self.musicxml: str | None = None
         self.zoom = zoom_level
+        self.laid_out = zoom_level  # the zoom the current pages were engraved at
         self.on_zoom = on_zoom  # told every new zoom (the window remembers it)
         self.pages: list[engraving.Page] = []
         self.views: list[PageView] = []
@@ -113,8 +150,16 @@ class Sheet(Gtk.ScrolledWindow):
     def pinch(self, scale: float) -> None:
         """Follows a pinch: the zoom is set at once, the new layout once the fingers pause
         (Verovio for every step of the gesture would stutter)."""
-        self.zoom = zoom.pinched(self._pinch_from, scale)
+        self.preview_zoom(zoom.pinched(self._pinch_from, scale))
+
+    def preview_zoom(self, value: float) -> None:
+        """Shows `value` at once by scaling the drawn pages; the sharp layout follows."""
+        if value == self.zoom:
+            return
+        self.zoom = value
         self._zoomed()
+        for view in self.views:
+            view.set_scale(self.zoom / self.laid_out)
         self._relayout_soon()
 
     def _relayout_soon(self) -> None:
@@ -127,6 +172,7 @@ class Sheet(Gtk.ScrolledWindow):
         if self.musicxml is None or width <= 0:
             return
         self.pages = engraving.engrave(self.musicxml, width=width, zoom=self.zoom)
+        self.laid_out = self.zoom
         for view in self.views:
             self.column.remove(view)
         self.views = [
@@ -187,9 +233,9 @@ class Sheet(Gtk.ScrolledWindow):
     def _on_scroll(self, controller: Gtk.EventControllerScroll, _dx: float, dy: float) -> bool:
         if not controller.get_current_event_state() & Gdk.ModifierType.CONTROL_MASK:
             return False  # an ordinary scroll moves the pages
-        self.set_zoom(zoom.scrolled(self.zoom, dy))
+        self.preview_zoom(zoom.scrolled(self.zoom, dy))
         return True
 
     def _redraw(self) -> None:
         for view in self.views:
-            view.queue_draw()
+            view.restyle()

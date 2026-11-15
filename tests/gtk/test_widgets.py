@@ -455,3 +455,20 @@ def test_the_note_size_is_shown_in_the_menu_and_kept_for_the_next_song():
     assert Window().sheet.zoom == 1.25  # the next window starts at the chosen size
     window.activate_action("win.zoom-reset", None)
     assert settings.load(settings.store_path()).zoom == 1.0
+
+
+def test_a_pinch_scales_the_drawn_pages_at_once_and_lays_them_out_after(monkeypatch, tmp_path):
+    """Smooth zoom (owner, 2026-11-15: the pinch was not smooth): during the gesture the drawn
+    page is scaled at once; Verovio lays it out anew once the fingers pause."""
+    window = _result_window(monkeypatch, tmp_path)
+    try:
+        view = window.sheet.views[0]
+        width = view.get_content_width()
+        window.sheet._pinch_from = window.sheet.zoom
+        window.sheet.pinch(1.5)
+        assert window.sheet.views[0] is view  # same page, not laid out yet
+        assert view.get_content_width() == round(width * 1.5)
+        assert _wait(lambda: window.sheet.views[0] is not view)  # laid out anew
+        assert abs(window.sheet.views[0].get_content_width() - width) <= 2  # as wide again
+    finally:
+        window.close()

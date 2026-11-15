@@ -457,6 +457,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ### Checkpoint J
 - [ ] All 7 success criteria of SPEC.md `sheet-view` met; the owner looks at the sheet music at small widths and in dark style
+  - Owner, 2026-11-15: pinch zoom was not smooth (nothing moved until the new layout). Each page now keeps its drawn picture; a gesture or Ctrl+scroll scales it at once, Verovio lays out sharply once the input pauses.
   - Owner, 2026-11-15: a setting for the note size; chosen: a "−  100 %  +" row in the main menu (design screen 9 updated, SPEC.md design decisions), remembered in settings.json for every song; zoom works on every page now, not only on a result.
   - Owner, 2026-11-15: "♩=109" lacked its spaces: Verovio writes no-break spaces, librsvg drops them at the edge of a text part; the leading one became a shift (dx, 0.25 em, the width Verovio reserves), the trailing one is preserved. Pinch zoom on the touchpad did not work: `Gtk.GestureZoom` added, the layout follows when the fingers pause.
   - Owner, 2026-11-15: the window could not be made smaller while the sheet was shown; the pages' width was the window's minimum (`hscrollbar_policy` NEVER). Fixed with EXTERNAL; a test measures it.
