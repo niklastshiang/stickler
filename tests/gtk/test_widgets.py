@@ -411,3 +411,21 @@ def test_the_pdf_has_one_a4_page_per_print_page(tmp_path):
     assert document.get_title() == "Groove"
     width, height = document.get_page(0).get_size()
     assert (round(width), round(height)) == (595, 842)
+
+
+def test_the_window_can_be_made_narrow_while_the_sheet_is_shown(monkeypatch, tmp_path):
+    """The pages must not set the window's minimum width, or it cannot shrink and Verovio
+    never lays the song out for the narrower width (found by the owner, 2026-11-15)."""
+    from gi.repository import Gtk
+
+    from stickler_gtk.ui.window import MINIMUM_SIZE
+
+    window = _result_window(monkeypatch, tmp_path, width=1000)
+    try:
+        assert window.sheet.pages[0].width > 900
+        assert window.sheet.measure(Gtk.Orientation.HORIZONTAL, -1)[0] <= MINIMUM_SIZE[0]
+        # the labelled header buttons need a little more, but less than the width at which
+        # the narrow layout swaps them for icons (NARROW, 550sp)
+        assert window.get_content().measure(Gtk.Orientation.HORIZONTAL, -1)[0] < 550
+    finally:
+        window.close()

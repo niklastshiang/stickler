@@ -64,7 +64,9 @@ class PageView(Gtk.DrawingArea):
 
 class Sheet(Gtk.ScrolledWindow):
     def __init__(self) -> None:
-        super().__init__(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True, hexpand=True)
+        # EXTERNAL: no sideways scroll bar, and the pages' width is not the window's minimum,
+        # so the window can shrink and the pages are laid out anew for it (NEVER kept it wide)
+        super().__init__(hscrollbar_policy=Gtk.PolicyType.EXTERNAL, vexpand=True, hexpand=True)
         self.musicxml: str | None = None
         self.zoom = 1.0
         self.pages: list[engraving.Page] = []

@@ -457,6 +457,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ### Checkpoint J
 - [ ] All 7 success criteria of SPEC.md `sheet-view` met; the owner looks at the sheet music at small widths and in dark style
+  - Owner, 2026-11-15: the window could not be made smaller while the sheet was shown; the pages' width was the window's minimum (`hscrollbar_policy` NEVER). Fixed with EXTERNAL; a test measures it.
 
 ### Next: the app icon (owner, 2026-11-15: right after `sheet-view`)
 - [ ] Design round on the canvas with the owner: a few drafts in the GNOME style (Daudix's icons as the reference), then the chosen one as SVG plus its symbolic variant, named `ng.tshia.Stickler`; see "App icon in GNOME style" under Later.
