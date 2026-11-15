@@ -1,7 +1,8 @@
-# Stickler as a Flatpak (SPEC.md, module `packaging`), built from the committed state of `main`:
+# Stickler as a Flatpak (SPEC.md, module `packaging`), built from the committed state (HEAD):
 #   flatpak run org.flatpak.Builder --user --install --force-clean build \
 #     packaging/flatpak/ng.tshia.Stickler.yml
-#   flatpak build-bundle ~/.local/share/flatpak/repo Stickler.flatpak ng.tshia.Stickler
+#   flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
+#     ~/.local/share/flatpak/repo Stickler.flatpak ng.tshia.Stickler
 # The GNOME runtime brings Python 3.14, PyGObject, GTK, libadwaita, GStreamer and ffmpeg.
 id: ng.tshia.Stickler
 runtime: org.gnome.Platform
@@ -64,6 +65,5 @@ modules:
           msgfmt --check -o "/app/share/locale/$lang/LC_MESSAGES/stickler.mo" "$po"
         done
     sources:
-      - type: git
+      - type: git # the checked-out commit (HEAD): a release tag in CI, main locally
         path: ../..
-        branch: main
