@@ -709,6 +709,9 @@ in light and dark, wide and narrow (screens 4, 5, 8 and 9 of `design`).
    is shown as missing and can be removed.
 6. **Appearance:** follow the system, light or dark, chosen in the main menu and remembered.
 7. **Languages:** every string goes through gettext; German is complete in the first version.
+   The app follows the system's language, as GNOME apps do; there is no switch inside the app
+   (owner, 2026-11-15). Starting it with `LANGUAGE=en` (or `flatpak run --env=LANGUAGE=en …`)
+   overrides it.
    Translations come in through Weblate later (owner's decision 2026-11-14): Weblate commits
    `po/*.po` to the repository, so outside pull requests stay off.
 8. **Keyboard:** every action is reachable by keyboard, and the shortcuts window lists them.
