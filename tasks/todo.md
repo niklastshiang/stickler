@@ -412,7 +412,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 46, 47 · Files: `src/stickler_gtk/ui/*`, `po/de.po`
 
 ### Checkpoint I
-- [x] All 9 success criteria of SPEC.md `app-shell` met; review with the owner (2026-11-15): cancel back to where you came from is as wanted; the drum track's line in the export menu went (also on the design canvas); the appearance circles showed the radio indicator of grouped check buttons, now hidden (checked in a rendered PNG and by the owner).
+- [x] All 9 success criteria of SPEC.md `app-shell` met; review with the owner (2026-11-15): cancel back to where you came from is as wanted; the drum track's line in the export menu now names only the format, "As FLAC or WAV" (also on the design canvas); the appearance circles showed the radio indicator of grouped check buttons, now hidden (checked in a rendered PNG and by the owner).
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
