@@ -537,6 +537,41 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint L
 - [x] All 8 success criteria of SPEC.md `corrections` met; the owner corrects Eye of the Tiger. Done 2026-11-15 (owner: "Prima"); the title cut short in the narrow header was accepted as is.
 
+## Phase 13: GTK application, module `setup-assistant` (approved 2026-11-15, SPEC.md "Module `setup-assistant`")
+
+- [ ] **Task 65: ADTOF from a GitHub archive** (S)
+  - Acceptance:
+    - `adtof-pytorch` comes from the archive of commit 85c192e…; `uv.lock` updated with the same package versions; cached ADTOF results rekeyed (`cache-digests` before, `cache-migrate --rekey-from` after).
+  - Verify: the environment rebuilt; one own song transcribed: the same hits as the cached result
+  - Dependencies: none · Files: `adapters/transcribers/adtof/{pyproject.toml,uv.lock}`
+
+- [ ] **Task 66: A mirror for Beat This!'s checkpoint** (S)
+  - Acceptance:
+    - `setup.py` downloads from JKU, else from the release URL; the SHA-256 is checked; a mismatch or both failing raises an error naming both servers; cached results rekeyed.
+  - Verify: tests against a local HTTP server (JKU answering; failing with the copy answering; wrong checksum; both failing)
+  - Dependencies: none · Files: `adapters/beats/beat_this/{setup.py,common.py}`, tests
+
+- [ ] **Task 67: Setup logic** (S)
+  - Acceptance:
+    - `logic/setup.py`: at start consent, download or nothing; the step rows of what is missing; a step's bytes against its size, capped at 99 %; the server a failed step names. `settings` remembers the consent; `STICKLER_ADAPTERS` sets the adapters folder.
+  - Verify: `uv run pytest -q tests/gtk/test_setup.py tests/gtk/test_settings.py`
+  - Dependencies: none · Files: `src/stickler_gtk/logic/{setup,settings,paths}.py`, tests
+
+- [ ] **Task 68: Consent and download pages** (M)
+  - Acceptance:
+    - Design screens 1 and 2; Download runs `api.setup_adapters` in the worker with steps and bytes; Cancel stops it; done → the empty window; an agreed but unfinished setup goes on at the next start.
+  - Verify: widget tests with a fake `setup_adapters`
+  - Dependencies: 67 · Files: `src/stickler_gtk/ui/{setup,window}.py`, `po/*`, tests
+
+- [ ] **Task 69: Errors, Not Now, the old page gone** (M)
+  - Acceptance:
+    - Design screen 3 (server named, details, Try Again, Later); Not Now → the empty window, a song asks again; `SetupMissing` leads to consent instead of the command page; German complete; every page fits 360 px.
+  - Verify: widget tests; by hand: a fresh setup with `STICKLER_ADAPTERS` pointing at a copy
+  - Dependencies: 68 · Files: `src/stickler_gtk/ui/*`, `src/stickler_gtk/logic/session.py`, `po/*`, tests
+
+### Checkpoint M
+- [ ] All 6 success criteria of SPEC.md `setup-assistant` met; the owner publishes the mirror release (or gives the go) and runs a fresh setup
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.

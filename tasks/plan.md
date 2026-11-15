@@ -209,6 +209,33 @@ applying, remembering, Back to Detected (63) → bottom sheet, keys, German (64)
 | Re-engraving with Verovio blocks the main loop on long songs | Low | Measured with notate at 0.2 s; Verovio runs as today on a result; measure on the longest own song in Task 63 |
 | A stored correction no longer fits (song changed) | Low | Values are validated on load; an invalid entry is dropped alone |
 
+## GTK application: `setup-assistant` (approved 2026-11-15, SPEC.md "Module `setup-assistant`")
+
+A first start without a terminal: consent, download with progress, errors that name the server.
+
+Design decisions:
+- **The two adapter changes come first and alone** (65, 66), each with the rekey procedure of
+  CLAUDE.md, so a result change would show in its own commit.
+- **The mirror URL is fixed before the release exists:**
+  `https://github.com/niklastshiang/stickler/releases/download/beat-this-final0/final0.ckpt`,
+  with the checkpoint's SHA-256 in Beat This!'s `common.py`. The code is tested against a local
+  HTTP server; the release itself is published with the owner's go (Checkpoint M).
+- **`logic/setup.py` decides, `ui/setup.py` draws:** what to show at start (consent, download,
+  nothing), the step rows of what is missing, the byte progress of a step (folder sizes sampled
+  every half second in the worker), and the server a failed step names.
+- **`STICKLER_ADAPTERS`** points the app at another adapters folder, so a fresh setup can be
+  tried without touching the models in use.
+
+Order: ADTOF from an archive (65) → Beat This!'s mirror (66) → setup logic (67) → consent and
+download pages (68) → errors, Not Now, the old page gone, German (69).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The archive build differs from the git build | High | Same commit, same lock versions (checked in the trial); one own song transcribed before and after, results compared |
+| The mirror serves another file | High | SHA-256 checked before the file is used; a mismatch counts as failed |
+| Byte progress jumps or stalls (uv links from its cache at the end) | Low | Capped at 99 % until the step ends; the step list still shows which step runs |
+| The JKU server is down while testing | Medium | Tests use a local server; the owner's fresh setup can use the mirror once published |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
