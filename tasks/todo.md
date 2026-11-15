@@ -622,6 +622,8 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
+- [ ] **After release 5: lessons learned** (owner, 2026-11-15): write down what building the app taught us (mistakes, detours, what worked), so a comparable project starts faster and more directly.
+
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
 
 - [x] **Release 3 published on 2026-11-14** (tag v3, GitHub release): error analysis and honest numbers (Phase 7). Owner, 2026-11-14: Quality stays as a mode for now, although Fast is ahead after the correction.
