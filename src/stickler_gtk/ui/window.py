@@ -11,7 +11,7 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 from stickler import api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
-from stickler_gtk.logic import analysis, paths, recent, session
+from stickler_gtk.logic import analysis, exports, paths, recent, session
 from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import worker
 
@@ -65,6 +65,10 @@ class Window(Adw.ApplicationWindow):
 
         self.heading = Adw.WindowTitle(title=APP_NAME)
         header = Adw.HeaderBar(title_widget=self.heading)
+        self.export_button = Gtk.MenuButton(
+            label=_("Export"), popover=self._export_menu(), visible=False
+        )
+        header.pack_end(self.export_button)
         header.pack_start(
             Gtk.Button(
                 child=Adw.ButtonContent(icon_name="document-open-symbolic", label=_("Open…")),
@@ -131,6 +135,9 @@ class Window(Adw.ApplicationWindow):
             ("open", self.choose_song),
             ("cancel", self.cancel),
             ("retry", self.retry),
+            ("export", lambda: self.export_button.popup()),
+            ("export-musicxml", self.export_musicxml),
+            ("export-drums", self.export_drums),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())
@@ -138,6 +145,25 @@ class Window(Adw.ApplicationWindow):
             self.actions[name] = action
         self.connect("close-request", self._on_close)
         self.show(self.state)
+
+    def _export_menu(self) -> Gtk.Popover:
+        """Design screen 8: each export with a line on what it is for."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        for action, title, detail in (
+            (
+                "win.export-musicxml",
+                _("MusicXML…"),
+                _("To edit in MuseScore or another notation program"),
+            ),
+            ("win.export-drums", _("Drum Track…"), _("Only the drums, as FLAC or WAV")),
+        ):
+            text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            text.append(Gtk.Label(label=title, xalign=0))
+            text.append(Gtk.Label(label=detail, xalign=0, css_classes=["caption", "dim-label"]))
+            button = Gtk.Button(child=text, action_name=action, css_classes=["flat"])
+            button.connect("clicked", lambda _b: self.export_button.popdown())
+            box.append(button)
+        return Gtk.Popover(child=box)
 
     # what the user does
 
@@ -186,6 +212,86 @@ class Window(Adw.ApplicationWindow):
     def _on_close(self, _window) -> bool:
         self.wait_for_job(2.0)  # a cancel takes well under a second
         return False  # close
+
+    def _save_dialog(self, name: str, then) -> None:
+        dialog = Gtk.FileDialog(title=_("Save As"), initial_name=name)
+
+        def saved(dialog: Gtk.FileDialog, result: Gio.AsyncResult) -> None:
+            try:
+                chosen = dialog.save_finish(result)
+            except Exception:  # dismissed: GLib reports it as an error
+                return
+            if chosen is not None and chosen.get_path():
+                then(Path(chosen.get_path()))
+
+        dialog.save(self, None, saved)
+
+    def export_musicxml(self) -> None:
+        result = self.state
+        if not isinstance(result, session.Result):
+            return
+
+        def save(dest: Path) -> None:
+            try:
+                exports.save_musicxml(result.notation.musicxml, dest)
+            except OSError as exc:
+                self.toast(_("Could not save: {reason}").format(reason=exc.strerror))
+                return
+            self._saved(dest)
+
+        self._save_dialog(exports.musicxml_name(result.title), save)
+
+    def export_drums(self) -> None:
+        result = self.state
+        if not isinstance(result, session.Result):
+            return
+        setup = api.DRUM_TRACK_SEPARATOR in api.mode_ready(drums=True)
+        cost = exports.drum_track_cost(result.info.seconds, download=setup)
+        alert = Adw.AlertDialog(heading=_("Save the Drum Track?"), body=cost.text)
+        alert.add_response("cancel", _("Cancel"))
+        alert.add_response("save", _("Choose Where to Save…"))
+        alert.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+        alert.set_default_response("save")
+
+        def answered(_alert, response: str) -> None:
+            if response == "save":
+                name = exports.drum_track_name(result.title)
+                self._save_dialog(name, lambda dest: self._start_drums(result, dest, setup))
+
+        alert.connect("response", answered)
+        alert.present(self)
+
+    def _start_drums(self, result: session.Result, dest: Path, setup: bool) -> None:
+        self._stop_job()
+        self.token = token = api.CancelToken()
+        state = session.export_drums(result, dest, setup=setup)
+        job = state.job
+        self.show(state)
+        report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, job, step)))
+
+        def done(saved: Path) -> None:
+            state = session.exported(self.state, job)
+            if state is not self.state:
+                self.show(state)
+                self._saved(saved)
+
+        self.job_thread = worker.run(
+            lambda: exports.drum_track(result.song, dest, report, token, setup=setup),
+            done,
+            lambda exc: self.show(session.failed(self.state, job, exc)),
+        )
+
+    def _saved(self, dest: Path) -> None:
+        toast = Adw.Toast(
+            title=_("Saved “{name}”").format(name=dest.name), button_label=_("Open"), timeout=8
+        )
+        toast.connect(
+            "button-clicked",
+            lambda _t: Gtk.FileLauncher.new(Gio.File.new_for_path(str(dest))).launch(
+                self, None, None, None
+            ),
+        )
+        self.toasts.add_toast(toast)
 
     def _finished(self, job: int, info: api.SongInfo, notation: api.Notation) -> None:
         state = session.finished(self.state, job, info, notation)
@@ -253,17 +359,30 @@ class Window(Adw.ApplicationWindow):
     def toast(self, text: str) -> None:
         self.toasts.add_toast(Adw.Toast(title=text))
 
+    def _show_steps(self, rows) -> None:
+        self.steps.remove_all()
+        for step in rows:
+            self.steps.append(_step_row(step))
+        self.pages.set_visible_child_name("analysing")
+
     def show(self, state: session.State) -> None:
         self.state = state
-        self.actions["cancel"].set_enabled(isinstance(state, session.Analysing))
         self.actions["retry"].set_enabled(isinstance(state, session.Failed) and state.can_retry)
-        if isinstance(state, session.Analysing):
+        is_result = isinstance(state, session.Result)
+        for name in ("export", "export-musicxml", "export-drums"):
+            self.actions[name].set_enabled(is_result)
+        self.export_button.set_visible(is_result)
+        self.actions["cancel"].set_enabled(isinstance(state, session.Analysing | session.Exporting))
+        if isinstance(state, session.Exporting):
+            self.heading.set_title(state.previous.title)
+            self.heading.set_subtitle(state.previous.subtitle)
+            self.analysing.set_title(_("Saving the Drum Track"))
+            self._show_steps(state.steps)
+        elif isinstance(state, session.Analysing):
             self.heading.set_title(state.song.stem)
             self.heading.set_subtitle("")
-            self.steps.remove_all()
-            for step in state.steps:
-                self.steps.append(_step_row(step))
-            self.pages.set_visible_child_name("analysing")
+            self.analysing.set_title(_("Writing the Drum Part"))
+            self._show_steps(state.steps)
         elif isinstance(state, session.Result):
             self.heading.set_title(state.title)
             self.heading.set_subtitle(state.subtitle)

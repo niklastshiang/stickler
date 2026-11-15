@@ -1378,3 +1378,14 @@ def test_song_info_reads_title_artist_and_length(tmp_path):
     )
     info = api.song_info(tagged)
     assert (info.title, info.artist) == ("Eye of the Tiger", "Survivor")
+
+
+def test_mode_ready_can_include_the_drum_track_separator(tmp_path):
+    from stickler import adapters as ad
+
+    root = tmp_path / "adapters"
+    for stage, name in (("transcribers", "adtof"), ("beats", "beat_this")):
+        ad.setup_adapter(_plain_adapter(root, stage, name))
+    _plain_adapter(root, "separators", api.DRUM_TRACK_SEPARATOR)
+    assert api.mode_ready("fast", adapters_root=root) == []
+    assert api.mode_ready("fast", drums=True, adapters_root=root) == [api.DRUM_TRACK_SEPARATOR]

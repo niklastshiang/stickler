@@ -43,6 +43,13 @@ class StepRow:
 
 
 def row(step_id: str, state: str = "waiting") -> StepRow:
+    kind, _sep, adapter = step_id.partition(":")
+    if kind == "environment" and adapter:  # setup steps: environment:<adapter>
+        label = _("Download the programs for {model}").format(model=model_name(adapter))
+        return StepRow(step_id, label, _("Once; later songs use them too"), state)
+    if kind == "weights" and adapter:
+        label = _("Download the {model} model").format(model=model_name(adapter))
+        return StepRow(step_id, label, _("Once; later songs use it too"), state)
     label, detail = LABELS.get(step_id, (step_id, ""))
     return StepRow(step_id, _(label) if label else "", _(detail) if detail else "", state)
 
@@ -61,3 +68,10 @@ def report(rows: tuple[StepRow, ...], step: api.Step) -> tuple[StepRow, ...]:
         current[step.index - 1] = row(step.id)
     current[step.index - 1] = replace(current[step.index - 1], state=state)
     return tuple(current)
+
+
+def report_by_id(rows: tuple[StepRow, ...], step: api.Step) -> tuple[StepRow, ...]:
+    """Like report, for a list that mixes calls (setup, then analysis): each call numbers its
+    own steps, so rows follow the step id; steps not listed (cached ones) are left out."""
+    state = "running" if step.state == "started" else "done"
+    return tuple(replace(r, state=state) if r.id == step.id else r for r in rows)

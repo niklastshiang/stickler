@@ -204,3 +204,32 @@ def test_recent_songs_open_or_can_be_removed(monkeypatch, tmp_path):
     assert seen and os.path.samefile(recent.load(store)[0].path, there)
     assert recent.load(store)[0].title == "Eye of the Tiger"  # the analysis's own title
     assert Path(store).parent.is_relative_to(tmp_path)
+
+
+def test_the_drum_track_export_runs_with_steps_and_returns_to_the_result(monkeypatch, tmp_path):
+    from stickler import api
+    from stickler_gtk.ui.window import Window
+
+    _fake_analysis(monkeypatch, tmp_path)
+    stem = tmp_path / "stem.wav"
+    stem.write_bytes(b"RIFF")
+
+    def transcribe(song, *, drums, progress, cancel):
+        progress(api.Step("separate", 1, 1, "started", False, "demucs"))
+        progress(api.Step("separate", 1, 1, "done", False, "demucs"))
+        return api.SongTranscription(song, "fast", stem, [], [], [])
+
+    monkeypatch.setattr(api, "transcribe_song", transcribe)
+    monkeypatch.setattr(api, "export_drum_track", lambda s, d: d.write_bytes(s.read_bytes()) or d)
+    window = Window()
+    assert not window.export_button.get_visible()
+    window.open_song(tmp_path / "eye.flac")
+    assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+    assert window.export_button.get_visible()
+    dest = tmp_path / "out" / "Eye of the Tiger (drums).flac"
+    dest.parent.mkdir()
+    window._start_drums(window.state, dest, setup=False)
+    assert window.pages.get_visible_child_name() == "analysing"
+    assert window.analysing.get_title() == "Saving the Drum Track"
+    assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+    assert dest.read_bytes() == b"RIFF"

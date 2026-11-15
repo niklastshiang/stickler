@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 mapfile -t sources < <(git ls-files --cached --others --exclude-standard 'src/stickler_gtk/*.py' | sort)
-xgettext --language=Python --from-code=UTF-8 --keyword=_ --keyword=N_ \
+xgettext --language=Python --from-code=UTF-8 --keyword=_ --keyword=N_ --keyword=ngettext:1,2 \
   --add-comments=Translators --sort-by-file --package-name=Stickler \
   --msgid-bugs-address=https://github.com/niklastshiang/stickler/issues \
   --output=po/stickler.pot "${sources[@]}"

@@ -36,5 +36,9 @@ def _(message: str) -> str:
     return _translation.gettext(message)
 
 
+def ngettext(singular: str, plural: str, n: int) -> str:
+    return _translation.ngettext(singular, plural, n)
+
+
 def N_(message: str) -> str:
     return message

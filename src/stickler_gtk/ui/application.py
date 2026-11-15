@@ -18,7 +18,11 @@ STYLE = """
   background: color-mix(in srgb, var(--accent-bg-color) 8%, transparent); }
 """
 
-ACCELS = {"win.open": ["<Control>o"], "win.cancel": ["Escape"]}
+ACCELS = {
+    "win.open": ["<Control>o"],
+    "win.cancel": ["Escape"],
+    "win.export": ["<Control>e"],
+}
 
 
 class Application(Adw.Application):

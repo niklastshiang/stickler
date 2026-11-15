@@ -18,8 +18,8 @@ def test_every_analysis_step_has_a_label_and_a_line_of_what_it_does():
 
 
 def test_an_unknown_step_still_gets_a_row():
-    row = steps.row("environment:adtof")
-    assert row.label == "environment:adtof" and row.detail == ""
+    row = steps.row("mystery")
+    assert row.label == "mystery" and row.detail == ""
 
 
 def test_fast_is_planned_as_three_waiting_steps():

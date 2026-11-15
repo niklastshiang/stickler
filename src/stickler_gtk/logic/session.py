@@ -5,7 +5,7 @@ cancelled or replaced change nothing."""
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from stickler import api
@@ -47,9 +47,20 @@ class Result:
 
 
 @dataclass(frozen=True)
+class Exporting:
+    """A drum track being separated and saved; "Cancel" goes back to the result."""
+
+    song: Path
+    steps: tuple[steps.StepRow, ...]
+    job: int
+    previous: Result
+    dest: Path
+
+
+@dataclass(frozen=True)
 class Failed:
     song: Path
-    kind: str  # "setup", "unreadable" or "analysis"
+    kind: str  # "setup", "unreadable", "analysis" or "export"
     title: str
     description: str
     details: str  # the command to run, or the technical message
@@ -60,23 +71,36 @@ class Failed:
         return self.kind == "analysis"
 
 
-State = Empty | Analysing | Result | Failed
+State = Empty | Analysing | Result | Exporting | Failed
 
 
 def open_song(song: Path, previous: State) -> Analysing:
-    if isinstance(previous, Analysing | Failed):
+    if isinstance(previous, Analysing | Exporting | Failed):
         previous = previous.previous
     return Analysing(song, steps.planned(steps.FAST), next(_jobs), previous)
 
 
+def export_drums(result: Result, dest: Path, *, setup: bool) -> Exporting:
+    """`setup`: the separator is downloaded first."""
+    separator = api.DRUM_TRACK_SEPARATOR
+    ids = (f"environment:{separator}", f"weights:{separator}") if setup else ()
+    return Exporting(result.song, steps.planned((*ids, "separate")), next(_jobs), result, dest)
+
+
 def _current(state: State, job: int) -> bool:
-    return isinstance(state, Analysing) and state.job == job
+    return isinstance(state, Analysing | Exporting) and state.job == job
 
 
 def on_step(state: State, job: int, step: api.Step) -> State:
     if not _current(state, job):
         return state
+    if isinstance(state, Exporting):
+        return replace(state, steps=steps.report_by_id(state.steps, step))
     return Analysing(state.song, steps.report(state.steps, step), job, state.previous)
+
+
+def exported(state: State, job: int) -> State:
+    return state.previous if _current(state, job) else state
 
 
 def finished(state: State, job: int, info: api.SongInfo, notation: api.Notation) -> State:
@@ -86,7 +110,7 @@ def finished(state: State, job: int, info: api.SongInfo, notation: api.Notation)
 
 
 def cancel(state: State) -> State:
-    return state.previous if isinstance(state, Analysing) else state
+    return state.previous if isinstance(state, Analysing | Exporting) else state
 
 
 def failed(state: State, job: int, error: BaseException) -> State:
@@ -114,6 +138,11 @@ def failed(state: State, job: int, error: BaseException) -> State:
             description,
             str(error),
             state.previous,
+        )
+    if isinstance(state, Exporting):
+        description = _("Saving the drum track of “{name}” did not work.").format(name=name)
+        return Failed(
+            state.song, "export", _("The Export Failed"), description, str(error), state.previous
         )
     description = _("Something went wrong while listening to “{name}”.").format(name=name)
     return Failed(

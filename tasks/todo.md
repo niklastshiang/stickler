@@ -389,7 +389,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: logic tests; by hand: restart keeps the list, a renamed file shows as missing
   - Dependencies: 43 · Files: `src/stickler_gtk/logic/recent.py`, `src/stickler_gtk/ui/*`, tests
 
-- [ ] **Task 46: Export: MusicXML and the drum track** (M)
+- [x] **Task 46: Export: MusicXML and the drum track** (M): done 2026-11-15. When Demucs is not set up, the export sets it up itself (`api.setup_adapters`, steps in the same list; `api.mode_ready(..., drums=True)` tells); rows follow step ids, since setup and analysis number their steps each. A failed export is its own kind (no "Try Again" that would analyse again). The size uses the locale's number format (German "1,2 GB"); the minutes are a plural (`ngettext`). Real job, Eye of the Tiger: a 245.64 s FLAC in 0.6 s (stem cached from Quality). The dialogs (cost, save) were not driven by a test; the owner's check at Task 48 covers them.
   - Acceptance:
     - Export menu (screen 8, Ctrl+E) with MusicXML and the drum track; the save dialog proposes "<title>.musicxml" and "<title> (drums).flac".
     - The drum track names its cost first (`logic/exports.py`: 1.84 × the song's length, the 1.2 GB download while Demucs is not set up) and runs as a step list with "Cancel".

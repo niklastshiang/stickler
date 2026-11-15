@@ -959,11 +959,16 @@ def _not_set_up(plan: _Analysis, registry: dict, device: str) -> list[str]:
 
 
 def mode_ready(
-    mode: str = DEFAULT_MODE, *, device: str = "auto", adapters_root: Path = ADAPTERS_ROOT
+    mode: str = DEFAULT_MODE,
+    *,
+    drums: bool = False,
+    device: str = "auto",
+    adapters_root: Path = ADAPTERS_ROOT,
 ) -> list[str]:
-    """The adapters of `mode` that are not set up yet, in the order they run (empty: ready)."""
+    """The adapters of `mode` that are not set up yet, in the order they run (empty: ready).
+    `drums`: also the separator a drum track needs (transcribe_song's `drums`)."""
     registry = adapters.discover(adapters_root)
-    return _not_set_up(_analysis(None, mode, False, registry), registry, device)
+    return _not_set_up(_analysis(None, mode, drums, registry), registry, device)
 
 
 class _Steps:

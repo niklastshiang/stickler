@@ -79,9 +79,9 @@ def _po_entries(path: Path) -> dict[str, tuple[str, bool]]:
         elif line.startswith("msgid "):
             key = msgid
             msgid.append(ast.literal_eval(line[6:]))
-        elif line.startswith("msgstr "):
+        elif line.startswith("msgstr"):  # msgstr, or msgstr[n] of a plural entry
             key = msgstr
-            msgstr.append(ast.literal_eval(line[7:]))
+            msgstr.append(ast.literal_eval(line.split(" ", 1)[1]))
         elif line.startswith('"') and key is not None:
             key.append(ast.literal_eval(line))
     return entries
