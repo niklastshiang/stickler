@@ -846,14 +846,20 @@ def _click_track(song: own.Song, notes: list[tuple[float, int]]) -> Path:
     return audio.write_wav(song.dir / "click.wav", stereo, CLICK_SR)
 
 
+# Fuller than the listening clicks: those sat about 3 dB under a song (owner, 2026-11-15)
+PLAYBACK_CLICK = {"seconds": 0.06, "decay": 50.0, "peak": 1.4}
+
+
 def render_hits(transcription: SongTranscription, dest: Path) -> Path:
     """The detected hits as a mono WAV as long as the song: one click per hit, pitched for
-    kick, snare/toms and cymbals (the same clicks as align's click track). The app mixes it
-    with the song."""
+    kick, snare/toms and cymbals, long and loud enough to stand out under the song; where
+    clicks pile up they are limited softly (tanh), never clipped. The app mixes it with the
+    song."""
     length = round(audio.duration(transcription.audio) * CLICK_SR)
     hits = [(t, align._group(pitch)) for t, pitch, _ in transcription.hits]
     dest.parent.mkdir(parents=True, exist_ok=True)
-    return audio.write_wav(dest, audio.clicks(hits, length, CLICK_SR), CLICK_SR)
+    signal = np.tanh(audio.clicks(hits, length, CLICK_SR, **PLAYBACK_CLICK))
+    return audio.write_wav(dest, signal, CLICK_SR)
 
 
 def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) -> AlignReport:

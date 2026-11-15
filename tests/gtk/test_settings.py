@@ -48,8 +48,8 @@ def test_a_note_size_out_of_range_falls_back_to_the_window_width(tmp_path):
 
 def test_the_two_volumes_are_remembered_and_bad_ones_fall_back(tmp_path):
     store = tmp_path / "settings.json"
-    assert (settings.load(store).song_volume, settings.load(store).hits_volume) == (1.0, 1.0)
+    assert (settings.load(store).song_volume, settings.load(store).hits_volume) == (0.7, 1.0)
     settings.update(store, song_volume=0.6, hits_volume=0.3)
     assert (settings.load(store).song_volume, settings.load(store).hits_volume) == (0.6, 0.3)
     store.write_text('{"song_volume": 7, "hits_volume": "loud"}', encoding="utf-8")
-    assert (settings.load(store).song_volume, settings.load(store).hits_volume) == (1.0, 1.0)
+    assert (settings.load(store).song_volume, settings.load(store).hits_volume) == (0.7, 1.0)

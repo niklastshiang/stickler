@@ -19,7 +19,7 @@ APPEARANCES = ("system", "light", "dark")
 class Settings:
     appearance: str = "system"  # follow the system's light or dark style
     zoom: float = 1.0  # note size: 1.0 is the window's width
-    song_volume: float = 1.0  # playback, 0 to 1
+    song_volume: float = 0.7  # playback, 0 to 1; a little down, so the clicks stand out
     hits_volume: float = 1.0
 
 

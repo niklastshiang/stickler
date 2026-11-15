@@ -580,7 +580,7 @@ def test_what_to_hear_and_the_volumes_reach_the_player_and_are_remembered(monkey
         bar = window.playbar
         window.activate_action("win.play", None)
         player = _FakePlayer.made[-1]
-        assert player.volumes == (1.0, 1.0)  # both, at full volume
+        assert player.volumes == (0.7, 1.0)  # both; the song a little down, so clicks stand out
         bar.song_volume.set_value(0.6)
         bar.hits_volume.set_value(0.3)
         assert player.volumes == (0.6, 0.3)

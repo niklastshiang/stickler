@@ -983,7 +983,9 @@ tests/gtk/test_engraving.py, test_marker.py
    into the app's cache when a result appears (0.18 s for Eye of the Tiger). Drum samples instead
    of clicks stay a later decision.
 3. **Song / Hits / Both** mute one source or none; the volume button holds one slider per source
-   (design screen 6). The two volumes are remembered for every song (owner, 2026-11-15), like
+   (design screen 6). The song starts at 70 %, the clicks at 100 %, and the clicks are fuller
+   than the CLI's listening clicks: the first ones sat about 3 dB under the song and were too
+   quiet (owner, 2026-11-15). The two volumes are remembered for every song (owner, 2026-11-15), like
    the note size; what to hear starts at "Both".
 4. **The position drives the marker:** while playing, the window asks the pipeline for its
    position about 20 times a second and calls `show_position` (sheet-view), which marks the

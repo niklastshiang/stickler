@@ -1345,8 +1345,27 @@ def test_render_hits_writes_one_click_per_hit_as_long_as_the_song(tmp_path):
         assert w.getnchannels() == 1
         assert w.getnframes() / w.getframerate() == pytest.approx(3.0, abs=1e-3)
     clicks = audio_mod.load_mono(dest, sr=api.CLICK_SR)
-    expected = audio_mod.clicks([(0.5, 0), (1.0, 1), (1.5, 1), (2.0, 2)], len(clicks), api.CLICK_SR)
-    assert np.allclose(clicks, expected, atol=1e-3)  # kick, snare and tom, cymbal
+    groups = [(0.5, 0), (1.0, 1), (1.5, 1), (2.0, 2)]  # kick, snare and tom, cymbal
+    expected = np.tanh(audio_mod.clicks(groups, len(clicks), api.CLICK_SR, **api.PLAYBACK_CLICK))
+    assert np.allclose(clicks, expected, atol=1e-3)
+
+
+def test_the_apps_clicks_are_louder_than_the_listening_clicks_and_never_clip(tmp_path):
+    """The owner found the first clicks too quiet under a song (2026-11-15): measured, about
+    3 dB under Eye of the Tiger where they sounded. Longer and fuller, they stand out."""
+    import numpy as np
+
+    from stickler import audio as audio_mod
+
+    song = audio_mod.write_wav(tmp_path / "song.wav", np.zeros(2 * 44100), 44100)
+    hits = [(0.5, 38, 100)] + [(1.0 + k * 0.01, 38, 100) for k in range(4)]  # one, then a pile
+    t = api.SongTranscription(song, "fast", None, [], [], hits)
+    clicks = audio_mod.load_mono(api.render_hits(t, tmp_path / "hits.wav"), sr=api.CLICK_SR)
+    plain = audio_mod.clicks([(0.5, 1)], len(clicks), api.CLICK_SR)
+    one = slice(int(0.5 * api.CLICK_SR), int(0.6 * api.CLICK_SR))
+    energy = np.sqrt((clicks[one] ** 2).sum() / (plain[one] ** 2).sum())
+    assert 20 * np.log10(energy) > 6  # at least 6 dB more
+    assert np.abs(clicks).max() < 1.0  # piled-up clicks are limited, not clipped
 
 
 def test_notation_carries_tempo_and_meter_for_the_window(tmp_path, monkeypatch):

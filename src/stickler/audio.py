@@ -73,13 +73,22 @@ def load_mono(path: Path, sr: int = 22050) -> np.ndarray:
 CLICK_FREQ = {0: 700.0, 1: 1400.0, 2: 2800.0}  # Hz per group: kick, snare/toms, cymbals
 
 
-def clicks(hits: list[tuple[float, int]], length: int, sr: int) -> np.ndarray:
-    """`length` samples of silence with a 20 ms click per (seconds, group) hit, pitched by
-    group (CLICK_FREQ). Clicks before the start are dropped, a click at the end is cut."""
+def clicks(
+    hits: list[tuple[float, int]],
+    length: int,
+    sr: int,
+    *,
+    seconds: float = 0.02,
+    decay: float = 200.0,
+    peak: float = 0.6,
+) -> np.ndarray:
+    """`length` samples of silence with a click per (seconds, group) hit, pitched by group
+    (CLICK_FREQ): a sine of `seconds` that starts at `peak` and fades by `decay` per second.
+    Clicks before the start are dropped, a click at the end is cut."""
     out = np.zeros(length, dtype=np.float32)
-    t = np.arange(int(0.02 * sr)) / sr
+    t = np.arange(int(seconds * sr)) / sr
     for time, group in hits:
-        burst = 0.6 * np.exp(-t * 200) * np.sin(2 * np.pi * CLICK_FREQ[group] * t)
+        burst = peak * np.exp(-t * decay) * np.sin(2 * np.pi * CLICK_FREQ[group] * t)
         start = int(time * sr)
         end = min(length, start + len(burst))
         if 0 <= start < end:
