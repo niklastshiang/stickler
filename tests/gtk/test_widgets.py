@@ -275,7 +275,7 @@ def test_the_drum_track_export_runs_with_steps_and_returns_to_the_result(monkeyp
     stem = tmp_path / "stem.wav"
     stem.write_bytes(b"RIFF")
 
-    def transcribe(song, *, drums, progress, cancel):
+    def transcribe(song, *, drums, progress, cancel, adapters_root, cache_dir):
         progress(api.Step("separate", 1, 1, "started", False, "demucs"))
         progress(api.Step("separate", 1, 1, "done", False, "demucs"))
         return api.SongTranscription(song, "fast", stem, [], [], [])
