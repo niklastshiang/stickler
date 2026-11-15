@@ -9,6 +9,8 @@ from pathlib import Path
 from gi.repository import Adw, Gdk, Gio, GLib, GLibUnix, Gtk
 
 from stickler_gtk import APP_ID
+from stickler_gtk.logic import settings
+from stickler_gtk.ui import menu
 from stickler_gtk.ui.window import Window
 
 # The dashed drop area of design screen 4; :drop(active) while a file is dragged over it
@@ -18,10 +20,14 @@ STYLE = """
   background: color-mix(in srgb, var(--accent-bg-color) 8%, transparent); }
 """
 
+# GNOME HIG standard shortcuts, plus Escape and Ctrl+E (SPEC.md, module `app-shell`)
 ACCELS = {
     "win.open": ["<Control>o"],
     "win.cancel": ["Escape"],
     "win.export": ["<Control>e"],
+    "win.close": ["<Control>w"],
+    "app.shortcuts": ["<Control>question"],
+    "app.quit": ["<Control>q"],
 }
 
 
@@ -32,10 +38,19 @@ class Application(Adw.Application):
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
         css = Gtk.CssProvider()
-        css.load_from_string(STYLE)
+        css.load_from_string(STYLE + menu.STYLE)
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+        menu.apply_appearance(settings.load(settings.store_path()).appearance)
+        for name, run in (
+            ("shortcuts", lambda: menu.shortcuts_dialog().present(self.get_active_window())),
+            ("about", lambda: menu.about_dialog().present(self.get_active_window())),
+            ("quit", self._quit),
+        ):
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", lambda _a, _p, run=run: run())
+            self.add_action(action)
         for action, keys in ACCELS.items():
             self.set_accels_for_action(action, keys)
         # Models run in their own process group; ending the app by a signal (Ctrl+C in a
@@ -43,10 +58,13 @@ class Application(Adw.Application):
         for signum in (signal.SIGINT, signal.SIGTERM):
             GLibUnix.signal_add(GLib.PRIORITY_DEFAULT, signum, self._quit_on_signal)
 
-    def _quit_on_signal(self) -> bool:
+    def _quit(self) -> None:
         for window in self.get_windows():
             window.close()  # the window cancels its job and waits for it on close-request
         self.quit()
+
+    def _quit_on_signal(self) -> bool:
+        self._quit()
         return GLib.SOURCE_REMOVE
 
     def _window(self) -> Window:

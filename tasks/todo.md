@@ -397,7 +397,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: logic tests (names, cost for a 4:06 song ≈ 7.5 min); `scripts/gtk.sh test` (fake export); by hand: MusicXML of a cached song, the drum track of one song
   - Dependencies: 44 · Files: `src/stickler_gtk/logic/exports.py`, `src/stickler_gtk/ui/*`, tests
 
-- [ ] **Task 47: Main menu, appearance, keyboard** (S)
+- [x] **Task 47: Main menu, appearance, keyboard** (S): done 2026-11-15. The appearance circles are a `Gtk.CheckButton` group in the `Gtk.PopoverMenu`, as GNOME's own apps draw them; the shortcuts use `Adw.ShortcutsDialog` (libadwaita 1.8, replacing the deprecated `Gtk.ShortcutsWindow`), so the minimum libadwaita is now 1.8 (SPEC.md). Ctrl+W closes the window, Ctrl+Q quits through the same path as a signal (jobs cancelled and waited for). The real app starts without a GTK or CSS warning.
   - Acceptance:
     - Main menu (screen 9, F10) with the three-way appearance switch, remembered in the XDG config folder (`logic/settings.py`); follow the system by default.
     - Shortcuts window (Ctrl+?) listing Ctrl+O, Ctrl+E, Escape, Ctrl+W, Ctrl+Q, Ctrl+?, F10; "About Stickler".

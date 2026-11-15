@@ -13,7 +13,7 @@ from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
 from stickler_gtk.logic import analysis, exports, paths, recent, session
 from stickler_gtk.logic.steps import StepRow
-from stickler_gtk.ui import worker
+from stickler_gtk.ui import menu, worker
 
 DEFAULT_SIZE = (1000, 700)
 
@@ -68,6 +68,7 @@ class Window(Adw.ApplicationWindow):
         self.export_button = Gtk.MenuButton(
             label=_("Export"), popover=self._export_menu(), visible=False
         )
+        header.pack_end(menu.main_menu())
         header.pack_end(self.export_button)
         header.pack_start(
             Gtk.Button(
@@ -138,6 +139,7 @@ class Window(Adw.ApplicationWindow):
             ("export", lambda: self.export_button.popup()),
             ("export-musicxml", self.export_musicxml),
             ("export-drums", self.export_drums),
+            ("close", self.close),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())

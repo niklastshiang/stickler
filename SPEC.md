@@ -666,8 +666,9 @@ is drawn here; a change of a screen is agreed on the canvas first and copied to 
    system libraries and typelibs. In development the app runs on the system Python 3.14
    (GTK 4.22, libadwaita 1.9, GStreamer 1.28, librsvg, pycairo, checked 2026-11-14) in its own
    environment `.venv-gtk`, made with `--system-site-packages`; in the Flatpak the GNOME
-   runtime provides them (runtime 51: Python 3.14.9, libadwaita 1.10). Minimum libadwaita: 1.7
-   (toggle groups; the bottom sheet is 1.6).
+   runtime provides them (runtime 51: Python 3.14.9, libadwaita 1.10). Minimum libadwaita: 1.8
+   (the shortcuts dialog, which replaces the deprecated `Gtk.ShortcutsWindow`; toggle groups
+   are 1.7, the bottom sheet 1.6).
 4. **Logic apart from widgets:** `stickler_gtk/logic/` imports no GTK (window states, steps →
    labels, recent songs, export names and costs, settings) and falls under the 95% coverage
    rule; `stickler_gtk/ui/` holds the widgets and is excluded like `cli.py`. Widgets are built

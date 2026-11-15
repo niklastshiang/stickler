@@ -233,3 +233,30 @@ def test_the_drum_track_export_runs_with_steps_and_returns_to_the_result(monkeyp
     assert window.analysing.get_title() == "Saving the Drum Track"
     assert _wait(lambda: window.pages.get_visible_child_name() == "result")
     assert dest.read_bytes() == b"RIFF"
+
+
+def test_the_appearance_switch_applies_and_remembers_the_choice():
+    from gi.repository import Adw, Gtk
+
+    from stickler_gtk.logic import settings
+    from stickler_gtk.ui import menu
+    from stickler_gtk.ui.window import Window
+
+    window = Window()
+    (button,) = _find(window, lambda w: isinstance(w, Gtk.MenuButton) and w.get_primary())
+    (dark,) = _find(button.get_popover(), lambda w: "dark" in w.get_css_classes())
+    dark.set_active(True)
+    assert settings.load(settings.store_path()).appearance == "dark"
+    assert Adw.StyleManager.get_default().get_color_scheme() == Adw.ColorScheme.FORCE_DARK
+    menu.choose_appearance("system")
+    assert Adw.StyleManager.get_default().get_color_scheme() == Adw.ColorScheme.DEFAULT
+
+
+def test_the_shortcuts_dialog_lists_every_shortcut_and_about_names_the_version():
+    import stickler
+    from stickler_gtk.ui import menu
+
+    assert len(menu.SHORTCUTS) == 7
+    assert {key for key, _title in menu.SHORTCUTS} >= {"<Control>o", "<Control>q", "F10"}
+    assert menu.shortcuts_dialog() is not None
+    assert menu.about_dialog().get_version() == stickler.__version__
