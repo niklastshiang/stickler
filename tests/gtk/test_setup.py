@@ -113,13 +113,22 @@ def test_an_appimage_sets_where_its_files_are_and_keeps_uv_off_its_own_python():
     with every mount, so uv must use a Python of its own (SPEC.md, module `packaging`)."""
     import stickler_gtk
 
-    env = {"APPIMAGE": "/x/Stickler.AppImage", "SHARUN_DIR": "/tmp/.mount_x"}
+    env = {
+        "APPIMAGE": "/x/Stickler.AppImage",
+        "SHARUN_DIR": "/tmp/.mount_x",
+        "XDG_DATA_HOME": "/d",
+        "XDG_CACHE_HOME": "/c",
+    }
     assert stickler_gtk.prefix(env=env) == Path("/tmp/.mount_x")
     added = paths.packaged_env(env)
     assert added == {
         "STICKLER_ADAPTER_SOURCES": "/tmp/.mount_x/share/stickler/adapters",
         "UV_PYTHON_PREFERENCE": "only-managed",
         "UV_PYTHON_DOWNLOADS": "automatic",
+        # uv's downloads and its Python inside Stickler's own folders, so removing those three
+        # folders removes everything (owner, 2026-11-15)
+        "UV_CACHE_DIR": "/c/stickler/uv",
+        "UV_PYTHON_INSTALL_DIR": "/d/stickler/python",
     }
     chosen = {**env, "UV_PYTHON_PREFERENCE": "system"}
     assert "UV_PYTHON_PREFERENCE" not in paths.packaged_env(chosen)  # the user's choice stays

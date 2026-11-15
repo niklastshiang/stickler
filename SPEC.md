@@ -1353,7 +1353,9 @@ tests/gtk/test_setup.py
    matter only to the benchmark, owner). In the Flatpak, `uv` uses the runtime's Python 3.14 (no
    download); a runtime with another Python makes the environments invalid, and the setup
    assistant rebuilds them from uv's cache. In the AppImage, `uv` downloads its own Python 3.14
-   (its bundled Python moves with every mount).
+   (its bundled Python moves with every mount); its downloads and that Python stay in Stickler's
+   folders (`~/.cache/stickler/uv`, `~/.local/share/stickler/python`), so deleting Stickler's
+   three folders removes everything (owner, 2026-11-15; README `> INSTALL THE APP`).
 6. **The app stops importing the benchmark's code** (`mir_eval`, and with it scipy), so neither
    package has to ship.
 7. **AppStream MetaInfo** (`packaging/ng.tshia.Stickler.metainfo.xml`): name, summary,

@@ -279,6 +279,41 @@ scripts/check.sh task
 
 ---
 
+## `> INSTALL THE APP`
+
+Every [release](https://github.com/niklastshiang/stickler/releases) has the app in two forms,
+for x86_64 Linux. On first start it asks to download its two models once (about 2.2 GB); after
+that it runs offline.
+
+**Flatpak** (recommended on GNOME): download `Stickler-<version>.flatpak` and open it with GNOME
+Software, or install it in a terminal; the GNOME runtime comes from Flathub:
+
+```bash
+flatpak install --user Stickler-5.flatpak
+```
+
+**AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
+and start it.
+
+```bash
+chmod +x Stickler-5-x86_64.AppImage && ./Stickler-5-x86_64.AppImage
+```
+
+### Removing it
+
+**Flatpak:** one command removes the app with its models, results and settings:
+
+```bash
+flatpak uninstall --delete-data ng.tshia.Stickler
+```
+
+**AppImage:** delete the file, then Stickler's three folders (the models, with the Python and
+downloads they were set up with, are in the first two):
+
+```bash
+rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler
+```
+
 ## `> BUILD IT YOURSELF`
 
 > **Documentation:** [CLI guide](docs/cli.md) · [Requirements](docs/requirements.md) ·

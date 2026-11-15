@@ -69,8 +69,9 @@ def results_cache(env: Mapping[str, str] = os.environ) -> Path:
 
 def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
     """What an AppImage sets for itself (the Flatpak's manifest sets the same): where its
-    adapters' sources are, and that uv uses a Python of its own, never the AppImage's, whose
-    path changes with every mount. Values already set stay."""
+    adapters' sources are; that uv uses a Python of its own, never the AppImage's, whose path
+    changes with every mount; and that uv keeps its downloads and that Python in Stickler's
+    folders. Values already set stay."""
     if packaged(env) != "appimage":
         return {}
     import stickler_gtk
@@ -79,6 +80,10 @@ def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
         "STICKLER_ADAPTER_SOURCES": str(stickler_gtk.prefix(env=env) / "share/stickler/adapters"),
         "UV_PYTHON_PREFERENCE": "only-managed",
         "UV_PYTHON_DOWNLOADS": "automatic",
+        # uv's downloads and Python in Stickler's own folders: removing the app's three folders
+        # removes everything, and nothing of another uv user's is touched (owner, 2026-11-15)
+        "UV_CACHE_DIR": str(cache_home(env) / "uv"),
+        "UV_PYTHON_INSTALL_DIR": str(_data_home(env) / "python"),
     }
     return {key: value for key, value in wanted.items() if key not in env}
 

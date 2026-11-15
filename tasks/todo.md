@@ -624,6 +624,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [ ] **Later release: click volume follows the song** (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.
+- [ ] **Later release: "Remove Downloaded Models…" in the app** (owner, 2026-11-15): a menu entry that deletes the models, their environments and the results after asking, so an AppImage user need not know the folders.
 - [ ] **Later release: the band's name in the PDF** (owner, 2026-11-15): the engraved page shows the title but not the artist.
 - [ ] **After release 5: lessons learned** (owner, 2026-11-15): write down what building the app taught us (mistakes, detours, what worked), so a comparable project starts faster and more directly.
 
