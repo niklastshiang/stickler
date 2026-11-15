@@ -595,7 +595,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: logic tests for each case
   - Dependencies: 72 · Files: `src/stickler_gtk/logic/{paths,analysis,setup}.py`, `src/stickler_gtk/ui/window.py`, tests
 
-- [ ] **Task 74: AppStream MetaInfo** (S)
+- [x] **Task 74: AppStream MetaInfo** (S): done 2026-11-15. Screenshots of "Fluffing a Duck" (Kevin MacLeod, CC BY 4.0; the owner's choice after a search for a free, funny song), linked at the commit that added them; credited in the captions and `docs/screenshots/README.md`. The desktop file no longer claims audio/mp4.
   - Acceptance: `packaging/ng.tshia.Stickler.metainfo.xml` with description, screenshots (from the app), releases, OARS, licences, developer; `appstreamcli validate` in CI.
   - Verify: `appstreamcli validate --pedantic`
   - Dependencies: none · Files: `packaging/*`, `docs/screenshots/*`, `.github/workflows/check.yml`
@@ -614,6 +614,8 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Acceptance: `.github/workflows/release.yml` builds both on a release tag and attaches them, and on a manual run uploads them as artifacts; the release notes template says how to install each.
   - Verify: a manual run
   - Dependencies: 75, 76 · Files: `.github/workflows/release.yml`, `docs/` release notes
+
+- [ ] **Before release 5: every document checked** (owner, 2026-11-15): README, CONTRIBUTING, CITATION.cff, docs/cli.md, docs/report.md, SPEC.md, CONSTRAINTS.md, the AppStream MetaInfo and the release notes agree with the app, the GPL (ADR 0007), Python 3.14 for the app's models and the packages.
 
 ### Checkpoint N
 - [ ] All 6 success criteria of SPEC.md `packaging` met; the owner installs the Flatpak and the AppImage from a CI run
