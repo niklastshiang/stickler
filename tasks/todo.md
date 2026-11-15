@@ -499,7 +499,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 58 · Files: `src/stickler_gtk/ui/*`, `po/*`, tests
 
 ### Checkpoint K
-- [ ] All 8 success criteria of SPEC.md `playback` met; the owner listens to Eye of the Tiger with the clicks
+- [x] All 8 success criteria of SPEC.md `playback` met; the owner listens to Eye of the Tiger with the clicks. Done 2026-11-15: the clicks follow the marks, switching Song / Hits / Both is smooth; the first clicks were too quiet, the fuller ones are "much better to hear" (owner).
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
