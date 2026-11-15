@@ -45,7 +45,7 @@ def packaged(env: Mapping[str, str] = os.environ) -> str | None:
     return None
 
 
-def _data_home(env: Mapping[str, str]) -> Path:
+def data_home(env: Mapping[str, str] = os.environ) -> Path:
     base = env.get("XDG_DATA_HOME") or str(
         Path(env.get("HOME") or Path.home()) / ".local" / "share"
     )
@@ -59,7 +59,7 @@ def adapters_root(env: Mapping[str, str] = os.environ) -> Path:
     chosen = env.get("STICKLER_ADAPTERS")
     if chosen:
         return Path(chosen)
-    return _data_home(env) / "adapters" if packaged(env) else api.ADAPTERS_ROOT
+    return data_home(env) / "adapters" if packaged(env) else api.ADAPTERS_ROOT
 
 
 def results_cache(env: Mapping[str, str] = os.environ) -> Path:
@@ -84,7 +84,7 @@ def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
         # uv's downloads and Python in Stickler's own folders: removing the app's three folders
         # removes everything, and nothing of another uv user's is touched (owner, 2026-11-15)
         "UV_CACHE_DIR": str(cache_home(env) / "uv"),
-        "UV_PYTHON_INSTALL_DIR": str(_data_home(env) / "python"),
+        "UV_PYTHON_INSTALL_DIR": str(data_home(env) / "python"),
     }
     forced = ("UV_PYTHON_PREFERENCE", "UV_PYTHON_DOWNLOADS")  # requirements, not preferences
     return {key: value for key, value in wanted.items() if key in forced or key not in env}

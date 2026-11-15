@@ -633,7 +633,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/test_api.py tests/test_audio.py`; by ear: Fearless and Eye of the Tiger (owner)
   - Dependencies: none · Files: `src/stickler/{audio,api}.py`, tests
 
-- [ ] **Task 80: What a removal deletes** (S)
+- [x] **Task 80: What a removal deletes** (S): done 2026-11-15. Nothing from the checkout; by default `adapters/` and `python/` in Stickler's data folder and its whole cache folder, in the Flatpak also uv's cache inside the sandbox folder (only when the cache lies under `.var/app/ng.tshia.Stickler/`); everything means Stickler's three folders.
   - Acceptance: `logic/removal.py`: the folders for the Flatpak and the AppImage, with and without "everything"; nothing from the checkout, nothing outside the app's folders; their size; the deletion itself.
   - Verify: `uv run pytest -q tests/gtk/test_removal.py`
   - Dependencies: none · Files: `src/stickler_gtk/logic/removal.py`, tests
