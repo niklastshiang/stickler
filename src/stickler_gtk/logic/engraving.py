@@ -24,6 +24,11 @@ PAGE_HEIGHT = 60000  # Verovio's largest page: a screen shows one long page per 
 SVG = "{http://www.w3.org/2000/svg}"
 MEI = "{http://www.music-encoding.org/ns/mei}"
 XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
+# A text part starting or ending with no-break spaces, as in Verovio's tempo mark " = "
+EDGE_SPACES = re.compile(
+    '(<tspan[^>]*?font-size="(\\d+)px"[^>]*?)>(\u00a0*)([^<\u00a0]+)(\u00a0*)</tspan>'
+)
+SPACE_EM = 0.25  # a no-break space in Times, as a share of the font size (Verovio counts it)
 LINE = re.compile(r"M\s*(-?[\d.]+)\s+(-?[\d.]+)\s+L\s*(-?[\d.]+)\s+(-?[\d.]+)")
 
 
@@ -98,7 +103,22 @@ def render(musicxml: str, settings: dict) -> list[Page]:
         toolkit.loadData(musicxml)
         numbers = _measure_numbers(toolkit.getMEI())
         svgs = [toolkit.renderToSVG(k) for k in range(1, toolkit.getPageCount() + 1)]
-    return [_page(svg, numbers) for svg in svgs]
+    return [_page(_keep_edge_spaces(svg), numbers) for svg in svgs]
+
+
+def _keep_edge_spaces(svg: str) -> str:
+    """librsvg drops a no-break space at the start of a text part (even when preserved) and at
+    its end (unless preserved): "♩ = 109" read "♩=109". Leading spaces become an explicit
+    shift (dx), trailing ones are kept with xml:space="preserve"; other text is untouched."""
+
+    def fix(found: re.Match) -> str:
+        head, size, lead, text, tail = found.groups()
+        if not lead and not tail:
+            return found.group(0)
+        shift = f' dx="{len(lead) * SPACE_EM * int(size):g}"' if lead else ""
+        return f'{head}{shift} xml:space="preserve">{text}{tail}</tspan>'
+
+    return EDGE_SPACES.sub(fix, svg)
 
 
 def _measure_numbers(mei: str) -> dict[str, int]:

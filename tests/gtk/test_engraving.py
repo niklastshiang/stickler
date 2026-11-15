@@ -127,3 +127,21 @@ def test_print_pages_are_a4_with_the_title_on_the_first():
         assert page.height / page.width == pytest.approx(297 / 210, rel=0.01)
     assert "Groove Song" in pages[0].svg
     assert sum(len(p.bars) for p in pages) == 8
+
+
+def test_the_tempo_mark_keeps_its_spaces_around_the_equals_sign():
+    """Verovio writes " = " with no-break spaces; librsvg drops a leading one (even with
+    xml:space="preserve") and a trailing one unless preserved, so "♩ = 109" read "♩=109"
+    (owner, 2026-11-15). The leading space becomes an explicit shift (dx) of about one space,
+    the trailing one is preserved."""
+    import re
+
+    svg = engraving.engrave(_xml(), width=800)[0].svg
+    tempo = re.search(r'class="tempo".*?</g>', svg, re.S).group(0)
+    equals = re.search(
+        '<tspan font-size="(\\d+)px" dx="([\\d.]+)" xml:space="preserve">=\u00a0</tspan>', tempo
+    )
+    assert equals, tempo
+    assert float(equals.group(2)) == pytest.approx(
+        engraving.SPACE_EM * int(equals.group(1)), rel=0.01
+    )

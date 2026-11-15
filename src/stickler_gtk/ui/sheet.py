@@ -86,6 +86,11 @@ class Sheet(Gtk.ScrolledWindow):
         scroll = Gtk.EventControllerScroll(flags=Gtk.EventControllerScrollFlags.VERTICAL)
         scroll.connect("scroll", self._on_scroll)
         self.add_controller(scroll)
+        pinch = Gtk.GestureZoom()  # two fingers on a touchpad or touchscreen
+        pinch.connect("begin", lambda *_a: setattr(self, "_pinch_from", self.zoom))
+        pinch.connect("scale-changed", lambda _g, scale: self.pinch(scale))
+        self.add_controller(pinch)
+        self._pinch_from = 1.0
         Adw.StyleManager.get_default().connect("notify::dark", lambda *_a: self._redraw())
 
     # what the window asks
@@ -98,6 +103,17 @@ class Sheet(Gtk.ScrolledWindow):
         if value != self.zoom:
             self.zoom = value
             self.relayout()
+
+    def pinch(self, scale: float) -> None:
+        """Follows a pinch: the zoom is set at once, the new layout once the fingers pause
+        (Verovio for every step of the gesture would stutter)."""
+        self.zoom = zoom.pinched(self._pinch_from, scale)
+        self._relayout_soon()
+
+    def _relayout_soon(self) -> None:
+        if self._pending:
+            GLib.source_remove(self._pending)
+        self._pending = GLib.timeout_add(RELAYOUT_AFTER_MS, self._relayout_once)
 
     def relayout(self) -> None:
         width = self.get_width() - 2 * GUTTER
@@ -154,9 +170,7 @@ class Sheet(Gtk.ScrolledWindow):
         Gtk.ScrolledWindow.do_size_allocate(self, width, height, baseline)
         if width != self._width:
             self._width = width
-            if self._pending:
-                GLib.source_remove(self._pending)
-            self._pending = GLib.timeout_add(RELAYOUT_AFTER_MS, self._relayout_once)
+            self._relayout_soon()
 
     def _relayout_once(self) -> bool:
         self._pending = 0

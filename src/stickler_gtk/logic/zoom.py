@@ -21,3 +21,8 @@ def zoom_out(current: float) -> float:
 def scrolled(current: float, dy: float) -> float:
     """Ctrl+scroll: `dy` < 0 (up) enlarges, a step per notch, finer for touchpads."""
     return _clamp(current * STEP ** (-dy))
+
+
+def pinched(start: float, scale: float) -> float:
+    """A pinch on a touchpad or touchscreen: the zoom it began at times the gesture's scale."""
+    return _clamp(start * scale)

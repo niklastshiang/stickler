@@ -429,3 +429,15 @@ def test_the_window_can_be_made_narrow_while_the_sheet_is_shown(monkeypatch, tmp
         assert window.get_content().measure(Gtk.Orientation.HORIZONTAL, -1)[0] < 550
     finally:
         window.close()
+
+
+def test_a_pinch_zooms_once_the_fingers_pause(monkeypatch, tmp_path):
+    window = _result_window(monkeypatch, tmp_path)
+    try:
+        normal = window.sheet.pages[0].bars[1].height
+        window.sheet._pinch_from = window.sheet.zoom
+        window.sheet.pinch(1.6)
+        assert window.sheet.zoom == 1.6
+        assert _wait(lambda: window.sheet.pages[0].bars[1].height > normal * 1.4)
+    finally:
+        window.close()
