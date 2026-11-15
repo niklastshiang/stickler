@@ -623,7 +623,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 15: `polish` (approved 2026-11-15, SPEC.md "Module `polish`")
 
-- [ ] **Task 78: The artist in the PDF** (S)
+- [x] **Task 78: The artist in the PDF** (S): done 2026-11-15. Credits for title (centred) and artist (right) after `<identification>`; Verovio engraves both once (the title no longer comes from its auto header alone). Checked on Fluffing a Duck's PDF with the app's font setup.
   - Acceptance: the MusicXML holds `<credit>` elements for title and artist; the first A4 page engraved by Verovio shows the artist; no artist, no artist credit.
   - Verify: `uv run pytest -q tests/test_notation.py`; a GTK test engraves an A4 page
   - Dependencies: none · Files: `src/stickler/notation.py`, tests

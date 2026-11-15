@@ -120,12 +120,14 @@ def test_verovio_writes_numbers_with_a_point_whatever_the_users_locale():
 
 
 def test_print_pages_are_a4_with_the_title_on_the_first():
-    xml = notation.engrave(groove(), BEATS, DOWNBEATS, title="Groove Song").musicxml
+    xml = notation.engrave(
+        groove(), BEATS, DOWNBEATS, title="Groove Song", artist="The Band"
+    ).musicxml
     pages = engraving.a4_pages(xml)
     assert len(pages) >= 1
     for page in pages:
         assert page.height / page.width == pytest.approx(297 / 210, rel=0.01)
-    assert "Groove Song" in pages[0].svg
+    assert "Groove Song" in pages[0].svg and "The Band" in pages[0].svg
     assert sum(len(p.bars) for p in pages) == 8
 
 

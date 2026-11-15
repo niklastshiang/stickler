@@ -142,8 +142,18 @@ def test_artist_is_written_as_composer():
     assert parse(xml).metadata.composer == "A & B"
 
 
+def test_title_and_artist_are_credits_for_the_printed_page():
+    """Verovio engraves credits, not the composer of the metadata (owner: the PDF lacked the
+    band, 2026-11-15); notation programs read them too."""
+    xml = notation.to_musicxml(groove(), BEATS, DOWNBEATS, title="RATATATA", artist="A & B")
+    assert "<credit-type>title</credit-type>" in xml and ">RATATATA</credit-words>" in xml
+    assert "<credit-type>composer</credit-type>" in xml and ">A &amp; B</credit-words>" in xml
+    assert xml.index("<identification>") < xml.index("<credit ") < xml.index("<part-list>")
+
+
 def test_no_artist_no_creator():
-    assert "<creator" not in notation.to_musicxml(groove(), BEATS, DOWNBEATS)
+    xml = notation.to_musicxml(groove(), BEATS, DOWNBEATS)
+    assert "<creator" not in xml and "<credit-type>composer" not in xml
 
 
 def _measures(xml: str) -> list[str]:

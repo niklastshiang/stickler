@@ -535,6 +535,23 @@ class Engraving:
     meter: tuple[int, int]  # time signature, as written
 
 
+def _credits(title: str, artist: str) -> str:
+    """What the first printed page shows: the title centred, the artist on the right. Verovio
+    engraves credits, not the composer of the metadata (the PDF lacked the band, 2026-11-15)."""
+    out = (
+        '<credit page="1"><credit-type>title</credit-type>'
+        f'<credit-words justify="center" valign="top" font-size="20">{escape(title)}</credit-words>'
+        "</credit>"
+    )
+    if artist:
+        out += (
+            '<credit page="1"><credit-type>composer</credit-type>'
+            f'<credit-words justify="right" valign="bottom">{escape(artist)}</credit-words>'
+            "</credit>"
+        )
+    return out
+
+
 def to_musicxml(
     notes: list[tuple[float, int, int]],
     beats: list[float],
@@ -693,6 +710,7 @@ def engrave(
             if artist
             else ""
         )
+        + _credits(title, artist)
         + '<part-list><score-part id="P1"><part-name>Drumset</part-name>'
         f"{instruments}</score-part></part-list>"
         f'<part id="P1">{"".join(out)}</part></score-partwise>\n'
