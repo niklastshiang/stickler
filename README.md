@@ -16,10 +16,6 @@
 </p>
 
 <p align="center">
-  <img src="docs/badges/fun-cloud.svg" alt="cloud" />
-  <img src="docs/badges/fun-subscription.svg" alt="subscription" />
-  <img src="docs/badges/fun-rocket-science.svg" alt="rocket science" />
-  <img src="docs/badges/fun-drummer.svg" alt="drummer" />
   <img src="docs/badges/fun-burgers.svg" alt="burgers" />
 </p>
 
@@ -380,6 +376,8 @@ uv run stickler report   # results/report.html
   <img src="docs/badges/origin-built-with.svg" alt="built with Claude Code" />
   <img src="docs/badges/origin-code.svg" alt="code: 100% AI" />
   <img src="docs/badges/origin-decisions.svg" alt="decisions: 100% human" />
+  <img src="docs/badges/origin-ai-cost.svg" alt="AI cost at API prices" />
+  <img src="docs/badges/origin-tokens.svg" alt="tokens used" />
 </p>
 
 **The code of this project comes from an AI.** It was programmed, tested and documented by Claude
@@ -405,9 +403,9 @@ On a subscription the real cost differs; this is what the same work would cost o
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–15 Nov 2026 | Claude Opus 5.5 (the work) | 1,216 | 1.3 M | 509 M | 152 USD |
+| 13–15 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 1,338 | 1.4 M | 567 M | 167 USD |
 | 13–15 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
-| | **Total** | | | | **about 160 USD** |
+| | **Total** | | | | **about 176 USD** |
 
 ---
 

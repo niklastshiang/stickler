@@ -59,7 +59,18 @@ def facts() -> dict[str, str]:
         "tests": passed.group(1),
         "coverage": total.group(1),
         "smoke": collected.group(1),
+        **ai_figures(),
     }
+
+
+def ai_figures() -> dict[str, str]:
+    """What building Stickler with Claude Code cost, from its local logs (scripts/ai_usage.py)."""
+    import ai_usage  # next to this script
+
+    totals, _first, _last = ai_usage.collect([ai_usage.log_folder()])
+    dollars = sum(ai_usage.cost(model, counts) or 0.0 for model, counts in totals.items())
+    tokens = sum(sum(counts[kind] for kind in ai_usage.KINDS) for counts in totals.values())
+    return {"ai_cost": f"≈ {dollars:,.0f} USD", "ai_tokens": f"{tokens / 1e6:,.0f} M"}
 
 
 def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
@@ -73,16 +84,14 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
             ("local", "runs", "100% local"),
         ],
         "fun": [
-            ("cloud", "cloud", "0 bytes"),
-            ("subscription", "subscription", "€0"),
-            ("rocket-science", "rocket science", "no"),
-            ("drummer", "drummer", "beginner"),
             ("burgers", "burgers received", "0"),
         ],
         "origin": [
             ("built-with", "built with", "Claude Code"),
             ("code", "code", "100% AI"),
             ("decisions", "decisions", "100% human"),
+            ("ai-cost", "AI cost (API prices)", f["ai_cost"]),
+            ("tokens", "tokens", f["ai_tokens"]),
         ],
     }
 
