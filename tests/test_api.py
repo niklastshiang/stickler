@@ -1417,3 +1417,18 @@ def test_mode_ready_can_include_the_drum_track_separator(tmp_path):
     _plain_adapter(root, "separators", api.DRUM_TRACK_SEPARATOR)
     assert api.mode_ready("fast", adapters_root=root) == []
     assert api.mode_ready("fast", drums=True, adapters_root=root) == [api.DRUM_TRACK_SEPARATOR]
+
+
+def test_the_app_side_of_the_library_loads_no_benchmark_scoring():
+    """The packaged app ships neither mir_eval nor scipy (SPEC.md, module `packaging`)."""
+    import subprocess
+    import sys
+
+    code = (
+        "import sys, stickler.api, stickler_gtk.logic.analysis, stickler_gtk.logic.session; "
+        "print(sorted(m for m in ('mir_eval', 'scipy') if m in sys.modules))"
+    )
+    loaded = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert loaded.stdout.strip() == "[]"

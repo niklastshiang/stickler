@@ -21,9 +21,9 @@ from pathlib import Path
 
 import mido
 import numpy as np
-from mir_eval.util import match_events
 
 from stickler import onsets
+from stickler.events import match_events
 
 SUB = 4  # slots per beat (sixteenths for quarter beats)
 KICKS = frozenset({35, 36})

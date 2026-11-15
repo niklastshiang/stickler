@@ -580,7 +580,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 14: Packaging (approved 2026-11-15, SPEC.md "Module `packaging`")
 
-- [ ] **Task 71: The app imports no benchmark code** (S)
+- [x] **Task 71: The app imports no benchmark code** (S): done 2026-11-15. The only use was `mir_eval.util.match_events` (align, errors, evaluate); `stickler.events.match_events` loads it on the first call. The GTK window now loads neither mir_eval, scipy nor typer.
   - Acceptance: importing `stickler.api` and the GTK app loads neither `mir_eval` nor `scipy`; the benchmark still works (they load when it runs).
   - Verify: a test that imports the app in a fresh interpreter and checks `sys.modules`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler/api.py` (lazy imports), tests

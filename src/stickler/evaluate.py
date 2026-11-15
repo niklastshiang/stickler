@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import mir_eval
 import numpy as np
 
 from stickler.classes import Onsets
+from stickler.events import match_events
 
 # Tolerance window ±50 ms, standard in the ADT literature (MDB, ENST, ADTOF).
 WINDOW = 0.05
@@ -44,7 +44,7 @@ class Scores:
 
 def match(ref: np.ndarray, est: np.ndarray, window: float = WINDOW) -> PRF:
     """Counts for one class; each estimate hits at most one reference within `window`."""
-    tp = len(mir_eval.util.match_events(ref, est, window)) if ref.size and est.size else 0
+    tp = len(match_events(ref, est, window)) if ref.size and est.size else 0
     return PRF(tp=tp, fp=int(est.size) - tp, fn=int(ref.size) - tp)
 
 

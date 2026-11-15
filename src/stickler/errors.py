@@ -19,11 +19,11 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
 
-import mir_eval
 import numpy as np
 
 from stickler.classes import Onsets
 from stickler.evaluate import WINDOW
+from stickler.events import match_events
 
 OFF_TIME = 0.1  # same drum up to 100 ms away: a timing error, not a missed hit
 SEED = 20261114  # the listening sample is drawn once with this seed (SPEC.md, "Release 3")
@@ -64,7 +64,7 @@ class Breakdown:
 
 def _unmatched(ref: np.ndarray, est: np.ndarray, window: float) -> tuple[list, list, list]:
     """Matched index pairs and the unmatched reference and estimate indices."""
-    pairs = mir_eval.util.match_events(ref, est, window) if ref.size and est.size else []
+    pairs = match_events(ref, est, window) if ref.size and est.size else []
     used_r, used_e = {i for i, _ in pairs}, {j for _, j in pairs}
     return (
         pairs,
