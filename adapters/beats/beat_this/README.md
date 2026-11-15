@@ -8,7 +8,7 @@ later for quantization into notation.
 |---|---|
 | Paper | Foscarin, Schlüter, Widmer: *Beat this! Accurate beat tracking without DBN postprocessing*, ISMIR 2024 (arXiv:2407.21658) |
 | Code | https://github.com/CPJKU/beat_this, PyPI `beat-this==1.1.0` (last push 2026-05-28) |
-| Weights | Checkpoint `final0` (library default), from cloud.cp.jku.at, 78 MB |
+| Weights | Checkpoint `final0` (library default), 78 MB, SHA-256 `8c328b45…8331`: from cloud.cp.jku.at, else from Stickler's copy of the same file in the release `beat-this-final0` (the JKU server was down on 2026-11-14 and 2026-11-15; `download.py`) |
 | License | MIT (code and weights) |
 
 ## Usage

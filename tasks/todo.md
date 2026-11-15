@@ -545,7 +545,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: the environment rebuilt; one own song transcribed: the same hits as the cached result
   - Dependencies: none · Files: `adapters/transcribers/adtof/{pyproject.toml,uv.lock}`
 
-- [ ] **Task 66: A mirror for Beat This!'s checkpoint** (S)
+- [x] **Task 66: A mirror for Beat This!'s checkpoint** (S): done 2026-11-15. The download lives in a torch-free `download.py` (tested against a local server); `setup.py` uses it and then loads the checkpoint as `run.py` does; 115 cache entries rekeyed. In an empty copy with JKU down and the release not yet published: "JKU Linz (cloud.cp.jku.at): 500; Stickler's copy (github.com): 404", nothing left behind. The release itself waits for Checkpoint M.
   - Acceptance:
     - `setup.py` downloads from JKU, else from the release URL; the SHA-256 is checked; a mismatch or both failing raises an error naming both servers; cached results rekeyed.
   - Verify: tests against a local HTTP server (JKU answering; failing with the copy answering; wrong checksum; both failing)
