@@ -535,7 +535,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 63 · Files: `src/stickler_gtk/ui/*`, `po/*`, tests
 
 ### Checkpoint L
-- [ ] All 8 success criteria of SPEC.md `corrections` met; the owner corrects Eye of the Tiger
+- [x] All 8 success criteria of SPEC.md `corrections` met; the owner corrects Eye of the Tiger. Done 2026-11-15 (owner: "Prima"); the title cut short in the narrow header was accepted as is.
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
