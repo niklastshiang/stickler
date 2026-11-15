@@ -424,7 +424,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `scripts/check.sh task`; `FONTCONFIG_FILE=… fc-list | grep Leipzig` inside `scripts/gtk.sh`'s environment
   - Dependencies: none · Files: `pyproject.toml`, `uv.lock`, `packaging/fonts/*`, `scripts/gtk.sh`, `src/stickler_gtk/ui/menu.py`, tests
 
-- [ ] **Task 50: Engraving with Verovio** (M)
+- [x] **Task 50: Engraving with Verovio** (M): done 2026-11-15. Scale 50 % at zoom 1 (a staff about 36 px high); one long page per song (Verovio's largest page height); measures matched by id between Verovio's SVG and its MEI (`n` = written bar). Eye of the Tiger: 43 rectangles at 1000 and 360 px in 0.06 s, the 8 bars with dotted notes as tall as all others (72 px with padding). Verovio's layout warnings are silenced (errors stay); at 360 px it warns of tightly packed bars, for the owner's look at Checkpoint J.
   - Acceptance:
     - `logic/engraving.py`: MusicXML → SVG pages for a page width and zoom; for each written bar its page and rectangle, taken from the measure's staff lines.
     - Tests on MusicXML from `notation.engrave` (repeats, pickup, multi-measure rest): one rectangle per written bar, inside its page, left to right within a system.
