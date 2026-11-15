@@ -2,6 +2,7 @@
 
 import wave
 
+import numpy as np
 import pytest
 
 from stickler import audio
@@ -197,3 +198,23 @@ def test_ffprobe_and_ffmpeg_run_with_c_numbers(monkeypatch, tmp_path):
         if re.search(r"subprocess\.run\(\s*\[\s*\"ff(mpeg|probe)\"", line)
     ]
     assert direct == [], "call ffmpeg/ffprobe through audio.media_tool"
+
+
+def _noise_song(level, seconds=4.0, sr=22050):
+    rng = np.random.default_rng(1)
+    return (level * rng.standard_normal(int(seconds * sr))).astype(np.float32)
+
+
+def test_the_click_gain_puts_the_clicks_the_same_distance_above_any_song():
+    """Clicks suited Eye of the Tiger but were too loud on a quieter song (owner, 2026-11-15)."""
+    sr, times = 22050, [0.5 + 0.25 * k for k in range(12)]
+    raw = audio.clicks([(t, 1) for t in times], 4 * sr, sr, seconds=0.06, decay=50.0, peak=1.4)
+    for level in (0.3, 0.03):  # a loud song and a quiet one
+        song = _noise_song(level)
+        gain = audio.click_gain(song, raw, times, sr, over_db=4.0)
+        clicks = np.tanh(raw * gain)
+        offset = audio.level_at(clicks, times, sr) - audio.level_at(song, times, sr)
+        assert offset == pytest.approx(4.0, abs=0.3)
+        assert np.abs(clicks).max() < 1.0
+    assert audio.click_gain(np.zeros(4 * sr), raw, times, sr, over_db=4.0) == 1.0  # silence
+    assert audio.click_gain(_noise_song(0.3), raw, [], sr, over_db=4.0) == 1.0  # no hits

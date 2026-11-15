@@ -848,18 +848,24 @@ def _click_track(song: own.Song, notes: list[tuple[float, int]]) -> Path:
 
 # Fuller than the listening clicks: those sat about 3 dB under a song (owner, 2026-11-15)
 PLAYBACK_CLICK = {"seconds": 0.06, "decay": 50.0, "peak": 1.4}
+# How far the clicks stand out over the song at its hits: Eye of the Tiger's level, which the
+# owner liked; louder or quieter songs get the same distance (owner, 2026-11-15)
+CLICK_OVER_SONG_DB = 4.0
 
 
 def render_hits(transcription: SongTranscription, dest: Path) -> Path:
     """The detected hits as a mono WAV as long as the song: one click per hit, pitched for
-    kick, snare/toms and cymbals, long and loud enough to stand out under the song; where
-    clicks pile up they are limited softly (tanh), never clipped. The app mixes it with the
-    song."""
+    kick, snare/toms and cymbals, set CLICK_OVER_SONG_DB above the song where its hits are (one
+    level per song); where clicks pile up they are limited softly (tanh), never clipped. The app
+    mixes it with the song."""
     length = round(audio.duration(transcription.audio) * CLICK_SR)
     hits = [(t, align._group(pitch)) for t, pitch, _ in transcription.hits]
     dest.parent.mkdir(parents=True, exist_ok=True)
-    signal = np.tanh(audio.clicks(hits, length, CLICK_SR, **PLAYBACK_CLICK))
-    return audio.write_wav(dest, signal, CLICK_SR)
+    raw = audio.clicks(hits, length, CLICK_SR, **PLAYBACK_CLICK)
+    song = audio.load_mono(transcription.audio, CLICK_SR)
+    times = [t for t, _ in hits]
+    gain = audio.click_gain(song, raw, times, CLICK_SR, over_db=CLICK_OVER_SONG_DB)
+    return audio.write_wav(dest, np.tanh(raw * gain), CLICK_SR)
 
 
 def _align_song(song: own.Song, registry: dict, cache_dir: Path, device: str) -> AlignReport:

@@ -103,6 +103,42 @@ def clicks(
     return out
 
 
+LEVEL_WINDOW = 0.05  # seconds after each hit that "the song at the hits" means
+SILENT_DB = -60.0  # quieter than this, a song has no level to follow
+
+
+def level_at(signal: np.ndarray, times: list[float], sr: int) -> float:
+    """The median loudness (dB of the RMS) of `signal` in the 50 ms after each time."""
+    width = int(LEVEL_WINDOW * sr)
+    rms = [
+        float(np.sqrt(np.mean(np.square(signal[start : start + width], dtype=np.float64))))
+        for start in (int(t * sr) for t in times)
+        if 0 <= start < len(signal)
+    ]
+    if not rms:
+        return float("-inf")
+    return 20 * float(np.log10(max(float(np.median(rms)), 1e-12)))
+
+
+def click_gain(
+    song: np.ndarray, clicks: np.ndarray, times: list[float], sr: int, *, over_db: float
+) -> float:
+    """The factor for `clicks` (before the soft limit, tanh) that puts them `over_db` above the
+    song at its hits: one level for the whole song. A silent song, or no hits, keeps 1."""
+    song_db = level_at(song, times, sr)
+    if not times or song_db < SILENT_DB:
+        return 1.0
+    low, high = -40.0, 20.0  # dB: the limit makes the level grow ever slower, so bisect
+    for _ in range(40):
+        middle = (low + high) / 2
+        gain = 10 ** (middle / 20)
+        if level_at(np.tanh(clicks * gain), times, sr) - song_db < over_db:
+            low = middle
+        else:
+            high = middle
+    return 10 ** ((low + high) / 40)
+
+
 def write_wav(path: Path, signal: np.ndarray, sr: int) -> Path:
     """16-bit WAV; `signal` is (samples,) or (samples, channels), values are clipped to ±1."""
     data = signal if signal.ndim == 2 else signal[:, None]

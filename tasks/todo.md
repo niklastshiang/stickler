@@ -628,7 +628,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/test_notation.py`; a GTK test engraves an A4 page
   - Dependencies: none · Files: `src/stickler/notation.py`, tests
 
-- [ ] **Task 79: Click volume per song** (S)
+- [x] **Task 79: Click volume per song** (S): done 2026-11-15. The target (4.0 dB over the song at its hits) is what Eye of the Tiger had: its gain is now 1.01; Fluffing a Duck's clicks come out 7.1 dB quieter. The gain is found by bisection because the soft limit is not linear; render_hits takes about a second. Fearless is the owner's to hear (not in data/own).
   - Acceptance: `render_hits` scales the clicks by the song's loudness at the hits, so a quiet and a loud copy of a song get the same click-to-song ratio; Eye of the Tiger keeps about today's level; silent songs keep the fixed level; no clipping.
   - Verify: `uv run pytest -q tests/test_api.py tests/test_audio.py`; by ear: Fearless and Eye of the Tiger (owner)
   - Dependencies: none · Files: `src/stickler/{audio,api}.py`, tests

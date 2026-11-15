@@ -1441,3 +1441,29 @@ def test_the_class_table_ships_inside_the_package():
 
     package = Path(stickler.__file__).parent
     assert api.CLASSES.parent == package and api.CLASSES.is_file()
+
+
+def test_the_clicks_stand_out_by_the_same_amount_on_a_loud_and_a_quiet_song(tmp_path):
+    """One click level per song, following its loudness at the hits (owner, 2026-11-15)."""
+    import numpy as np
+
+    from stickler import audio as audio_mod
+
+    rng = np.random.default_rng(3)
+    noise = rng.standard_normal(3 * 44100)
+    hits = [(0.5 + 0.2 * k, 38, 100) for k in range(10)]
+    offsets = []
+    for name, level in (("loud", 0.3), ("quiet", 0.03)):
+        song = audio_mod.write_wav(tmp_path / f"{name}.wav", level * noise, 44100)
+        t = api.SongTranscription(song, "fast", None, [], [], hits)
+        clicks = audio_mod.load_mono(
+            api.render_hits(t, tmp_path / f"{name}-hits.wav"), api.CLICK_SR
+        )
+        mix = audio_mod.load_mono(song, api.CLICK_SR)
+        times = [h[0] for h in hits]
+        offsets.append(
+            audio_mod.level_at(clicks, times, api.CLICK_SR)
+            - audio_mod.level_at(mix, times, api.CLICK_SR)
+        )
+        assert np.abs(clicks).max() < 1.0
+    assert offsets == pytest.approx([api.CLICK_OVER_SONG_DB] * 2, abs=0.5)
