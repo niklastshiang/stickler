@@ -293,7 +293,8 @@ def test_a_narrow_window_keeps_icon_buttons_in_the_header():
 @pytest.mark.parametrize("language", ["en", "de"])
 def test_every_page_fits_the_narrowest_window(monkeypatch, language):
     """No page needs more than the minimum width, so nothing scrolls sideways (SPEC
-    app-shell, criterion 7); German texts are longer, so both languages are measured."""
+    app-shell, criterion 7); German texts are longer, so both languages are measured. The
+    playback bar's one-row layout must fit where the narrow breakpoint (550 sp) ends."""
     from gi.repository import Gtk
 
     from stickler_gtk import i18n
@@ -303,6 +304,8 @@ def test_every_page_fits_the_narrowest_window(monkeypatch, language):
     i18n.setup()
     try:
         window = Window()
+        wide = window.pages.get_child_by_name("result").measure(Gtk.Orientation.HORIZONTAL, -1)[0]
+        window.playbar.set_narrow(True)  # as the breakpoint does below 550 sp
         widths = {}
         for name in ("empty", "analysing", "result", "error"):
             page = window.pages.get_child_by_name(name)
@@ -311,6 +314,7 @@ def test_every_page_fits_the_narrowest_window(monkeypatch, language):
         monkeypatch.setenv("LANGUAGE", "en")
         i18n.setup()
     assert all(w <= MINIMUM_SIZE[0] for w in widths.values()), widths
+    assert wide <= 550, wide
 
 
 def test_the_app_environment_finds_the_leipzig_font():
@@ -561,5 +565,55 @@ def test_at_the_end_playback_stops_and_starts_again_from_the_top(monkeypatch, tm
         assert window.playbar.play.get_icon_name() == "media-playback-start-symbolic"
         window.activate_action("win.play", None)
         assert player.is_playing and player.at == 0.0
+    finally:
+        window.close()
+
+
+def test_what_to_hear_and_the_volumes_reach_the_player_and_are_remembered(monkeypatch, tmp_path):
+    from stickler_gtk.logic import settings
+
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        bar = window.playbar
+        window.activate_action("win.play", None)
+        player = _FakePlayer.made[-1]
+        assert player.volumes == (1.0, 1.0)  # both, at full volume
+        bar.song_volume.set_value(0.6)
+        bar.hits_volume.set_value(0.3)
+        assert player.volumes == (0.6, 0.3)
+        bar.hear.set_active_name("song")
+        assert player.volumes == (0.6, 0.0)
+        bar.hear.set_active_name("hits")
+        assert player.volumes == (0.0, 0.3)
+        stored = settings.load(settings.store_path())
+        assert (stored.song_volume, stored.hits_volume) == (0.6, 0.3)
+    finally:
+        window.close()
+
+
+def test_a_click_on_a_bar_jumps_there(monkeypatch, tmp_path):
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        window.activate_action("win.play", None)
+        player = _FakePlayer.made[-1]
+        box = window.sheet.pages[0].bars[3]
+        window.sheet.mark_at(0, box.x + box.width / 2, box.y + box.height / 2)
+        assert player.at == 4.0  # bar 3 starts at 4 s
+        assert window.playbar.time.get_label() == "0:04" and window.sheet.marked == 3
+    finally:
+        window.close()
+
+
+def test_a_narrow_window_shows_the_playback_bar_in_two_rows(monkeypatch, tmp_path):
+    from gi.repository import Gtk
+
+    window = _playing_window(monkeypatch, tmp_path)
+    window.set_default_size(400, 700)
+    try:
+        bar = window.playbar
+        assert _wait(lambda: bar.narrow)
+        assert bar.get_orientation() == Gtk.Orientation.VERTICAL and not bar.bar.get_visible()
+        window.set_default_size(900, 700)
+        assert _wait(lambda: not bar.narrow) and bar.bar.get_visible()
     finally:
         window.close()

@@ -486,7 +486,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests with a fake player; by hand: Eye of the Tiger plays, pauses, seeks
   - Dependencies: 56 · Files: `src/stickler_gtk/ui/{playbar,window}.py`, `src/stickler_gtk/logic/analysis.py`, `po/*`, tests
 
-- [ ] **Task 58: What to hear, volumes, the marker, bar clicks** (M)
+- [x] **Task 58: What to hear, volumes, the marker, bar clicks** (M): done 2026-11-15. Song / Hits / Both is an `Adw.ToggleGroup`, the volume popover has one slider each (remembered); a click on a bar seeks to its next pass. The two-row narrow layout (Task 59) came along: the one-row bar no longer fit 360 px. The narrow breakpoint calls `PlayBar.set_narrow`, which regroups the widgets as on design screen 10.
   - Acceptance:
     - Song / Hits / Both and the volume popover (two sliders, remembered); while playing the marker follows (50 ms timer) and scrolls; a click on a bar seeks to its next pass.
   - Verify: widget tests (fake player: volumes per mode, seek target of a click in repeats, the marker after a position); by hand: clicks in time with the drums (owner)

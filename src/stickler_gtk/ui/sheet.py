@@ -107,6 +107,7 @@ class Sheet(Gtk.ScrolledWindow):
         self.zoom = zoom_level
         self.laid_out = zoom_level  # the zoom the current pages were engraved at
         self.on_zoom = on_zoom  # told every new zoom (the window remembers it)
+        self.on_bar = None  # told the written bar a click hit (playback jumps there)
         self.pages: list[engraving.Page] = []
         self.views: list[PageView] = []
         self.marked: int | None = None  # the written bar shown in blue
@@ -190,6 +191,8 @@ class Sheet(Gtk.ScrolledWindow):
         if found is not None:
             self.marked = found
             self._show_mark(scroll=False)
+            if self.on_bar is not None:
+                self.on_bar(found)
 
     def mark_time(self, bars: list[api.BarTime], seconds: float) -> None:
         """Marks the bar sounding at `seconds` and scrolls it into view (`playback` calls it)."""

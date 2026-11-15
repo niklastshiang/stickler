@@ -17,6 +17,7 @@ from stickler_gtk.logic import (
     engraving,
     exports,
     paths,
+    playback,
     recent,
     session,
     settings,
@@ -87,6 +88,7 @@ class Window(Adw.ApplicationWindow):
         self.state: session.State = session.Empty()
 
         self.note_size = settings.load(settings.store_path()).zoom
+        self.playbar = PlayBar(on_position=self.show_position)
         self.zoom_label = Gtk.Label(label=zoom.percent(self.note_size))
         self.heading = Adw.WindowTitle(title=APP_NAME)
         header = Adw.HeaderBar(title_widget=self.heading)
@@ -123,6 +125,8 @@ class Window(Adw.ApplicationWindow):
         ):
             narrow.add_setter(wide_one, "visible", False)
             narrow.add_setter(narrow_one, "visible", True)
+        narrow.connect("apply", lambda _b: self.playbar.set_narrow(True))
+        narrow.connect("unapply", lambda _b: self.playbar.set_narrow(False))
         self.add_breakpoint(narrow)
 
         self.steps = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
@@ -161,10 +165,10 @@ class Window(Adw.ApplicationWindow):
         self._show_recent()
         self.pages.add_named(_empty_page(self.recent_group), "empty")
         self.pages.add_named(self.analysing, "analysing")
-        self.playbar = PlayBar(on_position=self.show_position)
         self.playbar.on_error = lambda reason: self.toast(
             _("The song cannot be played: {reason}").format(reason=reason)
         )
+        self.sheet.on_bar = self.jump_to_bar
         result_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         result_page.append(self.sheet)
         result_page.append(Gtk.Separator())
@@ -307,6 +311,13 @@ class Window(Adw.ApplicationWindow):
         """Marks the bar sounding at `seconds` (for `playback`, which follows the song)."""
         if isinstance(self.state, session.Result):
             self.sheet.mark_time(self.state.notation.bars, seconds)
+
+    def jump_to_bar(self, written: int) -> None:
+        """A click on a bar: playback goes to its next pass (owner, 2026-11-15)."""
+        if isinstance(self.state, session.Result):
+            target = playback.jump_target(self.state.notation.bars, written, self.playbar.now())
+            if target is not None:
+                self.playbar.seek(target)
 
     def export_pdf(self) -> None:
         result = self.state
