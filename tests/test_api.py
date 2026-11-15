@@ -1432,3 +1432,12 @@ def test_the_app_side_of_the_library_loads_no_benchmark_scoring():
         [sys.executable, "-c", code], capture_output=True, text=True, check=True
     )
     assert loaded.stdout.strip() == "[]"
+
+
+def test_the_class_table_ships_inside_the_package():
+    """Installed (Flatpak, AppImage) there is no repository around the package: an analysis
+    failed with "No such file: /app/lib/python3.14/config/classes.yaml" (owner, 2026-11-15)."""
+    import stickler
+
+    package = Path(stickler.__file__).parent
+    assert api.CLASSES.parent == package and api.CLASSES.is_file()

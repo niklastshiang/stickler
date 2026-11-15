@@ -7,7 +7,7 @@ import pytest
 
 from stickler.classes import Onsets, load_schemes, onsets_from_notes
 
-CONFIG = Path(__file__).resolve().parents[1] / "config" / "classes.yaml"
+CONFIG = Path(__file__).resolve().parents[1] / "src" / "stickler" / "classes.yaml"
 
 
 @pytest.fixture(scope="module")

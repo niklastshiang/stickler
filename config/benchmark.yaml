@@ -12,7 +12,7 @@ transcribers: [adt_str, adtof, muscriptor_m]
 # ADTOF on the mix and below every separated variant. Medium stays on separated stems.
 skip: ["none+muscriptor_m"]
 device: auto          # auto | cpu | gpu
-schemes: ["5", "3"]   # from config/classes.yaml
+schemes: ["5", "3"]   # from src/stickler/classes.yaml
 # Time limit per adapter call in seconds (exceeding it = "time limit" error).
 # Transcribers relative to the song length: MuScriptor medium needs ~7× real time on the mix,
 # ADT_STR on jazz drums ~17× (28 min for 103 s) – that should be aborted.

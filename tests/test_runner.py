@@ -9,7 +9,7 @@ from stickler import adapters, runner
 from stickler.classes import load_schemes
 
 FIXTURES = Path(__file__).parent / "fixtures" / "adapters"
-SCHEMES = load_schemes(Path(__file__).resolve().parents[1] / "config" / "classes.yaml")
+SCHEMES = load_schemes(Path(__file__).resolve().parents[1] / "src" / "stickler" / "classes.yaml")
 
 
 @dataclass(frozen=True)

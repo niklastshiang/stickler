@@ -95,7 +95,7 @@ src/stickler/
   report.py                    # CSV + HTML
   notation.py                  # quantization + MusicXML
 config/benchmark.yaml          # active separators/transcribers/datasets
-config/classes.yaml            # mapping table
+src/stickler/classes.yaml      # mapping table (in the package, so the installed app has it)
 adapters/separators/<id>/      # pyproject.toml + run.py + README.md (source, license, version)
 adapters/transcribers/<id>/
 adapters/beats/beat_this/

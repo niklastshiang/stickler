@@ -123,7 +123,7 @@ separators: [none, oracle, demucs, roformer]
 transcribers: [adt_str, adtof, muscriptor_m]
 skip: ["none+muscriptor_m"]              # pairs not computed
 device: auto                             # auto | cpu | gpu
-schemes: ["5", "3"]                      # class schemes from config/classes.yaml
+schemes: ["5", "3"]                      # class schemes from src/stickler/classes.yaml
 timeout:
   separators: 1800                       # seconds per call
   transcribers: {factor: 10, min: 120}   # 10 × song length, at least 120 s

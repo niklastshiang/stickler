@@ -39,7 +39,7 @@ class Scheme:
 
 
 def load_schemes(path: Path) -> dict[str, Scheme]:
-    """Reads `config/classes.yaml`; a pitch may belong to only one class per scheme."""
+    """Reads `classes.yaml` (in the package); a pitch may belong to only one class per scheme."""
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     schemes: dict[str, Scheme] = {}
     for name, classes in raw["schemes"].items():

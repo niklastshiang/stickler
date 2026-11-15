@@ -369,7 +369,7 @@ stickler/
 │   ├── separators/      # demucs, roformer
 │   ├── transcribers/    # adtof, adt_str, muscriptor_s, muscriptor_m
 │   └── beats/           # beat_this
-├── config/              # benchmark, own and enst configs; classes.yaml (GM pitch → class)
+├── config/              # benchmark, own and enst configs
 ├── references/own/      # own songs: title, recording, manual exclusions
 ├── tests/               # pytest; smoke tests with real models under -m adapters
 ├── scripts/             # check.sh, floor_guard.py
