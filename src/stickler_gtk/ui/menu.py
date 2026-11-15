@@ -106,7 +106,26 @@ def shortcuts_dialog() -> Adw.ShortcutsDialog:
     return dialog
 
 
+# What the app ships from others, named in the About dialog (SPEC.md, module `sheet-view`)
+LEGAL = (
+    ("Verovio", "© RISM Digital Center and contributors", Gtk.License.LGPL_3_0_ONLY, None),
+    (
+        "Leipzig",
+        "© 2014 Etienne Darbellay, Jean-François Martin, Laurent Pugin",
+        Gtk.License.CUSTOM,
+        "SIL Open Font License, Version 1.1",
+    ),
+)
+
+
 def about_dialog() -> Adw.AboutDialog:
+    dialog = _about()
+    for title, copyright_, licence_type, licence in LEGAL:
+        dialog.add_legal_section(title, copyright_, licence_type, licence)
+    return dialog
+
+
+def _about() -> Adw.AboutDialog:
     return Adw.AboutDialog(
         application_name=APP_NAME,
         application_icon=APP_ID,

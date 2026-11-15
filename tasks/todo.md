@@ -416,7 +416,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 10: GTK application, module `sheet-view` (approved 2026-11-15, SPEC.md "Module `sheet-view`")
 
-- [ ] **Task 49: Verovio, the Leipzig font, credits** (S)
+- [x] **Task 49: Verovio, the Leipzig font, credits** (S): done 2026-11-15. `verovio==6.4.1` pinned exactly (another version is "ask first"); `[tool.uv] default-groups = ["dev", "app"]`. Font from Verovio's tag, licence from `rism-digital/leipzig` (commit in `packaging/fonts/README.md`). GTK has no OFL licence type, so the About dialog's Leipzig section is `CUSTOM` with the licence's name.
   - Acceptance:
     - Verovio 6.4.1 in a uv dependency group `app`, synced by default and by `scripts/gtk.sh`; a test fails if `src/stickler` imports `verovio`.
     - `packaging/fonts/Leipzig.ttf` from Verovio's tag `version-6.4.1` with `OFL.txt`; `scripts/gtk.sh` copies it into `.venv-gtk/share/fonts` and sets `FONTCONFIG_FILE` to a config adding that folder.

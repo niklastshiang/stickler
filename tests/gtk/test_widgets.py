@@ -299,3 +299,18 @@ def test_every_page_fits_the_narrowest_window(monkeypatch, language):
         monkeypatch.setenv("LANGUAGE", "en")
         i18n.setup()
     assert all(w <= MINIMUM_SIZE[0] for w in widths.values()), widths
+
+
+def test_the_app_environment_finds_the_leipzig_font():
+    """scripts/gtk.sh points fontconfig at the app's font folder (librsvg's only way in)."""
+    import subprocess
+
+    families = subprocess.run(["fc-list", ":", "family"], capture_output=True, text=True).stdout
+    assert "Leipzig" in families
+
+
+def test_the_about_dialog_names_what_the_app_ships_from_others():
+    from stickler_gtk.ui import menu
+
+    assert [title for title, *_rest in menu.LEGAL] == ["Verovio", "Leipzig"]
+    assert menu.about_dialog() is not None

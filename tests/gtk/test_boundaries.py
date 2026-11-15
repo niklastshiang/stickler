@@ -29,6 +29,25 @@ def test_library_and_app_logic_never_import_gtk():
         assert offenders == [], f"GTK imported where it must not be: {offenders}"
 
 
+def test_verovio_is_the_apps_alone():
+    """Verovio (LGPL) engraves for the app; the library and its CLI never import it."""
+    files = sorted((ROOT / "src" / "stickler").rglob("*.py"))
+    offenders = [str(f.relative_to(ROOT)) for f in files if "verovio" in _imports(f)]
+    assert offenders == []
+
+
+def test_the_app_engraves_with_the_pinned_verovio():
+    import verovio
+
+    assert verovio.toolkit().getVersion().startswith("6.4.1")
+
+
+def test_the_leipzig_font_ships_with_its_licence():
+    fonts = ROOT / "packaging" / "fonts"
+    assert (fonts / "Leipzig.ttf").read_bytes()[:4] == b"\x00\x01\x00\x00"  # TrueType
+    assert "SIL OPEN FONT LICENSE" in (fonts / "OFL.txt").read_text(encoding="utf-8").upper()
+
+
 def test_one_app_id_for_the_app_and_its_desktop_file():
     assert stickler_gtk.APP_ID == "ng.tshia.Stickler"
     desktop = configparser.ConfigParser(interpolation=None)

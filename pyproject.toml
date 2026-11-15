@@ -26,6 +26,15 @@ dev = [
     "ruff>=0.14",
 ]
 
+# The GTK application's own dependencies (SPEC.md, module `sheet-view`); never imported by
+# src/stickler. Synced by default, so the app's logic tests run in CI too.
+app = [
+    "verovio==6.4.1",
+]
+
+[tool.uv]
+default-groups = ["dev", "app"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
