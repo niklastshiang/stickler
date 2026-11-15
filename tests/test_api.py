@@ -1378,6 +1378,15 @@ def test_notation_carries_tempo_and_meter_for_the_window(tmp_path, monkeypatch):
     assert result.meter == (2, 4)
 
 
+def test_notation_says_which_beat_is_the_first_one(tmp_path, monkeypatch):
+    """The corrections sidebar shows it as "Beat n" (SPEC.md, module `corrections`)."""
+    audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)
+    kw = {"pdf": False, "cache_dir": tmp_path}
+    assert api.notate(audio, tmp_path / "o.musicxml", **kw).first_downbeat == 1
+    moved = api.Corrections(first_downbeat=3)
+    assert api.notate(audio, tmp_path / "o.musicxml", corrections=moved, **kw).first_downbeat == 3
+
+
 def test_song_info_reads_title_artist_and_length(tmp_path):
     import subprocess
 

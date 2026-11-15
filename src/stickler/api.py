@@ -1064,6 +1064,7 @@ class Notation:
     bars: list[BarTime] = field(default_factory=list)  # every song bar in played order
     tempo: int = 0  # quarter notes per minute, as written (0: not engraved)
     meter: tuple[int, int] = (4, 4)  # time signature, as written
+    first_downbeat: int = 1  # the beat (1-based, on the corrected beats) that is the first one
 
 
 def _parse_pipeline(pipeline: str, registry: dict) -> tuple[str, str]:
@@ -1251,13 +1252,14 @@ def notate(
             repeats=fix.repeats,
         )
         target.write_text(engraving.musicxml, encoding="utf-8")
-        return engraving, False
+        first = notation.nearest_beat(beats, downbeats[0]) + 1 if downbeats and beats else 1
+        return (engraving, first), False
 
-    e = steps.run(engrave)
+    e, first = steps.run(engrave)
     if not pdf:
-        return Notation(target, None, None, t, e.bars, e.tempo, e.meter)
+        return Notation(target, None, None, t, e.bars, e.tempo, e.meter, first)
     pdf_path, pdf_error = steps.run(lambda: (_export_pdf(target), False))
-    return Notation(target, pdf_path, pdf_error, t, e.bars, e.tempo, e.meter)
+    return Notation(target, pdf_path, pdf_error, t, e.bars, e.tempo, e.meter, first)
 
 
 def _export_pdf(musicxml: Path) -> tuple[Path | None, str | None]:

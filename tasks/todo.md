@@ -503,7 +503,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 ## Phase 12: GTK application, module `corrections` (approved 2026-11-15, SPEC.md "Module `corrections`")
 
-- [ ] **Task 60: Corrections logic and store** (S)
+- [x] **Task 60: Corrections logic and store** (S): done 2026-11-15. `api.Notation` gained `first_downbeat` (the detected or corrected first one, 1-based on the corrected beats), so the sidebar can show it. A new tempo resets the first one, which is counted on the corrected beats.
   - Acceptance:
     - `logic/corrections.py`: each control's change with its range (beats 1–12, the first "one" within the bar, kept there when the beats shrink); "anything corrected?"; the texts "Beat n".
     - The store: per song by absolute path, round trip, bad entries dropped one by one, a missing file is empty, atomic save.

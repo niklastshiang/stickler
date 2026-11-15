@@ -116,6 +116,11 @@ def _nearest_index(beats: np.ndarray, t: float) -> int:
     return int(np.argmin(np.abs(beats - t)))
 
 
+def nearest_beat(beats: list[float], t: float) -> int:
+    """The index of the beat nearest to `t`."""
+    return _nearest_index(np.asarray(beats), t)
+
+
 def time_signature(beats: list[float], downbeats: list[float]) -> tuple[int, int]:
     """Beats per bar (most common distance between downbeats) over a quarter note."""
     b = np.asarray(beats, dtype=float)
