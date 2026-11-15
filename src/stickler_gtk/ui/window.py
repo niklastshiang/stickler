@@ -269,6 +269,11 @@ class Window(Adw.ApplicationWindow):
 
         dialog.save(self, None, saved)
 
+    def show_position(self, seconds: float) -> None:
+        """Marks the bar sounding at `seconds` (for `playback`, which follows the song)."""
+        if isinstance(self.state, session.Result):
+            self.sheet.mark_time(self.state.notation.bars, seconds)
+
     def export_musicxml(self) -> None:
         result = self.state
         if not isinstance(result, session.Result):

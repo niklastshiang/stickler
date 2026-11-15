@@ -1,25 +1,40 @@
 """The sheet music on the result page (SPEC.md, module `sheet-view`; design screen 6): Verovio's
 pages one under the other, drawn with librsvg, as wide as the window, with zoom; inverted in
-dark style. What is engraved where is `stickler_gtk.logic.engraving`'s business."""
+dark style; the marked bar in blue. What is engraved where, and which bar a time or a click
+means, is `stickler_gtk.logic`'s business (engraving, marker)."""
 
 from __future__ import annotations
+
+import math
 
 import cairo
 from gi.repository import Adw, Gdk, GLib, Gtk, Rsvg
 
-from stickler_gtk.logic import engraving, zoom
+from stickler import api
+from stickler_gtk.logic import engraving, marker, zoom
 
 GUTTER = 12  # pixels around the pages
 RELAYOUT_AFTER_MS = 150  # wait for resizing to pause before engraving anew
+MARK = (0.21, 0.52, 0.89, 0.25)  # libadwaita's blue accent, see-through
+MARK_RADIUS = 6
 
 
 class PageView(Gtk.DrawingArea):
-    def __init__(self, page: engraving.Page) -> None:
+    def __init__(self, page: engraving.Page, on_click) -> None:
         super().__init__(content_width=round(page.width), content_height=round(page.height))
         self.page = page
+        self.mark: engraving.Box | None = None
         self.handle = Rsvg.Handle.new_from_data(page.svg.encode())
         self.add_css_class("card")
         self.set_draw_func(self._draw)
+        click = Gtk.GestureClick()
+        click.connect("released", lambda _g, _n, x, y: on_click(x, y))
+        self.add_controller(click)
+
+    def set_mark(self, box: engraving.Box | None) -> None:
+        if box != self.mark:
+            self.mark = box
+            self.queue_draw()
 
     def _draw(self, _area, cr: cairo.Context, width: int, height: int) -> None:
         cr.set_source_rgb(1, 1, 1)
@@ -32,6 +47,19 @@ class PageView(Gtk.DrawingArea):
             cr.set_source_rgb(0.88, 0.88, 0.89)
             cr.paint()
             cr.set_operator(cairo.OPERATOR_OVER)
+        if self.mark is not None:  # drawn after inverting, so blue in both styles
+            box = self.mark
+            cr.new_sub_path()
+            for cx, cy, start in (
+                (box.x + box.width - MARK_RADIUS, box.y + MARK_RADIUS, -0.5),
+                (box.x + box.width - MARK_RADIUS, box.y + box.height - MARK_RADIUS, 0.0),
+                (box.x + MARK_RADIUS, box.y + box.height - MARK_RADIUS, 0.5),
+                (box.x + MARK_RADIUS, box.y + MARK_RADIUS, 1.0),
+            ):
+                cr.arc(cx, cy, MARK_RADIUS, start * math.pi, (start + 0.5) * math.pi)
+            cr.close_path()
+            cr.set_source_rgba(*MARK)
+            cr.fill()
 
 
 class Sheet(Gtk.ScrolledWindow):
@@ -41,6 +69,7 @@ class Sheet(Gtk.ScrolledWindow):
         self.zoom = 1.0
         self.pages: list[engraving.Page] = []
         self.views: list[PageView] = []
+        self.marked: int | None = None  # the written bar shown in blue
         self._width = 0
         self._pending = 0
         self.column = Gtk.Box(
@@ -75,9 +104,47 @@ class Sheet(Gtk.ScrolledWindow):
         self.pages = engraving.engrave(self.musicxml, width=width, zoom=self.zoom)
         for view in self.views:
             self.column.remove(view)
-        self.views = [PageView(page) for page in self.pages]
+        self.views = [
+            PageView(page, lambda x, y, k=k: self.mark_at(k, x, y))
+            for k, page in enumerate(self.pages)
+        ]
         for view in self.views:
             self.column.append(view)
+        self._show_mark(scroll=False)
+
+    def mark_at(self, page: int, x: float, y: float) -> None:
+        """A click on page `page` at (x, y): marks the bar there; beside every bar, nothing
+        changes."""
+        found = marker.bar_at_point(self.pages[page], x, y)
+        if found is not None:
+            self.marked = found
+            self._show_mark(scroll=False)
+
+    def mark_time(self, bars: list[api.BarTime], seconds: float) -> None:
+        """Marks the bar sounding at `seconds` and scrolls it into view (`playback` calls it)."""
+        self.marked = marker.written_at(bars, seconds)
+        self._show_mark(scroll=True)
+
+    def marked_box(self) -> tuple[int, engraving.Box] | None:
+        return None if self.marked is None else marker.locate(self.pages, self.marked)
+
+    def _show_mark(self, *, scroll: bool) -> None:
+        found = self.marked_box()
+        for k, view in enumerate(self.views):
+            view.set_mark(found[1] if found and found[0] == k else None)
+        if scroll and found:
+            self._scroll_to(*found)
+
+    def _scroll_to(self, page: int, box: engraving.Box) -> None:
+        """Brings the box into view, a third down from the top, when it is not visible."""
+        top = GUTTER + sum(p.height + GUTTER for p in self.pages[:page]) + box.y
+        adjustment = self.get_vadjustment()
+        visible = adjustment.get_value(), adjustment.get_value() + adjustment.get_page_size()
+        if top >= visible[0] and top + box.height <= visible[1]:
+            return
+        target = top - adjustment.get_page_size() / 3
+        upper = adjustment.get_upper() - adjustment.get_page_size()
+        adjustment.set_value(min(max(target, adjustment.get_lower()), max(upper, 0)))
 
     # what GTK tells it
 

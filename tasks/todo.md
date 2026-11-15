@@ -443,7 +443,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests (page appears after a fake analysis, zoom changes the layout); by hand: Eye of the Tiger within 1 s of the result, at 360 px and 1000 px
   - Dependencies: 50 · Files: `src/stickler_gtk/ui/sheet.py`, `src/stickler_gtk/ui/window.py`, `po/*`, tests
 
-- [ ] **Task 53: Marking bars** (S)
+- [x] **Task 53: Marking bars** (S): done 2026-11-15. The sheet keeps the marked written bar and finds its rectangle again after every new layout (zoom, width); a time scrolls its bar a third down from the top when it is out of view. Eye of the Tiger: each of the 43 bars is marked by a click on it; the marker is blue in light and dark (rendered and looked at).
   - Acceptance:
     - A click marks the bar under it; `Window.show_position(seconds)` marks the bar sounding then and scrolls it into view; the marker is blue in both styles.
   - Verify: widget tests (click, position); by hand: click through Eye of the Tiger

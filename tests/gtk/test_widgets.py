@@ -350,3 +350,45 @@ def test_the_result_page_shows_the_sheet_as_wide_as_the_window_and_zooms(monkeyp
         assert abs(window.sheet.pages[0].bars[1].height - normal) < 0.5
     finally:
         window.close()
+
+
+def _result_window(monkeypatch, tmp_path, width=900, height=700):
+    from stickler_gtk.ui.window import Window
+
+    _fake_analysis(monkeypatch, tmp_path)
+    window = Window()
+    window.set_default_size(width, height)
+    window.present()
+    window.open_song(tmp_path / "eye.flac")
+    assert _wait(lambda: bool(window.sheet.views))
+    return window
+
+
+def test_a_click_marks_the_bar_under_it_and_the_mark_survives_a_zoom(monkeypatch, tmp_path):
+    window = _result_window(monkeypatch, tmp_path)
+    try:
+        box = window.sheet.pages[0].bars[3]
+        window.sheet.mark_at(0, box.x + box.width / 2, box.y + box.height / 2)
+        assert window.sheet.marked == 3
+        window.sheet.mark_at(0, -5, -5)  # beside every bar: the mark stays
+        assert window.sheet.marked == 3
+        window.activate_action("win.zoom-in", None)
+        assert window.sheet.marked == 3 and window.sheet.marked_box() is not None
+    finally:
+        window.close()
+
+
+def test_a_time_marks_its_bar_and_scrolls_it_into_view(monkeypatch, tmp_path):
+    window = _result_window(monkeypatch, tmp_path, width=360, height=400)
+    try:
+        assert _wait(lambda: window.sheet.get_vadjustment().get_upper() > 600)
+        window.show_position(15.0)  # bar 8, far below at 360 px
+        assert window.sheet.marked == 8
+        adjustment = window.sheet.get_vadjustment()
+        assert adjustment.get_value() > 0
+        window.show_position(0.5)
+        assert window.sheet.marked == 1 and adjustment.get_value() == 0
+        window.show_position(99.0)  # after the song: nothing sounds, nothing marked
+        assert window.sheet.marked is None
+    finally:
+        window.close()
