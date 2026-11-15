@@ -37,13 +37,25 @@ def test_reports_of_a_cancelled_or_replaced_job_are_ignored():
     assert session.finished(back, second.job, api.SongInfo("B", "", 1.0), _notation()) is back
 
 
-def test_a_missing_model_names_it_and_the_command_that_sets_it_up():
+def test_a_missing_model_asks_for_the_download_and_keeps_the_song():
+    """No terminal commands any more: the setup assistant asks (SPEC.md, setup-assistant)."""
     state = session.open_song(Path("s.flac"), session.Empty())
-    error = session.failed(state, state.job, api.SetupMissing(["adtof", "beat_this"]))
-    assert isinstance(error, session.Failed) and error.kind == "setup"
-    assert "ADTOF" in error.description and "Beat This!" in error.description
-    assert error.details == ("stickler setup --adapter adtof\nstickler setup --adapter beat_this")
-    assert not error.can_retry
+    asked = session.failed(state, state.job, api.SetupMissing(["adtof", "beat_this"]))
+    assert isinstance(asked, session.Consent)
+    assert asked.missing == ("adtof", "beat_this")
+    assert asked.song == Path("s.flac")
+    assert session.failed(asked, state.job, RuntimeError("late")) is asked
+
+
+def test_a_failed_download_keeps_what_is_done_and_names_the_step():
+    running = session.start_setup(("environment:adtof", "weights:beat_this"), None, ("adtof",))
+    step = api.Step("weights:beat_this", 2, 2, "started", False, None)
+    running = session.on_setup_step(running, running.job, step)
+    error = session.failed(running, running.job, RuntimeError("one\ntwo\nHTTP 500"))
+    assert isinstance(error, session.SetupFailed)
+    assert error.step == "weights:beat_this" and error.details.endswith("HTTP 500")
+    assert error.missing == ("adtof",) and error.song is None
+    assert session.failed(running, running.job, api.Cancelled()) == session.Empty()
 
 
 def test_an_unreadable_file_is_told_apart_from_a_failed_analysis():

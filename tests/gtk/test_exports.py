@@ -97,7 +97,7 @@ def test_a_failed_export_says_so_and_does_not_offer_to_analyse_again():
     assert failed.kind == "export" and not failed.can_retry
     assert "eye.flac" in failed.description and failed.details == "ffmpeg: disk full"
     missing = session.failed(state, state.job, api.SetupMissing(["demucs"]))
-    assert missing.kind == "setup" and "Demucs" in missing.description
+    assert isinstance(missing, session.Consent) and missing.missing == ("demucs",)
 
 
 def test_the_pdf_is_named_after_the_title():

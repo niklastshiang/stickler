@@ -563,7 +563,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests with a fake `setup_adapters`
   - Dependencies: 67 · Files: `src/stickler_gtk/ui/{setup,window}.py`, `po/*`, tests
 
-- [ ] **Task 69: Errors, Not Now, the old page gone** (M)
+- [x] **Task 69: Errors, Not Now, the old page gone** (M): done 2026-11-15. `SetupFailed` names the step's server and keeps the step list (Ready / Not reached); Try Again restarts the setup, whose finished steps are quick. A `SetupMissing` from an analysis or an export leads to the consent page, which keeps the song and opens it once the models are there. The fresh setup by hand waits for Checkpoint M.
   - Acceptance:
     - Design screen 3 (server named, details, Try Again, Later); Not Now → the empty window, a song asks again; `SetupMissing` leads to consent instead of the command page; German complete; every page fits 360 px.
   - Verify: widget tests; by hand: a fresh setup with `STICKLER_ADAPTERS` pointing at a copy

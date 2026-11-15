@@ -147,21 +147,66 @@ def test_a_failed_analysis_shows_the_error_page_and_can_try_again(monkeypatch, t
     assert _wait(lambda: len(attempts) == 2)
 
 
-def test_a_missing_model_shows_the_setup_commands(monkeypatch, tmp_path):
+def test_a_song_without_models_asks_for_them_and_opens_once_they_are_there(monkeypatch, tmp_path):
     from stickler import api
     from stickler_gtk.ui.window import Window
 
-    def missing(song, out, **kw):
-        raise api.SetupMissing(["adtof"])
+    _fake_analysis(monkeypatch, tmp_path)
+    analysed = api.notate
+    done = _fake_setup(monkeypatch, missing=("adtof",))
 
-    monkeypatch.setattr(api, "song_info", lambda p: api.SongInfo("x", "", 1.0))
-    monkeypatch.setattr(api, "notate", missing)
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    def notate(song, out, **kw):
+        if "adtof" not in done:
+            raise api.SetupMissing(["adtof"])
+        return analysed(song, out, **kw)
+
+    monkeypatch.setattr(api, "notate", notate)
     window = Window()
-    window.open_song(tmp_path / "x.flac")
-    assert _wait(lambda: window.pages.get_visible_child_name() == "error")
-    assert window.error_details.get_label() == "stickler setup --adapter adtof"
-    assert window.error_expander.get_expanded() and not window.retry_button.get_visible()
+    try:
+        assert _wait(lambda: window.pages.get_visible_child_name() == "consent")
+        window.activate_action("win.setup-later", None)  # Not Now
+        window.open_song(tmp_path / "eye.flac")
+        assert _wait(lambda: window.pages.get_visible_child_name() == "consent")
+        assert window.state.song == tmp_path / "eye.flac"
+        window.activate_action("win.setup-download", None)
+        assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+        assert done == ["adtof"]
+    finally:
+        window.close()
+
+
+def test_a_server_that_does_not_answer_is_named_and_the_download_can_be_retried(monkeypatch):
+    from stickler import api
+    from stickler_gtk.logic import settings
+    from stickler_gtk.ui.window import Window
+
+    settings.update(settings.store_path(), setup_agreed=True)
+    done = _fake_setup(monkeypatch, missing=("beat_this",))
+    working = api.setup_adapters
+    attempts = []
+
+    def flaky(adapter, device="cpu", adapters_root=None, *, progress, cancel):
+        attempts.append(adapter)
+        if len(attempts) == 1:
+            progress(api.Step("environment:beat_this", 1, 2, "started", False, None))
+            progress(api.Step("environment:beat_this", 1, 2, "done", False, None))
+            progress(api.Step("weights:beat_this", 2, 2, "started", False, None))
+            raise RuntimeError("Beat This! model not downloaded. JKU Linz: 500")
+        return working(adapter, device, adapters_root, progress=progress, cancel=cancel)
+
+    monkeypatch.setattr(api, "setup_adapters", flaky)
+    window = Window()
+    try:
+        assert _wait(lambda: window.pages.get_visible_child_name() == "setup-error")
+        labels = _labels(window.pages.get_child_by_name("setup-error"))
+        assert "A Download Server Is Not Answering" in labels
+        assert any("cloud.cp.jku.at" in text for text in labels)
+        assert "Try Again" in labels and "Later" in labels
+        window.activate_action("win.setup-retry", None)
+        assert _wait(lambda: window.pages.get_visible_child_name() == "empty")
+        assert done == ["beat_this"] and len(attempts) == 2
+    finally:
+        window.close()
 
 
 def test_cancel_returns_at_once_and_stops_the_job(monkeypatch, tmp_path):
@@ -305,6 +350,7 @@ def test_every_page_fits_the_narrowest_window(monkeypatch, language):
     from gi.repository import Gtk
 
     from stickler_gtk import i18n
+    from stickler_gtk.logic import session, steps
     from stickler_gtk.ui.window import MINIMUM_SIZE, Window
 
     monkeypatch.setenv("LANGUAGE", language)
@@ -315,6 +361,12 @@ def test_every_page_fits_the_narrowest_window(monkeypatch, language):
         window.playbar.set_narrow(True)  # as the breakpoint does below 550 sp
         widths = {}
         for name in ("empty", "analysing", "result", "error"):
+            page = window.pages.get_child_by_name(name)
+            widths[name] = page.measure(Gtk.Orientation.HORIZONTAL, -1)[0]
+        window.show(session.consent(("adtof", "beat_this")))
+        failed_steps = steps.planned(("environment:beat_this", "weights:beat_this"))
+        window.show(session.SetupFailed(failed_steps, "weights:beat_this", "HTTP 500", ()))
+        for name in ("consent", "setup-error"):
             page = window.pages.get_child_by_name(name)
             widths[name] = page.measure(Gtk.Orientation.HORIZONTAL, -1)[0]
     finally:

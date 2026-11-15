@@ -216,6 +216,8 @@ class Window(Adw.ApplicationWindow):
         self.pages.add_named(self.error, "error")
         self.consent = Adw.Bin()  # filled with the missing models (design screen 1)
         self.pages.add_named(self.consent, "consent")
+        self.setup_error = Adw.Bin()  # design screen 3
+        self.pages.add_named(self.setup_error, "setup-error")
 
         self.toasts = Adw.ToastOverlay(child=self.pages)
         view = Adw.ToolbarView(content=self.toasts)
@@ -255,6 +257,7 @@ class Window(Adw.ApplicationWindow):
             ("zoom-reset", lambda: self.sheet.set_zoom(1.0)),
             ("setup-download", self.agree_to_setup),
             ("setup-later", lambda: self.show(session.Empty())),
+            ("setup-retry", self.retry_setup),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())
@@ -661,13 +664,18 @@ class Window(Adw.ApplicationWindow):
             settings.update(settings.store_path(), setup_agreed=True)
         self._start_setup(self.state.missing, self.state.song)
 
+    def retry_setup(self) -> None:
+        """Goes on from where it failed: steps already done are quick (api.setup_adapters)."""
+        if isinstance(self.state, session.SetupFailed):
+            self._start_setup(self.state.missing, self.state.song)
+
     def _start_setup(self, missing: tuple[str, ...], song: Path | None) -> None:
         root = paths.adapters_root()
         registry = adapters.discover(root)
         ids = setup.step_ids(list(missing), lambda a: adapters.needs_weights(registry[a]))
         self._stop_job()
         self.token = token = api.CancelToken()
-        state = session.start_setup(ids, song)
+        state = session.start_setup(ids, song, missing)
         job = state.job
         self.show(state)
 
@@ -742,6 +750,14 @@ class Window(Adw.ApplicationWindow):
                 self._consent_for = state.missing
                 self.consent.set_child(setup_ui.consent_page(state.missing))
             self.pages.set_visible_child_name("consent")
+        elif isinstance(state, session.SetupFailed):
+            self.heading.set_title(APP_NAME)
+            self.heading.set_subtitle("")
+            page = setup_ui.error_page(
+                state.steps, setup.server(state.step), setup.details(state.details)
+            )
+            self.setup_error.set_child(page)
+            self.pages.set_visible_child_name("setup-error")
         elif isinstance(state, session.SettingUp):
             self.heading.set_title(APP_NAME)
             self.heading.set_subtitle("")
@@ -791,9 +807,7 @@ class Window(Adw.ApplicationWindow):
             self.error.set_title(state.title)
             self.error.set_description(state.description)
             self.error_details.set_label(state.details)
-            setup = state.kind == "setup"  # the commands are the point, so they stay open
-            self.error_expander.set_label(_("Commands") if setup else _("Technical Details"))
-            self.error_expander.set_expanded(setup)
+            self.error_expander.set_expanded(False)
             self.retry_button.set_visible(state.can_retry)
             self.pages.set_visible_child_name("error")
         else:

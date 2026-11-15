@@ -66,3 +66,42 @@ def consent_page(missing: tuple[str, ...]) -> Gtk.Widget:
         description=intro,
         child=box,
     )
+
+
+def error_page(steps, server: str, details: str) -> Gtk.Widget:
+    """Design screen 3: which server did not answer; what is done stays; "Later" and "Try
+    Again" (win.setup-later, win.setup-retry)."""
+    rows = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
+    for step in steps:
+        row = Adw.ActionRow(title=step.label)
+        if step.state == "done":
+            icon = Gtk.Image(icon_name="object-select-symbolic", css_classes=["success"])
+            row.add_prefix(icon)
+            row.add_suffix(Gtk.Label(label=_("Ready"), css_classes=["dim-label"]))
+        else:
+            row.add_prefix(Gtk.Image(icon_name="network-error-symbolic", opacity=0.6))
+            row.add_suffix(Gtk.Label(label=_("Not reached"), css_classes=["dim-label"]))
+        rows.append(row)
+    text = Gtk.Label(label=details, selectable=True, wrap=True, xalign=0, css_classes=["monospace"])
+    expander = Gtk.Expander(label=_("Technical Details"), child=text)
+    later = Gtk.Button(label=_("Later"), action_name="win.setup-later", css_classes=["pill"])
+    again = Gtk.Button(
+        label=_("Try Again"),
+        action_name="win.setup-retry",
+        css_classes=["pill", "suggested-action"],
+    )
+    buttons = Adw.WrapBox(child_spacing=12, line_spacing=12, align=0.5)
+    buttons.append(later)
+    buttons.append(again)
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
+    box.append(Adw.Clamp(maximum_size=520, child=rows))
+    box.append(Adw.Clamp(maximum_size=520, child=expander))
+    box.append(buttons)
+    return Adw.StatusPage(
+        icon_name="network-error-symbolic",
+        title=_("A Download Server Is Not Answering"),
+        description=_(
+            "Stickler could not reach {server}. Everything that is done stays downloaded."
+        ).format(server=server),
+        child=box,
+    )

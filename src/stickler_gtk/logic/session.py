@@ -77,7 +77,7 @@ class Exporting:
 @dataclass(frozen=True)
 class Failed:
     song: Path
-    kind: str  # "setup", "unreadable", "analysis" or "export"
+    kind: str  # "unreadable", "analysis" or "export"
     title: str
     description: str
     details: str  # the command to run, or the technical message
@@ -103,10 +103,22 @@ class SettingUp:
     steps: tuple[steps.StepRow, ...]
     job: int
     song: Path | None = None
+    missing: tuple[str, ...] = ()  # what is set up, for "Try Again"
     grown: int = 0  # bytes the running step has used so far
 
 
-State = Empty | Analysing | Result | Exporting | Failed | Consent | SettingUp
+@dataclass(frozen=True)
+class SetupFailed:
+    """Design screen 3: a download did not work; what is done stays."""
+
+    steps: tuple[steps.StepRow, ...]
+    step: str  # the step that failed
+    details: str  # the error, for "Technical details"
+    missing: tuple[str, ...]
+    song: Path | None = None
+
+
+State = Empty | Analysing | Result | Exporting | Failed | Consent | SettingUp | SetupFailed
 
 
 def open_song(song: Path, previous: State, corrections: api.Corrections = DETECTED) -> Analysing:
@@ -130,8 +142,10 @@ def consent(missing: tuple[str, ...], song: Path | None = None) -> Consent:
     return Consent(tuple(missing), song)
 
 
-def start_setup(ids: tuple[str, ...], song: Path | None = None) -> SettingUp:
-    return SettingUp(steps.planned(ids), next(_jobs), song)
+def start_setup(
+    ids: tuple[str, ...], song: Path | None = None, missing: tuple[str, ...] = ()
+) -> SettingUp:
+    return SettingUp(steps.planned(ids), next(_jobs), song, tuple(missing))
 
 
 def on_setup_step(state: State, job: int, step: api.Step) -> State:
@@ -199,20 +213,17 @@ def failed(state: State, job: int, error: BaseException) -> State:
     if not _current(state, job):
         return state
     if isinstance(state, SettingUp):
-        return Empty()  # Task 69: the page that names the server
+        if isinstance(error, api.Cancelled):
+            return Empty()
+        running = [r.id for r in state.steps if r.state == "running"]
+        waiting = [r.id for r in state.steps if r.state == "waiting"]
+        step = (running or waiting or [state.steps[-1].id])[0]
+        return SetupFailed(state.steps, step, str(error), state.missing, state.song)
     if isinstance(error, api.Cancelled):
         return state.previous
     name = state.song.name
-    if isinstance(error, api.SetupMissing):
-        models = ", ".join(steps.model_name(a) for a in error.adapters)
-        commands = "\n".join(f"stickler setup --adapter {a}" for a in error.adapters)
-        description = _(
-            "Stickler needs these models before it can listen: {models}. "
-            "Set them up once in a terminal:"
-        ).format(models=models)
-        return Failed(
-            state.song, "setup", _("Models Not Set Up"), description, commands, state.previous
-        )
+    if isinstance(error, api.SetupMissing):  # the setup assistant asks, then opens the song
+        return Consent(tuple(error.adapters), state.song)
     if isinstance(error, analysis.Unreadable):
         description = _("“{name}” cannot be read. Is it a complete sound file?").format(name=name)
         return Failed(

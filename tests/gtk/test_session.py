@@ -126,7 +126,9 @@ def test_only_the_newest_correction_is_shown_and_a_failed_one_keeps_the_sheet():
 
 def test_the_setup_runs_its_steps_and_then_opens_the_song_it_was_for():
     asked = session.consent(("adtof", "beat_this"), Path("eye.flac"))
-    running = session.start_setup(("environment:adtof", "weights:beat_this"), asked.song)
+    running = session.start_setup(
+        ("environment:adtof", "weights:beat_this"), asked.song, asked.missing
+    )
     assert [r.state for r in running.steps] == ["waiting", "waiting"]
     step = api.Step("environment:adtof", 1, 1, "started", False, None)
     running = session.on_setup_step(running, running.job, step)
