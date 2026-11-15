@@ -34,7 +34,7 @@ User stories:
 | Beats | `beat_this` | CPJKU/beat_this | MIT |
 
 ## Tech Stack
-- Python **3.12** and `uv` ≥ 0.13 (Homebrew). Every environment is managed with `uv`. The harness also runs on 3.13 and 3.14 (since 2026-11-14, for the GTK app, whose bindings use the system's or the GNOME runtime's Python); `.python-version` keeps 3.12 the default for development, and the adapters stay on 3.12.
+- Python **3.12** and `uv` ≥ 0.13 (Homebrew). Every environment is managed with `uv`. The harness also runs on 3.13 and 3.14 (since 2026-11-14, for the GTK app, whose bindings use the system's or the GNOME runtime's Python); `.python-version` keeps 3.12 the default for development. The app's models (ADTOF, Beat This!, Demucs) run on 3.14 since 2026-11-15 (`packaging`); the benchmark-only models stay on 3.12.
 - Harness: `mir_eval`, `pretty_midi`, `music21`, `librosa`, `pandas`, `pyyaml`, `jinja2`, `typer`.
 - Dev: `pytest`, `ruff`.
 - Every adapter has its **own** `pyproject.toml` with its own environment (Torch CPU wheels). The harness never imports model code; it calls adapters as subprocesses.
@@ -437,9 +437,9 @@ GitHub archive, because the runtime has no git.
    PyGObject on the development machine exists for the system Python 3.14 only, and the GNOME
    Flatpak runtime brings its own Python. The harness pin is widened to 3.12–3.14: a trial
    run of the test suite on 3.14 passed (2026-11-14; 461 of 462, the one failure came from the
-   trial not installing the package). The adapters stay on 3.12 in their own environments:
-   they run as subprocesses, so the app's Python does not matter to them, and raising them
-   would change every cache key and require the benchmark to be recomputed.
+   trial not installing the package). The adapters run in their own environments as
+   subprocesses, so the app's Python does not matter to them. (Update 2026-11-15, `packaging`:
+   the app's three models moved to 3.14 with identical results, their cache rekeyed.)
 3. Nothing in `adapters/*/run.py`, `setup.py` or `pyproject.toml` changes, so no cache key
    changes and no rekeying is needed.
 4. Corrections are parameters of notation only. They never rerun a model: the transcription is
@@ -1344,9 +1344,11 @@ tests/gtk/test_setup.py
    weights, and `uv sync` updates what changed. The result cache goes to
    `$XDG_CACHE_HOME/stickler`. Running from the checkout (`scripts/gtk.sh`) keeps today's folders;
    `STICKLER_ADAPTERS` still overrides.
-5. **Python 3.14 for all seven models** (owner, 2026-11-15). ADTOF and Beat This! were checked:
+5. **Python 3.14 for the models the app uses** (owner, 2026-11-15: ADTOF, Beat This!, Demucs;
+   the four benchmark-only models stay on 3.12, the benchmark was run already). ADTOF and Beat This! were checked:
    every package has a 3.14 wheel, no version changes, and Eye of the Tiger gives identical
-   results (1375 hits, byte-identical MIDI; 441 beats). The other five are checked the same way;
+   results (1375 hits, byte-identical MIDI; 441 beats). Demucs is checked the same way (it needs
+   numpy 2, which has 3.14 wheels; the old lock had kept numpy 1.26 without one);
    identical results are rekeyed (CLAUDE.md), different ones recomputed when next needed (they
    matter only to the benchmark, owner). In the Flatpak, `uv` uses the runtime's Python 3.14 (no
    download); a runtime with another Python makes the environments invalid, and the setup
@@ -1386,7 +1388,7 @@ packaging/ng.tshia.Stickler.metainfo.xml
 scripts/appimage.sh                        # quick-sharun build
 .github/workflows/release.yml              # both files for a release tag or by hand
 src/stickler_gtk/logic/paths.py            # + packaged: models and cache in XDG folders
-adapters/*/*/pyproject.toml, uv.lock       # Python 3.14
+adapters/{transcribers/adtof,beats/beat_this,separators/demucs}/  # Python 3.14
 ```
 
 #### Testing strategy
@@ -1414,7 +1416,7 @@ adapters/*/*/pyproject.toml, uv.lock       # Python 3.14
 2. The Flatpak installs on the owner's machine, the setup assistant sets up the models inside
    the sandbox, and a song can be opened, analysed, played and exported (owner).
 3. The AppImage does the same on the owner's machine (owner).
-4. All seven models run on Python 3.14; each was compared on one song.
+4. ADTOF, Beat This! and Demucs run on Python 3.14; each was compared with its 3.12 result.
 5. The app no longer imports scipy or mir_eval.
 6. The MetaInfo validates; `scripts/check.sh task` is green.
 

@@ -2,7 +2,7 @@
 name = "stickler-adtof"
 version = "0.1.0"
 description = "Stickler adapter: ADTOF Frame_RNN (Zehren et al. 2023), PyTorch port by xavriley"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.14,<3.15"
 dependencies = [
     "stickler-adapter",
     "adtof-pytorch",

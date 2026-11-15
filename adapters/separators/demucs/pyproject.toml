@@ -2,7 +2,7 @@
 name = "stickler-demucs"
 version = "0.1.0"
 description = "Stickler adapter: drum stem with Demucs v4 (maintained fork adefossez/demucs)"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.14,<3.15"
 dependencies = [
     "stickler-adapter",
     "demucs==4.1.0",  # PyPI release of the fork github.com/adefossez/demucs (ADR 0001)

@@ -585,8 +585,8 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: a test that imports the app in a fresh interpreter and checks `sys.modules`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler/api.py` (lazy imports), tests
 
-- [ ] **Task 72: Python 3.14 for all seven models** (M)
-  - Acceptance: every adapter's `requires-python` is 3.14, its lock resolved with wheels for every package, its environment rebuilt; one own song compared with the 3.12 result; identical results rekeyed, differences noted and left to be recomputed.
+- [x] **Task 72: Python 3.14 for the app's models** (M): done 2026-11-15. ADTOF and Beat This! on Eye of the Tiger: identical (1375 hits, byte-identical MIDI; 441 beats). Demucs needed numpy 2.5.4 (the old lock kept 1.26.4, which has no 3.14 wheel); its stem differs from 3.12 by 24.0 dB SNR, but two runs on 3.14 differ by 26.3 dB: its random shift (`shifts 1`), not the version. 653 cache entries rekeyed. Each of the three got a `.python-version` (3.14), since the repository's 3.12 would otherwise apply. The ROCm environment of Demucs (developer tool) still runs 3.12 until `stickler setup --device rocm` rebuilds it. (owner, 2026-11-15: ADTOF, Beat This!, Demucs; the benchmark-only models stay on 3.12)
+  - Acceptance: each of the three adapters' `requires-python` is 3.14, its lock resolved with wheels for every package, its environment rebuilt; one own song compared with the 3.12 result; identical results rekeyed, differences noted and left to be recomputed.
   - Verify: per adapter, the comparison; `stickler doctor`; `scripts/check.sh task`
   - Dependencies: none · Files: `adapters/*/*/{pyproject.toml,uv.lock}`, `.python-version` if needed, README notes
 

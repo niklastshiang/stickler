@@ -243,7 +243,7 @@ A `.flatpak` and an AppImage for every release, built by GitHub Actions.
 Design decisions:
 - **App changes first** (71–73), so both packages are built from an app that already runs
   without the benchmark's imports, on Python 3.14 models, with its models in the XDG folders.
-- **One adapter per step in Task 72**, each with the rekey procedure when its song result is
+- **One adapter per step in Task 72** (the app's three: ADTOF, Beat This!, Demucs), each with the rekey procedure when its song result is
   identical; the downloads (a 3.14 environment per model) stay in uv's cache.
 - **The Flatpak is built and installed locally first** (75), then in CI (77) with the
   `flatpak-github-actions` container for GNOME 51; the AppImage script (76) runs the same in a
@@ -255,7 +255,7 @@ Flatpak (75) → AppImage (76) → release workflow (77).
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| A benchmark-only model has no 3.14 wheel for a dependency | Medium | Checked per model; if one cannot move, it stays on 3.12 and the owner is asked |
+| An app model has no 3.14 wheel for a dependency | Medium | Checked per model (Demucs: numpy 2); if one cannot move, the owner is asked |
 | uv in the Flatpak picks the wrong Python | Medium | `UV_PYTHON` points at the runtime's interpreter, `UV_PYTHON_DOWNLOADS=never`; a test of the environment the app passes |
 | quick-sharun changes daily | Medium | Pinned to a commit; updated on purpose |
 | GTK/libadwaita in the AppImage differ from the runtime's | Low | Arch has GTK 4.22 and libadwaita 1.9 like the development machine; the AppImage's own test runs it |
