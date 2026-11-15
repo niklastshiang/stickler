@@ -260,6 +260,29 @@ Flatpak (75) → AppImage (76) → release workflow (77).
 | quick-sharun changes daily | Medium | Pinned to a commit; updated on purpose |
 | GTK/libadwaita in the AppImage differ from the runtime's | Low | Arch has GTK 4.22 and libadwaita 1.9 like the development machine; the AppImage's own test runs it |
 
+## `polish` (approved 2026-11-15, SPEC.md "Module `polish`")
+
+Click volume per song, the artist in the PDF, removing the models from the installed app.
+
+Design decisions:
+- **Clicks:** `audio.click_gain(song, hits, sr)` measures the song's 50 ms windows at the hits
+  and returns the factor that puts the clicks' windows a fixed number of dB above them; the
+  number is chosen so Eye of the Tiger keeps today's level. `render_hits` applies it before the
+  soft limit.
+- **Artist:** `notation` writes `<credit>` elements after `<identification>`; a test engraves
+  an A4 page with Verovio and finds the artist.
+- **Removal:** `logic/removal.py` returns the folders for a packaged app (none from the
+  checkout) and their size; the window runs the deletion in the worker, resets the consent and
+  shows the empty window.
+
+Order: artist (78) → clicks (79) → removal logic (80) → menu entry and alert (81).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The click level changes what the owner liked on Eye of the Tiger | Medium | The target offset is computed from Eye of the Tiger's current clicks; a test pins that the gain there is about 1 |
+| A removal deletes something outside the app's folders | High | The logic only returns folders below the app's XDG folders, refuses the checkout; tests for every case |
+| Deleting 2 GB blocks the window | Low | The deletion runs in the worker, the window waits on the analysing page |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

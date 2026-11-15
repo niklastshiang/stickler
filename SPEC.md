@@ -1433,8 +1433,8 @@ adapters/{transcribers/adtof,beats/beat_this,separators/demucs}/  # Python 3.14
 
 ### Module `polish`
 
-> Status: **draft**, waiting for the owner's approval (2026-11-15). Three wishes of the owner
-> after release 5.
+> Status: **approved** by the owner on 2026-11-15. Three wishes of the owner after release 5.
+> Plan: `tasks/plan.md` ("`polish`"), tasks 78–81 in `tasks/todo.md`.
 
 #### Assumptions
 

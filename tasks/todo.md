@@ -621,6 +621,31 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint N
 - [x] All 6 success criteria of SPEC.md `packaging` met; the owner installs the Flatpak and the AppImage from a CI run. Done 2026-11-15: the owner tested both (built locally, the same scripts CI runs); CI built both twice; attaching them is confirmed with release 5.
 
+## Phase 15: `polish` (approved 2026-11-15, SPEC.md "Module `polish`")
+
+- [ ] **Task 78: The artist in the PDF** (S)
+  - Acceptance: the MusicXML holds `<credit>` elements for title and artist; the first A4 page engraved by Verovio shows the artist; no artist, no artist credit.
+  - Verify: `uv run pytest -q tests/test_notation.py`; a GTK test engraves an A4 page
+  - Dependencies: none · Files: `src/stickler/notation.py`, tests
+
+- [ ] **Task 79: Click volume per song** (S)
+  - Acceptance: `render_hits` scales the clicks by the song's loudness at the hits, so a quiet and a loud copy of a song get the same click-to-song ratio; Eye of the Tiger keeps about today's level; silent songs keep the fixed level; no clipping.
+  - Verify: `uv run pytest -q tests/test_api.py tests/test_audio.py`; by ear: Fearless and Eye of the Tiger (owner)
+  - Dependencies: none · Files: `src/stickler/{audio,api}.py`, tests
+
+- [ ] **Task 80: What a removal deletes** (S)
+  - Acceptance: `logic/removal.py`: the folders for the Flatpak and the AppImage, with and without "everything"; nothing from the checkout, nothing outside the app's folders; their size; the deletion itself.
+  - Verify: `uv run pytest -q tests/gtk/test_removal.py`
+  - Dependencies: none · Files: `src/stickler_gtk/logic/removal.py`, tests
+
+- [ ] **Task 81: "Remove Downloaded Models…"** (M)
+  - Acceptance: the main menu entry only when packaged, disabled while a job runs; an alert with the size and the check box; the deletion in the worker; afterwards the empty window and the consent asked again; German and Spanish.
+  - Verify: widget tests (packaged and not, the alert's choices); by hand in the Flatpak or AppImage (owner)
+  - Dependencies: 80 · Files: `src/stickler_gtk/ui/{menu,window,application}.py`, `po/*`, tests
+
+### Checkpoint O
+- [ ] All 4 success criteria of SPEC.md `polish` met (the owner listens, prints and removes)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [ ] **Later release: click volume follows the song** (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.
