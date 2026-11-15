@@ -431,7 +431,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: `uv run pytest -q tests/gtk/test_engraving.py`; Eye of the Tiger: 43 measures with rectangles, the 8 bars with dotted notes as tall as their staff
   - Dependencies: 49 · Files: `src/stickler_gtk/logic/engraving.py`, tests
 
-- [ ] **Task 51: From song time to the marked bar** (S)
+- [x] **Task 51: From song time to the marked bar** (S): done 2026-11-15. A written bar without a rectangle of its own (inside a multi-measure rest) is shown by the nearest engraved bar before it. Eye of the Tiger: all 110 song bars mark the bar map's written bar and every one has a rectangle; song bar 3 marks written bar 1.
   - Acceptance:
     - `logic/marker.py`: seconds → song bar (`Notation.bars`) → written bar → measure; a point on a page → the measure under it.
   - Verify: tests; Eye of the Tiger: every song bar's start time marks the bar map's written bar (110), song bar 3 marks written bar 1
