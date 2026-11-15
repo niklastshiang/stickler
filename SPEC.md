@@ -1354,8 +1354,10 @@ tests/gtk/test_setup.py
    numpy 2, which has 3.14 wheels; the old lock had kept numpy 1.26 without one);
    identical results are rekeyed (CLAUDE.md), different ones recomputed when next needed (they
    matter only to the benchmark, owner). In the Flatpak, `uv` uses the runtime's Python 3.14 (no
-   download); a runtime with another Python makes the environments invalid, and the setup
-   assistant rebuilds them from uv's cache. In the AppImage, `uv` downloads its own Python 3.14
+   download). A runtime with another Python would leave `uv` without a matching interpreter, so
+   the release workflow checks that the runtime's Python equals the models' `.python-version`;
+   moving to such a runtime means moving the models to its Python first (code review, 2026-11-15).
+   In the AppImage, `uv` downloads its own Python 3.14
    (its bundled Python moves with every mount); its downloads and that Python stay in Stickler's
    folders (`~/.cache/stickler/uv`, `~/.local/share/stickler/python`), so deleting Stickler's
    three folders removes everything (owner, 2026-11-15; README `> INSTALL THE APP`).

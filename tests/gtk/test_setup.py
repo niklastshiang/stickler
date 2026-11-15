@@ -77,7 +77,12 @@ def test_the_consent_is_remembered(tmp_path):
 
 def test_a_packaged_app_keeps_models_and_results_in_its_own_folders(tmp_path):
     flatpak = {"FLATPAK_ID": "ng.tshia.Stickler", "XDG_DATA_HOME": "/d", "XDG_CACHE_HOME": "/c"}
-    appimage = {"APPIMAGE": "/x/Stickler.AppImage", "XDG_DATA_HOME": "/d", "XDG_CACHE_HOME": "/c"}
+    appimage = {
+        "APPIMAGE": "/x/Stickler.AppImage",
+        "SHARUN_DIR": "/tmp/.mount_x",
+        "XDG_DATA_HOME": "/d",
+        "XDG_CACHE_HOME": "/c",
+    }
     assert paths.packaged(flatpak) == "flatpak" and paths.packaged(appimage) == "appimage"
     assert paths.packaged({"FLATPAK_ID": "org.other.App"}) is None and paths.packaged({}) is None
     for env in (flatpak, appimage):
@@ -130,7 +135,30 @@ def test_an_appimage_sets_where_its_files_are_and_keeps_uv_off_its_own_python():
         "UV_CACHE_DIR": "/c/stickler/uv",
         "UV_PYTHON_INSTALL_DIR": "/d/stickler/python",
     }
-    chosen = {**env, "UV_PYTHON_PREFERENCE": "system"}
-    assert "UV_PYTHON_PREFERENCE" not in paths.packaged_env(chosen)  # the user's choice stays
+    # requirements, not preferences: a user's own setting would let uv take the AppImage's Python
+    chosen = {**env, "UV_PYTHON_PREFERENCE": "system", "UV_CACHE_DIR": "/mine/uv"}
+    forced = paths.packaged_env(chosen)
+    assert forced["UV_PYTHON_PREFERENCE"] == "only-managed"
+    assert "UV_CACHE_DIR" not in forced  # where uv keeps its downloads is the user's to choose
+    assert paths.packaged({"APPIMAGE": "/x/Other.AppImage"}) is None  # another AppImage's terminal
     assert paths.packaged_env({"FLATPAK_ID": "ng.tshia.Stickler"}) == {}  # set by the manifest
     assert paths.packaged_env({}) == {}
+
+
+def test_new_weight_downloads_drop_the_finished_mark_so_setup_runs_again(tmp_path):
+    """An update that changes where a model's weights come from must download them again
+    (code review before release 5)."""
+    shipped, models = tmp_path / "app", tmp_path / "data"
+    code = shipped / "beats" / "beat_this"
+    code.mkdir(parents=True)
+    for name, text in (("run.py", "run 1"), ("download.py", "sha 1"), ("setup.py", "setup")):
+        (code / name).write_text(text)
+    setup.sync_adapters(shipped, models)
+    marker = models / "beats" / "beat_this" / "weights" / ".setup-complete"
+    marker.parent.mkdir(parents=True)
+    marker.write_text("")
+    (code / "run.py").write_text("run 2")  # code only: the weights stay valid
+    assert setup.sync_adapters(shipped, models) == 1 and marker.exists()
+    (code / "download.py").write_text("sha 2")  # another checkpoint
+    assert setup.sync_adapters(shipped, models) == 1 and not marker.exists()
+    assert not list(models.rglob("*.part"))

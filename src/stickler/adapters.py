@@ -278,7 +278,11 @@ def _setup_rocm(spec: AdapterSpec) -> Path:
         raise RuntimeError(f"{spec.id} declares no ROCm packages ([tool.stickler.rocm])")
     python = _rocm_python(spec)
     if not python.exists():
-        _check(["uv", "venv", "--quiet", "--python", "3.12", ROCM_ENV], spec, cwd=spec.path)
+        _check(
+            ["uv", "venv", "--quiet", "--python", adapter_python(spec.path), ROCM_ENV],
+            spec,
+            cwd=spec.path,
+        )
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
         f.write("\n".join(rocm_requirements(spec, cfg.replace)) + "\n")
     _check(
@@ -330,7 +334,11 @@ def cuda_requirements(export: str, replace: set[str]) -> list[str]:
 def _setup_cuda(spec: AdapterSpec) -> Path:
     python = _cuda_python(spec)
     if not python.exists():
-        _check(["uv", "venv", "--quiet", "--python", "3.12", CUDA_ENV], spec, cwd=spec.path)
+        _check(
+            ["uv", "venv", "--quiet", "--python", adapter_python(spec.path), CUDA_ENV],
+            spec,
+            cwd=spec.path,
+        )
     pins = cuda_pins(spec)
     export = _check(
         [
@@ -373,6 +381,13 @@ def _setup_cuda(spec: AdapterSpec) -> Path:
 
 # Written by the harness once setup.py has finished. It lives in the git-ignored weights
 # folder, so deleting the weights also drops it, and it is not part of any cache key.
+def adapter_python(adapter: Path) -> str:
+    """The adapter's Python: its `.python-version` (3.14 for the app's models since 2026-11-15),
+    else 3.12, which the others keep."""
+    pin = adapter / ".python-version"
+    return pin.read_text(encoding="utf-8").strip() if pin.is_file() else "3.12"
+
+
 SETUP_MARKER = Path("weights") / ".setup-complete"
 
 

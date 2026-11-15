@@ -129,6 +129,7 @@ def uv_cache(env: Mapping[str, str] = os.environ) -> Path:
 
 
 SKIPPED = {"__pycache__", ".venv", "weights", ".pytest_cache"}  # never shipped, never replaced
+WEIGHT_FILES = {"setup.py", "download.py", "common.py"}  # what decides an adapter's weights
 
 
 def sync_adapters(shipped: Path, models: Path) -> int:
@@ -145,6 +146,12 @@ def sync_adapters(shipped: Path, models: Path) -> int:
             target.mkdir(parents=True, exist_ok=True)
         elif not target.exists() or target.read_bytes() != source.read_bytes():
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source, target)
+            part = target.with_name(target.name + ".part")  # never a half-copied file
+            shutil.copyfile(source, part)
+            part.replace(target)
             copied += 1
+            if source.name in WEIGHT_FILES and len(relative.parts) >= 3:
+                # where the weights come from changed: setup must download them again
+                adapter = models / relative.parts[0] / relative.parts[1]
+                (adapter / "weights" / ".setup-complete").unlink(missing_ok=True)
     return copied

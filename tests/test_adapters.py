@@ -332,3 +332,18 @@ def test_harness_uv_settings_do_not_reach_the_adapters(registry, tmp_path, monke
     result = adapters.run_adapter(registry["dummy"], tmp_path / "in.wav", tmp_path / "out")
     assert result.ok, result.error
     assert not elsewhere.exists(), "an adapter environment was built in the harness's place"
+
+
+def test_gpu_environments_use_the_adapters_own_python(tmp_path):
+    """ROCm and CUDA environments were built with 3.12 although ADTOF, Beat This! and Demucs
+    moved to 3.14 (code review before release 5)."""
+    from stickler import adapters as adapters_mod
+
+    pinned = tmp_path / "pinned"
+    pinned.mkdir()
+    (pinned / ".python-version").write_text("3.14\n")
+    assert adapters_mod.adapter_python(pinned) == "3.14"
+    assert adapters_mod.adapter_python(tmp_path / "unpinned") == "3.12"
+    real = Path(__file__).parents[1] / "adapters"
+    assert adapters_mod.adapter_python(real / "separators" / "demucs") == "3.14"
+    assert adapters_mod.adapter_python(real / "transcribers" / "muscriptor_m") == "3.12"

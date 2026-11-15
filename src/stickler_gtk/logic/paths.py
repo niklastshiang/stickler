@@ -40,7 +40,7 @@ def packaged(env: Mapping[str, str] = os.environ) -> str | None:
     """ "flatpak" or "appimage" when installed as one; None when run from the checkout."""
     if env.get("FLATPAK_ID") == APP_ID:
         return "flatpak"
-    if env.get("APPIMAGE"):
+    if env.get("APPIMAGE") and env.get("SHARUN_DIR"):  # ours: another AppImage has no SHARUN_DIR
         return "appimage"
     return None
 
@@ -71,7 +71,8 @@ def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
     """What an AppImage sets for itself (the Flatpak's manifest sets the same): where its
     adapters' sources are; that uv uses a Python of its own, never the AppImage's, whose path
     changes with every mount; and that uv keeps its downloads and that Python in Stickler's
-    folders. Values already set stay."""
+    folders. The Python settings always apply (otherwise uv may take the AppImage's own);
+    other values already set stay."""
     if packaged(env) != "appimage":
         return {}
     import stickler_gtk
@@ -85,7 +86,8 @@ def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
         "UV_CACHE_DIR": str(cache_home(env) / "uv"),
         "UV_PYTHON_INSTALL_DIR": str(_data_home(env) / "python"),
     }
-    return {key: value for key, value in wanted.items() if key not in env}
+    forced = ("UV_PYTHON_PREFERENCE", "UV_PYTHON_DOWNLOADS")  # requirements, not preferences
+    return {key: value for key, value in wanted.items() if key in forced or key not in env}
 
 
 def adapter_sources(env: Mapping[str, str] = os.environ) -> Path | None:

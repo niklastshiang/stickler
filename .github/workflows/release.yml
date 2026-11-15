@@ -15,21 +15,39 @@ jobs:
   flatpak:
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # the manifest builds the checked-out commit from the git history
+      - name: A release tag matches the version in pyproject.toml
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(sed -n 's/^version = "\([0-9]*\)".*/\1/p' pyproject.toml)
+          test "${GITHUB_REF_NAME#v}" = "$version" || {
+            echo "tag $GITHUB_REF_NAME, but pyproject.toml says version $version" >&2; exit 1; }
       - name: flatpak-builder and the GNOME 51 runtime
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq flatpak flatpak-builder
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y --noninteractive flathub org.gnome.Platform//51 org.gnome.Sdk//51
+      - name: The runtime's Python is the one the app's models are pinned to
+        run: |
+          runtime=$(flatpak run --command=python3 org.gnome.Platform//51 -c \
+            'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')
+          for pin in adapters/transcribers/adtof adapters/beats/beat_this adapters/separators/demucs; do
+            test "$(cat "$pin/.python-version")" = "$runtime" || {
+              echo "$pin wants Python $(cat "$pin/.python-version"), the runtime has $runtime" >&2
+              exit 1; }
+          done
       - name: Build Stickler.flatpak
         run: |
+          # build exactly this run's commit, not whatever HEAD resolves to in the mirror
+          sed -i "s|        branch: HEAD .*|        commit: $GITHUB_SHA|" packaging/flatpak/ng.tshia.Stickler.yml
+          grep -q "commit: $GITHUB_SHA" packaging/flatpak/ng.tshia.Stickler.yml
           flatpak-builder --user --force-clean --repo=repo build packaging/flatpak/ng.tshia.Stickler.yml
           version=$(sed -n 's/^version = "\([0-9]*\)".*/\1/p' pyproject.toml)
           flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
             repo "Stickler-$version.flatpak" ng.tshia.Stickler
-      - uses: actions/upload-artifact@v7.0.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: flatpak
           path: Stickler-*.flatpak
@@ -40,10 +58,10 @@ jobs:
     # the Anylinux AppImages project's Arch image, pinned (scripts/appimage.sh)
     container: ghcr.io/pkgforge-dev/archlinux@sha256:a96f110aad5150fedd880c05099edd42348e0caf8282ce8c19b92720ed265d5b
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build the AppImage
         run: sh scripts/appimage.sh
-      - uses: actions/upload-artifact@v7.0.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: appimage
           path: dist/Stickler-*
@@ -56,7 +74,7 @@ jobs:
     permissions:
       contents: write # upload to the release
     steps:
-      - uses: actions/download-artifact@v8.0.2
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: files
           merge-multiple: true
