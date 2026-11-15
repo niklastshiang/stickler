@@ -123,6 +123,35 @@ export (46) → menu, appearance and keyboard (47) → narrow windows and the Ge
 | A string slips through untranslated | Low | The translation test fails on string literals shown to the user without `_()` |
 | Drop or file chooser paths behave differently in the Flatpak | Medium | Only portal-friendly GTK APIs (`Gtk.FileDialog`, `Gdk.FileList`, `Gtk.FileLauncher`); the sandbox trial in `packaging` checks them early |
 
+## GTK application: `sheet-view` (approved 2026-11-15, SPEC.md "Module `sheet-view`")
+
+The sheet music on the result page: Verovio engraves, librsvg draws, cairo adds the marker.
+
+Design decisions:
+- **Verovio lives in `stickler_gtk/logic/engraving.py`:** it needs no GTK, so the layout, the
+  measure of each written bar and its rectangle are tested in CI like the rest of the logic.
+  Only drawing (librsvg, cairo) and the PDF are in `ui/`.
+- **Rectangles from the SVG, not from librsvg:** a measure's staff lines give its left and
+  right edge and the staff's top and bottom; the marker pads that box. Parsed with the standard
+  library's XML parser from Verovio's SVG.
+- **Song time → bar in one place (`logic/marker.py`):** the bar map gives the written bar, the
+  engraving gives its measure; `playback` will only call it.
+- **Layout follows the width:** Verovio's page width is the window's width divided by the zoom;
+  a new width waits for the resizing to pause (about 150 ms) before Verovio runs again.
+- **The font through fontconfig only:** `scripts/gtk.sh` writes a fonts.conf that adds
+  `.venv-gtk/share/fonts`; nothing is installed into the user's own font folders.
+
+Order: dependency, font and About (49) → engraving (50) → marker logic (51) → the page in the
+window, width and zoom, dark (52) → marking by click and by time (53) → PDF and "Open With…"
+(54).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Verovio's layout at small widths is hard to read for drums | Medium | The owner looks at it at the checkpoint; scale and page width are the only levers the spec allows without asking |
+| Re-engraving on every resize makes the window sluggish | Medium | Debounced; Verovio took ≤ 0.06 s per song in the Verovio test; measured again in Task 52 |
+| Verovio's SVG structure (classes, ids) changes in a later version | Medium | The engraving tests pin the structure they read; a Verovio update is "ask first" |
+| The font is found in development but not in the Flatpak | Low | The Flatpak's `/app/share/fonts` is on fontconfig's path; the `packaging` trial checks it |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

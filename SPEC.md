@@ -389,7 +389,7 @@ only in its first version.
 | `engine-api` | Additions to `stickler.api`, no GTK: progress and cancellation for `transcribe_song`, `notate` and `setup_adapters`; song bar → written bar map; correction parameters; audio of the detected hits | – | approved, below |
 | `design` | Mockups of every screen, made with the owner, following the GNOME HIG; no code | – | approved, below |
 | `app-shell` | Window, open or drop a song, analysis with a step display, export (MusicXML, drum track; PDF with `sheet-view`), recent songs | `engine-api`, `design` | approved, below |
-| `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | draft, below |
+| `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | approved, below |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | – |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | – |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
@@ -845,7 +845,9 @@ def _on_progress(self, step: api.Step) -> None:  # called on the worker thread
 
 ### Module `sheet-view`
 
-> Status: **draft**, waiting for the owner's approval (2026-11-15).
+> Status: **approved** by the owner on 2026-11-15 (Verovio as a new dependency of the app
+> included). Plan: `tasks/plan.md` ("GTK application: `sheet-view`"), tasks 49–54 in
+> `tasks/todo.md`.
 
 #### Assumptions
 

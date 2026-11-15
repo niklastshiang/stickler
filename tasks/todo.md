@@ -414,6 +414,50 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint I
 - [x] All 9 success criteria of SPEC.md `app-shell` met; review with the owner (2026-11-15): cancel back to where you came from is as wanted; the drum track's line in the export menu now names only the format, "As FLAC or WAV" (also on the design canvas); the appearance circles showed the radio indicator of grouped check buttons, now hidden (checked in a rendered PNG and by the owner).
 
+## Phase 10: GTK application, module `sheet-view` (approved 2026-11-15, SPEC.md "Module `sheet-view`")
+
+- [ ] **Task 49: Verovio, the Leipzig font, credits** (S)
+  - Acceptance:
+    - Verovio 6.4.1 in a uv dependency group `app`, synced by default and by `scripts/gtk.sh`; a test fails if `src/stickler` imports `verovio`.
+    - `packaging/fonts/Leipzig.ttf` from Verovio's tag `version-6.4.1` with `OFL.txt`; `scripts/gtk.sh` copies it into `.venv-gtk/share/fonts` and sets `FONTCONFIG_FILE` to a config adding that folder.
+    - The About dialog names Verovio (LGPL-3.0) and Leipzig (SIL OFL).
+  - Verify: `scripts/check.sh task`; `FONTCONFIG_FILE=… fc-list | grep Leipzig` inside `scripts/gtk.sh`'s environment
+  - Dependencies: none · Files: `pyproject.toml`, `uv.lock`, `packaging/fonts/*`, `scripts/gtk.sh`, `src/stickler_gtk/ui/menu.py`, tests
+
+- [ ] **Task 50: Engraving with Verovio** (M)
+  - Acceptance:
+    - `logic/engraving.py`: MusicXML → SVG pages for a page width and zoom; for each written bar its page and rectangle, taken from the measure's staff lines.
+    - Tests on MusicXML from `notation.engrave` (repeats, pickup, multi-measure rest): one rectangle per written bar, inside its page, left to right within a system.
+  - Verify: `uv run pytest -q tests/gtk/test_engraving.py`; Eye of the Tiger: 43 measures with rectangles, the 8 bars with dotted notes as tall as their staff
+  - Dependencies: 49 · Files: `src/stickler_gtk/logic/engraving.py`, tests
+
+- [ ] **Task 51: From song time to the marked bar** (S)
+  - Acceptance:
+    - `logic/marker.py`: seconds → song bar (`Notation.bars`) → written bar → measure; a point on a page → the measure under it.
+  - Verify: tests; Eye of the Tiger: every song bar's start time marks the bar map's written bar (110), song bar 3 marks written bar 1
+  - Dependencies: 50 · Files: `src/stickler_gtk/logic/marker.py`, tests
+
+- [ ] **Task 52: The page in the window** (M)
+  - Acceptance:
+    - The result page shows the pages under one another (librsvg), as wide as the window; re-engraved after resizing pauses; Ctrl+plus/minus, Ctrl+scroll, Ctrl+0; dark style inverts the page.
+  - Verify: widget tests (page appears after a fake analysis, zoom changes the layout); by hand: Eye of the Tiger within 1 s of the result, at 360 px and 1000 px
+  - Dependencies: 50 · Files: `src/stickler_gtk/ui/sheet.py`, `src/stickler_gtk/ui/window.py`, `po/*`, tests
+
+- [ ] **Task 53: Marking bars** (S)
+  - Acceptance:
+    - A click marks the bar under it; `Window.show_position(seconds)` marks the bar sounding then and scrolls it into view; the marker is blue in both styles.
+  - Verify: widget tests (click, position); by hand: click through Eye of the Tiger
+  - Dependencies: 51, 52 · Files: `src/stickler_gtk/ui/sheet.py`, tests
+
+- [ ] **Task 54: PDF export and "Open With…"** (S)
+  - Acceptance:
+    - Export menu: "Sheet Music (PDF)…" writes Verovio's A4 pages with librsvg into a cairo PDF; "Open With…" opens the system's app chooser for the MusicXML.
+  - Verify: a test finds one PDF page per Verovio page for a short song; by hand the tempo mark reads "♩ = 109" in the PDF of Eye of the Tiger
+  - Dependencies: 49, 50 · Files: `src/stickler_gtk/ui/pdf.py`, `src/stickler_gtk/ui/window.py`, `po/*`, tests
+
+### Checkpoint J
+- [ ] All 7 success criteria of SPEC.md `sheet-view` met; the owner looks at the sheet music at small widths and in dark style
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
