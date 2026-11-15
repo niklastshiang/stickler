@@ -48,7 +48,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
     - Manual: view the MIDI of an MDB track in MuseScore.
   - Dependencies: 3 · Files: `adapters/transcribers/adt_str/*`, `src/stickler/api.py` (setup)
 
-- [ ] **Task 5: `stickler run` and `stickler eval` with cache** (M)
+- [x] **Task 5: `stickler run` and `stickler eval` with cache** (M): ticked 2026-11-15 by the owner; built early, releases 1–3 rest on it.
   - Acceptance:
     - `run` computes the combinations active in `config/benchmark.yaml` over a dataset.
     - `eval` writes `results/metrics.csv`.
@@ -124,7 +124,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Verify: `pytest -m adapters -k beat_this`
   - Dependencies: 3 · Files: `adapters/beats/beat_this/*`
 
-- [ ] **Task 15: Own songs: loader, alignment, click check** (M)
+- [x] **Task 15: Own songs: loader, alignment, click check** (M): ticked 2026-11-15 by the owner; `datasets/own.py` and `stickler align` are in use since release 1.
   - Acceptance:
     - `references/own/<song>.mid` + `.yaml` are mapped onto audio time via the beat positions.
     - `stickler align` produces a click-check WAV.
@@ -132,7 +132,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Verify: Unit tests for `align` (synthetic tempo rubato); the user listens to the click-check WAV
   - Dependencies: 5, 14, user MIDI · Files: `src/stickler/{align,datasets/own}.py`, tests
 
-- [ ] **Task 16: ENST application and loader** (S)
+- [x] **Task 16: ENST application and loader** (S): ticked 2026-11-15 by the owner; `docs/enst-request.md` and `datasets/enst.py` (`stickler fetch enst`) exist.
   - Acceptance: `docs/enst-request.md` as a draft for the user. `datasets/enst.py` loads the dataset as soon as `data/enst/` exists, otherwise it is skipped.
   - Status 2026-11-12: request draft done (`docs/enst-request.md`, licence summarised). The loader waits for the data, so it can be built against the real folder layout.
   - Verify: Unit test with a mini fixture
