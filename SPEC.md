@@ -389,7 +389,7 @@ only in its first version.
 | `engine-api` | Additions to `stickler.api`, no GTK: progress and cancellation for `transcribe_song`, `notate` and `setup_adapters`; song bar → written bar map; correction parameters; audio of the detected hits | – | approved, below |
 | `design` | Mockups of every screen, made with the owner, following the GNOME HIG; no code | – | approved, below |
 | `app-shell` | Window, open or drop a song, analysis with a step display, export (MusicXML, drum track; PDF with `sheet-view`), recent songs | `engine-api`, `design` | approved, below |
-| `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | – |
+| `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | draft, below |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | – |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | – |
 | `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | – |
@@ -842,6 +842,117 @@ def _on_progress(self, step: api.Step) -> None:  # called on the worker thread
 - "Open in MuseScore" (screen 8) moves to `sheet-view`, next to the PDF. It becomes "Open
   With…", the system's own app chooser (OpenURI portal) on the MusicXML file, which needs no
   permission; starting MuseScore directly from the sandbox would need access to the host.
+
+### Module `sheet-view`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-15).
+
+#### Assumptions
+
+1. **Verovio 6.4.1** (PyPI, 2026-11-03; LGPL-3.0; actively maintained, last push 2026-11-12;
+   `cp310-abi3` wheels, so one wheel serves Python 3.12 to 3.14) engraves the app's MusicXML
+   into SVG pages. It is a dependency of the app only: a uv dependency group `app`, synced by
+   default (so the logic tests run in CI) and by `scripts/gtk.sh`; `src/stickler` never imports
+   it. Used unmodified through its Python module, as the LGPL allows; the About dialog names it.
+2. **Drawing:** librsvg renders each SVG page into a widget; the bar marker is drawn on top with
+   cairo. Bar rectangles come from the staff lines in Verovio's SVG, not from librsvg, whose
+   rectangles are wrong for bars with dotted notes (Verovio test, idea one-pager).
+3. **The marker follows song time:** a position in seconds → the song bar (`Notation.bars`) →
+   its written bar number → that bar's measure in Verovio's output (a multi-measure rest is one
+   measure, as the bar map already says). `playback` will drive it; in this module a click on a
+   bar marks it, and the window exposes the position call for `playback` and the tests.
+4. **The Leipzig font ships with the app** (owner, 2026-11-15), so librsvg draws Verovio's
+   tempo mark: `Leipzig.ttf` from Verovio's tag `version-6.4.1` (SIL Open Font License) in
+   `packaging/fonts/` with its licence. librsvg finds fonts through fontconfig only (checked
+   2026-11-15: loading it into Pango's font map did not reach librsvg, nor did the WOFF2 inside
+   Verovio's `Leipzig.css`; a font folder in fontconfig did). Development: `scripts/gtk.sh`
+   copies it into `.venv-gtk/share/fonts` and points `FONTCONFIG_FILE` at a config that adds
+   that folder; the Flatpak installs it to `/app/share/fonts`.
+5. **Layout** (owner, 2026-11-15): pages one under the other, the page as wide as the window;
+   Ctrl+plus, Ctrl+minus, Ctrl+scroll zoom, Ctrl+0 back to the window's width. Verovio lays the
+   bars out anew for the width (a short pause after resizing, not on every pixel).
+6. **Dark style:** the page is inverted (light notes on a dark page); the marker stays blue.
+7. **PDF export** comes here (owner, 2026-11-14): Verovio's pages at A4, drawn with librsvg into
+   a cairo PDF; no MuseScore. "Open With…" offers the system's app chooser for the MusicXML
+   (OpenURI portal, no permission).
+
+#### Objective
+
+The result page shows the sheet music (design screen 6, without the playback bar, which is
+`playback`): readable at any window width, in light and dark, with the bar marker, and exports
+it as PDF.
+
+1. After an analysis (or a correction, later) the page shows the engraved song; title, artist,
+   tempo and meter stay in the header.
+2. Width and zoom as in assumption 5; scrolling is vertical only.
+3. A click on a bar marks it; the position call marks the bar sounding at a time and scrolls it
+   into view when it is off screen.
+4. The export menu gains "Sheet Music (PDF)…" and "Open With…" (design screen 8).
+
+Not part of this module: playback and the volume (`playback`), the corrections (`corrections`),
+printing directly (the PDF covers it).
+
+#### Commands
+
+```bash
+scripts/gtk.sh                          # the app; now also installs the Leipzig font for it
+uv run pytest -q tests/gtk              # logic tests, Verovio included, no GTK
+scripts/gtk.sh test                     # widget tests (pytest -m gtk)
+scripts/check.sh task                   # before every commit
+```
+
+#### Project structure (additions)
+
+```
+src/stickler_gtk/logic/engraving.py   # Verovio: MusicXML → SVG pages at a width and zoom;
+                                      # the measure of each written bar; its rectangle from
+                                      # the staff lines
+src/stickler_gtk/logic/marker.py      # song time → song bar → written bar → measure
+src/stickler_gtk/ui/sheet.py          # the pages (librsvg) and the marker (cairo)
+src/stickler_gtk/ui/pdf.py            # Verovio's A4 pages → PDF with librsvg and cairo
+packaging/fonts/Leipzig.ttf, packaging/fonts/OFL.txt
+tests/gtk/test_engraving.py, test_marker.py
+```
+
+#### Testing strategy
+
+- Logic first, with Verovio and without GTK, on MusicXML that `notation.engrave` writes for
+  the notation tests' songs (with repeats, a pickup, a multi-measure rest): every written bar has
+  one rectangle inside its page; the rectangles of a system follow left to right; every song
+  time inside the song maps to a bar, and the marked measure is the bar map's written bar.
+- Eye of the Tiger once by hand and in a slow test: 43 measures, each with a rectangle; the 8
+  bars with dotted notes get rectangles as tall as their staff (where librsvg failed).
+- Widgets: the page appears after a fake analysis; zoom changes the layout; a click marks a bar.
+- PDF: a test renders a short song to PDF and finds one PDF page per Verovio page; by hand the
+  tempo mark shows as "♩ = 109", not a box.
+
+#### Boundaries
+
+- **Always:** Verovio only in `stickler_gtk`; layout and bar rectangles in `logic/`; the font
+  only through fontconfig.
+- **Ask first:** another Verovio version or another music font; changing Verovio's engraving
+  options beyond page size, scale and breaks.
+- **Never:** Verovio in `src/stickler`; MuseScore for the app's PDF; a sideways scroll bar.
+
+#### Success criteria
+
+1. Eye of the Tiger appears on the result page within 1 s of the result (Verovio and librsvg
+   together), as wide as the window, at 360 px and at 1000 px.
+2. Zoom works with the keyboard and Ctrl+scroll; Ctrl+0 returns to the window's width.
+3. Every one of the 43 written bars of Eye of the Tiger can be marked by a click; marking song
+   bar 3 (inside the first multi-measure rest) marks written bar 1.
+4. The position call marks the right bar for every song bar of Eye of the Tiger (110, checked
+   against the bar map) and scrolls it into view.
+5. In dark style the page is inverted and the marker blue.
+6. The PDF export writes A4 pages with the tempo mark drawn correctly; "Open With…" opens the
+   system's app chooser for the MusicXML.
+7. `scripts/check.sh task` is green, `stickler_gtk/logic` stays at ≥ 95% coverage, and no
+   Verovio import exists in `src/stickler`.
+
+#### Open questions
+
+- Whether Verovio's default engraving options read well for drums at small widths (system
+  breaks, spacing) is only seen on screen; the owner looks at it in this module's checkpoint.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
