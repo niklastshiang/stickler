@@ -569,6 +569,12 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests; by hand: a fresh setup with `STICKLER_ADAPTERS` pointing at a copy
   - Dependencies: 68 · Files: `src/stickler_gtk/ui/*`, `src/stickler_gtk/logic/session.py`, `po/*`, tests
 
+- [ ] **Task 70: Spanish as a third language** (S) (owner, 2026-11-15: the owner's drum teacher is from Peru)
+  - Acceptance:
+    - `po/es.po` complete, neutral Latin American Spanish, informal "tú" (as German "du"); built and installed like German; the tests check every language's catalogue, not only German; the width test also measures Spanish; SPEC.md records the third language.
+  - Verify: `uv run pytest -q tests/gtk/test_translations.py`; `scripts/gtk.sh test`; by hand: `LANGUAGE=es scripts/gtk.sh`
+  - Dependencies: 69 · Files: `po/es.po`, `po/LINGUAS` if any, `scripts/{i18n,gtk}.sh`, tests, `SPEC.md`
+
 ### Checkpoint M
 - [ ] All 6 success criteria of SPEC.md `setup-assistant` met; the owner publishes the mirror release (or gives the go) and runs a fresh setup
 
