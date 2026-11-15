@@ -578,6 +578,46 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint M
 - [x] All 6 success criteria of SPEC.md `setup-assistant` met; the owner publishes the mirror release (or gives the go) and runs a fresh setup. Done 2026-11-15: the owner gave the go, the release `beat-this-final0` is published (not "latest"); with JKU down, `download.fetch` took the copy (81 MB, SHA-256 matching). The owner's fresh setup into a copy of the adapters worked. German wording fixed after the owner's remark ("Sein Modell" → "Dieses"/"Das Modell"). Resuming and Not Now are covered by widget tests.
 
+## Phase 14: Packaging (approved 2026-11-15, SPEC.md "Module `packaging`")
+
+- [ ] **Task 71: The app imports no benchmark code** (S)
+  - Acceptance: importing `stickler.api` and the GTK app loads neither `mir_eval` nor `scipy`; the benchmark still works (they load when it runs).
+  - Verify: a test that imports the app in a fresh interpreter and checks `sys.modules`; `scripts/check.sh task`
+  - Dependencies: none · Files: `src/stickler/api.py` (lazy imports), tests
+
+- [ ] **Task 72: Python 3.14 for all seven models** (M)
+  - Acceptance: every adapter's `requires-python` is 3.14, its lock resolved with wheels for every package, its environment rebuilt; one own song compared with the 3.12 result; identical results rekeyed, differences noted and left to be recomputed.
+  - Verify: per adapter, the comparison; `stickler doctor`; `scripts/check.sh task`
+  - Dependencies: none · Files: `adapters/*/*/{pyproject.toml,uv.lock}`, `.python-version` if needed, README notes
+
+- [ ] **Task 73: Packaged paths** (S)
+  - Acceptance: in a packaged app models live in `$XDG_DATA_HOME/stickler/adapters` (sources copied from the app, refreshed on a new version, environments and weights kept) and results in `$XDG_CACHE_HOME/stickler`; `uv` uses the runtime's Python in the Flatpak and its own in the AppImage; the checkout keeps today's folders.
+  - Verify: logic tests for each case
+  - Dependencies: 72 · Files: `src/stickler_gtk/logic/{paths,analysis,setup}.py`, `src/stickler_gtk/ui/window.py`, tests
+
+- [ ] **Task 74: AppStream MetaInfo** (S)
+  - Acceptance: `packaging/ng.tshia.Stickler.metainfo.xml` with description, screenshots (from the app), releases, OARS, licences, developer; `appstreamcli validate` in CI.
+  - Verify: `appstreamcli validate --pedantic`
+  - Dependencies: none · Files: `packaging/*`, `docs/screenshots/*`, `.github/workflows/check.yml`
+
+- [ ] **Task 75: The Flatpak** (M)
+  - Acceptance: the manifest builds offline from pinned sources (Python wheels from flatpak-pip-generator, uv with SHA-256); installed locally, the app starts, the setup assistant sets up the models inside the sandbox, a song is analysed and played.
+  - Verify: `flatpak-builder --install`; by hand with Eye of the Tiger
+  - Dependencies: 71, 73, 74 · Files: `packaging/flatpak/*`
+
+- [ ] **Task 76: The AppImage** (M)
+  - Acceptance: `scripts/appimage.sh` builds `Stickler-x86_64.AppImage` with quick-sharun (pinned) in an Arch container; it starts, sets up, analyses and plays.
+  - Verify: the script in a local container; `quick-sharun --test`; by hand
+  - Dependencies: 71, 73, 74 · Files: `scripts/appimage.sh`, `packaging/appimage/*`
+
+- [ ] **Task 77: Release workflow** (M)
+  - Acceptance: `.github/workflows/release.yml` builds both on a release tag and attaches them, and on a manual run uploads them as artifacts; the release notes template says how to install each.
+  - Verify: a manual run
+  - Dependencies: 75, 76 · Files: `.github/workflows/release.yml`, `docs/` release notes
+
+### Checkpoint N
+- [ ] All 6 success criteria of SPEC.md `packaging` met; the owner installs the Flatpak and the AppImage from a CI run
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
