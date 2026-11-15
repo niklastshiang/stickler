@@ -634,6 +634,8 @@ is drawn here; a change of a screen is agreed on the canvas first and copied to 
   (simplify, repeat signs), with "Back to Detected".
 - **Playback:** what to hear is Song / Hits / Both; a volume button opens one slider for the song
   and one for the detected hits.
+- **Export menu (owner, 2026-11-15):** MusicXML keeps a line on what it is for; the drum track
+  has none, its name says enough.
 - **Export of the drum track announces its cost** before it starts: Fast does not separate the
   drums, so the export runs Demucs (CPU: about 1.84× the song's length) and downloads it once
   (about 1.2 GB).

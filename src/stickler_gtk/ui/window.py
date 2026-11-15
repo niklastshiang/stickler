@@ -191,11 +191,12 @@ class Window(Adw.ApplicationWindow):
                 _("MusicXML…"),
                 _("To edit in MuseScore or another notation program"),
             ),
-            ("win.export-drums", _("Drum Track…"), _("Only the drums, as FLAC or WAV")),
+            ("win.export-drums", _("Drum Track…"), ""),  # owner: the name says enough
         ):
             text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             text.append(Gtk.Label(label=title, xalign=0))
-            text.append(Gtk.Label(label=detail, xalign=0, css_classes=["caption", "dim-label"]))
+            if detail:
+                text.append(Gtk.Label(label=detail, xalign=0, css_classes=["caption", "dim-label"]))
             button = Gtk.Button(child=text, action_name=action, css_classes=["flat"])
             box.append(button)
         popover = Gtk.Popover(child=box)

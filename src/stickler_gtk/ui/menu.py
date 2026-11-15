@@ -23,7 +23,9 @@ STYLE = """
 .style-switcher { margin: 6px 12px 12px; }
 .style-switcher checkbutton { padding: 0; min-height: 40px; min-width: 40px;
   border-radius: 9999px; box-shadow: inset 0 0 0 1px alpha(black, 0.2); }
-.style-switcher checkbutton check { opacity: 0; min-width: 0; min-height: 0; margin: 0; }
+/* grouped check buttons draw a radio indicator: the ring shows the choice instead */
+.style-switcher checkbutton radio { opacity: 0; min-width: 0; min-height: 0; margin: 0;
+  padding: 0; border: none; -gtk-icon-source: none; }
 .style-switcher checkbutton:checked { box-shadow: inset 0 0 0 3px var(--accent-bg-color); }
 .style-switcher .system {
   background: linear-gradient(to bottom right, #ffffff 49.9%, #222226 50.1%); }
@@ -52,7 +54,12 @@ def _style_switcher() -> Gtk.Widget:
     group = None
     for appearance, name in names.items():
         button = Gtk.CheckButton(
-            group=group, active=appearance == current, tooltip_text=name, css_classes=[appearance]
+            group=group,
+            active=appearance == current,
+            tooltip_text=name,
+            css_classes=[appearance],
+            halign=Gtk.Align.CENTER,
+            valign=Gtk.Align.CENTER,
         )
         button.update_property([Gtk.AccessibleProperty.LABEL], [name])
         button.connect("toggled", lambda b, a=appearance: b.get_active() and choose_appearance(a))

@@ -17,5 +17,6 @@ for lang in ${STICKLER_LANGUAGES:-de}; do
     msginit --no-translator --locale="$lang" --input=po/stickler.pot --output-file="po/$lang.po"
   fi
   msgmerge --quiet --update --backup=none --previous "po/$lang.po" po/stickler.pot
+  msgattrib --no-obsolete --output-file="po/$lang.po" "po/$lang.po"  # drop removed texts
 done
 echo "po/stickler.pot: $(grep -c '^msgid ' po/stickler.pot) entries (including the header)"
