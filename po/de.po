@@ -134,7 +134,7 @@ msgstr "erkennt die Schläge"
 msgid ""
 "Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0)."
 msgstr ""
-"Sein trainiertes Modell ist nur für nicht-kommerzielle Nutzung frei (CC BY-"
+"Dieses trainierte Modell ist nur für nicht-kommerzielle Nutzung frei (CC BY-"
 "NC-SA 4.0)."
 
 #: src/stickler_gtk/logic/setup.py:95
@@ -143,7 +143,7 @@ msgstr "findet den Beat und die Takte"
 
 #: src/stickler_gtk/logic/setup.py:96
 msgid "MIT licence. Its model comes from the JKU Linz server."
-msgstr "MIT-Lizenz. Sein Modell kommt vom Server der JKU Linz."
+msgstr "MIT-Lizenz. Das Modell kommt vom Server der JKU Linz."
 
 #: src/stickler_gtk/logic/steps.py:13
 msgid "Only the drum track, without the band"

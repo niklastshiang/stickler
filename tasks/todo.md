@@ -576,7 +576,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Dependencies: 69 · Files: `po/es.po`, `po/LINGUAS` if any, `scripts/{i18n,gtk}.sh`, tests, `SPEC.md`
 
 ### Checkpoint M
-- [ ] All 6 success criteria of SPEC.md `setup-assistant` met; the owner publishes the mirror release (or gives the go) and runs a fresh setup
+- [x] All 6 success criteria of SPEC.md `setup-assistant` met; the owner publishes the mirror release (or gives the go) and runs a fresh setup. Done 2026-11-15: the owner gave the go, the release `beat-this-final0` is published (not "latest"); with JKU down, `download.fetch` took the copy (81 MB, SHA-256 matching). The owner's fresh setup into a copy of the adapters worked. German wording fixed after the owner's remark ("Sein Modell" → "Dieses"/"Das Modell"). Resuming and Not Now are covered by widget tests.
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 

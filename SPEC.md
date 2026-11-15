@@ -392,7 +392,7 @@ only in its first version.
 | `sheet-view` | Sheet music in the app (Verovio → SVG → librsvg), bar marker, tempo and artist in the window; PDF export through Verovio | `app-shell` | done, below |
 | `playback` | Play the song: original / detected / both; the position drives the marker | `sheet-view`, `engine-api` | done, below |
 | `corrections` | Side panel with the light corrections; re-engraves | `sheet-view`, `engine-api` | done, below |
-| `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | approved, below |
+| `setup-assistant` | Consent, download of the Fast models with progress, resumable | `app-shell`, `engine-api` | done, below |
 | `packaging` | Flatpak and AppImage with every release | all | – |
 
 Build order: `engine-api`, `design` (in parallel) → `app-shell` → `sheet-view` → `playback`,
@@ -1189,8 +1189,8 @@ tests/gtk/test_corrections.py
 
 ### Module `setup-assistant`
 
-> Status: **approved** by the owner on 2026-11-15. Plan: `tasks/plan.md` ("GTK application:
-> `setup-assistant`"), tasks 65–69 in `tasks/todo.md`.
+> Status: **done** (Checkpoint M, 2026-11-15). Approved by the owner on 2026-11-15. Plan:
+> `tasks/plan.md` ("GTK application: `setup-assistant`"), tasks 65–69 in `tasks/todo.md`.
 
 #### Assumptions
 
