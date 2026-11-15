@@ -480,7 +480,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: a widget test with `fakesink` and a generated song: plays, the position advances, a seek lands within 50 ms, `stop` leaves the pipeline NULL
   - Dependencies: 55 · Files: `src/stickler_gtk/ui/player.py`, tests
 
-- [ ] **Task 57: The playback bar** (M)
+- [x] **Task 57: The playback bar** (M): done 2026-11-15. The analysis job writes the clicks after the notation (left out if that fails); the pipeline loads on the first play, the length comes from `SongInfo`; the bar is stopped whenever the result page is left and on close.
   - Acceptance:
     - The clicks WAV is made with `api.render_hits` when a result appears; the result page has the playback bar (design screen 6): play/pause, time, position slider (seek), length, "Bar n of N".
   - Verify: widget tests with a fake player; by hand: Eye of the Tiger plays, pauses, seeks

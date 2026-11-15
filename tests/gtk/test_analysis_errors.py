@@ -98,3 +98,21 @@ def test_the_analysis_job_passes_progress_and_cancel_to_notate(monkeypatch):
     assert got == (info, _notation())
     assert seen["cancel"] is token and seen["progress"] is print and seen["pdf"] is False
     assert (seen["title"], seen["artist"]) == ("Eye of the Tiger", "Survivor")
+
+
+def test_the_analysis_job_writes_the_clicks_and_goes_on_without_them(monkeypatch, tmp_path):
+    info = api.SongInfo("Eye of the Tiger", "Survivor", 246.0)
+    monkeypatch.setattr(api, "song_info", lambda p: info)
+    monkeypatch.setattr(api, "notate", lambda song, out, **kw: _notation())
+    written = []
+    monkeypatch.setattr(api, "render_hits", lambda t, dest: written.append((t, dest)) or dest)
+    clicks = tmp_path / "hits" / "eye.wav"
+    analysis.analyse(Path("eye.flac"), Path("eye.musicxml"), print, api.CancelToken(), clicks)
+    assert written == [(_notation().transcription, clicks)]
+
+    def unreadable(t, dest):
+        raise RuntimeError("ffprobe: eye.flac: no duration")
+
+    monkeypatch.setattr(api, "render_hits", unreadable)
+    got = analysis.analyse(Path("eye.flac"), Path("eye.musicxml"), print, api.CancelToken(), clicks)
+    assert got == (info, _notation())  # the song still plays, only without its clicks

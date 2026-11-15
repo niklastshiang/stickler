@@ -483,3 +483,83 @@ def test_the_app_finds_its_own_icon():
     application.register_icons()
     theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
     assert theme.has_icon(APP_ID) and theme.has_icon(f"{APP_ID}-symbolic")
+
+
+class _FakePlayer:
+    """ui.player.Player's interface, without sound."""
+
+    made: list = []
+
+    def __init__(self, **kw):
+        self.on_end, self.loaded, self.at, self.is_playing = kw.get("on_end"), None, 0.0, False
+        _FakePlayer.made.append(self)
+
+    def load(self, song, clicks):
+        self.loaded, self.at = (song, clicks), 0.0
+
+    def play(self):
+        self.is_playing = True
+
+    def pause(self):
+        self.is_playing = False
+
+    def seek(self, seconds):
+        self.at = seconds
+
+    def position(self):
+        return self.at
+
+    def playing(self):
+        return self.is_playing
+
+    def set_volumes(self, song, clicks):
+        self.volumes = (song, clicks)
+
+    def stop(self):
+        self.loaded, self.is_playing = None, False
+
+
+def _playing_window(monkeypatch, tmp_path):
+    from stickler_gtk.ui import playbar
+
+    _FakePlayer.made = []
+    monkeypatch.setattr(playbar, "Player", _FakePlayer)
+    return _result_window(monkeypatch, tmp_path)
+
+
+def test_the_playback_bar_plays_follows_and_seeks(monkeypatch, tmp_path):
+    from gi.repository import Gtk
+
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        bar = window.playbar
+        assert bar.length.get_label() == "4:06" and bar.time.get_label() == "0:00"
+        assert bar.bar.get_label() == "Bar 1 of 8"
+        window.activate_action("win.play", None)
+        player = _FakePlayer.made[-1]
+        assert player.is_playing and player.loaded[0] == tmp_path / "eye.flac"
+        assert bar.play.get_icon_name() == "media-playback-pause-symbolic"
+        player.at = 5.0
+        assert _wait(lambda: bar.time.get_label() == "0:05")
+        assert bar.bar.get_label() == "Bar 3 of 8" and window.sheet.marked == 3
+        bar.position.emit("change-value", Gtk.ScrollType.JUMP, 10.0)
+        assert player.at == 10.0
+        window.activate_action("win.play", None)
+        assert not player.is_playing
+        assert bar.play.get_icon_name() == "media-playback-start-symbolic"
+    finally:
+        window.close()
+
+
+def test_at_the_end_playback_stops_and_starts_again_from_the_top(monkeypatch, tmp_path):
+    window = _playing_window(monkeypatch, tmp_path)
+    try:
+        window.activate_action("win.play", None)
+        player = _FakePlayer.made[-1]
+        player.at = 16.0
+        player.on_end()
+        assert window.playbar.play.get_icon_name() == "media-playback-start-symbolic"
+        window.activate_action("win.play", None)
+        assert player.is_playing and player.at == 0.0
+    finally:
+        window.close()

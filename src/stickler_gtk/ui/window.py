@@ -24,6 +24,7 @@ from stickler_gtk.logic import (
 )
 from stickler_gtk.logic.steps import StepRow
 from stickler_gtk.ui import menu, pdf, worker
+from stickler_gtk.ui.playbar import PlayBar
 from stickler_gtk.ui.sheet import Sheet
 
 DEFAULT_SIZE = (1000, 700)
@@ -160,7 +161,15 @@ class Window(Adw.ApplicationWindow):
         self._show_recent()
         self.pages.add_named(_empty_page(self.recent_group), "empty")
         self.pages.add_named(self.analysing, "analysing")
-        self.pages.add_named(self.sheet, "result")
+        self.playbar = PlayBar(on_position=self.show_position)
+        self.playbar.on_error = lambda reason: self.toast(
+            _("The song cannot be played: {reason}").format(reason=reason)
+        )
+        result_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        result_page.append(self.sheet)
+        result_page.append(Gtk.Separator())
+        result_page.append(self.playbar)
+        self.pages.add_named(result_page, "result")
         self.pages.add_named(self.error, "error")
 
         self.toasts = Adw.ToastOverlay(child=self.pages)
@@ -186,6 +195,7 @@ class Window(Adw.ApplicationWindow):
             ("open-with", self.open_with),
             ("export-drums", self.export_drums),
             ("close", self.close),
+            ("play", self.playbar.toggle),
             ("zoom-in", lambda: self.sheet.set_zoom(zoom.zoom_in(self.sheet.zoom))),
             ("zoom-out", lambda: self.sheet.set_zoom(zoom.zoom_out(self.sheet.zoom))),
             ("zoom-reset", lambda: self.sheet.set_zoom(1.0)),
@@ -269,6 +279,7 @@ class Window(Adw.ApplicationWindow):
         return False  # let a closing window close
 
     def _on_close(self, _window) -> bool:
+        self.playbar.stop()
         self.wait_for_job(2.0)  # a cancel takes well under a second
         return False  # close
 
@@ -442,7 +453,9 @@ class Window(Adw.ApplicationWindow):
         self.show(state)
         report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, job, step)))
         self.job_thread = worker.run(
-            lambda: analysis.analyse(song, paths.score_path(song), report, token),
+            lambda: analysis.analyse(
+                song, paths.score_path(song), report, token, paths.hits_path(song)
+            ),
             lambda done: self._finished(job, *done),
             lambda exc: self.show(session.failed(self.state, job, exc)),
         )
@@ -468,8 +481,11 @@ class Window(Adw.ApplicationWindow):
             "export-musicxml",
             "export-drums",
             "open-with",
+            "play",
         ):
             self.actions[name].set_enabled(is_result)
+        if not is_result:
+            self.playbar.stop()
         self.export_box.set_visible(is_result)
         self.actions["cancel"].set_enabled(isinstance(state, session.Analysing | session.Exporting))
         if isinstance(state, session.Exporting):
@@ -488,6 +504,12 @@ class Window(Adw.ApplicationWindow):
             if self.sheet.musicxml is None or state.notation.musicxml != self._shown:
                 self._shown = state.notation.musicxml
                 self.sheet.show_musicxml(state.notation.musicxml.read_text(encoding="utf-8"))
+                self.playbar.set_song(
+                    state.song,
+                    paths.hits_path(state.song),
+                    state.info.seconds,
+                    state.notation.bars,
+                )
             self.pages.set_visible_child_name("result")
         elif isinstance(state, session.Failed):
             self.heading.set_title(state.song.stem)
