@@ -449,7 +449,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
   - Verify: widget tests (click, position); by hand: click through Eye of the Tiger
   - Dependencies: 51, 52 · Files: `src/stickler_gtk/ui/sheet.py`, tests
 
-- [ ] **Task 54: PDF export and "Open With…"** (S)
+- [x] **Task 54: PDF export and "Open With…"** (S): done 2026-11-15. A4 in Verovio units (2100 × 2970: a 7.2 mm staff), Verovio's header for title on the first page; Eye of the Tiger fits one page, PDF written in 0.18 s. Found on the way: Verovio dropped the tempo mark of Eye of the Tiger, because it followed the attributes of a bar starting a multi-measure rest; `notation` now writes the tempo direction before the attributes (allowed by MusicXML; MuseScore's PDF of the song checked unchanged), and the app's PDF shows "♩=109" drawn with Leipzig. Verovio does not print the artist (composer); MuseScore does. The design canvas's "Open in MuseScore" became "Open With…".
   - Acceptance:
     - Export menu: "Sheet Music (PDF)…" writes Verovio's A4 pages with librsvg into a cairo PDF; "Open With…" opens the system's app chooser for the MusicXML.
   - Verify: a test finds one PDF page per Verovio page for a short song; by hand the tempo mark reads "♩ = 109" in the PDF of Eye of the Tiger

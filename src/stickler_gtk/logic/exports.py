@@ -24,6 +24,10 @@ def musicxml_name(title: str) -> str:
     return f"{_file_name(title)}.musicxml"
 
 
+def pdf_name(title: str) -> str:
+    return f"{_file_name(title)}.pdf"
+
+
 def drum_track_name(title: str) -> str:
     return _("{title} (drums)").format(title=_file_name(title)) + ".flac"
 

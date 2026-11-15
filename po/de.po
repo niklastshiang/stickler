@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-15 11:03+0100\n"
+"POT-Creation-Date: 2026-11-15 11:07+0100\n"
 "PO-Revision-Date: 2026-11-14 16:03+0100\n"
 "Last-Translator: Stickler maintainers\n"
 "Language-Team: none\n"
@@ -17,12 +17,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/stickler_gtk/logic/exports.py:28
+#: src/stickler_gtk/logic/exports.py:32
 #, python-brace-format
 msgid "{title} (drums)"
 msgstr "{title} (Schlagzeug)"
 
-#: src/stickler_gtk/logic/exports.py:41
+#: src/stickler_gtk/logic/exports.py:45
 #, python-brace-format
 msgid "Separating the drums takes about {minutes} minute on this computer."
 msgid_plural ""
@@ -34,7 +34,7 @@ msgstr[1] ""
 "Das Heraustrennen des Schlagzeugs dauert auf diesem Computer etwa {minutes} "
 "Minuten."
 
-#: src/stickler_gtk/logic/exports.py:46
+#: src/stickler_gtk/logic/exports.py:50
 #, python-brace-format
 msgid "Before that, Demucs is downloaded once (about {size:n} GB)."
 msgstr "Vorher wird Demucs einmalig heruntergeladen (etwa {size:n} GB)."
@@ -138,7 +138,7 @@ msgstr "Noten schreiben"
 msgid "Make the PDF"
 msgstr "PDF erstellen"
 
-#: src/stickler_gtk/logic/steps.py:17
+#: src/stickler_gtk/logic/steps.py:17 src/stickler_gtk/ui/window.py:192
 msgid "To print or to read on a tablet"
 msgstr "Zum Drucken oder Lesen auf dem Tablet"
 
@@ -189,7 +189,7 @@ msgid "Main Menu"
 msgstr "Hauptmenü"
 
 #: src/stickler_gtk/ui/menu.py:90 src/stickler_gtk/ui/window.py:96
-#: src/stickler_gtk/ui/window.py:101 src/stickler_gtk/ui/window.py:218
+#: src/stickler_gtk/ui/window.py:101 src/stickler_gtk/ui/window.py:222
 msgid "Open a Song"
 msgstr "Song öffnen"
 
@@ -252,15 +252,15 @@ msgstr "Wartet"
 msgid "Open…"
 msgstr "Öffnen …"
 
-#: src/stickler_gtk/ui/window.py:117 src/stickler_gtk/ui/window.py:294
+#: src/stickler_gtk/ui/window.py:117 src/stickler_gtk/ui/window.py:325
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/stickler_gtk/ui/window.py:123 src/stickler_gtk/ui/window.py:434
+#: src/stickler_gtk/ui/window.py:123 src/stickler_gtk/ui/window.py:467
 msgid "Writing the Drum Part"
 msgstr "Schlagzeugstimme wird geschrieben"
 
-#: src/stickler_gtk/ui/window.py:127 src/stickler_gtk/ui/window.py:450
+#: src/stickler_gtk/ui/window.py:127 src/stickler_gtk/ui/window.py:483
 msgid "Technical Details"
 msgstr "Technische Details"
 
@@ -277,69 +277,81 @@ msgid "Recent"
 msgstr "Zuletzt geöffnet"
 
 #: src/stickler_gtk/ui/window.py:192
+msgid "Sheet Music (PDF)…"
+msgstr "Noten (PDF) …"
+
+#: src/stickler_gtk/ui/window.py:195
 msgid "MusicXML…"
 msgstr "MusicXML …"
 
-#: src/stickler_gtk/ui/window.py:193
+#: src/stickler_gtk/ui/window.py:196
 msgid "To edit in MuseScore or another notation program"
 msgstr "Zum Bearbeiten in MuseScore oder einem anderen Notenprogramm"
 
-#: src/stickler_gtk/ui/window.py:195
+#: src/stickler_gtk/ui/window.py:198
 msgid "As FLAC or WAV"
 msgstr "Als FLAC oder WAV"
 
-#: src/stickler_gtk/ui/window.py:195
+#: src/stickler_gtk/ui/window.py:198
 msgid "Drum Track…"
 msgstr "Schlagzeugspur …"
 
-#: src/stickler_gtk/ui/window.py:214
+#: src/stickler_gtk/ui/window.py:199
+msgid "Open With…"
+msgstr "Öffnen mit …"
+
+#: src/stickler_gtk/ui/window.py:199
+msgid "The MusicXML in another program"
+msgstr "Die MusicXML in einem anderen Programm"
+
+#: src/stickler_gtk/ui/window.py:218
 msgid "Songs"
 msgstr "Songs"
 
-#: src/stickler_gtk/ui/window.py:233
+#: src/stickler_gtk/ui/window.py:237
 msgid "Not an audio file"
 msgstr "Keine Audiodatei"
 
-#: src/stickler_gtk/ui/window.py:260
+#: src/stickler_gtk/ui/window.py:264
 msgid "Save As"
 msgstr "Speichern unter"
 
-#: src/stickler_gtk/ui/window.py:281
+#: src/stickler_gtk/ui/window.py:291 src/stickler_gtk/ui/window.py:312
 #, python-brace-format
 msgid "Could not save: {reason}"
 msgstr "Speichern nicht möglich: {reason}"
 
-#: src/stickler_gtk/ui/window.py:293
+#: src/stickler_gtk/ui/window.py:324
 msgid "Save the Drum Track?"
 msgstr "Schlagzeugspur speichern?"
 
-#: src/stickler_gtk/ui/window.py:295
+#: src/stickler_gtk/ui/window.py:326
 msgid "Choose Where to Save…"
 msgstr "Speicherort wählen …"
 
-#: src/stickler_gtk/ui/window.py:329
+#: src/stickler_gtk/ui/window.py:360
 msgid "Open"
 msgstr "Öffnen"
 
-#: src/stickler_gtk/ui/window.py:329
+#: src/stickler_gtk/ui/window.py:360
 #, python-brace-format
 msgid "Saved “{name}”"
 msgstr "„{name}“ gespeichert"
 
-#: src/stickler_gtk/ui/window.py:351
+#: src/stickler_gtk/ui/window.py:382
 #, python-brace-format
 msgid "Recent songs could not be saved: {reason}"
 msgstr ""
 "Die zuletzt geöffneten Songs konnten nicht gespeichert werden: {reason}"
 
-#: src/stickler_gtk/ui/window.py:364
+#: src/stickler_gtk/ui/window.py:395
 msgid "Remove from the List"
 msgstr "Aus der Liste entfernen"
 
-#: src/stickler_gtk/ui/window.py:429
+#: src/stickler_gtk/ui/window.py:462
 msgid "Saving the Drum Track"
 msgstr "Schlagzeugspur wird gespeichert"
 
-#: src/stickler_gtk/ui/window.py:450
+#: src/stickler_gtk/ui/window.py:483
 msgid "Commands"
 msgstr "Befehle"

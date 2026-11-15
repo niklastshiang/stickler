@@ -488,3 +488,12 @@ def test_engraving_reports_tempo_and_meter_of_the_grid_it_used():
     beats, downbeats = notation.corrected_grid(BEATS, DOWNBEATS, tempo="half", beats_per_bar=3)
     e = notation.engrave(groove(4), beats, downbeats)
     assert (e.tempo, e.meter) == (60, (3, 4))
+
+
+def test_the_tempo_mark_comes_before_the_attributes_of_the_first_bar():
+    """Verovio drops a tempo mark that follows the attributes of a bar that starts a
+    multi-measure rest (Eye of the Tiger); before them every reader keeps it."""
+    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2: a multi-measure rest
+    first = _measures(notation.to_musicxml(notes, BEATS, DOWNBEATS))[0]
+    assert "<multiple-rest>" in first
+    assert first.index("<metronome>") < first.index("<attributes>")

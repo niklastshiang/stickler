@@ -608,14 +608,15 @@ def engrave(
             attributes += (
                 f"<measure-style><multiple-rest>{multi_rest[m]}</multiple-rest></measure-style>"
             )
-        if attributes:
-            body.append(f"<attributes>{attributes}</attributes>")
-        if m == 0:
+        if m == 0:  # before the attributes: Verovio drops a tempo mark that follows the
+            # attributes of a bar starting a multi-measure rest (MusicXML allows either order)
             body.append(
                 '<direction placement="above"><direction-type><metronome>'
                 f"<beat-unit>quarter</beat-unit><per-minute>{tempo}</per-minute>"
                 f'</metronome></direction-type><sound tempo="{tempo}"/></direction>'
             )
+        if attributes:
+            body.append(f"<attributes>{attributes}</attributes>")
         merge = den == 4 and num % 2 == 0 and not implicit
         meta = "".join(body)
         body = []

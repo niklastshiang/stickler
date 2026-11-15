@@ -11,9 +11,9 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 from stickler import api
 from stickler_gtk import APP_NAME
 from stickler_gtk.i18n import _
-from stickler_gtk.logic import analysis, exports, paths, recent, session, zoom
+from stickler_gtk.logic import analysis, engraving, exports, paths, recent, session, zoom
 from stickler_gtk.logic.steps import StepRow
-from stickler_gtk.ui import menu, worker
+from stickler_gtk.ui import menu, pdf, worker
 from stickler_gtk.ui.sheet import Sheet
 
 DEFAULT_SIZE = (1000, 700)
@@ -169,7 +169,9 @@ class Window(Adw.ApplicationWindow):
             ("cancel", self.cancel),
             ("retry", self.retry),
             ("export", self._open_export_menu),
+            ("export-pdf", self.export_pdf),
             ("export-musicxml", self.export_musicxml),
+            ("open-with", self.open_with),
             ("export-drums", self.export_drums),
             ("close", self.close),
             ("zoom-in", lambda: self.sheet.set_zoom(zoom.zoom_in(self.sheet.zoom))),
@@ -187,12 +189,14 @@ class Window(Adw.ApplicationWindow):
         """Design screen 8: each export with a line on what it is for."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         for action, title, detail in (
+            ("win.export-pdf", _("Sheet Music (PDF)…"), _("To print or to read on a tablet")),
             (
                 "win.export-musicxml",
                 _("MusicXML…"),
                 _("To edit in MuseScore or another notation program"),
             ),
             ("win.export-drums", _("Drum Track…"), _("As FLAC or WAV")),
+            ("win.open-with", _("Open With…"), _("The MusicXML in another program")),
         ):
             text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             text.append(Gtk.Label(label=title, xalign=0))
@@ -273,6 +277,28 @@ class Window(Adw.ApplicationWindow):
         """Marks the bar sounding at `seconds` (for `playback`, which follows the song)."""
         if isinstance(self.state, session.Result):
             self.sheet.mark_time(self.state.notation.bars, seconds)
+
+    def export_pdf(self) -> None:
+        result = self.state
+        if not isinstance(result, session.Result):
+            return
+
+        def save(dest: Path) -> None:
+            try:
+                xml = result.notation.musicxml.read_text(encoding="utf-8")
+                pdf.write_pdf(engraving.a4_pages(xml), dest, title=result.title)
+            except OSError as exc:
+                self.toast(_("Could not save: {reason}").format(reason=exc.strerror))
+                return
+            self._saved(dest)
+
+        self._save_dialog(exports.pdf_name(result.title), save)
+
+    def open_with(self) -> None:
+        """The system's app chooser for the MusicXML (OpenURI portal in the Flatpak)."""
+        if isinstance(self.state, session.Result):
+            musicxml = Gio.File.new_for_path(str(self.state.notation.musicxml))
+            Gtk.FileLauncher(file=musicxml, always_ask=True).launch(self, None, None, None)
 
     def export_musicxml(self) -> None:
         result = self.state
@@ -419,8 +445,10 @@ class Window(Adw.ApplicationWindow):
         is_result = isinstance(state, session.Result)
         for name in (
             "export",
+            "export-pdf",
             "export-musicxml",
             "export-drums",
+            "open-with",
             "zoom-in",
             "zoom-out",
             "zoom-reset",

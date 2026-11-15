@@ -80,6 +80,16 @@ def c_numbers() -> Iterator[None]:
         locale.setlocale(locale.LC_NUMERIC, before)
 
 
+A4 = (2100, 2970)  # Verovio units (tenths of a millimetre): a staff 7.2 mm high in print
+
+
+def a4_pages(musicxml: str) -> list[Page]:
+    """Pages for printing: A4, the title and artist on the first (Verovio's header)."""
+    settings = options(*A4, scale=BASE_SCALE)
+    settings.update({"adjustPageHeight": False, "header": "auto"})
+    return render(musicxml, settings)
+
+
 def render(musicxml: str, settings: dict) -> list[Page]:
     verovio.enableLog(verovio.LOG_ERROR)  # layout warnings (tight bars) are not the user's
     with c_numbers():

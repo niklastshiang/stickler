@@ -392,3 +392,22 @@ def test_a_time_marks_its_bar_and_scrolls_it_into_view(monkeypatch, tmp_path):
         assert window.sheet.marked is None
     finally:
         window.close()
+
+
+def test_the_pdf_has_one_a4_page_per_print_page(tmp_path):
+    """Read back with Poppler (cairo compresses the page objects, so no text search)."""
+    import gi
+
+    gi.require_version("Poppler", "0.18")
+    from gi.repository import Poppler
+
+    from stickler_gtk.logic import engraving
+    from stickler_gtk.ui import pdf
+
+    pages = engraving.a4_pages(_groove_score().musicxml)
+    out = pdf.write_pdf(pages, tmp_path / "groove.pdf", title="Groove")
+    document = Poppler.Document.new_from_file(out.as_uri(), None)
+    assert document.get_n_pages() == len(pages)
+    assert document.get_title() == "Groove"
+    width, height = document.get_page(0).get_size()
+    assert (round(width), round(height)) == (595, 842)

@@ -98,3 +98,7 @@ def test_a_failed_export_says_so_and_does_not_offer_to_analyse_again():
     assert "eye.flac" in failed.description and failed.details == "ffmpeg: disk full"
     missing = session.failed(state, state.job, api.SetupMissing(["demucs"]))
     assert missing.kind == "setup" and "Demucs" in missing.description
+
+
+def test_the_pdf_is_named_after_the_title():
+    assert exports.pdf_name("Eye of the Tiger") == "Eye of the Tiger.pdf"
