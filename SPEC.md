@@ -1431,6 +1431,89 @@ adapters/{transcribers/adtof,beats/beat_this,separators/demucs}/  # Python 3.14
 
 - None.
 
+### Module `polish`
+
+> Status: **draft**, waiting for the owner's approval (2026-11-15). Three wishes of the owner
+> after release 5.
+
+#### Assumptions
+
+1. **Click volume follows the song, one level per song** (owner, 2026-11-15). The clicks suit
+   Eye of the Tiger but are too loud on Amaranthe's "Fearless". `render_hits` measures the song
+   where its hits are (the loudness of 50 ms windows at the hits, the measure used on
+   2026-11-15) and scales the clicks so that they stand out by as much as they do on Eye of the
+   Tiger today (about 4 dB over the song). One gain for the whole song: steady, no pumping. The
+   soft limit stays, so the clicks never clip; a silent song or one without hits keeps today's
+   level. Reading the song takes about a second in the worker that writes the clicks; the
+   volume sliders stay on top of it.
+2. **The artist in the PDF** (owner, 2026-11-15). Stickler's MusicXML names the artist as the
+   composer, which Verovio keeps in its metadata but does not engrave (checked 2026-11-15). The
+   MusicXML gets `<credit>` elements for the title (centred) and the artist (right), as
+   notation programs write them: the PDF's first page shows both (checked with Verovio), and
+   MuseScore shows them too. The app's sheet keeps no header (the window title shows both).
+3. **"Remove Downloaded Models…" in the main menu, only in the installed app** (owner,
+   2026-11-15): in the Flatpak and the AppImage the models lie in Stickler's own folders; from
+   the checkout the entry would delete the benchmark's models, so it is not shown there.
+   - It asks first (an alert) and says how much it frees.
+   - By default it removes the models with their programs and downloads (uv's cache and, in
+     the AppImage, its Python) and the saved analyses; settings, recent songs and corrections
+     stay. A check box "Also remove settings, recent songs and corrections" removes everything,
+     as a new install would have it (owner, 2026-11-15).
+   - It is not offered while an analysis, an export or a download runs. Afterwards the window
+     is empty, and the setup assistant asks again before the next analysis.
+4. **The logic is apart from GTK:** which folders a removal touches (never anything outside the
+   app's own folders, nothing in the checkout), and the click gain.
+
+#### Objective
+
+The clicks are as easy to hear on a loud song as on a quiet one; the printed sheet names the
+band; an AppImage user can free the space the models take without knowing where they lie.
+
+#### Commands
+
+```bash
+uv run pytest -q                       # library and logic tests
+scripts/gtk.sh test                    # widget tests (headless)
+scripts/check.sh task                  # before every commit
+```
+
+#### Project structure (additions)
+
+```
+src/stickler/audio.py, api.py          # the click gain from the song's loudness
+src/stickler/notation.py               # credits for title and artist
+src/stickler_gtk/logic/removal.py      # what a removal deletes, in the app's folders only
+src/stickler_gtk/ui/menu.py, window.py # the menu entry and its alert
+```
+
+#### Testing strategy
+
+- Clicks: a quiet and a loud version of the same song get clicks at the same level relative to
+  the song; a silent song keeps today's level; the clicks never clip.
+- Artist: the MusicXML holds both credits; the first A4 page's SVG contains the artist; no
+  artist, no credit.
+- Removal: the folders for Flatpak, AppImage, with and without the check box; nothing outside
+  the app's folders, nothing in the checkout; the size it frees. Widgets: the entry shows only
+  when packaged, is disabled while a job runs, and leads to the consent page afterwards.
+
+#### Boundaries
+
+- **Always:** a removal asks first and touches only the app's own folders.
+- **Ask first:** deleting anything the user did not choose; another click level.
+- **Never:** remove models from the checkout's `adapters/`; let clicks clip.
+
+#### Success criteria
+
+1. On Fearless and Eye of the Tiger the clicks sound about equally prominent (owner, by ear).
+2. The PDF's first page shows title and artist (owner).
+3. In the Flatpak or AppImage, the menu entry frees the models' space after asking; with the
+   check box nothing of Stickler is left; afterwards the assistant asks again (owner).
+4. German and Spanish complete; `scripts/check.sh task` green.
+
+#### Open questions
+
+- None.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
