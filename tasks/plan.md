@@ -152,6 +152,33 @@ window, width and zoom, dark (52) → marking by click and by time (53) → PDF 
 | Verovio's SVG structure (classes, ids) changes in a later version | Medium | The engraving tests pin the structure they read; a Verovio update is "ask first" |
 | The font is found in development but not in the Flatpak | Low | The Flatpak's `/app/share/fonts` is on fontconfig's path; the `packaging` trial checks it |
 
+## GTK application: `playback` (approved 2026-11-15, SPEC.md "Module `playback`")
+
+Play the song, the detected hits as clicks, or both; the marker follows.
+
+Design decisions:
+- **One GStreamer pipeline, two branches:** `uridecodebin` → `audioconvert` → `audioresample`
+  → `volume` for the song and for the clicks WAV, both into one `audiomixer` → `autoaudiosink`.
+  Seeking and pausing the pipeline moves both; muting is the `volume` element's `mute`.
+- **The player is a thin object with a small interface** (`load`, `play`, `pause`, `seek`,
+  `position`, `duration`, `set_volumes`, `stop`), so widget tests use a fake and one test runs
+  the real pipeline against `fakesink`.
+- **Decisions in `logic/playback.py`:** volumes per hear mode, the jump target of a bar click,
+  the previous/next bar for the arrow keys, and the bar's texts. No GStreamer there.
+- **The clicks are made once per result** in the worker that finished the analysis, into the
+  app's cache, so playing never waits for them.
+- **The marker** is driven by a 50 ms timer that runs only while playing.
+
+Order: logic (55) → player (56) → the playback bar on the result page (57) → hear mode, volumes,
+marker, bar clicks (58) → keyboard, narrow, stopping, German (59).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Song and clicks drift apart | High | One pipeline and one clock for both; the clicks WAV is as long as the song (engine-api) |
+| A seek in a compressed file lands late | Medium | Accurate seeks (`Gst.SeekFlags.ACCURATE`); a test checks a seek lands within 50 ms |
+| No audio device (CI, a broken setup) | Medium | The real-pipeline test uses `fakesink`; the app shows an error toast instead of crashing when the sink fails |
+| The pipeline keeps playing after the window closed | Medium | `stop()` sets it to NULL on close, quit and a new song; a test checks the state |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

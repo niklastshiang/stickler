@@ -465,6 +465,42 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Next: the app icon (owner, 2026-11-15: right after `sheet-view`)
 - [x] Done 2026-11-15: draft B of four (page and drumsticks), `packaging/icons/ng.tshia.Stickler.svg` and `-symbolic.svg`, installed by `scripts/gtk.sh`, used for the window and the About dialog. Design round on the canvas with the owner: a few drafts in the GNOME style (Daudix's icons as the reference), then the chosen one as SVG plus its symbolic variant, named `ng.tshia.Stickler`; see "App icon in GNOME style" under Later.
 
+## Phase 11: GTK application, module `playback` (approved 2026-11-15, SPEC.md "Module `playback`")
+
+- [ ] **Task 55: Playback logic** (S)
+  - Acceptance:
+    - `logic/playback.py`: the volume of song and clicks for Song / Hits / Both; the time a click on a written bar jumps to (its next pass from now, else its first); the previous and next song bar for the arrow keys; the texts "0:06" and "Bar 2 of 110".
+    - `settings`: the two volumes, remembered, bad values fall back; `paths`: where a song's clicks WAV goes.
+  - Verify: `uv run pytest -q tests/gtk/test_playback.py tests/gtk/test_settings.py`
+  - Dependencies: none · Files: `src/stickler_gtk/logic/{playback,settings,paths}.py`, tests
+
+- [ ] **Task 56: The player** (M)
+  - Acceptance:
+    - `ui/player.py`: one pipeline mixing the song and the clicks, with `load`, `play`, `pause`, `seek`, `position`, `duration`, `set_volumes`, `stop`; an error on the bus reaches a callback.
+  - Verify: a widget test with `fakesink` and a generated song: plays, the position advances, a seek lands within 50 ms, `stop` leaves the pipeline NULL
+  - Dependencies: 55 · Files: `src/stickler_gtk/ui/player.py`, tests
+
+- [ ] **Task 57: The playback bar** (M)
+  - Acceptance:
+    - The clicks WAV is made with `api.render_hits` when a result appears; the result page has the playback bar (design screen 6): play/pause, time, position slider (seek), length, "Bar n of N".
+  - Verify: widget tests with a fake player; by hand: Eye of the Tiger plays, pauses, seeks
+  - Dependencies: 56 · Files: `src/stickler_gtk/ui/{playbar,window}.py`, `src/stickler_gtk/logic/analysis.py`, `po/*`, tests
+
+- [ ] **Task 58: What to hear, volumes, the marker, bar clicks** (M)
+  - Acceptance:
+    - Song / Hits / Both and the volume popover (two sliders, remembered); while playing the marker follows (50 ms timer) and scrolls; a click on a bar seeks to its next pass.
+  - Verify: widget tests (fake player: volumes per mode, seek target of a click in repeats, the marker after a position); by hand: clicks in time with the drums (owner)
+  - Dependencies: 55, 57 · Files: `src/stickler_gtk/ui/{playbar,window,sheet}.py`, `po/*`, tests
+
+- [ ] **Task 59: Keyboard, narrow window, stopping** (S)
+  - Acceptance:
+    - Space, Left, Right, Home (in the shortcuts dialog); the bar in two rows below the narrow breakpoint; playback stops on a new song, close and quit; German complete.
+  - Verify: widget tests (keys through actions, stop on close); by hand at 400 px
+  - Dependencies: 58 · Files: `src/stickler_gtk/ui/*`, `po/*`, tests
+
+### Checkpoint K
+- [ ] All 8 success criteria of SPEC.md `playback` met; the owner listens to Eye of the Tiger with the clicks
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
