@@ -1,5 +1,6 @@
 """Tests for the benchmark matrix: execution, cache, errors, scoring."""
 
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -291,10 +292,18 @@ def test_other_formats_reach_the_adapter_as_flac_but_keep_their_cache_key(tmp_pa
     )
 
 
-def test_cache_keys_do_not_depend_on_the_harness_python():
+def test_cache_keys_do_not_depend_on_the_harness_python(tmp_path):
     """The harness runs on Python 3.12 to 3.14 (CLI on 3.12, the GTK app on the system's 3.14);
     the same adapter code must give the same key, or every result is computed again. Python
     3.13 changed what ast.dump prints; the expected value was computed on 3.12. Since 2026-11-16
-    the digest also covers adapters/_common, so an edit there changes this value too."""
-    spec = adapters.discover(Path(__file__).parent / "fixtures" / "adapters")["dummy"]
-    assert runner.code_digest(spec) == "82d94bba170a027e6e9180832b9c32393c7ee1d9"
+    the digest also covers adapters/_common, so an edit there changes this value too.
+
+    The digest also covers uv.lock, which other tests may create in the fixture (it is not in
+    git, and its content depends on the uv version), so the test reads a copy without it."""
+    repo = Path(__file__).parents[1]
+    fixture = Path("tests/fixtures/adapters/transcribers/dummy")
+    skip = shutil.ignore_patterns("uv.lock", ".venv", "__pycache__")
+    shutil.copytree(repo / fixture, tmp_path / fixture, ignore=skip)
+    shutil.copytree(repo / "adapters/_common", tmp_path / "adapters/_common", ignore=skip)
+    spec = adapters.discover(tmp_path / "tests/fixtures/adapters")["dummy"]
+    assert runner.code_digest(spec) == "dfe5ec425c9ea138f6e10687ad8cb7783a29657d"
