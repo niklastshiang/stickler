@@ -297,4 +297,4 @@ def test_cache_keys_do_not_depend_on_the_harness_python():
     3.13 changed what ast.dump prints; the expected value was computed on 3.12. Since 2026-11-16
     the digest also covers adapters/_common, so an edit there changes this value too."""
     spec = adapters.discover(Path(__file__).parent / "fixtures" / "adapters")["dummy"]
-    assert runner.code_digest(spec) == "79609962ba653683ff4479a20512e25a103cbfbf"
+    assert runner.code_digest(spec) == "8455050e57e867a12cb8be3c3e8a600d272b1a8d"

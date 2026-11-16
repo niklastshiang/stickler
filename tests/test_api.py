@@ -1139,7 +1139,7 @@ def test_migrate_cache_collects_inputs(tmp_path, monkeypatch):
         "previous": None,
     }
     snapshot = tmp_path / "digests.json"
-    snapshot.write_text('{"adtof": "abc"}', encoding="utf-8")
+    snapshot.write_text('{"definition": 2, "digests": {"adtof": "abc"}}', encoding="utf-8")
     api.migrate_cache(cache_dir=tmp_path, data_dir=tmp_path, rekey_from=snapshot)
     assert seen["previous"] == {"adtof": "abc"}
 
@@ -1149,7 +1149,8 @@ def test_save_digests_writes_every_adapter(tmp_path):
     api.save_digests(out)
     import json
 
-    assert {"adtof", "demucs"} <= json.loads(out.read_text()).keys()
+    snapshot = json.loads(out.read_text())
+    assert snapshot["definition"] == 2 and {"adtof", "demucs"} <= snapshot["digests"].keys()
 
 
 def _own_song(monkeypatch, tmp_path):

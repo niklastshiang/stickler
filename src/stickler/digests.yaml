@@ -1,20 +1,31 @@
-# Earlier code digests whose cached results equal those of the adapter's current code
-# (stickler.runner.cache_dir_for renames such entries to the current key on first use).
+# Pairs of code digests whose cached results are the same: `from` an earlier digest `to` a
+# later one. stickler.runner.cache_dir_for renames an entry under `from` to the current key on
+# first use, but only along a chain of pairs that ends at the adapter's current digest: after a
+# real behaviour change the chain stops there, and nothing earlier is handed to the new code.
 #
-# Add an entry only for an edit that does not change what the adapter computes: comments,
-# translations, a new definition of the digest. Never after a real behaviour change: old
-# results would be handed to new code. Take the old digest from `stickler cache-digests`
-# before the edit, and keep earlier entries (a cache may still hold them).
+# Add a pair only for an edit that does not change what the adapter computes (comments,
+# translations, a new definition of the digest), never after a real behaviour change. Take
+# `from` with `stickler cache-digests` before the edit and `to` after it; keep earlier pairs
+# (a cache may still hold their entries).
 equivalent:
-  # 2026-11-16: the digest now covers every Python module of the adapter and the shared
-  # package adapters/_common (before: run.py, pyproject.toml, setup.py). These adapters are
-  # unchanged since release 6. Not listed: drumsep_onset, whose onsets.py changed behaviour
-  # under the same old digest (its results from before exist only in a test container).
-  adt_str: [a6e42d04761802db0916ae4029de8712578a80a4]
-  adtof: [db9160eb89e28c7de13b836fe113c4514b8e0554]
-  beat_this: [36a01674d6c221aff08424aeaff8e17a3080c4e6]
-  demucs: [a9719f2ff24f8d1bc6ea4775c9cc0cc26d04d894]
-  muscriptor_l: [7dc00814b64f14a51892c18f463fe56f7fe0349f]
-  muscriptor_m: [c8af6164e49783c9eec15eb3d54f325a7201816e]
-  muscriptor_s: [fa7abcc22fd7231e9348c9061c27bcfce23dcb36]
-  roformer: [641f015ffddfaab934ef810910bf1d6f2b23a8fb]
+  # 2026-11-16 (Task 87): the digest now covers the modules run.py and setup.py import,
+  # uv.lock, .python-version and adapters/_common (before: run.py, pyproject.toml, setup.py).
+  # These adapters are unchanged since release 6 (muscriptor_l was added after it and is
+  # unchanged since). Not listed: drumsep_onset, whose onsets.py changed behaviour under the
+  # same old digest (its earlier results exist only in a test container).
+  adt_str:
+    - {from: a6e42d04761802db0916ae4029de8712578a80a4, to: 578c45d3efe50f008b7cb0fe165d9f42bf0f9e70}
+  adtof:
+    - {from: db9160eb89e28c7de13b836fe113c4514b8e0554, to: 0b07e4f1ffbc21badba26ad18beb7387dbded709}
+  beat_this:
+    - {from: 36a01674d6c221aff08424aeaff8e17a3080c4e6, to: 1de7cca3152b77b9dddf839a5f88e65b67ba60d3}
+  demucs:
+    - {from: a9719f2ff24f8d1bc6ea4775c9cc0cc26d04d894, to: 4ebe54413ef6aab6a56f8d47b268f1df70ef4b25}
+  muscriptor_l:
+    - {from: 7dc00814b64f14a51892c18f463fe56f7fe0349f, to: 16924518469de5995e5be4ccc02c874761061337}
+  muscriptor_m:
+    - {from: c8af6164e49783c9eec15eb3d54f325a7201816e, to: b0f5b04ebf93f6701783d513e084a9c2c7eb6049}
+  muscriptor_s:
+    - {from: fa7abcc22fd7231e9348c9061c27bcfce23dcb36, to: 32824e78d92adc327478206d76a151e2c45bf1f7}
+  roformer:
+    - {from: 641f015ffddfaab934ef810910bf1d6f2b23a8fb, to: 65ec3f035d8d6eda6fb088ecdbdd022911ee5f20}

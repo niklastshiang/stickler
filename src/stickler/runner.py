@@ -103,7 +103,8 @@ _DUMP_AS_312 = {"show_empty": True} if sys.version_info >= (3, 13) else {}
 
 def _canonical(path: Path) -> bytes:
     """What defines an adapter's behaviour: Python as syntax tree without docstrings (comments
-    are not part of it), TOML as parsed data. Comments and translations do not change it."""
+    are not part of it), TOML (pyproject.toml, uv.lock) as parsed data. Comments and
+    translations do not change it."""
     text = path.read_text(encoding="utf-8")
     if path.suffix == ".py":
         tree = ast.parse(text)
@@ -118,9 +119,15 @@ def _canonical(path: Path) -> bytes:
             ):
                 node.body = body[1:] or [ast.Pass()]
         return ast.dump(tree, **_DUMP_AS_312).encode()
-    if path.suffix == ".toml":
+    if path.suffix == ".toml" or path.name == "uv.lock":
         return json.dumps(tomllib.loads(text), sort_keys=True).encode()
-    return text.encode()
+    return text.strip().encode()
+
+
+# Since 2026-11-16 (Task 87). Snapshots of digests (cachemigration) record it, so a snapshot of
+# another definition is never used to rekey.
+DIGEST_DEFINITION = 2
+SKIPPED_PARTS = {"__pycache__", ".venv", "weights", "build"}
 
 
 def _common_dir(spec: adapters.AdapterSpec) -> Path | None:
@@ -128,30 +135,55 @@ def _common_dir(spec: adapters.AdapterSpec) -> Path | None:
     pyproject = spec.path / "pyproject.toml"
     if not pyproject.exists():
         return None
-    sources = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    source = sources.get("tool", {}).get("uv", {}).get("sources", {}).get("stickler-adapter", {})
-    path = source.get("path") if isinstance(source, dict) else None
+    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    source = data.get("tool", {}).get("uv", {}).get("sources", {}).get("stickler-adapter")
+    entries = source if isinstance(source, list) else [source]
+    path = next((e["path"] for e in entries if isinstance(e, dict) and "path" in e), None)
     folder = (spec.path / path).resolve() if path else None
     return folder if folder and folder.is_dir() else None
 
 
+def _local_modules(folder: Path, entry_points: list[Path]) -> list[Path]:
+    """The adapter's own modules that its entry points import, directly or through each
+    other. A stray file nothing imports (a scratch script) does not count."""
+    seen: dict[str, Path] = {}
+    todo = [p for p in entry_points if p.exists()]
+    while todo:
+        tree = ast.parse(todo.pop().read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            names = []
+            if isinstance(node, ast.Import):
+                names = [a.name.split(".")[0] for a in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+                names = [node.module.split(".")[0]]
+            for name in names:
+                module = folder / f"{name}.py"
+                if name not in seen and module.is_file() and module not in entry_points:
+                    seen[name] = module
+                    todo.append(module)
+    return [seen[n] for n in sorted(seen)]
+
+
 def _behaviour_files(spec: adapters.AdapterSpec) -> list[tuple[str, Path]]:
-    """Every file that defines what the adapter computes: its own Python modules and
-    pyproject.toml, and the shared adapter package it imports (since 2026-11-16; before, only
-    run.py, pyproject.toml and setup.py counted, so a changed helper kept old results valid)."""
+    """Every file that defines what the adapter computes (since 2026-11-16; before, only
+    run.py, pyproject.toml and setup.py counted, so a changed helper kept old results valid):
+    the entry points and the modules they import, pyproject.toml, uv.lock and .python-version
+    (the model's and its libraries' versions), and the shared adapter package. Names are
+    relative, so the digest is the same wherever the adapters live."""
+    entry = [spec.path / "run.py", spec.path / "setup.py"]
     files = [(name, spec.path / name) for name in ("run.py", "pyproject.toml", "setup.py")]
-    files += [
-        (p.name, p) for p in sorted(spec.path.glob("*.py")) if p.name not in ("run.py", "setup.py")
-    ]
+    files += [(p.name, p) for p in _local_modules(spec.path, entry)]
+    files += [(name, spec.path / name) for name in ("uv.lock", ".python-version")]
     common = _common_dir(spec)
     if common:
         files += [
-            (f"_common/{p.relative_to(common).as_posix()}", p)
+            (f"_common/{rel.as_posix()}", p)
             for p in sorted(common.rglob("*.py"))
-            if "__pycache__" not in p.parts and ".venv" not in p.parts
+            for rel in [p.relative_to(common)]
+            if not SKIPPED_PARTS.intersection(rel.parts)
         ]
         files.append(("_common/pyproject.toml", common / "pyproject.toml"))
-    return [(name, p) for name, p in files if p.exists()]
+    return [(name, p) for name, p in files if p.is_file()]
 
 
 def code_digest(spec: adapters.AdapterSpec) -> str:
@@ -165,16 +197,30 @@ EQUIVALENTS = Path(__file__).with_name("digests.yaml")
 
 
 @cache
-def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, tuple[str, ...]]:
-    """Adapter id → earlier code digests whose results are those of today's code."""
+def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, tuple[tuple[str, str], ...]]:
+    """Adapter id → (earlier digest, later digest) pairs whose results are the same."""
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else None
     return {
-        str(k): tuple(str(d) for d in v) for k, v in ((raw or {}).get("equivalent") or {}).items()
+        str(spec_id): tuple((str(p["from"]), str(p["to"])) for p in pairs)
+        for spec_id, pairs in ((raw or {}).get("equivalent") or {}).items()
     }
 
 
 def equivalent_digests(spec: adapters.AdapterSpec) -> tuple[str, ...]:
-    return load_equivalents().get(spec.id, ())
+    """Earlier digests whose results equal the current code's: those with a chain of pairs
+    that ends at the current digest. After a real change the chain no longer reaches it, so
+    nothing earlier counts any more."""
+    pairs = load_equivalents().get(spec.id, ())
+    reached, found = {code_digest(spec)}, []
+    changed = True
+    while changed:
+        changed = False
+        for old, new in pairs:
+            if new in reached and old not in reached:
+                reached.add(old)
+                found.append(old)
+                changed = True
+    return tuple(found)
 
 
 def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path) -> Path:

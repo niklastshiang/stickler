@@ -130,3 +130,25 @@ def test_digest_snapshot_round_trip(world, tmp_path):
     path = tmp_path / "digests.json"
     cachemigration.save_digests(path, reg)
     assert cachemigration.load_digests(path) == cachemigration.digests(reg)
+
+
+def test_a_snapshot_of_another_digest_definition_is_refused(tmp_path):
+    """Snapshots before 2026-11-16 hold digests of the old definition; rekeying with them would
+    move results of adapters whose helpers changed (drumsep_onset)."""
+    path = tmp_path / "old.json"
+    path.write_text('{"dummy": "' + "0" * 40 + '"}', encoding="utf-8")
+    with pytest.raises(ValueError, match="definition"):
+        cachemigration.load_digests(path)
+
+
+def test_migrate_moves_entries_under_an_equivalent_digest(world, monkeypatch):
+    reg, cache, mix = world["registry"], world["cache"], world["mix"]
+    cachemigration.migrate(cache, reg, [mix])
+    spec = reg["dummy"]
+    current = runner.cache_dir_for(cache, spec, mix)
+    sha = runner._sha1_file(mix)
+    old = current.parent / runner.cache_key(spec, sha, "0" * 40)
+    current.rename(old)
+    monkeypatch.setattr(runner, "equivalent_digests", lambda s: ("0" * 40,) if s is spec else ())
+    report = cachemigration.migrate(cache, reg, [mix], dry_run=True)
+    assert report.orphaned == 0 and report.moved == 1

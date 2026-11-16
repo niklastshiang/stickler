@@ -250,8 +250,8 @@ The Hugging Face token goes over the SSH connection's input, never onto a comman
 | Command | Use |
 |---|---|
 | `stickler cache-migrate [--dry-run]` | move entries from older cache keys to the current ones; nothing is deleted (duplicates go to `cache/_superseded/`, unknown entries to `cache/_orphaned/`) |
-| `stickler cache-digests <file>` | snapshot every model's code digest before an edit that does not change behaviour (e.g. a translated message); add the old digest to `src/stickler/digests.yaml`, and results are renamed to the new key on first use |
-| `stickler cache-migrate --rekey-from <file>` | the same at once for a whole cache; never after a real code change |
+| `stickler cache-digests <file>` | snapshot every model's code digest before and after an edit that does not change behaviour (e.g. a translated message); add the pair `{from, to}` to `src/stickler/digests.yaml`, and results are renamed to the new key on first use |
+| `stickler cache-migrate --rekey-from <file>` | the same at once for a whole cache, from a snapshot of the current digest definition; never after a real code change |
 
 ### 4.3 Tests and checks
 
