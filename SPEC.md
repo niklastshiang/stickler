@@ -1558,9 +1558,13 @@ RoFormer DrumSep variants (no downloadable weights).
    within 0.01 of a mode's, or beats it, gets a listening round of about 40 new spots drawn from
    its own errors with release 3's procedure (blind, fixed seed, drawn once); its corrected score
    comes from those verdicts. The others go into the report with measured scores only.
-5. **Time budget** (owner, 2026-11-16): Fast stays the fast mode (~15 s for a 4-minute song on
-   the laptop); a Quality candidate may take at most **20 minutes** (15 minutes plus a buffer) for a 4-minute song on the
-   laptop CPU. Slower candidates are reported, never put into the app.
+5. **Time budget** (owner, 2026-11-16): Fast stays the fast mode that runs on any laptop
+   (~15 s for a 4-minute song). A Quality candidate may take at most **20 minutes** (15 minutes
+   plus a buffer) for a 4-minute song: on the laptop CPU, or, if it is too slow there, on a
+   strong GPU (measured on RunPod's RTX 4090 as the reference). In the second case Quality
+   requires a strong GPU (a strong integrated or dedicated card, or a rented one such as
+   RunPod); how the app says so is decided with the mode (Task 86). Slower candidates are
+   reported, never put into the app.
 6. **Decision rule**: a candidate (alone or in a combination like today's Quality) replaces Fast
    or Quality only if its corrected macro-F1 on the own songs is higher and it stays within the
    mode's time budget. Per song better/worse counts and the 95 % interval are reported as for
@@ -1607,8 +1611,9 @@ docs/report.md, README.md              # results, candidates table
 1. Corrected scores need listening, because a new pipeline makes other errors than Fast and
    Quality: measured scores first, a listening round of about 40 spots only for a candidate
    that comes close (method, point 4).
-2. Time budget for Quality: at most 20 minutes (15 plus a buffer; owner first said 30, then 20) for a 4-minute song on the laptop (method,
-   point 5).
+2. Time budget for Quality: at most 20 minutes (15 plus a buffer; owner first said 30, then 20)
+   for a 4-minute song, on the laptop or, if too slow there, on a strong GPU, which Quality then
+   requires (method, point 5).
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
