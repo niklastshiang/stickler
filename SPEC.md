@@ -30,7 +30,9 @@ User stories:
 | Transcription | `adt_str` | pier-maker92/ADT_STR (2026), `setting-tau-0.8`, 26 classes | CC BY-SA |
 | Transcription | `muscriptor_s`, `muscriptor_m` | muscriptor/muscriptor (2026), small/medium | MIT / weights CC BY-NC |
 | ~~Transcription~~ | ~~`yourmt3`~~ | YourMT3+, removed 2026-11-13 (last on the own songs; transformers with known vulnerabilities could not be updated) | – |
-| Transcription | `drumsep_onset` | DrumSep MDX23C 6-stem + librosa onsets per stem | Community |
+| Transcription | `drumsep_onset` | DrumSep MDX23C 6-stem (via python-audio-separator 0.48.0) + onsets per stem (release 7) | Code MIT, weights without a formal licence (community model) |
+| Transcription | `muscriptor_l` | muscriptor/muscriptor large (release 7) | MIT / weights CC BY-NC |
+| Transcription | `sad` | Separate-and-Detect (ddman1101, 2026), 5 drum stems by latent diffusion + onsets per stem (release 7; owner's exception: research code) | MIT |
 | Beats | `beat_this` | CPJKU/beat_this | MIT |
 
 ## Tech Stack
@@ -50,7 +52,7 @@ User stories:
 ### Rented GPU for the development phase (NVIDIA CUDA, RunPod)
 Only to speed up benchmark runs during development; the app itself runs locally. Decided with the owner on 2026-11-12: RunPod, RTX 4090 (24 GB), Community Cloud for public data (MDB), Secure Cloud in the EU for the owner's songs. Laptop runtimes stay the reference for the app's "Fast"/"Quality" modes.
 - **CUDA environment:** `stickler setup --device cuda` builds `.venv-cuda` per adapter like the ROCm variant, but generically in the harness: direct dependencies, with `torch`/`torchaudio` replaced by the version pinned in the adapter's `uv.lock` from the PyTorch CUDA index. Adapter files stay untouched.
-- **Device-independent cache:** results computed on a GPU count as cache hits on the laptop. The device is recorded in `meta.json` instead of the cache key. Together with comment-insensitive adapter digests this is one cache migration after the running MDB benchmark has finished; existing entries are moved to their new keys, nothing is recomputed.
+- **Device-independent cache:** results computed on a GPU count as cache hits on the laptop. Since 2026-11-16 (owner, Task 87) the code digest covers `run.py`, `setup.py`, the adapter's modules they import, `pyproject.toml`, `uv.lock`, `.python-version` and `adapters/_common`; pairs of equivalent digests in `src/stickler/digests.yaml` let an entry under an earlier digest be renamed on first use, but only along a chain that ends at the current digest, so edits that do not change behaviour never cost a recomputation and a real change never inherits old results. The device is recorded in `meta.json` instead of the cache key. Together with comment-insensitive adapter digests this is one cache migration after the running MDB benchmark has finished; existing entries are moved to their new keys, nothing is recomputed.
 - **`stickler remote`:** copies code, the needed audio and the cache to the pod via rsync over SSH, sets up the CUDA environments, runs a config, copies new cache entries back and, if a `RUNPOD_API_KEY` is set, stops the pod. Secrets (Hugging Face token, API key) are passed as environment variables only and never written to disk or the repo. No new harness dependencies (rsync, ssh, urllib).
 
 ### Later: GTK interface (not part of v1)
@@ -1513,6 +1515,107 @@ src/stickler_gtk/ui/menu.py, window.py # the menu entry and its alert
 #### Open questions
 
 - None.
+
+## Release 7: New candidates
+
+> Status: **approved** by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
+> after a web check of each (facts and sources below). Plan: `tasks/plan.md` ("Release 7"),
+> tasks 12 and 82–86 in `tasks/todo.md`.
+
+### Objective
+**Find out whether a newer model makes Fast or Quality better on the owner's music.** A
+candidate replaces a pipeline in the app only if it beats it on the 25 own songs, corrected for
+reference errors (owner, 2026-11-16); otherwise its results go into the report and the app stays
+as it is.
+
+User stories:
+- As the owner, I want to know whether the models published since the benchmark beat Fast and
+  Quality on my rock and metal songs.
+- As the owner, I want the app to change only for a measured improvement, never for a promise.
+
+Scope: three candidates, measured like every pipeline so far (25 own songs, MDB Drums, ENST
+drummer 3; ±50 ms; 5 and 3 classes). Not in scope: fine-tuning (owner, 2026-11-13), new scoring,
+finer classes in the sheet music (a later module; DrumSep's ride/crash split is only recorded).
+
+### Candidates (owner, 2026-11-16; facts checked on the web 2026-11-16)
+| ID | What | Source and licence | Notes |
+|---|---|---|---|
+| `drumsep_onset` (Task 12) | MDX23C DrumSep by aufr33/jarredou splits a drum stem into kick, snare, toms, hi-hat, ride, crash; librosa onset detection per stem → GM MIDI | In python-audio-separator 0.48.0 (`models.json`: `MDX23C-DrumSep-aufr33-jarredou.ckpt`), the version the `roformer` adapter pins; code MIT, weights without a formal licence (community model) | Needs a drum stem: runs as `demucs+drumsep_onset`. The original weight host is gone; the download is checked first. Ride and crash are merged into cymbals for scoring |
+| `muscriptor_l` | MuScriptor large (~1.4 B parameters), like `muscriptor_s/_m` | HF `MuScriptor/muscriptor-large`, `model.safetensors` 5.47 GB, CC BY-NC 4.0, gated (accept the terms, `hf auth login`); muscriptor 0.4.0 (pinned) loads it | Download > 2 GB approved by the owner (2026-11-16). Measured on RunPod; a Quality candidate only (never Fast) |
+| `sad` | Separate-and-Detect (Hsu et al., arXiv 2608.01093, Aug 2026): a latent-diffusion model generates five drum stems, a fixed onset detector turns them into hits | github.com/ddman1101/Separate-and-detect (MIT, last push 2026-08-13), weights HF `ddman1101/Separate-and-Detect` `msgld_obtb.ckpt` (MIT) | **Exception (owner, 2026-11-16):** tested although the project is research code without visible maintenance (CLAUDE.md asks for actively maintained projects): Python 3.9/3.10, conda, madmom, CUDA scripts. Trained on drum-only multitracks, so it runs on a Demucs stem; diffusion is slow, so measured on RunPod |
+
+Looked at and left out (2026-11-16): Noise-to-Notes (Sony, 2025/26; no code or weights
+published), LarsNet (5-stem U-Nets, 2023; the baseline Separate-and-Detect beats), MVSEP's
+RoFormer DrumSep variants (no downloadable weights).
+
+### Method
+1. **Each candidate as an adapter**, like the others (own `pyproject.toml`, own environment,
+   README with source, version/commit and licence). The harness is unchanged.
+2. **Settings are chosen before the own songs are seen**: onset parameters (DrumSep) and any
+   threshold on MDB and ENST, as in Phase 5c; the own songs are the final check only.
+3. **Measured on all three datasets**; laptop runtimes (RTF, peak RAM) for every candidate that
+   can run there, RunPod for the rest (the laptop stays the reference for the app's modes).
+4. **Measured first, listened to only where it can matter** (owner, 2026-11-16): all candidates
+   are compared on measured scores. A candidate whose measured macro-F1 on the own songs comes
+   within 0.01 of a mode's, or beats it, gets a listening round of about 40 new spots drawn from
+   its own errors with release 3's procedure (blind, fixed seed, drawn once); its corrected score
+   comes from those verdicts. The others go into the report with measured scores only.
+5. **Time budget** (owner, 2026-11-16): Fast stays the fast mode that runs on any laptop
+   (~15 s for a 4-minute song). A Quality candidate may take at most **20 minutes** (15 minutes
+   plus a buffer) for a 4-minute song: on the laptop CPU, or, if it is too slow there, on a
+   strong GPU (measured on RunPod's RTX 4090 as the reference). In the second case Quality
+   requires a strong GPU (a strong integrated or dedicated card, or a rented one such as
+   RunPod); how the app says so is decided with the mode (Task 86). Slower candidates are
+   reported, never put into the app.
+6. **Decision rule**: a candidate (alone or in a combination like today's Quality) replaces Fast
+   or Quality only if its corrected macro-F1 on the own songs is higher and it stays within the
+   mode's time budget. Per song better/worse counts and the 95 % interval are reported as for
+   Quality vs Fast.
+
+### Commands
+```bash
+uv run stickler setup --adapter drumsep_onset   # likewise muscriptor_l, sad
+uv run stickler run --config config/benchmark.yaml
+uv run stickler run --config config/own.yaml
+uv run stickler remote …                        # RunPod for muscriptor_l and sad
+uv run stickler eval --config config/own.yaml && uv run stickler report
+```
+
+### Project structure (additions)
+```
+adapters/transcribers/drumsep_onset/   # audio-separator DrumSep + librosa onsets
+adapters/transcribers/muscriptor_l/    # copy of muscriptor_m with SIZE = "large"
+adapters/transcribers/sad/             # Separate-and-Detect, pinned commit
+config/benchmark.yaml, config/own.yaml # the new pipelines
+docs/report.md, README.md              # results, candidates table
+```
+
+### Testing strategy
+- Adapter smoke tests (`pytest -m adapters -k <id>`): 10 s of a real mix through the pipeline
+  gives valid GM MIDI and `meta.json`; GM mapping of each candidate's classes as unit tests.
+- DrumSep: the per-stem onset step is a pure function with unit tests on generated clicks.
+- Results checked against the cache rules: existing entries untouched (new adapters, new keys).
+
+### Boundaries
+- **Always:** source, commit and licence in each adapter's README; weights downloaded by
+  `setup`, never committed or shipped.
+- **Ask first:** changing a mode of the app; adding a fourth candidate; a RunPod run longer than
+  planned.
+- **Never:** tune on the own songs; change the scoring to favour a candidate.
+
+### Success criteria
+1. Each of the three candidates produces MIDI or a logged error on all MDB, ENST and own songs.
+2. `metrics.csv`, `report.html` and `docs/report.md` contain them next to Fast and Quality.
+3. A decision per mode, recorded as an ADR: unchanged, or replaced (owner).
+4. README candidates and results tables updated; `scripts/check.sh task` green.
+
+### Resolved questions (owner, 2026-11-16)
+1. Corrected scores need listening, because a new pipeline makes other errors than Fast and
+   Quality: measured scores first, a listening round of about 40 spots only for a candidate
+   that comes close (method, point 4).
+2. Time budget for Quality: at most 20 minutes (15 plus a buffer; owner first said 30, then 20)
+   for a 4-minute song, on the laptop or, if too slow there, on a strong GPU, which Quality then
+   requires (method, point 5).
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

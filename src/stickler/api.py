@@ -722,24 +722,27 @@ def error_breakdown(
 
 
 def _class_of(scheme) -> dict[int, str]:
-    """ADTOF's output pitches (LABELS_5) → classes of the scheme."""
-    return {p: scheme.class_of(p) for p in (35, 38, 47, 42, 49)}
+    """Every GM pitch the scheme knows → its class (the activation labels of any transcriber)."""
+    return {p: cls for cls, pitches in scheme.classes.items() for p in pitches}
 
 
 @dataclass
 class TuneReport:
     inputs: list[str]
     tracks: int
-    default: dict  # class → fusion.Tuned for ADTOF's defaults on inputs[0]
+    default: dict  # class → fusion.Tuned for the transcriber's defaults on inputs[0]
     tuned: dict  # class → fusion.Tuned
+    transcriber: str = "adtof"
 
     def yaml(self, name: str) -> str:
         lines = [
             "fusions:",
             f"  {name}:",
             f"    inputs: [{', '.join(self.inputs)}]",
-            "    classes:",
         ]
+        if self.transcriber != fusion.TRANSCRIBER:
+            lines.append(f"    transcriber: {self.transcriber}")
+        lines.append("    classes:")
         for cls, t in self.tuned.items():
             weights = ", ".join(f"{w:g}" if w != int(w) else f"{w:.1f}" for w in t.weights)
             lines.append(f"      {cls}: {{weights: [{weights}], threshold: {t.threshold:g}}}")
@@ -750,14 +753,18 @@ def tune_fusion(
     config_paths: list[Path],
     inputs: list[str],
     *,
+    transcriber: str = "adtof",
     data_dir: Path = DATA_DIR,
     cache_dir: Path = CACHE_DIR,
     adapters_root: Path = ADAPTERS_ROOT,
     step: float = 0.25,
     thresholds: list[float] | None = None,
 ) -> TuneReport:
-    """Tunes fusion weights and thresholds per class on the cached ADTOF runs of the given
-    configs (use tuning data only, e.g. MDB and ENST; keep the own songs for the final check)."""
+    """Tunes fusion weights and thresholds per class on the transcriber's cached runs (its
+    activations) of the given configs (use tuning data only, e.g. MDB and ENST; keep the own
+    songs for the final check)."""
+    if transcriber not in fusion.DEFAULT_THRESHOLDS:
+        raise ValueError(f"no thresholds known for {transcriber}: it saves no activations")
     five = load_schemes(CLASSES)["5"]
     samples = []
     for path in config_paths:
@@ -766,22 +773,27 @@ def tune_fusion(
         records = run_benchmark(
             path, data_dir=data_dir, cache_dir=cache_dir, adapters_root=adapters_root, execute=False
         )
-        samples += fusion.samples_from_records(records, tracks, inputs, five)
+        samples += fusion.samples_from_records(records, tracks, inputs, five, transcriber)
     if not samples:
-        raise ValueError("no tracks with ADTOF activations for all inputs: run ADTOF first")
-    labels, class_of = [35, 38, 47, 42, 49], _class_of(five)
+        raise ValueError(
+            f"no tracks with {transcriber} activations for all inputs: run {transcriber} first"
+        )
+    labels, class_of = list(samples[0].labels), _class_of(five)
     first = tuple(1.0 if i == 0 else 0.0 for i in range(len(inputs)))
     default = fusion.score_params(
         samples,
         labels,
         class_of,
-        {c: fusion.ClassParams(first, t) for c, t in fusion.ADTOF_THRESHOLDS.items()},
+        {
+            c: fusion.ClassParams(first, t)
+            for c, t in fusion.DEFAULT_THRESHOLDS[transcriber].items()
+        },
     )
     grid = thresholds or [round(0.02 + 0.02 * i, 2) for i in range(30)]  # 0.02 … 0.60
     tuned = fusion.tune(
         samples, labels, class_of, weights=fusion.weight_grid(len(inputs), step), thresholds=grid
     )
-    return TuneReport(list(inputs), len(samples), default, tuned)
+    return TuneReport(list(inputs), len(samples), default, tuned, transcriber)
 
 
 def write_report(config_paths: list[Path] | None = None, results_dir: Path = RESULTS_DIR) -> Path:

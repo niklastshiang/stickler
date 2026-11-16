@@ -5,8 +5,8 @@
 # here were not a fair test; they stay in docs/report.md. ADT_STR reports state-of-the-art results on ENST.
 datasets: [enst]
 separators: [none, oracle, demucs, roformer]
-transcribers: [adt_str, adtof, muscriptor_m]
-skip: ["none+muscriptor_m"]
+transcribers: [adt_str, adtof, muscriptor_m, muscriptor_l, drumsep_onset, sad]
+skip: ["none+muscriptor_m", "none+muscriptor_l", "roformer+muscriptor_l", "roformer+drumsep_onset", "roformer+sad"]  # release 7 candidates: Demucs (and oracle) only
 device: auto
 schemes: ["5", "3"]
 timeout:

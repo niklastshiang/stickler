@@ -1,0 +1,36 @@
+[project]
+name = "stickler-muscriptor-l"
+version = "0.1.0"
+description = "Stickler adapter: MuScriptor large (Kyutai/Mirelo/IRCAM, 2026), drum track only"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "stickler-adapter",
+    "muscriptor==0.4.0",
+    "torch>=2.3",
+    "torchaudio",  # via beat-this; must match the CPU torch
+]
+
+[tool.uv]
+package = false
+# Stickler only runs on Linux; muscriptor pins an old torch for Intel macOS that cannot be
+# resolved with the CPU index.
+environments = ["sys_platform == 'linux'"]
+
+[tool.uv.sources]
+stickler-adapter = { path = "../../_common", editable = true }
+torch = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# GPU-Variante (stickler setup --adapter muscriptor_l --device rocm), see docs/adr/0003-rocm-kanal.md
+# MuScriptor computes with fp16 autocast on CUDA/ROCm, where the Radeon 840M is strong.
+[tool.stickler.rocm]
+index = "https://repo.amd.com/rocm/whl-multi-arch/"
+replace = ["torch", "torchaudio"]
+packages = ["torch[device-gfx1152]==2.12.0+rocm7.14.1", "torchaudio==2.11.0+rocm7.14.1"]
+# Not measured for large; prefer_gpu as for medium (GPU slower there: memory bandwidth)
+prefer_gpu = false

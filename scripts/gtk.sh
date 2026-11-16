@@ -7,6 +7,7 @@
 #
 #   scripts/gtk.sh            start the app
 #   scripts/gtk.sh test ...   widget smoke tests (pytest -m gtk), extra arguments go to pytest
+#   scripts/gtk.sh demo <song> [out.gif]   records the README's animated overview (scripts/demo.py)
 #
 # STICKLER_GTK_PYTHON overrides the interpreter (default: /usr/bin/python3).
 set -euo pipefail
@@ -56,11 +57,12 @@ adw = f"{Adw.get_major_version()}.{Adw.get_minor_version()}.{Adw.get_micro_versi
 print(f"Python {sys.version.split()[0]}, PyGObject {gi.__version__}, GTK {gtk}, libadwaita {adw}")
 EOF
 
-if [[ "${1:-}" == "test" ]]; then
+if [[ "${1:-}" == "test" || "${1:-}" == "demo" ]]; then
+  mode="$1"
   shift
-  # The widget tests open real windows. They run on an invisible screen of their own (a headless
-  # mutter on its own D-Bus session), so they never pop up on the desktop; STICKLER_TEST_VISIBLE=1
-  # shows them, which is also the fallback when mutter is missing.
+  # The widget tests and the demo recording open real windows. They run on an invisible screen of
+  # their own (a headless mutter on its own D-Bus session), so they never pop up on the desktop;
+  # STICKLER_TEST_VISIBLE=1 shows them, which is also the fallback when mutter is missing.
   if command -v mutter >/dev/null && command -v dbus-run-session >/dev/null \
       && [[ -z "${STICKLER_TEST_VISIBLE:-}" ]]; then
     screen="stickler-test-$$"
@@ -78,6 +80,15 @@ if [[ "${1:-}" == "test" ]]; then
     [[ -S "${XDG_RUNTIME_DIR:-/run/user/$UID}/$screen" ]] || { echo "headless mutter did not start" >&2; exit 1; }
     export WAYLAND_DISPLAY="$screen" GDK_BACKEND=wayland
     unset DISPLAY
+  fi
+  if [[ "$mode" == "demo" ]]; then
+    # private settings, cache and recent songs, in English, as for the screenshots
+    private=$(mktemp -d)
+    trap 'kill "$(cat "${pidfile:-/dev/null}")" 2>/dev/null; rm -rf "$private"' EXIT
+    XDG_CONFIG_HOME="$private/config" XDG_CACHE_HOME="$private/cache" \
+      XDG_DATA_HOME="$private/data" LANGUAGE=en \
+      .venv-gtk/bin/python scripts/demo.py "$@"
+    exit
   fi
   .venv-gtk/bin/python -m pytest -q -m gtk -p no:cacheprovider tests/gtk "$@"
   exit

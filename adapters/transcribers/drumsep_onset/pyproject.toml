@@ -1,0 +1,29 @@
+[project]
+name = "stickler-drumsep-onset"
+version = "0.1.0"
+description = "Stickler adapter: DrumSep (MDX23C, 6 drums) via python-audio-separator, onsets per drum"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "stickler-adapter",
+    "audio-separator[cpu]==0.48.0",
+    "audioread",  # missing from audio-separator 0.48.0's dependencies, but imported
+    "librosa>=0.10",
+    "torch>=2.3",
+    "soundfile>=0.12",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+stickler-adapter = { path = "../../_common", editable = true }
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# DrumSep is trained on drums only, so a separator comes first.
+[tool.stickler]
+input = "stem"

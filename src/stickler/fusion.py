@@ -1,5 +1,8 @@
-"""Fusing ADTOF's frame activations from several inputs of one song (e.g. the mix and a drum
-stem) and tuning the fusion weights and the peak-picking threshold per instrument class.
+"""Fusing a transcriber's frame activations from several inputs of one song (e.g. the mix and a
+drum stem) and tuning the fusion weights and the peak-picking threshold per instrument class.
+
+Any transcriber that saves `activations.npz` (ADTOF; drumsep_onset and sad since release 7) can be
+fused and tuned; its columns are named by GM pitch in the file's `labels`.
 
 Fusion is a weighted mean of the activations over their common length; onsets are then picked
 per class (stickler.peaks). Tuning maximises each class's F1 over the pooled counts of all
@@ -24,6 +27,7 @@ class Sample:
     activations: list[np.ndarray]  # one [frames, classes] array per input, same column order
     reference: dict[str, np.ndarray]  # reference onset times per class (exclusions removed)
     excluded: tuple[tuple[float, float], ...] = ()  # audio-time intervals without scoring
+    labels: tuple[int, ...] = ()  # GM pitch of each activation column
 
 
 @dataclass(frozen=True)
@@ -152,6 +156,13 @@ FUSION_SEPARATOR = "fusion"
 # ADTOF's own thresholds (adtof_pytorch FRAME_RNN_THRESHOLDS, in LABELS_5 order 35/38/47/42/49)
 ADTOF_THRESHOLDS = {"KD": 0.22, "SD": 0.24, "TT": 0.32, "HH": 0.22, "CY": 0.30}
 TRANSCRIBER = "adtof"
+# Each tunable transcriber's own thresholds, the baseline `stickler tune` compares against
+# (drumsep_onset and sad: THRESHOLD in stickler_adapter.onsets, the same for every class).
+DEFAULT_THRESHOLDS = {
+    "adtof": ADTOF_THRESHOLDS,
+    "drumsep_onset": dict.fromkeys(ADTOF_THRESHOLDS, 0.1),
+    "sad": dict.fromkeys(ADTOF_THRESHOLDS, 0.1),  # the same onset step (stickler_adapter.onsets)
+}
 ACTIVATIONS = "activations.npz"
 
 
@@ -160,6 +171,7 @@ class Fusion:
     name: str
     inputs: tuple[str, ...]
     params: dict[str, ClassParams]
+    transcriber: str = TRANSCRIBER
 
 
 def parse_fusions(raw: Mapping | None, classes: Sequence[str]) -> list[Fusion]:
@@ -176,7 +188,7 @@ def parse_fusions(raw: Mapping | None, classes: Sequence[str]) -> list[Fusion]:
             if len(w) != len(inputs):
                 raise ValueError(f"fusion {name}, {cls}: {len(inputs)} inputs need as many weights")
             params[cls] = ClassParams(w, float(given[cls]["threshold"]))
-        out.append(Fusion(str(name), inputs, params))
+        out.append(Fusion(str(name), inputs, params, str(spec.get("transcriber", TRANSCRIBER))))
     return out
 
 
@@ -185,11 +197,13 @@ def load_activations(record) -> tuple[np.ndarray, list[int], int]:
         return z["activations"], [int(x) for x in z["labels"]], int(z["fps"])
 
 
-def _inputs(records, inputs: Sequence[str]) -> dict[tuple[str, str], dict[str, object]]:
-    """(dataset, track) → {separator: ADTOF record} for the wanted inputs."""
+def _inputs(
+    records, inputs: Sequence[str], transcriber: str = TRANSCRIBER
+) -> dict[tuple[str, str], dict[str, object]]:
+    """(dataset, track) → {separator: record of the transcriber} for the wanted inputs."""
     by_track: dict[tuple[str, str], dict[str, object]] = {}
     for r in records:
-        if r.transcriber == TRANSCRIBER and r.separator in inputs:
+        if r.transcriber == transcriber and r.separator in inputs:
             by_track.setdefault((r.dataset, r.track), {})[r.separator] = r
     return by_track
 
@@ -200,7 +214,7 @@ def fused_records(records, fusions: Sequence[Fusion], class_of: Mapping[int, str
 
     out = []
     for f in fusions:
-        for (dataset, track), found in _inputs(records, f.inputs).items():
+        for (dataset, track), found in _inputs(records, f.inputs, f.transcriber).items():
             parts = [found.get(i) for i in f.inputs]
             bad = [i for i, r in zip(f.inputs, parts, strict=True) if r is None or not r.ok]
             notes_, error = None, None
@@ -235,13 +249,19 @@ def fused_records(records, fusions: Sequence[Fusion], class_of: Mapping[int, str
     return out
 
 
-def samples_from_records(records, tracks: Mapping[str, Sequence], inputs: Sequence[str], scheme):
-    """Tuning samples: tracks where every input's ADTOF run succeeded."""
+def samples_from_records(
+    records,
+    tracks: Mapping[str, Sequence],
+    inputs: Sequence[str],
+    scheme,
+    transcriber: str = TRANSCRIBER,
+):
+    """Tuning samples: tracks where every input's run of the transcriber succeeded."""
     from stickler.classes import onsets_from_notes
 
     by_id = {(ds, t.id): t for ds, ts in tracks.items() for t in ts}
     out = []
-    for key, found in _inputs(records, inputs).items():
+    for key, found in _inputs(records, inputs, transcriber).items():
         parts = [found.get(i) for i in inputs]
         if key not in by_id or any(r is None or not r.ok for r in parts):
             continue
@@ -249,5 +269,7 @@ def samples_from_records(records, tracks: Mapping[str, Sequence], inputs: Sequen
         ref = onsets_from_notes(track.reference_notes(), scheme).by_class
         excluded = tuple(track.excluded)
         reference = {c: _outside(t, excluded) for c, t in ref.items()}
-        out.append(Sample([load_activations(r)[0] for r in parts], reference, excluded))
+        loaded = [load_activations(r) for r in parts]
+        labels = tuple(loaded[0][1])
+        out.append(Sample([a for a, _, _ in loaded], reference, excluded, labels))
     return out

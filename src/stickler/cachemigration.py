@@ -13,7 +13,9 @@ The migration is idempotent; it is run again after results come back from a rent
 
 Rekeying: after an edit that does not change behaviour but does change the code digest (e.g.
 translating a `description` or an error message), entries made under the previous digest are
-moved to the current one. It is explicit (`previous_digests`, saved with `save_digests` before
+moved to the current one. Since 2026-11-16 the usual way is to list the previous digest in
+`digests.yaml`, which renames entries on first use (runner.cache_dir_for), also in the app.
+It is explicit (`previous_digests`, saved with `save_digests` before
 the edit) because applying it to a real code change would hand old results to new code.
 """
 
@@ -61,16 +63,27 @@ def digests(registry: dict[str, adapters.AdapterSpec]) -> dict[str, str]:
 
 
 def save_digests(path: Path, registry: dict[str, adapters.AdapterSpec]) -> None:
-    path.write_text(json.dumps(digests(registry), indent=1) + "\n", encoding="utf-8")
+    snapshot = {"definition": runner.DIGEST_DEFINITION, "digests": digests(registry)}
+    path.write_text(json.dumps(snapshot, indent=1) + "\n", encoding="utf-8")
 
 
 def load_digests(path: Path) -> dict[str, str]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    """A snapshot from save_digests; one of another digest definition is refused (its digests
+    say nothing about today's files)."""
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(snapshot, dict) or snapshot.get("definition") != runner.DIGEST_DEFINITION:
+        raise ValueError(
+            f"{path}: snapshot of another digest definition; list equivalent digests in "
+            "src/stickler/digests.yaml instead"
+        )
+    return snapshot["digests"]
 
 
 def _old_names(spec, sha: str, previous: str | None) -> list[str]:
-    """Names an entry for this input may still have: v1 keys, then the previous v2 digest."""
+    """Names an entry for this input may still have: v1 keys, the digests listed as
+    equivalent (digests.yaml), then the previous digest of a snapshot."""
     names = [legacy_key(spec, sha, env) for env in LEGACY_ENVS]
+    names += [runner.cache_key(spec, sha, d) for d in runner.equivalent_digests(spec)]
     if previous and previous != runner.code_digest(spec):
         names.append(runner.cache_key(spec, sha, previous))
     return names

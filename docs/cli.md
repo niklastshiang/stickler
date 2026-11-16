@@ -135,7 +135,7 @@ Optional entries build further pipelines from cached results, without computing 
 | Entry | What it scores | Name in the results |
 |---|---|---|
 | `combos` | each class from another pipeline, e.g. `{quality: {demucs+muscriptor_m: [KD, SD, TT], none+adtof: [HH, CY]}}` | `combo + quality` |
-| `fusions` | ADTOF's frame probabilities of several inputs averaged, thresholds per class (see `tune`) | `fusion + <name>` |
+| `fusions` | a transcriber's frame activations (ADTOF by default, `transcriber: drumsep_onset` possible) of several inputs averaged, thresholds per class (see `tune`) | `fusion + <name>` |
 | `votes` | a hit counts if `min_agree` of the listed pipelines detect it | `vote + <name>` |
 | `grid` | listed pipelines also after snapping to the beat grid, as the sheet music shows them | `<transcriber>@grid` |
 | `consensus` | with `grid`: fill in hits that most similar bars have | `<transcriber>@rep` |
@@ -183,7 +183,9 @@ uv run stickler tune --config config/benchmark.yaml --inputs none,demucs --name 
 
 Searches, per class, the fusion weights of ADTOF's probabilities on the given inputs and the
 peak-picking threshold that maximise F1 on the cached runs of the given configurations, and
-prints a `fusions` entry to paste into a configuration. Tune on one dataset and check the result
+prints a `fusions` entry to paste into a configuration. `--transcriber drumsep_onset` tunes
+DrumSep's onset envelopes instead (one input, e.g. `--inputs oracle` on MDB), compared against
+its default threshold; its picking is the same, so the tuned threshold reproduces the adapter. Tune on one dataset and check the result
 on another; settings tuned on MDB did not transfer to rock and metal recordings (report,
 section 6).
 
@@ -248,8 +250,8 @@ The Hugging Face token goes over the SSH connection's input, never onto a comman
 | Command | Use |
 |---|---|
 | `stickler cache-migrate [--dry-run]` | move entries from older cache keys to the current ones; nothing is deleted (duplicates go to `cache/_superseded/`, unknown entries to `cache/_orphaned/`) |
-| `stickler cache-digests <file>` | snapshot every model's code digest before an edit that does not change behaviour (e.g. a translated message) |
-| `stickler cache-migrate --rekey-from <file>` | after such an edit, move the results to the new digests; never after a real code change |
+| `stickler cache-digests <file>` | snapshot every model's code digest before and after an edit that does not change behaviour (e.g. a translated message); add the pair `{from, to}` to `src/stickler/digests.yaml`, and results are renamed to the new key on first use |
+| `stickler cache-migrate --rekey-from <file>` | the same at once for a whole cache, from a snapshot of the current digest definition; never after a real code change |
 
 ### 4.3 Tests and checks
 
