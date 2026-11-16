@@ -8,6 +8,7 @@ Built-in separators:
 from __future__ import annotations
 
 import ast
+import contextlib
 import hashlib
 import json
 import logging
@@ -16,8 +17,11 @@ import threading
 import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 from typing import Protocol
+
+import yaml
 
 from stickler import adapters
 from stickler import audio as audio_mod
@@ -119,20 +123,78 @@ def _canonical(path: Path) -> bytes:
     return text.encode()
 
 
+def _common_dir(spec: adapters.AdapterSpec) -> Path | None:
+    """The shared adapter package (adapters/_common) as the adapter's pyproject.toml names it."""
+    pyproject = spec.path / "pyproject.toml"
+    if not pyproject.exists():
+        return None
+    sources = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    source = sources.get("tool", {}).get("uv", {}).get("sources", {}).get("stickler-adapter", {})
+    path = source.get("path") if isinstance(source, dict) else None
+    folder = (spec.path / path).resolve() if path else None
+    return folder if folder and folder.is_dir() else None
+
+
+def _behaviour_files(spec: adapters.AdapterSpec) -> list[tuple[str, Path]]:
+    """Every file that defines what the adapter computes: its own Python modules and
+    pyproject.toml, and the shared adapter package it imports (since 2026-11-16; before, only
+    run.py, pyproject.toml and setup.py counted, so a changed helper kept old results valid)."""
+    files = [(name, spec.path / name) for name in ("run.py", "pyproject.toml", "setup.py")]
+    files += [
+        (p.name, p) for p in sorted(spec.path.glob("*.py")) if p.name not in ("run.py", "setup.py")
+    ]
+    common = _common_dir(spec)
+    if common:
+        files += [
+            (f"_common/{p.relative_to(common).as_posix()}", p)
+            for p in sorted(common.rglob("*.py"))
+            if "__pycache__" not in p.parts and ".venv" not in p.parts
+        ]
+        files.append(("_common/pyproject.toml", common / "pyproject.toml"))
+    return [(name, p) for name, p in files if p.exists()]
+
+
 def code_digest(spec: adapters.AdapterSpec) -> str:
     h = hashlib.sha1()
-    for name in ("run.py", "pyproject.toml", "setup.py"):
-        p = spec.path / name
-        if p.exists():
-            h.update(name.encode() + b"\0" + _canonical(p) + b"\0")
+    for name, p in _behaviour_files(spec):
+        h.update(name.encode() + b"\0" + _canonical(p) + b"\0")
     return h.hexdigest()
+
+
+EQUIVALENTS = Path(__file__).with_name("digests.yaml")
+
+
+@cache
+def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, tuple[str, ...]]:
+    """Adapter id → earlier code digests whose results are those of today's code."""
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else None
+    return {
+        str(k): tuple(str(d) for d in v) for k, v in ((raw or {}).get("equivalent") or {}).items()
+    }
+
+
+def equivalent_digests(spec: adapters.AdapterSpec) -> tuple[str, ...]:
+    return load_equivalents().get(spec.id, ())
 
 
 def cache_dir_for(cache: Path, spec: adapters.AdapterSpec, audio: Path) -> Path:
     """Cache folder: depends only on the input content and the adapter's code (ignoring
     comments and docstrings). The device is recorded in meta.json, not in the key, so results
-    computed on a rented GPU count as cache hits on the laptop (decided 2026-11-12)."""
-    return cache / spec.id / cache_key(spec, _sha1_file(audio))
+    computed on a rented GPU count as cache hits on the laptop (decided 2026-11-12).
+
+    If there is no folder under the current key but one under an equivalent earlier digest
+    (digests.yaml), that folder is renamed to the current key: results survive edits that do
+    not change behaviour, in the benchmark and in the app, without a migration step."""
+    sha = _sha1_file(audio)
+    current = cache / spec.id / cache_key(spec, sha)
+    if not current.exists():
+        for digest in equivalent_digests(spec):
+            earlier = cache / spec.id / cache_key(spec, sha, digest)
+            if earlier.is_dir():
+                with contextlib.suppress(OSError):  # another process renamed it first
+                    earlier.rename(current)
+                break
+    return current
 
 
 def cache_key(spec: adapters.AdapterSpec, audio_sha1: str, digest: str | None = None) -> str:

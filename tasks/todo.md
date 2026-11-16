@@ -662,7 +662,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
 
 - [ ] **Task 84: Benchmark runs** (M)
   - Prepared 2026-11-16: `stickler tune --transcriber drumsep_onset` tunes DrumSep's thresholds on its saved envelopes; the adapter picks peaks exactly as `stickler.peaks` (copy, kept identical by a test), so a tuned threshold reproduces its MIDI. Fusions take `transcriber:` (default adtof).
-  - Noticed, not changed (for the owner): an adapter's cache key covers only `run.py`, `setup.py` and `pyproject.toml`, not helper modules such as `onsets.py` or `common.py`. A behaviour change in a helper therefore keeps old results valid. Including every `.py` of the adapter folder would change every adapter's key (a rekey for unchanged code, `stickler cache-migrate`); the owner decides. Until then, after a behaviour change in a helper, delete that adapter's cache entries by hand.
+  - Noticed 2026-11-16: an adapter's cache key covered only `run.py`, `setup.py` and `pyproject.toml`, not helper modules; fixed in Task 87.
   - Acceptance: `demucs+drumsep_onset`, `demucs+muscriptor_l`, `demucs+sad` (and a combination like Quality's for a candidate that is strong on some classes) on MDB, ENST and the 25 own songs; every combination gives MIDI or a logged error (SPEC Release 7, criterion 1); `metrics.csv` and `report.html` updated; RunPod pods stopped.
   - Verify: `uv run stickler eval` for the three configs; the time per 4-minute song on the laptop for each candidate in the report
   - Dependencies: 12, 82, 83 · Files: `config/*.yaml`, results (not committed)
@@ -676,6 +676,9 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Acceptance: ADR 0008 with the decision per mode (unchanged or replaced; owner); `docs/report.md` section on the new candidates; README candidates and results tables; release steps of ADR 0006 incl. the hand-tried feature list.
   - Verify: SPEC Release 7 success criteria; `scripts/check.sh task`
   - Dependencies: 84, 85 · Files: `docs/adr/0008-*.md`, `docs/report.md`, `README.md`, version files
+
+- [x] **Task 87: Cache keys cover everything that defines an adapter** (M) (owner, 2026-11-16): done 2026-11-16. The digest covers every Python module and `pyproject.toml` of the adapter and `adapters/_common` (before: only `run.py`, `setup.py`, `pyproject.toml`, so a changed helper such as `onsets.py` kept old results valid). Earlier digests whose results equal today's code are listed in `src/stickler/digests.yaml`; `cache_dir_for` renames such entries to the current key on first use, in the benchmark and the app, so neither the laptop nor installed apps compute anything again. Listed: every adapter unchanged since release 6; not drumsep_onset (its helper changed under the same old digest). The fixture's pinned digest is the same on Python 3.12 and 3.14.
+  - Verify: `uv run pytest -q tests/test_cache_keys.py tests/test_runner.py tests/test_cachemigration.py`; on the laptop, the first `stickler run` after the update finds every cached result (nothing computed)
 
 ### Checkpoint P
 - [ ] All success criteria of SPEC.md "Release 7" met; the decision per mode by the owner; release 7

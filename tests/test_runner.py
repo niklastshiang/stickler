@@ -294,6 +294,7 @@ def test_other_formats_reach_the_adapter_as_flac_but_keep_their_cache_key(tmp_pa
 def test_cache_keys_do_not_depend_on_the_harness_python():
     """The harness runs on Python 3.12 to 3.14 (CLI on 3.12, the GTK app on the system's 3.14);
     the same adapter code must give the same key, or every result is computed again. Python
-    3.13 changed what ast.dump prints; the expected value was computed on 3.12."""
+    3.13 changed what ast.dump prints; the expected value was computed on 3.12. Since 2026-11-16
+    the digest also covers adapters/_common, so an edit there changes this value too."""
     spec = adapters.discover(Path(__file__).parent / "fixtures" / "adapters")["dummy"]
-    assert runner.code_digest(spec) == "00c110944dde54ab33188374a47b97b4bfbe71a8"
+    assert runner.code_digest(spec) == "79609962ba653683ff4479a20512e25a103cbfbf"

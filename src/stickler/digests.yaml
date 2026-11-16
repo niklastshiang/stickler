@@ -1,0 +1,20 @@
+# Earlier code digests whose cached results equal those of the adapter's current code
+# (stickler.runner.cache_dir_for renames such entries to the current key on first use).
+#
+# Add an entry only for an edit that does not change what the adapter computes: comments,
+# translations, a new definition of the digest. Never after a real behaviour change: old
+# results would be handed to new code. Take the old digest from `stickler cache-digests`
+# before the edit, and keep earlier entries (a cache may still hold them).
+equivalent:
+  # 2026-11-16: the digest now covers every Python module of the adapter and the shared
+  # package adapters/_common (before: run.py, pyproject.toml, setup.py). These adapters are
+  # unchanged since release 6. Not listed: drumsep_onset, whose onsets.py changed behaviour
+  # under the same old digest (its results from before exist only in a test container).
+  adt_str: [a6e42d04761802db0916ae4029de8712578a80a4]
+  adtof: [db9160eb89e28c7de13b836fe113c4514b8e0554]
+  beat_this: [36a01674d6c221aff08424aeaff8e17a3080c4e6]
+  demucs: [a9719f2ff24f8d1bc6ea4775c9cc0cc26d04d894]
+  muscriptor_l: [7dc00814b64f14a51892c18f463fe56f7fe0349f]
+  muscriptor_m: [c8af6164e49783c9eec15eb3d54f325a7201816e]
+  muscriptor_s: [fa7abcc22fd7231e9348c9061c27bcfce23dcb36]
+  roformer: [641f015ffddfaab934ef810910bf1d6f2b23a8fb]

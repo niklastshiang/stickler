@@ -13,7 +13,9 @@ The migration is idempotent; it is run again after results come back from a rent
 
 Rekeying: after an edit that does not change behaviour but does change the code digest (e.g.
 translating a `description` or an error message), entries made under the previous digest are
-moved to the current one. It is explicit (`previous_digests`, saved with `save_digests` before
+moved to the current one. Since 2026-11-16 the usual way is to list the previous digest in
+`digests.yaml`, which renames entries on first use (runner.cache_dir_for), also in the app.
+It is explicit (`previous_digests`, saved with `save_digests` before
 the edit) because applying it to a real code change would hand old results to new code.
 """
 
