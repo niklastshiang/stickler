@@ -143,7 +143,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 ### Checkpoint C
 - [ ] Report with MDB and at least one own song (Success Criteria 3 and 4)
 - [ ] Review with the user: choose the winning pipeline, `docs/adr/0005-gewinner-pipeline.md`
-  - Evidence (2026-11-16): `docs/report.md` and `report.html` cover MDB, ENST and 25 own songs (sections 5.1–5.4, with per-class F1, runtime, RTF and RAM). The winning pipeline was chosen by the owner as two modes, Fast and Quality (2026-11-13, kept on 2026-11-14 after the correction), recorded in report section 7 and Phase 5c, but not as an ADR: `0005` became YourMT3+'s ADR. Gap: no ADR for the modes; Task 86's ADR 0008 (the decision per mode in release 7) can record their history too.
+  - Evidence (2026-11-16): `docs/report.md` and `report.html` cover MDB, ENST and 25 own songs (sections 5.1–5.4, with per-class F1, runtime, RTF and RAM). The winning pipeline was chosen by the owner as two modes, Fast and Quality (2026-11-13, kept on 2026-11-14 after the correction), recorded in report section 7 and Phase 5c, but not as an ADR: `0005` became YourMT3+'s ADR. Gap: no ADR for the modes; Task 86's ADR 0008 records their history too (owner, 2026-11-16), then this checkpoint can be ticked.
 
 ## Phase 5: Notes
 
@@ -687,7 +687,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Dependencies: 84 · Files: `src/stickler/{errors,api}.py` if the sample needs a candidate filter, tests
 
 - [ ] **Task 86: Decision, report and release 7** (S)
-  - Acceptance: ADR 0008 with the decision per mode (unchanged or replaced; owner); `docs/report.md` section on the new candidates; README candidates and results tables; release steps of ADR 0006 incl. the hand-tried feature list.
+  - Acceptance: ADR 0008 with the decision per mode (unchanged or replaced; owner), and the modes' history since the owner chose them (Fast and Quality, 2026-11-13; kept on 2026-11-14 after the correction), which closes Checkpoint C (owner, 2026-11-16); `docs/report.md` section on the new candidates; README candidates and results tables; release steps of ADR 0006 incl. the hand-tried feature list.
   - Verify: SPEC Release 7 success criteria; `scripts/check.sh task`
   - Dependencies: 84, 85 · Files: `docs/adr/0008-*.md`, `docs/report.md`, `README.md`, version files
 
