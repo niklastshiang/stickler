@@ -69,7 +69,7 @@ def test_a_quiet_stem_stays_quiet_because_all_stems_share_one_scale():
     assert times(notes, 36) == [0.5, 1.5]
 
 
-def test_hits_closer_than_the_wait_become_one():
+def test_hits_within_the_combine_window_become_one():
     notes = onsets.transcribe(stems(snare=envelope(2, [1.0, 1.01])), FPS)
     assert times(notes, 38) == [1.0]
 
@@ -99,3 +99,14 @@ def test_activations_are_five_classes_with_ride_and_crash_merged():
 def test_missing_stem_is_an_error():
     with pytest.raises(ValueError, match="toms"):
         onsets.transcribe({"kick": silent(1)}, FPS)
+
+
+def test_peak_picking_is_the_harness_s_so_tuned_thresholds_reproduce_the_adapter():
+    """The adapter may not import the harness, so it keeps a copy of stickler.peaks.pick."""
+    from stickler import peaks
+
+    rng = np.random.default_rng(1)
+    for _ in range(20):
+        env = np.clip(rng.gamma(0.3, 0.3, 600), 0, None).astype(np.float32)
+        for thr in (0.02, 0.1, 0.3):
+            assert np.array_equal(onsets.pick(env, thr, FPS), peaks.pick(env, thr, FPS))

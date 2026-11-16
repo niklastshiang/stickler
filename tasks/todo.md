@@ -661,6 +661,8 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Dependencies: none · Files: `adapters/transcribers/sad/*`, `config/*.yaml`
 
 - [ ] **Task 84: Benchmark runs** (M)
+  - Prepared 2026-11-16: `stickler tune --transcriber drumsep_onset` tunes DrumSep's thresholds on its saved envelopes; the adapter picks peaks exactly as `stickler.peaks` (copy, kept identical by a test), so a tuned threshold reproduces its MIDI. Fusions take `transcriber:` (default adtof).
+  - Noticed, not changed (for the owner): an adapter's cache key covers only `run.py`, `setup.py` and `pyproject.toml`, not helper modules such as `onsets.py` or `common.py`. A behaviour change in a helper therefore keeps old results valid. Including every `.py` of the adapter folder would change every adapter's key (a rekey for unchanged code, `stickler cache-migrate`); the owner decides. Until then, after a behaviour change in a helper, delete that adapter's cache entries by hand.
   - Acceptance: `demucs+drumsep_onset`, `demucs+muscriptor_l`, `demucs+sad` (and a combination like Quality's for a candidate that is strong on some classes) on MDB, ENST and the 25 own songs; every combination gives MIDI or a logged error (SPEC Release 7, criterion 1); `metrics.csv` and `report.html` updated; RunPod pods stopped.
   - Verify: `uv run stickler eval` for the three configs; the time per 4-minute song on the laptop for each candidate in the report
   - Dependencies: 12, 82, 83 · Files: `config/*.yaml`, results (not committed)

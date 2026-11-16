@@ -68,21 +68,21 @@ def test_notes_apply_weights_and_thresholds_per_class():
     assert notes == [(0.10, 35), (0.30, 38), (0.50, 35)]
 
 
-def _records(tmp_path, track="t1", ok=True):
+def _records(tmp_path, track="t1", ok=True, transcriber="adtof", labels=LABELS):
     from stickler.runner import Record
 
     s = _sample()
     out = []
     for sep, act in zip(["none", "demucs"], s.activations, strict=True):
-        d = tmp_path / f"{sep}-{track}"
+        d = tmp_path / f"{sep}-{track}-{transcriber}"
         d.mkdir()
-        np.savez(d / "activations.npz", activations=act, fps=100, labels=np.asarray(LABELS))
+        np.savez(d / "activations.npz", activations=act, fps=100, labels=np.asarray(labels))
         out.append(
             Record(
                 "mdb",
                 track,
                 sep,
-                "adtof",
+                transcriber,
                 None,
                 d / "drums.mid",
                 {"seconds": 0.0 if sep == "none" else 3.0},
@@ -152,3 +152,38 @@ def test_score_params_counts_fixed_settings():
     scored = fusion.score_params([_sample()], LABELS, {35: "KD", 38: "SD"}, params)
     assert scored["KD"].counts == (2, 1, 0)  # false kick from the stem
     assert scored["SD"].counts == (0, 0, 1)  # weak snare on the mix is missed
+
+
+def test_a_fusion_names_its_transcriber_adtof_by_default():
+    classes = {"KD": {"weights": [1], "threshold": 0.5}, "SD": {"weights": [1], "threshold": 0.5}}
+    raw = {"a": {"inputs": ["none"], "classes": classes}}
+    raw["d"] = {"inputs": ["oracle"], "transcriber": "drumsep_onset", "classes": classes}
+    a, d = fusion.parse_fusions(raw, ["KD", "SD"])
+    assert a.transcriber == "adtof" and d.transcriber == "drumsep_onset"
+
+
+def test_fused_records_use_only_the_fusion_s_transcriber(tmp_path):
+    params = {"KD": fusion.ClassParams((1.0, 0.0), 0.5), "SD": fusion.ClassParams((0.0, 1.0), 0.5)}
+    records = _records(tmp_path) + _records(tmp_path, transcriber="drumsep_onset", labels=[36, 38])
+    f = fusion.Fusion("ds", ("none", "demucs"), params, transcriber="drumsep_onset")
+    (rec,) = fusion.fused_records(records, [f], {36: "KD", 38: "SD", 35: "KD"})
+    assert list(rec.notes) == [(0.10, 36), (0.30, 38), (0.50, 36)]
+    missing = fusion.Fusion("ds", ("none", "demucs"), params, transcriber="other")
+    assert fusion.fused_records(records, [missing], {36: "KD", 38: "SD"}) == []
+
+
+def test_samples_carry_the_labels_of_their_activations(tmp_path):
+    class T:
+        id, excluded = "t1", ()
+
+        def reference_notes(self):
+            return [(0.1, 36)]
+
+    from stickler.classes import Scheme
+
+    scheme = Scheme("5", {"KD": frozenset({35, 36}), "SD": frozenset({38})})
+    records = _records(tmp_path) + _records(tmp_path, transcriber="drumsep_onset", labels=[36, 38])
+    (s,) = fusion.samples_from_records(
+        records, {"mdb": [T()]}, ("none",), scheme, transcriber="drumsep_onset"
+    )
+    assert s.labels == (36, 38)

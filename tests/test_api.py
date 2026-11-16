@@ -189,6 +189,41 @@ def test_fusions_are_scored_and_tuned_from_cached_activations(monkeypatch, tmp_p
     ) and "KD: {weights: [1.0], threshold: 0.3}" in report.yaml("tuned")
 
 
+def test_tune_works_for_any_transcriber_that_saves_activations(monkeypatch, tmp_path):
+    import mido
+    import numpy as np
+
+    from stickler import adapters, fusion
+    from stickler.runner import Record
+
+    _fake_mdb(monkeypatch, tmp_path)  # reference: KD at 0.5 s, SD at 1.0 s
+    act = np.zeros((200, 5), dtype=np.float32)
+    act[50, 0] = act[100, 1] = 0.9
+    entry = tmp_path / "ds-entry"
+    entry.mkdir()
+    np.savez(entry / "activations.npz", activations=act, fps=100, labels=[36, 38, 47, 42, 49])
+    mido.MidiFile().save(str(entry / "drums.mid"))
+    adtof = Record("mdb", "t", "oracle", "adtof", None, None, {}, {}, "not run")
+    ds = Record("mdb", "t", "oracle", "drumsep_onset", None, entry / "drums.mid", {}, {}, None)
+    monkeypatch.setattr(api, "run_benchmark", lambda *a, **kw: [adtof, ds])
+    monkeypatch.setattr(adapters, "discover", lambda root: {})
+    cfg = _bench(tmp_path)
+    report = api.tune_fusion(
+        [cfg],
+        ["oracle"],
+        transcriber="drumsep_onset",
+        data_dir=tmp_path,
+        step=1.0,
+        thresholds=[0.3, 0.95],
+    )
+    assert report.tracks == 1 and report.tuned["KD"].f1 == 1.0
+    assert report.default["KD"].threshold == fusion.DEFAULT_THRESHOLDS["drumsep_onset"]["KD"]
+    assert "transcriber: drumsep_onset" in report.yaml("ds_tuned")
+    assert "transcriber" not in api.TuneReport(["none"], 1, {}, {}).yaml("x")
+    with pytest.raises(ValueError, match="no thresholds"):
+        api.tune_fusion([cfg], ["oracle"], transcriber="unknown", data_dir=tmp_path)
+
+
 def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
     from stickler import grid
 
