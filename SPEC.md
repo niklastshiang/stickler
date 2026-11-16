@@ -1514,6 +1514,95 @@ src/stickler_gtk/ui/menu.py, window.py # the menu entry and its alert
 
 - None.
 
+## Release 7: New candidates
+
+> Status: **draft** (2026-11-16), not yet approved. Candidates chosen by the owner on 2026-11-16
+> after a web check of each (facts and sources below).
+
+### Objective
+**Find out whether a newer model makes Fast or Quality better on the owner's music.** A
+candidate replaces a pipeline in the app only if it beats it on the 25 own songs, corrected for
+reference errors (owner, 2026-11-16); otherwise its results go into the report and the app stays
+as it is.
+
+User stories:
+- As the owner, I want to know whether the models published since the benchmark beat Fast and
+  Quality on my rock and metal songs.
+- As the owner, I want the app to change only for a measured improvement, never for a promise.
+
+Scope: three candidates, measured like every pipeline so far (25 own songs, MDB Drums, ENST
+drummer 3; ±50 ms; 5 and 3 classes). Not in scope: fine-tuning (owner, 2026-11-13), new scoring,
+finer classes in the sheet music (a later module; DrumSep's ride/crash split is only recorded).
+
+### Candidates (owner, 2026-11-16; facts checked on the web 2026-11-16)
+| ID | What | Source and licence | Notes |
+|---|---|---|---|
+| `drumsep_onset` (Task 12) | MDX23C DrumSep by aufr33/jarredou splits a drum stem into kick, snare, toms, hi-hat, ride, crash; librosa onset detection per stem → GM MIDI | In python-audio-separator 0.48.0 (`models.json`: `MDX23C-DrumSep-aufr33-jarredou.ckpt`), the version the `roformer` adapter pins; code MIT, weights without a formal licence (community model) | Needs a drum stem: runs as `demucs+drumsep_onset`. The original weight host is gone; the download is checked first. Ride and crash are merged into cymbals for scoring |
+| `muscriptor_l` | MuScriptor large (~1.4 B parameters), like `muscriptor_s/_m` | HF `MuScriptor/muscriptor-large`, `model.safetensors` 5.47 GB, CC BY-NC 4.0, gated (accept the terms, `hf auth login`); muscriptor 0.4.0 (pinned) loads it | Download > 2 GB approved by the owner (2026-11-16). Measured on RunPod; a Quality candidate only (never Fast) |
+| `sad` | Separate-and-Detect (Hsu et al., arXiv 2608.01093, Aug 2026): a latent-diffusion model generates five drum stems, a fixed onset detector turns them into hits | github.com/ddman1101/Separate-and-detect (MIT, last push 2026-08-13), weights HF `ddman1101/Separate-and-Detect` `msgld_obtb.ckpt` (MIT) | **Exception (owner, 2026-11-16):** tested although the project is research code without visible maintenance (CLAUDE.md asks for actively maintained projects): Python 3.9/3.10, conda, madmom, CUDA scripts. Trained on drum-only multitracks, so it runs on a Demucs stem; diffusion is slow, so measured on RunPod |
+
+Looked at and left out (2026-11-16): Noise-to-Notes (Sony, 2025/26; no code or weights
+published), LarsNet (5-stem U-Nets, 2023; the baseline Separate-and-Detect beats), MVSEP's
+RoFormer DrumSep variants (no downloadable weights).
+
+### Method
+1. **Each candidate as an adapter**, like the others (own `pyproject.toml`, own environment,
+   README with source, version/commit and licence). The harness is unchanged.
+2. **Settings are chosen before the own songs are seen**: onset parameters (DrumSep) and any
+   threshold on MDB and ENST, as in Phase 5c; the own songs are the final check only.
+3. **Measured on all three datasets**; laptop runtimes (RTF, peak RAM) for every candidate that
+   can run there, RunPod for the rest (the laptop stays the reference for the app's modes).
+4. **Decision rule**: a candidate (alone or in a combination like today's Quality) replaces Fast
+   or Quality only if its macro-F1 on the own songs, corrected as in release 3, is higher, and it
+   stays within the mode's time budget (see open questions). Per song better/worse counts and the
+   95 % interval are reported as for Quality vs Fast.
+
+### Commands
+```bash
+uv run stickler setup --adapter drumsep_onset   # likewise muscriptor_l, sad
+uv run stickler run --config config/benchmark.yaml
+uv run stickler run --config config/own.yaml
+uv run stickler remote …                        # RunPod for muscriptor_l and sad
+uv run stickler eval --config config/own.yaml && uv run stickler report
+```
+
+### Project structure (additions)
+```
+adapters/transcribers/drumsep_onset/   # audio-separator DrumSep + librosa onsets
+adapters/transcribers/muscriptor_l/    # copy of muscriptor_m with SIZE = "large"
+adapters/transcribers/sad/             # Separate-and-Detect, pinned commit
+config/benchmark.yaml, config/own.yaml # the new pipelines
+docs/report.md, README.md              # results, candidates table
+```
+
+### Testing strategy
+- Adapter smoke tests (`pytest -m adapters -k <id>`): 10 s of a real mix through the pipeline
+  gives valid GM MIDI and `meta.json`; GM mapping of each candidate's classes as unit tests.
+- DrumSep: the per-stem onset step is a pure function with unit tests on generated clicks.
+- Results checked against the cache rules: existing entries untouched (new adapters, new keys).
+
+### Boundaries
+- **Always:** source, commit and licence in each adapter's README; weights downloaded by
+  `setup`, never committed or shipped.
+- **Ask first:** changing a mode of the app; adding a fourth candidate; a RunPod run longer than
+  planned.
+- **Never:** tune on the own songs; change the scoring to favour a candidate.
+
+### Success criteria
+1. Each of the three candidates produces MIDI or a logged error on all MDB, ENST and own songs.
+2. `metrics.csv`, `report.html` and `docs/report.md` contain them next to Fast and Quality.
+3. A decision per mode, recorded as an ADR: unchanged, or replaced (owner).
+4. README candidates and results tables updated; `scripts/check.sh task` green.
+
+### Open questions
+1. **Corrected scores need listening.** Release 3's correction rests on 100 spots judged by ear
+   from Fast's and Quality's own errors; a new pipeline makes other errors. Options: (a) compare
+   measured scores first and run a listening round (about 40 new spots, same procedure) only for
+   a candidate that comes close to or beats a mode; (b) a full listening round for every
+   candidate.
+2. **Time budget per mode**: Fast is ~15 s, Quality ~14 min for a 4-minute song on the laptop.
+   What may a Quality candidate cost at most?
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
