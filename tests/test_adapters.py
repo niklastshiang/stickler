@@ -116,8 +116,7 @@ def test_input_requirement_is_read(registry):
     assert not registry["dummy"].needs_stem
 
 
-def test_timeout_kills_model_process_under_uv(registry, tmp_path):
-    import os
+def test_timeout_kills_model_process_under_uv(registry, tmp_path, processes):
     import time
 
     out = tmp_path / "out"
@@ -127,7 +126,7 @@ def test_timeout_kills_model_process_under_uv(registry, tmp_path):
     assert not result.ok and "time limit" in result.error
     pid = int((out / "pid").read_text())
     time.sleep(0.5)
-    assert not os.path.exists(f"/proc/{pid}"), "model process keeps running after the time limit"
+    assert not processes.running(pid), "model process keeps running after the time limit"
 
 
 def _cancel_when_running(pid_file: Path, token, seen: dict) -> None:
@@ -148,21 +147,7 @@ def _cancel_when_running(pid_file: Path, token, seen: dict) -> None:
     threading.Thread(target=watch, daemon=True).start()
 
 
-def _group_gone(group: int, within: float) -> bool:
-    import os
-    import time
-
-    deadline = time.monotonic() + within
-    while time.monotonic() < deadline:
-        try:
-            os.killpg(group, 0)
-        except ProcessLookupError:
-            return True
-        time.sleep(0.01)
-    return False
-
-
-def test_cancel_ends_the_process_group_within_a_second(registry, tmp_path):
+def test_cancel_ends_the_process_group_within_a_second(registry, tmp_path, processes):
     import time
 
     out = tmp_path / "out"
@@ -171,7 +156,7 @@ def test_cancel_ends_the_process_group_within_a_second(registry, tmp_path):
     with pytest.raises(adapters.Cancelled):
         adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=30, cancel=token)
     assert time.monotonic() - seen["at"] < 1
-    assert _group_gone(seen["group"], within=1), "a process of the adapter's group survived"
+    assert processes.group_gone(seen["group"]), "a process of the adapter's group survived"
 
 
 def test_cancelled_run_leaves_no_output_behind(registry, tmp_path):
@@ -236,7 +221,7 @@ def test_a_finished_setup_is_ready(tmp_path):
     assert adapters.missing_setup(_local_adapter(tmp_path, "nw", weights=False)) == ["environment"]
 
 
-def test_cancelling_the_weights_download_keeps_them_not_set_up(tmp_path):
+def test_cancelling_the_weights_download_keeps_them_not_set_up(tmp_path, processes):
     """setup.py hangs mid-download; cancel kills its group. As measured in Task 32 the weights
     then do not count, and the next setup cleans up the partial file and finishes."""
     spec = _local_adapter(tmp_path)
@@ -255,7 +240,7 @@ def test_cancelling_the_weights_download_keeps_them_not_set_up(tmp_path):
     _cancel_when_running(spec.path / "pid", token, seen)
     with pytest.raises(adapters.Cancelled):
         adapters.setup_adapter(spec, cancel=token)
-    assert _group_gone(seen["group"], within=1)
+    assert processes.group_gone(seen["group"])
     assert adapters.missing_setup(spec) == ["weights"]
     setup_py.write_text(finishing, encoding="utf-8")
     adapters.setup_adapter(spec)
@@ -263,7 +248,7 @@ def test_cancelling_the_weights_download_keeps_them_not_set_up(tmp_path):
     assert not list((spec.path / "weights").rglob("*.partial"))
 
 
-def test_cancelling_uv_sync_leaves_the_environment_not_set_up(tmp_path, monkeypatch):
+def test_cancelling_uv_sync_leaves_the_environment_not_set_up(tmp_path, processes, monkeypatch):
     """A stand-in for `uv` that hangs: cancel kills it; the next setup with the real uv builds
     the environment (uv resumes, Task 32)."""
     spec = _local_adapter(tmp_path, weights=False)
@@ -278,7 +263,7 @@ def test_cancelling_uv_sync_leaves_the_environment_not_set_up(tmp_path, monkeypa
         m.setenv("STUB_PID", str(tmp_path / "uv.pid"))
         with pytest.raises(adapters.Cancelled):
             adapters.setup_adapter(spec, cancel=token)
-    assert _group_gone(seen["group"], within=1)
+    assert processes.group_gone(seen["group"])
     assert adapters.missing_setup(spec) == ["environment"]
     adapters.setup_adapter(spec)
     assert adapters.missing_setup(spec) == []
