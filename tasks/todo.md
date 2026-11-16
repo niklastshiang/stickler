@@ -61,6 +61,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 ### Checkpoint A
 - [ ] All tests green, `metrics.csv` with plausible F1 values for `none` × `adt_str` (kick clearly > 0.5)
 - [ ] Review with the user
+  - Evidence (2026-11-16, for the owner's review): 697 tests green. `none` × `adt_str` was dropped by decision: ADT_STR is trained on isolated drums and hallucinates on the mix, so it only runs on stems (report section 7; `skip` in the configs). On stems its kick is clearly above 0.5: 0.93 (oracle), 0.94 (RoFormer), 0.91 (Demucs) on MDB (report 5.2). The criterion is met in substance with this deviation.
 
 ## Phase 2: GPU (early, because it is risky)
 
@@ -108,6 +109,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 ### Checkpoint B
 - [ ] Full matrix on MDB: every combination yields a MIDI or a logged error (Success Criterion 2)
 - [ ] Review with the user
+  - Evidence (2026-11-16): report 5.2 scores every active MDB combination (ADTOF, ADT_STR, MuScriptor medium on oracle, Demucs, RoFormer; ADTOF also on the mix); the combinations left out are skipped by decision in `config/benchmark.yaml` (ADT_STR and MuScriptor medium on the mix, MuScriptor small), not missing. The release 7 candidates have their own criterion (SPEC "Release 7", criterion 1).
 
 ## Phase 4: Report and own songs
 
@@ -141,6 +143,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 ### Checkpoint C
 - [ ] Report with MDB and at least one own song (Success Criteria 3 and 4)
 - [ ] Review with the user: choose the winning pipeline, `docs/adr/0005-gewinner-pipeline.md`
+  - Evidence (2026-11-16): `docs/report.md` and `report.html` cover MDB, ENST and 25 own songs (sections 5.1–5.4, with per-class F1, runtime, RTF and RAM). The winning pipeline was chosen by the owner as two modes, Fast and Quality (2026-11-13, kept on 2026-11-14 after the correction), recorded in report section 7 and Phase 5c, but not as an ADR: `0005` became YourMT3+'s ADR. Gap: no ADR for the modes; Task 86's ADR 0008 (the decision per mode in release 7) can record their history too.
 
 ## Phase 5: Notes
 
@@ -159,6 +162,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 ### Checkpoint D
 - [ ] All 9 success criteria from SPEC.md met
 - [ ] Final review with the user
+  - Evidence per criterion (2026-11-16): (1) `tests/test_evaluate.py`: self-comparison, 60 ms miss, 40 ms hit. (2) Checkpoint B. (3) `metrics.csv`, `report.html` and report 5.1–5.4 (P/R/F1 per class, micro and macro, runtime, RTF, peak RAM, ranking). (4) 25 own songs passed the quality criteria, click tracks heard by the owner (Task 15, report section 3). (5) `stickler notate` output opened in MuseScore 4.7.5 without errors, with time signature and drum notation (Task 18). (6) `tests/test_adapters.py`: dummy adapters from `tests/fixtures/adapters` by folder and config only. (7) `tests/test_runner.py::test_second_run_hits_cache`. (8) `stickler doctor` reports the GPU (Task 6); ADT_STR, MuScriptor, Demucs and RoFormer ran with `--device gpu` on the Radeon 840M with identical notes (their `pyproject.toml` notes, ADR 0003); CPU and GPU runtimes in report 5.4. (9) `tests/test_cli.py::test_cli_imports_only_the_api_from_stickler` and the delegation tests. All nine met; Checkpoint C's ADR gap stays.
 
 ## Phase 5b: Rented GPU for development (RunPod, decided 2026-11-12)
 
