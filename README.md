@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="docs/screenshots/sheet.png" width="800" alt="Stickler showing the drum sheet music of a song, the bar that is sounding marked in blue, with play controls and the choice of song, hits or both below" />
+</p>
+
+<p align="center">
+  <img src="packaging/icons/ng.tshia.Stickler.svg" width="96" alt="Stickler's icon: a page of drum notation with two drumsticks crossed over it" />
+</p>
+
 <h1 align="center">
   <code>STICKLER://DRUMS</code>
 </h1>
@@ -21,26 +29,6 @@
 
 <p align="center"><sub>Badges: <a href="scripts/badges.py">scripts/badges.py</a>, rendered with <a href="https://shieldcn.dev">shieldcn</a>.</sub></p>
 
-<br/>
-
-<pre align="center">
-<code>
-  ╔═════════════════════════════════════════════════════════════════════════════╗
-  ║                                                                             ║
-  ║        ███████╗████████╗██╗ ██████╗██╗  ██╗██╗     ███████╗██████╗          ║
-  ║        ██╔════╝╚══██╔══╝██║██╔════╝██║ ██╔╝██║     ██╔════╝██╔══██╗         ║
-  ║        ███████╗   ██║   ██║██║     █████╔╝ ██║     █████╗  ██████╔╝         ║
-  ║        ╚════██║   ██║   ██║██║     ██╔═██╗ ██║     ██╔══╝  ██╔══██╗         ║
-  ║        ███████║   ██║   ██║╚██████╗██║  ██╗███████╗███████╗██║  ██║         ║
-  ║        ╚══════╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝         ║
-  ║                                                                             ║
-  ║                       🥁 SONG IN  //  SHEET MUSIC OUT                       ║
-  ║         DRUM SHEET MUSIC FROM ANY SONG  //  OPEN SOURCE  //  LOCAL          ║
-  ║                                                                             ║
-  ╚═════════════════════════════════════════════════════════════════════════════╝
-</code>
-</pre>
-
 ---
 
 ## `> WHAT IS THIS`
@@ -59,6 +47,20 @@ terminal: drop a song in, play along with the detected hits, export a PDF. It co
 and an AppImage with every release, see [`> INSTALL THE APP`](#-install-the-app).
 
 Stickler only uses open-source models from actively maintained projects. No cloud service; everything runs on your own machine.
+
+---
+
+## `> THE APP`
+
+<p align="center">
+  <img src="docs/screenshots/sheet.png" width="270" alt="The sheet music, the sounding bar marked during playback" />
+  <img src="docs/screenshots/corrections.png" width="270" alt="The corrections sidebar: tempo half or double, beats per bar, the first beat, simplify, repeat signs" />
+  <img src="docs/screenshots/dark.png" width="270" alt="The sheet music in the dark style" />
+</p>
+
+<p align="center"><sub><b>Play along</b>: the bar that sounds is marked &nbsp;·&nbsp; <b>Correct</b>: tempo, meter and the first beat, without analysing again &nbsp;·&nbsp; <b>Dark</b>: follows the system</sub></p>
+
+<p align="center"><sub>The song is "Fluffing a Duck" by Kevin MacLeod (<a href="https://incompetech.com">incompetech.com</a>), <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; the notes are Stickler's transcription of its drums.</sub></p>
 
 ---
 
