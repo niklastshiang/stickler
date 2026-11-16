@@ -35,3 +35,7 @@ running the model again, and they reproduce this adapter's MIDI.
 - 10 s synthetic clip (sine kicks, noise snares; CPU, cloud container): 52 s including model
   loading. Kick and snare are found at the right times, plus many false hits on toms, hi-hat and
   cymbals; the clip is far from real drums, so this only shows the adapter runs.
+- MDB, oracle drum stems, default threshold (not tuned), cloud container with a shared CPU,
+  2026-11-16: 10 of 23 tracks (the container's time limit stopped the run); F1 kick 0.96,
+  snare 0.89, toms 0.14, hi-hat 0.77, cymbals 0.58; macro-F1 0.668 (5 classes), 0.873
+  (3 classes). 2,376 s for 619 s of audio.

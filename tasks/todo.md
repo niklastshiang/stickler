@@ -101,7 +101,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Verify: `pytest -m adapters -k yourmt3`
   - Dependencies: 5 · Files: `adapters/transcribers/yourmt3/*`
 
-- [ ] **Task 12: Transcriber `drumsep_onset`** (M)
+- [x] **Task 12: Transcriber `drumsep_onset`** (M): done 2026-11-16 (release 7). DrumSep's weights still come from audio-separator's own mirror (the original host answers 404); onsets per stem through `stickler_adapter.onsets` (shared with `sad`, peaks picked as `stickler.peaks`, tunable with `stickler tune --transcriber drumsep_onset`). MDB in a cloud container, oracle stems, untuned threshold: 10 of 23 tracks before the container's 2-hour limit stopped the run twice; KD 0.96, SD 0.89, TT 0.14, HH 0.77, CY 0.58, macro-F1 0.668 (5 classes), 0.873 (3 classes); 40 minutes for 10 minutes of audio on a shared CPU. The full MDB run is part of Task 84 (`config/benchmark.yaml` holds it).
   - Acceptance: The 6-stem model DrumSep (MDX23C) and librosa onset detection per stem yield GM MIDI.
   - Verify: `pytest -m adapters -k drumsep`, run on MDB
   - Dependencies: 5 · Files: `adapters/transcribers/drumsep_onset/*`
