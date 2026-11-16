@@ -49,6 +49,16 @@ def apply() -> None:
     distributed = types.ModuleType("pytorch_lightning.utilities.distributed")
     distributed.rank_zero_only = rank_zero_only
     sys.modules["pytorch_lightning.utilities.distributed"] = distributed
+    # The end of a validation run imports audioldm_eval for a comparison with references, which
+    # the code has commented out (musicldm.py, on_validation_epoch_end); only the import is left.
+    evaluation = types.ModuleType("audioldm_eval")
+
+    class _Unused:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("audioldm_eval is not installed: evaluation against references")
+
+    evaluation.EvaluationHelper = _Unused
+    sys.modules.setdefault("audioldm_eval", evaluation)
     # The autoencoder builds its training loss, which downloads LPIPS weights on construction;
     # inference never uses the loss, and the checkpoint holds its weights anyway.
     import taming.modules.losses.lpips as lpips
