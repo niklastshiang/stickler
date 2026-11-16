@@ -492,21 +492,7 @@ def _ctrl_c_when(pid_file: Path, seen: dict) -> None:
     threading.Thread(target=press, daemon=True).start()
 
 
-def _gone(group: int) -> bool:
-    import os
-    import time
-
-    deadline = time.monotonic() + 1
-    while time.monotonic() < deadline:
-        try:
-            os.killpg(group, 0)
-        except ProcessLookupError:
-            return True
-        time.sleep(0.01)
-    return False
-
-
-def test_ctrl_c_cancels_notate_and_ends_the_model(monkeypatch, tmp_path):
+def test_ctrl_c_cancels_notate_and_ends_the_model(monkeypatch, tmp_path, processes):
     import signal
 
     from stickler import adapters, runner
@@ -523,11 +509,11 @@ def test_ctrl_c_cancels_notate_and_ends_the_model(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["notate", str(song), "--no-pdf"])
     assert result.exit_code == 130, result.output
     assert "Cancelled" in result.output
-    assert _gone(seen["group"]), "the model keeps running after Ctrl+C"
+    assert processes.group_gone(seen["group"]), "the model keeps running after Ctrl+C"
     assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
 
 
-def test_ctrl_c_cancels_setup_and_ends_setup_py(monkeypatch, tmp_path):
+def test_ctrl_c_cancels_setup_and_ends_setup_py(monkeypatch, tmp_path, processes):
     d = tmp_path / "transcribers" / "slow"
     d.mkdir(parents=True)
     (d / "run.py").write_text("", encoding="utf-8")
@@ -549,7 +535,7 @@ def test_ctrl_c_cancels_setup_and_ends_setup_py(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["setup", "--adapter", "slow"])
     assert result.exit_code == 130, result.output
     assert "Cancelled" in result.output
-    assert _gone(seen["group"]), "setup.py keeps running after Ctrl+C"
+    assert processes.group_gone(seen["group"]), "setup.py keeps running after Ctrl+C"
 
 
 def test_a_second_ctrl_c_stops_at_once():

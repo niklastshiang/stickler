@@ -651,6 +651,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 - [x] **Later release: click volume follows the song** (done in module `polish`) (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.
 - [x] **Later release: "Remove Downloaded Models…" in the app** (done in module `polish`) (owner, 2026-11-15): a menu entry that deletes the models, their environments and the results after asking, so an AppImage user need not know the folders.
 - [x] **Later release: the band's name in the PDF** (done in module `polish`) (owner, 2026-11-15): the engraved page shows the title but not the artist.
+- [ ] **Screenshots in the README** (owner, 2026-11-16): a few telling screenshots of the app in the README; today it has none (only the `how-it-works.svg` diagram). Start from the three AppStream screenshots in `docs/screenshots/` (sheet, corrections, dark; "Fluffing a Duck", CC BY 4.0) and decide with the owner which screens show Stickler best.
 - [ ] **Lessons learned, once most of the project is done** (owner, 2026-11-15; first noted for after release 5): write down what building the app taught us (mistakes, detours, what worked), so a comparable project starts faster and more directly.
 
 Not planned yet, just recorded. Before starting each one, extend SPEC.md and break it into tasks.
