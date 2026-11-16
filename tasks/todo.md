@@ -659,7 +659,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Verify: `uv run pytest -m adapters -k muscriptor_l` (on RunPod or the laptop after `stickler setup --adapter muscriptor_l`); laptop time for one 4-minute song recorded
   - Dependencies: none · Files: `adapters/transcribers/muscriptor_l/*`, `config/*.yaml`, `SPEC.md` candidates table
 
-- [ ] **Task 83: Transcriber `sad` (Separate-and-Detect)** (M, risk)
+- [x] **Task 83: Transcriber `sad` (Separate-and-Detect)** (M, risk): done 2026-11-16. The spike asked by the owner ("does a newer Python work?") showed the code runs on Python 3.12, torch 2.15 and pytorch-lightning 2.6 through seven shims in `compat.py`, without changing a file of the paper's code; the checkpoint loads with `weights_only=True` (no code in it runs) and holds the VAE and the vocoder, so MusicLDM's Zenodo files are not needed. Each 10.24 s window is a track of its own; the onset step is DrumSep's (`stickler_adapter.onsets`). First 10 s of MDB Punk's drum stem on a shared CPU: 92 minutes, 10.2 GB, F1 kick 0.84, snare 0.90, toms 0.20, hi-hat 0.24, cymbals 0.00 with the untuned threshold. The GPU run is part of Task 84.
   - Acceptance: spike first: the pinned commit of ddman1101/Separate-and-detect turns a 10 s drum stem into five stems and onsets, on CPU and on a RunPod GPU; then an adapter that gives GM MIDI from a Demucs stem, README with source, commit and licence (MIT), and the owner's exception noted. If the spike fails after two attempts: recorded in SPEC.md and the report as tried and left out (owner agrees).
   - Verify: `uv run pytest -m adapters -k sad`; laptop time for one 4-minute song recorded
   - Dependencies: none · Files: `adapters/transcribers/sad/*`, `config/*.yaml`

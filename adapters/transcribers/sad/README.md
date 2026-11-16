@@ -29,8 +29,9 @@ Trained on drum-only multitracks (StemGMD, IDMT), so a separator comes first
   vulnerabilities, among them `torch.load` running code from a checkpoint. On Python 3.12 with
   torch 2.15 and pytorch-lightning 2.6 the code runs through `compat.py`, which restores six
   removed APIs (torchaudio `info`/`load`, librosa's positional `mel`, two pytorch-lightning
-  imports) and skips the LPIPS download of the unused training loss; no file of the code is
-  changed. The checkpoint is loaded with `weights_only=True`, so no code in it runs.
+  imports), skips the LPIPS download of the unused training loss, and stands in for
+  `audioldm_eval`, which the end of a validation run imports for an evaluation it has commented
+  out; no file of the code is changed. The checkpoint is loaded with `weights_only=True`, so no code in it runs.
 - **Every 10.24 s window is a track of its own**: the data module drops a song's last partial
   window and songs under 10 s or over 640 s; the adapter pads the last window with silence and
   joins the windows' stems in order.
@@ -40,5 +41,9 @@ Trained on drum-only multitracks (StemGMD, IDMT), so a separator comes first
 - Diffusion settings are the inference config's (200 DDIM steps, one candidate).
 
 ## Measurements
-See the run on 10 s of an MDB drum stem below (CPU, cloud container), and Task 84 for the
-full runs.
+- First 10 s of MDB `MusicDelta_Punk`, drum stem (oracle), CPU in a cloud container that a
+  second model run shared, 2026-11-16: 5,488 s (about 92 minutes), peak RAM 10.2 GB. F1 with the
+  default threshold, not tuned: kick 0.84, snare 0.90, toms 0.20, hi-hat 0.24, cymbals 0.00
+  (micro 0.54). Too slow for the laptop (Quality's budget is 20 minutes for a 4-minute song);
+  the GPU and the full datasets come with Task 84 on RunPod.
+- The smoke test (`pytest -m adapters -k sad`) takes over an hour on a CPU for the same reason.
