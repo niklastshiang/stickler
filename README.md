@@ -36,17 +36,17 @@
 **Stickler** turns a song into drum sheet music: give it an MP3, FLAC, Opus, M4A or any other audio
 file, get the notes as MusicXML or PDF, and only correct them in MuseScore. Everything runs locally, with open-source models.
 
-**It started as a test bench**, because one question cannot be settled by reading papers:
-**which combination of drum separation and transcription model produces the best notes?** Every
-model lives in its own adapter with its own Python environment and competes against the same
+It started as a test bench, because one question cannot be settled by reading papers: which
+combination of drum separation and transcription model produces the best notes? Every model
+lives in its own adapter with its own Python environment and competes against the same
 references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms), on benchmark
-data and, above all, on real music. The answer is in: see [`> RESULTS`](#-results).
+data and, above all, on real music. The results are below, in [`> RESULTS`](#-results).
 
-**The desktop app** writes the drums of a song as sheet music for drummers who never open a
+The desktop app writes the drums of a song as sheet music for drummers who never open a
 terminal: drop a song in, play along with the detected hits, export a PDF. It comes as a Flatpak
 and an AppImage with every release, see [`> INSTALL THE APP`](#-install-the-app).
 
-Stickler only uses open-source models from actively maintained projects. No cloud service; everything runs on your own machine.
+Stickler only uses open-source models from actively maintained projects.
 
 ---
 
@@ -82,8 +82,9 @@ A dream come true.
 
 ## `> WARNINGS`
 
-> **⚠ NOT PERFECT.** About three in four hits come out right on real rock, metal and pop
-> recordings. The notes are a starting point to correct in MuseScore, not a finished score.
+> **⚠ NOT PERFECT.** On real rock, metal and pop recordings, about three in four hits match
+> third-party transcriptions; judged by ear, about 87 % are right (see [`> RESULTS`](#-results)).
+> The notes are a starting point to correct in MuseScore, not a finished score.
 
 > **⚠ MODEL LICENSES.** Stickler never ships model weights; the app's first start (or
 > `stickler setup`) downloads them, and
@@ -117,9 +118,8 @@ Quality 0.842.
 - **The references are the weak spot:** about half of the disagreements judged by ear were errors
   of the transcriptions. Fast gets about 87 % of the hits right on real music, not 77 %.
 - **Snapping to the beat grid** for the sheet music costs almost nothing.
-- **Clever tricks did not help on real music:** fusing inputs, voting between models, tuning
-  thresholds and filling in repeated bars all looked good on MDB and did not transfer to rock
-  and metal. Details, per-instrument tables and every decision: [**benchmark report**](docs/report.md).
+- **Fusion, voting, threshold tuning and bar filling did not help on real music:** they all
+  looked good on MDB and did not transfer to rock and metal. Details, per-instrument tables and every decision: [**benchmark report**](docs/report.md).
 
 On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
 ([ADR 0003](docs/adr/0003-rocm-kanal.md)); NVIDIA GPUs speed up the slow models 10–30×.
@@ -393,12 +393,12 @@ uv run stickler report   # results/report.html
   <img src="docs/badges/origin-tokens.svg" alt="tokens used" />
 </p>
 
-**The code of this project comes from an AI.** It was programmed, tested and documented by Claude
-(Anthropic) in Claude Code.
+The code of this project comes from an AI: Claude (Anthropic) programmed, tested and documented
+it in Claude Code.
 
-The project owner provides the goals, the selection of candidates and the songs. He makes the
-decisions and checks the results by ear. To keep the code from quietly getting worse, firm
-guardrails apply:
+The project owner provides the goals, the selection of candidates and the songs, makes the
+decisions and checks the results by ear. To keep the code from quietly getting worse, the
+repository enforces four rules:
 
 - **Specification first, then code.** What gets built is set out in [`SPEC.md`](SPEC.md), the plan
   in [`tasks/`](tasks/). Decisions made are recorded in [`docs/adr/`](docs/adr/).
@@ -406,7 +406,8 @@ guardrails apply:
 - **A floor guard checks every diff.** It triggers when checks are silenced, tests are skipped or
   limits are lowered. Such a commit is blocked, see [`CONSTRAINTS.md`](CONSTRAINTS.md).
 - **Measure, don't assert.** Every model choice is justified by measurements, even when the
-  result is inconvenient.
+  result is inconvenient: after the correction for reference errors Fast beat Quality, and
+  tuning that helped on MDB was dropped because it hurt real music.
 
 **What the AI cost.** Claude Code logs the tokens of every response;
 [`scripts/ai_usage.py`](scripts/ai_usage.py) sums them and prices them with Anthropic's
