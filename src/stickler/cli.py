@@ -366,13 +366,13 @@ def tune_cmd(
         "none,demucs"
     ),
     transcriber: Annotated[
-        str, typer.Option(help="whose activations: adtof or drumsep_onset")
+        str, typer.Option(help="whose activations: adtof, drumsep_onset or sad")
     ] = "adtof",
     name: Annotated[str, typer.Option(help="name of the fusion in the printed YAML")] = "fused",
     step: Annotated[float, typer.Option(help="weight grid step")] = 0.25,
 ) -> None:
     """Tune fusion weights and thresholds per class on cached activations (ADTOF or
-    drumsep_onset); prints a `fusions` entry for a benchmark config."""
+    drumsep_onset, sad); prints a `fusions` entry for a benchmark config."""
     try:
         r = api.tune_fusion(configs, inputs.split(","), transcriber=transcriber, step=step)
     except ValueError as exc:

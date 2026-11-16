@@ -8,7 +8,7 @@ DrumSep splits a drum stem into six drums; an onset detector per drum turns each
 | Code | [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) 0.48.0 (2026-10-29, MIT), the version the `roformer` adapter pins; its `models.json` lists `MDX23C-DrumSep-aufr33-jarredou.ckpt` with `config_drumsep_mdx23c.yaml` |
 | Weights | `MDX23C-DrumSep-aufr33-jarredou.ckpt` (438 MB), downloaded by `setup` from audio-separator's own mirror (release `model-configs` of nomadkaraoke/python-audio-separator); the original host (TRvlvr/model_repo) answers 404 since 2026 (checked 2026-11-16) |
 | Licence | Code MIT. The weights have **no formal licence** (a community model; Hugging Face mirrors state MIT or CC BY-NC-SA). Downloaded for private use only, never shipped (ADR 0002) |
-| Onsets | librosa `onset_strength` per stem at 100 frames/s; peaks picked in `onsets.py` on a scale shared by all six stems |
+| Onsets | librosa `onset_strength` per stem at 100 frames/s; peaks picked by `stickler_adapter.onsets` (adapters/_common, shared with the `sad` adapter) on a scale shared by all six stems |
 | Classes | kick → 36, snare → 38, toms → 47, hh → 42, ride → 51, crash → 49 (ride and crash score as CY) |
 
 ## Usage
@@ -20,7 +20,7 @@ DrumSep is trained on drums only, so it runs after a separator (`demucs+drumsep_
 
 ## Why the peaks are not picked by librosa
 `librosa.onset.onset_detect` normalises each envelope on its own. A stem that holds only bleed
-(a song without toms) would be scaled up until its noise looks like hits. `onsets.py` scales all
+(a song without toms) would be scaled up until its noise looks like hits. `stickler_adapter.onsets` scales all
 six stems of a song by the same value, the largest of any stem, so a quiet stem stays quiet.
 
 Peaks are then picked exactly as the harness picks ADTOF's activations (madmom's method:

@@ -1,0 +1,60 @@
+[project]
+name = "stickler-sad"
+version = "0.1.0"
+description = "Stickler adapter: Separate-and-Detect (MSG-LD latent diffusion, 5 drum stems), onsets per stem"
+requires-python = ">=3.12,<3.13"
+# The paper's code pins Python 3.9 and torch 1.13; it runs on this stack through compat.py.
+# Its imports need these packages (training-only ones included, as its modules import them).
+dependencies = [
+    "stickler-adapter",
+    "torch>=2.6",
+    "torchaudio>=2.6",
+    "torchvision",
+    "pytorch-lightning>=2.4",
+    "torchmetrics",
+    "numpy",
+    "scipy",
+    "librosa",
+    "soundfile",
+    "einops",
+    "omegaconf",
+    "pyyaml",
+    "transformers",
+    "matplotlib",
+    "seaborn",
+    "mir_eval",
+    "pandas",
+    "tqdm",
+    "h5py",
+    "torchlibrosa",
+    "ftfy",
+    "regex",
+    "timm",
+    "wandb",
+    "scikit-learn",
+    "braceexpand>=0.1.7",
+    "webdataset>=1.0.2",
+    "wget>=3.2",
+    "vector-quantize-pytorch>=1.34.0",
+    "ipython>=9.18.1",
+    "taming-transformers>=0.0.1",
+]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'linux'"]
+
+[tool.uv.sources]
+stickler-adapter = { path = "../../_common", editable = true }
+torch = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# Trained on drum-only multitracks (StemGMD, IDMT), so a separator comes first.
+[tool.stickler]
+input = "stem"

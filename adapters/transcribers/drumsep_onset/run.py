@@ -3,7 +3,8 @@ turns them into hits.
 
 DrumSep (MDX23C, aufr33 and jarredou) runs through python-audio-separator's official API with
 its default parameters. Each stem's onset-strength envelope comes from librosa at 100 frames per
-second; the peaks are picked in onsets.py on a scale shared by all six stems. The envelopes are
+second; the peaks are picked by stickler_adapter.onsets (adapters/_common, the same onset step
+as the `sad` adapter) on a scale shared by all six stems. The envelopes are
 also saved (activations.npz, as ADTOF's), so thresholds can be tuned without running the model
 again. DrumSep expects drums only, so a separator comes first ([tool.stickler] input = "stem").
 """
@@ -17,10 +18,13 @@ import numpy as np
 import soundfile
 from audio_separator.separator import Separator
 from common import MODEL, WEIGHTS
-from onsets import STEM_PITCHES, activations, transcribe
 from stickler_adapter import run, write_drum_midi
+from stickler_adapter.onsets import activations, transcribe
 
 FPS = 100
+# DrumSep's stems (config_drumsep_mdx23c.yaml) → GM pitches; ride and crash both score as CY.
+STEM_PITCHES = {"kick": 36, "snare": 38, "toms": 47, "hh": 42, "ride": 51, "crash": 49}
+COLUMNS = [["kick"], ["snare"], ["toms"], ["hh"], ["ride", "crash"]]  # KD, SD, TT, HH, CY
 
 
 def _envelope(path: Path) -> np.ndarray:
@@ -49,8 +53,8 @@ def transcribe_stem(audio: Path, out_dir: Path, device: str) -> None:
         envelopes = {stem: _envelope(path) for stem, path in files.items()}
     length = max(len(e) for e in envelopes.values())
     envelopes = {s: np.pad(e, (0, length - len(e))) for s, e in envelopes.items()}
-    write_drum_midi(out_dir / "drums.mid", transcribe(envelopes, FPS))
-    act, labels = activations(envelopes)
+    write_drum_midi(out_dir / "drums.mid", transcribe(envelopes, STEM_PITCHES, FPS))
+    act, labels = activations(envelopes, COLUMNS)
     np.savez_compressed(out_dir / "activations.npz", activations=act, fps=FPS, labels=labels)
 
 

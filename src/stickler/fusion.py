@@ -1,7 +1,7 @@
 """Fusing a transcriber's frame activations from several inputs of one song (e.g. the mix and a
 drum stem) and tuning the fusion weights and the peak-picking threshold per instrument class.
 
-Any transcriber that saves `activations.npz` (ADTOF; drumsep_onset since release 7) can be
+Any transcriber that saves `activations.npz` (ADTOF; drumsep_onset and sad since release 7) can be
 fused and tuned; its columns are named by GM pitch in the file's `labels`.
 
 Fusion is a weighted mean of the activations over their common length; onsets are then picked
@@ -157,10 +157,11 @@ FUSION_SEPARATOR = "fusion"
 ADTOF_THRESHOLDS = {"KD": 0.22, "SD": 0.24, "TT": 0.32, "HH": 0.22, "CY": 0.30}
 TRANSCRIBER = "adtof"
 # Each tunable transcriber's own thresholds, the baseline `stickler tune` compares against
-# (drumsep_onset: THRESHOLD in its onsets.py, the same for every class).
+# (drumsep_onset and sad: THRESHOLD in stickler_adapter.onsets, the same for every class).
 DEFAULT_THRESHOLDS = {
     "adtof": ADTOF_THRESHOLDS,
     "drumsep_onset": dict.fromkeys(ADTOF_THRESHOLDS, 0.1),
+    "sad": dict.fromkeys(ADTOF_THRESHOLDS, 0.1),  # the same onset step (stickler_adapter.onsets)
 }
 ACTIVATIONS = "activations.npz"
 

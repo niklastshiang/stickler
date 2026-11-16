@@ -106,13 +106,13 @@ def _release6_digest(spec: adapters.AdapterSpec) -> str:
     return h.hexdigest()
 
 
-def test_the_release_6_pairs_lead_from_the_old_definition_to_today_s_digest():
+def test_a_chain_leads_from_each_listed_adapter_s_release_6_digest_to_today_s():
     """Each listed adapter is unchanged since release 6 (checked against b4ca4a5 when listed),
-    so its old-definition digest must equal the pair's start and today's digest its end."""
+    so its digest of the old definition, computed on today's files, must be reachable."""
     registry = adapters.discover(ROOT / "adapters")
-    for spec_id, pairs in runner.load_equivalents().items():
+    for spec_id in runner.load_equivalents():
         spec = registry[spec_id]
-        assert (_release6_digest(spec), runner.code_digest(spec)) in pairs, spec_id
+        assert _release6_digest(spec) in runner.equivalent_digests(spec), spec_id
 
 
 def test_only_a_chain_that_ends_at_the_current_digest_counts(adapter, monkeypatch):
