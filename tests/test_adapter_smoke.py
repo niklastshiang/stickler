@@ -52,7 +52,8 @@ def drum_clip(tmp_path_factory) -> Path:
 
 
 @pytest.mark.parametrize(
-    "adapter_id", ["adt_str", "adtof", "muscriptor_s", "muscriptor_m", "drumsep_onset"]
+    "adapter_id",
+    ["adt_str", "adtof", "muscriptor_s", "muscriptor_m", "muscriptor_l", "drumsep_onset"],
 )
 def test_transcriber_produces_midi(adapter_id, drum_clip, tmp_path):
     spec = adapters.discover(ROOT / "adapters")[adapter_id]
