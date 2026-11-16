@@ -37,8 +37,11 @@ SETUP_DEVICES = ("cpu", "rocm", "cuda")
 ROCM_ENV = ".venv-rocm"
 CUDA_ENV = ".venv-cuda"
 PYTORCH_CPU_INDEX = "https://download.pytorch.org/whl/cpu"
-# Tried in this order; newer torch releases are not built for every CUDA version.
-CUDA_INDEXES = tuple(f"https://download.pytorch.org/whl/{v}" for v in ("cu128", "cu130", "cu126"))
+# Tried in this order; newer torch releases are not built for every CUDA version. torch 2.15.0
+# has CUDA wheels only on cu132 (checked 2026-11-16); cu132 needs a driver for CUDA 13.2.
+CUDA_INDEXES = tuple(
+    f"https://download.pytorch.org/whl/{v}" for v in ("cu132", "cu128", "cu130", "cu126")
+)
 
 
 @dataclass(frozen=True)

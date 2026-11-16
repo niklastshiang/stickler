@@ -87,7 +87,7 @@ def test_setup_cuda_installs_locked_versions_with_cuda_torch(spec, monkeypatch):
 
 
 def test_setup_cuda_falls_back_to_the_next_index(spec, monkeypatch):
-    calls, fake_run = recorder(fail_indexes=("cu128",))
+    calls, fake_run = recorder(fail_indexes=(adapters.CUDA_INDEXES[0][-5:],))
     monkeypatch.setattr(subprocess, "run", fake_run)
     adapters.setup_adapter(spec, device="cuda")
     used = [c[c.index("--index") + 1] for c in calls if c[:3] == ["uv", "pip", "install"]]
@@ -118,3 +118,10 @@ def test_run_adapter_uses_cuda_python(spec, monkeypatch, tmp_path):
     monkeypatch.setattr(adapters, "_run_group", fake_run_group)
     adapters.run_adapter(spec, tmp_path / "a.wav", tmp_path / "out", device="gpu")
     assert seen[0][0] == str(py)
+
+
+def test_the_index_with_today_s_torch_comes_first():
+    """torch 2.15.0 (every adapter since the Dependabot update of 2026-11-13) has CUDA wheels
+    only on cu132; the older indexes stay as a fallback for older torch versions."""
+    assert adapters.CUDA_INDEXES[0].endswith("/cu132")
+    assert {i[-5:] for i in adapters.CUDA_INDEXES} >= {"cu126", "cu128", "cu130", "cu132"}
