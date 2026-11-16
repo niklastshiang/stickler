@@ -1516,8 +1516,9 @@ src/stickler_gtk/ui/menu.py, window.py # the menu entry and its alert
 
 ## Release 7: New candidates
 
-> Status: **draft** (2026-11-16), not yet approved. Candidates chosen by the owner on 2026-11-16
-> after a web check of each (facts and sources below).
+> Status: **approved** by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
+> after a web check of each (facts and sources below). Plan: `tasks/plan.md` ("Release 7"),
+> tasks 12 and 82–86 in `tasks/todo.md`.
 
 ### Objective
 **Find out whether a newer model makes Fast or Quality better on the owner's music.** A
@@ -1552,10 +1553,18 @@ RoFormer DrumSep variants (no downloadable weights).
    threshold on MDB and ENST, as in Phase 5c; the own songs are the final check only.
 3. **Measured on all three datasets**; laptop runtimes (RTF, peak RAM) for every candidate that
    can run there, RunPod for the rest (the laptop stays the reference for the app's modes).
-4. **Decision rule**: a candidate (alone or in a combination like today's Quality) replaces Fast
-   or Quality only if its macro-F1 on the own songs, corrected as in release 3, is higher, and it
-   stays within the mode's time budget (see open questions). Per song better/worse counts and the
-   95 % interval are reported as for Quality vs Fast.
+4. **Measured first, listened to only where it can matter** (owner, 2026-11-16): all candidates
+   are compared on measured scores. A candidate whose measured macro-F1 on the own songs comes
+   within 0.01 of a mode's, or beats it, gets a listening round of about 40 new spots drawn from
+   its own errors with release 3's procedure (blind, fixed seed, drawn once); its corrected score
+   comes from those verdicts. The others go into the report with measured scores only.
+5. **Time budget** (owner, 2026-11-16): Fast stays the fast mode (~15 s for a 4-minute song on
+   the laptop); a Quality candidate may take at most **20 minutes** (15 minutes plus a buffer) for a 4-minute song on the
+   laptop CPU. Slower candidates are reported, never put into the app.
+6. **Decision rule**: a candidate (alone or in a combination like today's Quality) replaces Fast
+   or Quality only if its corrected macro-F1 on the own songs is higher and it stays within the
+   mode's time budget. Per song better/worse counts and the 95 % interval are reported as for
+   Quality vs Fast.
 
 ### Commands
 ```bash
@@ -1594,14 +1603,12 @@ docs/report.md, README.md              # results, candidates table
 3. A decision per mode, recorded as an ADR: unchanged, or replaced (owner).
 4. README candidates and results tables updated; `scripts/check.sh task` green.
 
-### Open questions
-1. **Corrected scores need listening.** Release 3's correction rests on 100 spots judged by ear
-   from Fast's and Quality's own errors; a new pipeline makes other errors. Options: (a) compare
-   measured scores first and run a listening round (about 40 new spots, same procedure) only for
-   a candidate that comes close to or beats a mode; (b) a full listening round for every
-   candidate.
-2. **Time budget per mode**: Fast is ~15 s, Quality ~14 min for a 4-minute song on the laptop.
-   What may a Quality candidate cost at most?
+### Resolved questions (owner, 2026-11-16)
+1. Corrected scores need listening, because a new pipeline makes other errors than Fast and
+   Quality: measured scores first, a listening round of about 40 spots only for a candidate
+   that comes close (method, point 4).
+2. Time budget for Quality: at most 20 minutes (15 plus a buffer; owner first said 30, then 20) for a 4-minute song on the laptop (method,
+   point 5).
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

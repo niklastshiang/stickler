@@ -646,6 +646,38 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint O
 - [x] All 4 success criteria of SPEC.md `polish` met (the owner listens, prints and removes; 2026-11-15). Found on the way and fixed: removal took the shipped model sources too (b5f5b78), libsndfile failed on some MP3s (e904c8e), the model download overshot its size (c07afbc)
 
+## Phase 16: Release 7, new candidates (approved 2026-11-16, SPEC.md "Release 7")
+
+Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
+
+- [ ] **Task 82: Transcriber `muscriptor_l`** (S)
+  - Acceptance: copy of `muscriptor_m` with `SIZE = "large"` (own name, lock, README with source, version, licence CC BY-NC 4.0, gated, 5.47 GB); in `config/benchmark.yaml` and `config/own.yaml` like `muscriptor_m` (Demucs stem, skip on the mix); existing cache entries untouched.
+  - Verify: `uv run pytest -m adapters -k muscriptor_l` (on RunPod or the laptop after `stickler setup --adapter muscriptor_l`); laptop time for one 4-minute song recorded
+  - Dependencies: none · Files: `adapters/transcribers/muscriptor_l/*`, `config/*.yaml`, `SPEC.md` candidates table
+
+- [ ] **Task 83: Transcriber `sad` (Separate-and-Detect)** (M, risk)
+  - Acceptance: spike first: the pinned commit of ddman1101/Separate-and-detect turns a 10 s drum stem into five stems and onsets, on CPU and on a RunPod GPU; then an adapter that gives GM MIDI from a Demucs stem, README with source, commit and licence (MIT), and the owner's exception noted. If the spike fails after two attempts: recorded in SPEC.md and the report as tried and left out (owner agrees).
+  - Verify: `uv run pytest -m adapters -k sad`; laptop time for one 4-minute song recorded
+  - Dependencies: none · Files: `adapters/transcribers/sad/*`, `config/*.yaml`
+
+- [ ] **Task 84: Benchmark runs** (M)
+  - Acceptance: `demucs+drumsep_onset`, `demucs+muscriptor_l`, `demucs+sad` (and a combination like Quality's for a candidate that is strong on some classes) on MDB, ENST and the 25 own songs; every combination gives MIDI or a logged error (SPEC Release 7, criterion 1); `metrics.csv` and `report.html` updated; RunPod pods stopped.
+  - Verify: `uv run stickler eval` for the three configs; the time per 4-minute song on the laptop for each candidate in the report
+  - Dependencies: 12, 82, 83 · Files: `config/*.yaml`, results (not committed)
+
+- [ ] **Task 85: Listening round, only if needed** (S)
+  - Acceptance: for each candidate within 0.01 of Fast's or Quality's measured macro-F1 on the own songs (or above it): about 40 spots from its own errors, drawn once with a fixed seed, judged blind with `stickler listen`; its corrected score as in release 3. Skipped, with the numbers stated, if no candidate comes close.
+  - Verify: `uv run pytest -q tests/test_errors.py tests/test_api.py -k "sample or correct"`; `results/own/corrected.csv`
+  - Dependencies: 84 · Files: `src/stickler/{errors,api}.py` if the sample needs a candidate filter, tests
+
+- [ ] **Task 86: Decision, report and release 7** (S)
+  - Acceptance: ADR 0008 with the decision per mode (unchanged or replaced; owner); `docs/report.md` section on the new candidates; README candidates and results tables; release steps of ADR 0006 incl. the hand-tried feature list.
+  - Verify: SPEC Release 7 success criteria; `scripts/check.sh task`
+  - Dependencies: 84, 85 · Files: `docs/adr/0008-*.md`, `docs/report.md`, `README.md`, version files
+
+### Checkpoint P
+- [ ] All success criteria of SPEC.md "Release 7" met; the decision per mode by the owner; release 7
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **Later release: click volume follows the song** (done in module `polish`) (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.

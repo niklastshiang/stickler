@@ -283,6 +283,37 @@ Order: artist (78) → clicks (79) → removal logic (80) → menu entry and ale
 | A removal deletes something outside the app's folders | High | The logic only returns folders below the app's XDG folders, refuses the checkout; tests for every case |
 | Deleting 2 GB blocks the window | Low | The deletion runs in the worker, the window waits on the analysing page |
 
+## Release 7: New candidates (approved 2026-11-16, SPEC.md "Release 7")
+
+Three new transcription candidates, measured like every pipeline; the app changes only for a
+corrected improvement within the time budget.
+
+Design decisions:
+- **DrumSep first** (Task 12): cheapest, runs on the laptop, reuses the `roformer` adapter's
+  pinned audio-separator 0.48.0. The weight download is checked before anything else, since the
+  original host is gone. The per-stem onset step is a pure function in the adapter (unit tests
+  on generated clicks); its parameters are chosen on MDB and ENST.
+- **MuScriptor large** (82) is a copy of `muscriptor_m` with `SIZE = "large"`: new folder, new
+  cache keys, existing results untouched.
+- **Separate-and-Detect** (83) is the risky one: research code on Python 3.10 with madmom and
+  CUDA scripts. A spike first: does the pinned commit run inference on a 10 s drum stem, on CPU
+  and on a RunPod GPU? If it fails after two attempts, it is recorded as tried and left out
+  (as YourMT3+ was), with the owner's agreement.
+- **Measurement** (84): laptop for DrumSep and the time budget of every candidate; RunPod
+  (`stickler remote`) for MuScriptor large and Separate-and-Detect on all datasets.
+- **Listening** (85) only if a candidate comes within 0.01 of a mode; release 3's code draws and
+  corrects, with the candidate's own spots.
+
+Order: DrumSep (12) → MuScriptor large (82) → Separate-and-Detect spike and adapter (83) →
+benchmark runs (84) → listening if needed (85) → decision ADR, report, README, release 7 (86).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| DrumSep weights no longer downloadable | Medium | Check the download first; a mirror only with a stated source and checksum, else drop the candidate (owner) |
+| Separate-and-Detect does not run (old Python, madmom, CUDA-only code) | Medium | Spike with two attempts, then leave it out with the owner's agreement |
+| MuScriptor large or Separate-and-Detect exceed 20 min per song | High (likely) | Measured on the laptop on one song early; reported, not put into the app |
+| RunPod cost | Low | Runs planned per dataset, pod stopped automatically |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
