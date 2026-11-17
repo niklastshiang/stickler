@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler · menu bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 520px; overflow: hidden; background: #c9d4df; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; color: #1d1d1f;">
+  <div style="position: absolute; left: 70px; top: 64px;">
+    <dc-import name="Sheet" hint-size="1000px,700px"></dc-import>
+  </div>
+  <nav aria-label="Menu bar" style="position: absolute; left: 0; top: 0; right: 0; height: 28px; display: flex; align-items: center; gap: 2px; padding: 0 10px; background: rgba(246,246,248,0.92); box-shadow: 0 1px 0 rgba(0,0,0,0.08); font-size: 13px;">
+    <sc-for list="{{bar}}" as="m" hint-placeholder-count="6">
+      <span style="padding: 3px 9px; border-radius: 5px; font-weight: {{m.weight}}; background: {{m.bg}};">{{m.label}}</span>
+    </sc-for>
+  </nav>
+  <ul role="menu" aria-label="{{menuLabel}}" style="position: absolute; top: 30px; left: {{menuX}}px; width: 260px; list-style: none; margin: 0; padding: 5px; box-sizing: border-box; background: rgba(250,250,252,0.97); border-radius: 10px; box-shadow: 0 12px 34px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.10); font-size: 13px;">
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="6">
+      <sc-if value="{{it.sep}}" hint-placeholder-val="{{false}}">
+        <li role="separator" style="height: 1px; margin: 5px 10px; background: rgba(0,0,0,0.10);"></li>
+      </sc-if>
+      <sc-if value="{{it.item}}" hint-placeholder-val="{{true}}">
+        <li role="menuitem" style="display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 6px; background: {{it.bg}}; color: {{it.fg}};">
+          <span style="flex-grow: 1;">{{it.label}}</span>
+          <span style="color: {{it.keyFg}}; font-size: 12px;">{{it.key}}</span>
+        </li>
+      </sc-if>
+    </sc-for>
+  </ul>
+  <sc-if value="{{showSub}}" hint-placeholder-val="{{false}}">
+    <ul role="menu" aria-label="Open Recent" style="position: absolute; top: 58px; left: {{subX}}px; width: 230px; list-style: none; margin: 0; padding: 5px; box-sizing: border-box; background: rgba(250,250,252,0.97); border-radius: 10px; box-shadow: 0 12px 34px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.10); font-size: 13px;">
+      <li role="menuitem" style="padding: 4px 10px; border-radius: 6px;">Eye of the Tiger</li>
+      <li role="menuitem" style="padding: 4px 10px; border-radius: 6px;">Fluffing a Duck</li>
+      <li role="menuitem" style="padding: 4px 10px; border-radius: 6px;">Highway to Hell</li>
+      <li role="separator" style="height: 1px; margin: 5px 10px; background: rgba(0,0,0,0.10);"></li>
+      <li role="menuitem" style="padding: 4px 10px; border-radius: 6px;">Clear Menu</li>
+    </ul>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"open":{"editor":"enum","options":["app","file","view"],"default":"app"},"$preview":{"width":1000,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const open = this.props.open ?? 'app';
+    const names = [['app', 'Stickler'], ['file', 'File'], ['edit', 'Edit'], ['view', 'View'], ['window', 'Window'], ['help', 'Help']];
+    const bar = names.map(([id, label]) => ({
+      label,
+      weight: id === 'app' ? 700 : 400,
+      bg: id === open ? 'rgba(0,0,0,0.10)' : 'transparent'
+    }));
+    const I = (label, key = '', hl = false) => ({ item: true, sep: false, label, key, bg: hl ? '#0060df' : 'transparent', fg: hl ? '#ffffff' : '#1d1d1f', keyFg: hl ? 'rgba(255,255,255,0.85)' : '#8e8e93' });
+    const S = { item: false, sep: true };
+    const menus = {
+      app: { x: 10, label: 'Stickler', items: [I('About Stickler'), S, I('Remove Downloaded Models…', '', true), S, I('Hide Stickler', '⌘H'), I('Hide Others', '⌥⌘H'), I('Show All'), S, I('Quit Stickler', '⌘Q')] },
+      file: { x: 82, label: 'File', items: [I('Open…', '⌘O'), I('Open Recent', '›', true), S, I('Export', '›'), S, I('Close Window', '⌘W')] },
+      view: { x: 168, label: 'View', items: [I('Zoom In', '⌘+'), I('Zoom Out', '⌘−'), I('Actual Size', '⌘0', true), S, I('Enter Full Screen', '⌃⌘F')] }
+    };
+    const m = menus[open] || menus.app;
+    return { bar, items: m.items, menuX: m.x, menuLabel: m.label, showSub: open === 'file', subX: m.x + 262 };
+  }
+}
+</script>
+</body>
+</html>

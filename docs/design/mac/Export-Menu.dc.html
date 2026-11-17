@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler · export menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; color: #1d1d1f;">
+  <dc-import name="Sheet" hint-size="1000px,700px"></dc-import>
+  <ul role="menu" aria-label="Export" style="position: absolute; top: 46px; right: 14px; width: 300px; list-style: none; margin: 0; padding: 5px; box-sizing: border-box; background: rgba(250,250,252,0.97); border-radius: 12px; box-shadow: 0 12px 34px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.10);">
+    <li role="menuitem" style="display: flex; flex-direction: column; gap: 1px; padding: 6px 10px; border-radius: 7px; background: #0060df; color: #ffffff;">
+      <span style="font-size: 13px;">Sheet Music (PDF)…</span>
+      <span style="font-size: 11px; color: rgba(255,255,255,0.85);">To print or to read on a tablet</span>
+    </li>
+    <li role="menuitem" style="display: flex; flex-direction: column; gap: 1px; padding: 6px 10px; border-radius: 7px;">
+      <span style="font-size: 13px;">MusicXML…</span>
+      <span style="font-size: 11px; color: #6e6e73;">To edit in MuseScore or Dorico</span>
+    </li>
+    <li role="menuitem" style="display: flex; flex-direction: column; gap: 1px; padding: 6px 10px; border-radius: 7px;">
+      <span style="font-size: 13px;">Drum Track…</span>
+      <span style="font-size: 11px; color: #6e6e73;">As FLAC or WAV</span>
+    </li>
+    <li role="separator" style="height: 1px; margin: 5px 10px; background: rgba(0,0,0,0.10);"></li>
+    <li role="menuitem" style="display: flex; flex-direction: column; gap: 1px; padding: 6px 10px; border-radius: 7px;">
+      <span style="font-size: 13px;">Open With…</span>
+      <span style="font-size: 11px; color: #6e6e73;">The MusicXML in another program</span>
+    </li>
+  </ul>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

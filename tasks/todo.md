@@ -775,6 +775,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Dependencies: 96 · Files: `adapters/separators/demucs/{pyproject.toml,uv.lock}`, `adapters/transcribers/muscriptor_{m,l}/{pyproject.toml,uv.lock}`, `scripts/lock_platforms.py`, its test, `src/stickler/digests.yaml`
 
 - [ ] **Task 98: The test suite on a macOS runner** (M)
+  - 2026-11-17: on `macos-15` for now; GitHub did not assign a `macos-26` runner twice (capacity). Back to `macos-26` once it can (owner).
   - Acceptance: a job on `macos-26` (arm64), Python 3.14, Homebrew ffmpeg, runs `scripts/check.sh task` green; every test that cannot hold on macOS is fixed or skipped with `skipif(sys.platform == "darwin", reason=...)`, each named in the commit message; Linux jobs unchanged.
   - Verify: the workflow run on GitHub, all jobs green
   - Dependencies: 97 · Files: `.github/workflows/check.yml` (or `mac.yml`), tests as needed

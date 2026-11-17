@@ -42,7 +42,10 @@ jobs:
   # The Mac app's core (SPEC.md, module `mac-core`): the same checks on Apple Silicon. The GTK
   # tests stay on Linux (pytest's default selection leaves them out, as above).
   macos:
-    runs-on: macos-26 # arm64, free for a public repository
+    # macos-15 (arm64, free for a public repository) while GitHub could not assign a macos-26
+    # runner (2026-11-17: twice not acquired in 15 minutes); back to macos-26 once it can. The
+    # Python core is the same on both; the app itself targets macOS 26 (checked on the owner's Mac).
+    runs-on: macos-15
     env:
       UV_PYTHON: "3.14"
     steps:

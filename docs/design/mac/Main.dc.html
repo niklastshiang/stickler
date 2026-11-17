@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler · empty window</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1000px; height: 700px; box-sizing: border-box; display: flex; flex-direction: column; background: {{c.window}}; color: {{c.text}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 1px {{c.edge}};">
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 14px 0 18px; background: {{c.bar}}; border-bottom: 1px solid {{c.hair}};">
+    <div style="display: flex; gap: 8px;" aria-hidden="true">
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #ff5f57;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #febc2e;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #28c840;"></span>
+    </div>
+    <h1 style="margin: 0 0 0 6px; font-size: 15px; font-weight: 600; flex-grow: 1;">Stickler</h1>
+    <div style="display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: {{c.capsule}}; box-shadow: inset 0 0 0 1px {{c.hair}};">
+      <button type="button" aria-label="Open a Song" style="width: 36px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+      </button>
+      <button type="button" aria-label="Export" disabled style="width: 36px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: {{c.disabled}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg>
+      </button>
+    </div>
+  </header>
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px;">
+    <div style="width: 520px; box-sizing: border-box; padding: 36px 32px; border-radius: 18px; border: 2px dashed {{c.dash}}; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="{{c.symbol}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l11-2v12"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="17.5" cy="16" r="2.5"></circle></svg>
+      <h2 style="margin: 6px 0 0; font-size: 22px; font-weight: 700;">Drop a Song Here</h2>
+      <p style="margin: 0; font-size: 13px; line-height: 1.45; color: {{c.secondary}}; max-width: 400px;">Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV or OGG; a song takes about 15 seconds.</p>
+      <button type="button" style="margin-top: 10px; height: 32px; padding: 0 18px; border: 0; border-radius: 999px; background: {{c.accent}}; color: #ffffff; font: 600 13px -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif;">Open a Song…</button>
+    </div>
+    <section style="width: 520px;" aria-label="Recent songs">
+      <h3 style="margin: 0 0 6px 12px; font-size: 11px; font-weight: 600; letter-spacing: .02em; color: {{c.secondary}};">Recent</h3>
+      <ul style="list-style: none; margin: 0; padding: 0; border-radius: 10px; background: {{c.list}}; box-shadow: inset 0 0 0 1px {{c.hair}};">
+        <li style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid {{c.hair}};">
+          <span style="flex-grow: 1; font-size: 13px;">Eye of the Tiger<span style="color: {{c.secondary}};"> · Survivor</span></span>
+          <span style="font-size: 12px; color: {{c.secondary}};">Today</span>
+        </li>
+        <li style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid {{c.hair}};">
+          <span style="flex-grow: 1; font-size: 13px;">Fluffing a Duck<span style="color: {{c.secondary}};"> · Kevin MacLeod</span></span>
+          <span style="font-size: 12px; color: {{c.secondary}};">Yesterday</span>
+        </li>
+        <li style="display: flex; align-items: center; gap: 10px; padding: 9px 14px;">
+          <span style="flex-grow: 1; font-size: 13px;">Highway to Hell<span style="color: {{c.secondary}};"> · AC/DC</span></span>
+          <span style="font-size: 12px; color: {{c.secondary}};">15 November</span>
+        </li>
+      </ul>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const light = {window: '#ffffff', bar: '#f6f6f6', hair: 'rgba(0,0,0,0.10)', edge: 'rgba(0,0,0,0.18)', text: '#1d1d1f', secondary: '#6e6e73', disabled: '#a8a8ad', capsule: 'rgba(0,0,0,0.04)', dash: '#c7c7cc', symbol: '#8e8e93', list: '#f9f9fb', accent: '#0060df'};
+    const darkC = {window: '#1e1e1e', bar: '#2a2a2b', hair: 'rgba(255,255,255,0.10)', edge: 'rgba(255,255,255,0.16)', text: '#f5f5f7', secondary: '#a1a1a6', disabled: '#5f5f63', capsule: 'rgba(255,255,255,0.06)', dash: '#4a4a4e', symbol: '#8e8e93', list: '#2a2a2c', accent: '#0060df'};
+    return { c: dark ? darkC : light };
+  }
+}
+</script>
+</body>
+</html>

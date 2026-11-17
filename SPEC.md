@@ -1792,7 +1792,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 | Module id | Responsibility | Depends on | Spec |
 |---|---|---|---|
 | `shared-core` | `stickler_gtk/logic` and `i18n` move to `stickler_app` (no visible change on Linux, the existing tests guard it); `scripts/xcstrings.py` writes the String Catalog from `po/` | – | done, below |
-| `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | to write |
+| `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | done, below |
 | `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | approved, below |
 | `core-bridge` | `stickler serve`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | to write |
 | `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped | `core-bridge`, `mac-design` | to write |
@@ -2013,9 +2013,8 @@ runner and runs on the owner's Mac at the checkpoint (if Quality is in the first
 
 ### Module `mac-design`
 
-> Status: **approved** by the owner on 2026-11-17; mockups in progress on the owner's private
-> design canvas ("Stickler Mac screens", a canvas of its own), copied to `docs/design/mac/` when
-> approved. Draft 1: M4 and M6, light and dark.
+> Status: **done** 2026-11-17: every screen approved by the owner on the private design canvas
+> "Stickler Mac screens" (a canvas of its own); sources in [docs/design/mac/](docs/design/mac/README.md).
 
 **Objective.** Mockups of every screen of the Mac app's first version, made with the owner on
 the design canvas, following Apple's Human Interface Guidelines for macOS 26. No code. The Mac
@@ -2067,6 +2066,24 @@ size; decided in `mac-shell`); the install guide's "Open Anyway" pictures (`mac-
 
 **Decided (owner, 2026-11-17):** a design canvas of its own for the Mac screens (the GTK canvas
 stays as it is); the macOS app icon is part of this module.
+
+**Decisions from the mockups (owner, 2026-11-17):**
+- **Window:** a unified toolbar (title, and under it artist, tempo and time signature once a
+  song is open); on the right a capsule with Open and Export (Export is a menu, disabled without
+  a song). The sheet music sits on a grey desk, the page as in the GTK app.
+- **First start** comes as sheets over the empty window (consent, download, a server not
+  answering), with the GTK app's texts and step list; buttons right-aligned, the default one blue.
+- **Export menu** items carry a second line (macOS 14 and later): PDF, MusicXML, Drum Track,
+  then Open With…; after saving, a short bar at the bottom of the window with "Show in Finder"
+  instead of a toast.
+- **Menu bar:** Stickler (About, Remove Downloaded Models…, Hide, Quit; **no Settings window**:
+  appearance follows the system and zoom is in View), File (Open… ⌘O, Open Recent, Export, Close
+  Window), Edit (the system's), View (Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0, Full Screen),
+  Window, Help.
+- **App icon:** the GTK icon's layers on the macOS shape, background `#2f5d8c`, a dark variant on
+  `#1c1c1e`.
+- **New texts for `po/`** (added by `mac-shell`): "Show in Finder", "Takes about 15 seconds",
+  "Open Recent", "Clear Menu" (the last two may come from the system).
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
