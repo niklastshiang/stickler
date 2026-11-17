@@ -654,8 +654,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 
 Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
 
-- [ ] **Task 82: Transcriber `muscriptor_l`** (S)
-  - Status 2026-11-17: adapter and config entries in `main` (8a841da); setup worked on the RunPod GPU (MDB, ENST oracle and own results exist, see Task 84). Still open: the verify run of `pytest -m adapters -k muscriptor_l` recorded, and the laptop time for one 4-minute song.
+- [x] **Task 82: Transcriber `muscriptor_l`** (S): done 2026-11-17. Adapter and config entries in `main` (8a841da); `pytest -m adapters -k muscriptor_l` passes on the laptop; laptop time see Task 84 step 6.
   - Acceptance: copy of `muscriptor_m` with `SIZE = "large"` (own name, lock, README with source, version, licence CC BY-NC 4.0, gated, 5.47 GB); in `config/benchmark.yaml` and `config/own.yaml` like `muscriptor_m` (Demucs stem, skip on the mix); existing cache entries untouched.
   - Verify: `uv run pytest -m adapters -k muscriptor_l` (on RunPod or the laptop after `stickler setup --adapter muscriptor_l`); laptop time for one 4-minute song recorded
   - Dependencies: none · Files: `adapters/transcribers/muscriptor_l/*`, `config/*.yaml`, `SPEC.md` candidates table
@@ -672,7 +671,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
     - ENST: only oracle `muscriptor_l` 0.827 and oracle `drumsep_onset` 0.834 (61 of 64 tracks, 3 errors); oracle `sad` and every `demucs+` candidate missing.
     - Own songs: `demucs+muscriptor_l` 0.837, `demucs+drumsep_onset` 0.767 (Quality 0.849, `none+adtof` 0.841); `demucs+sad` missing.
     - GPU speed: `sad` 3194 s for 1309 s of MDB audio (about 2.4× real time, so roughly 10 minutes per 4-minute song); `muscriptor_l` about 0.17× real time; `drumsep_onset` about 0.08×.
-    - Laptop time (step 6, 2026-11-17, AMD Ryzen AI 5 340, 12 threads, CPU): `drumsep_onset` on the cached Demucs stem of `eye_of_the_tiger` (245.6 s): 702 s, peak 1.9 GB (Demucs not included). `muscriptor_l` not measured yet; `sad` goes to the pod (92 minutes for 10 s on CPU).
+    - Laptop time (step 6, 2026-11-17, AMD Ryzen AI 5 340, 12 threads, CPU): `drumsep_onset` on the cached Demucs stem of `eye_of_the_tiger` (245.6 s): 702 s, peak 1.9 GB (Demucs not included). `muscriptor_l` on the same stem: 699 s, peak 10.7 GB (under the 20-minute budget, so no GPU reference needed). `sad` goes to the pod (92 minutes for 10 s on CPU).
     - Still open: the missing ENST and own runs (step 4), the 3 ENST errors, tuning (step 5), laptop times (step 6), eval and report (step 7). Check that no RunPod pod is still running.
   - Separate-and-Detect (owner, 2026-11-17): tune first, then decide. Its thresholds are tuned on MDB from the saved envelopes (no pod time), and DrumSep's the same way so both get the same treatment: `uv run stickler tune --transcriber sad --inputs oracle --config config/benchmark.yaml --name sad_tuned`, likewise `--transcriber drumsep_onset --name drumsep_tuned`. If tuned `sad` stays more than 0.03 macro-F1 behind tuned `drumsep_onset` and `muscriptor_l` on MDB, it is closed as tested and inferior (report and ADR say so) and its ENST and own-song runs are skipped; otherwise they are run. Why: on MDB's oracle stems, close to its training data, it came last (0.754 vs 0.844 and 0.869, 3 classes) and weakest on hi-hat and cymbals, where Fast and Quality are strong; but it ran with Stickler's onset step and an untuned threshold, not the paper's detector.
   - Noticed 2026-11-16: an adapter's cache key covered only `run.py`, `setup.py` and `pyproject.toml`, not helper modules; fixed in Task 87.
