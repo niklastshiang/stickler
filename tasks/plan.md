@@ -283,7 +283,7 @@ Order: artist (78) → clicks (79) → removal logic (80) → menu entry and ale
 | A removal deletes something outside the app's folders | High | The logic only returns folders below the app's XDG folders, refuses the checkout; tests for every case |
 | Deleting 2 GB blocks the window | Low | The deletion runs in the worker, the window waits on the analysing page |
 
-## Release 8: New candidates (approved 2026-11-16, SPEC.md "Release 8")
+## Release 7: New candidates (approved 2026-11-16, SPEC.md "Release 7")
 
 Three new transcription candidates, measured like every pipeline; the app changes only for a
 corrected improvement within the time budget.
@@ -305,7 +305,7 @@ Design decisions:
   corrects, with the candidate's own spots.
 
 Order: DrumSep (12) → MuScriptor large (82) → Separate-and-Detect spike and adapter (83) →
-benchmark runs (84) → listening if needed (85) → decision ADR, report, README, release 8 (86).
+benchmark runs (84) → listening if needed (85) → decision ADR, report, README, release 7 (86).
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -314,7 +314,7 @@ benchmark runs (84) → listening if needed (85) → decision ADR, report, READM
 | MuScriptor large or Separate-and-Detect exceed 20 min per song | High (likely) | Measured on the laptop on one song early; reported, not put into the app |
 | RunPod cost | Low | Runs planned per dataset, pod stopped automatically |
 
-## `legend` (approved 2026-11-17, SPEC.md "Module `legend`")
+## `legend` (approved 2026-11-17, deferred the same day by the owner; SPEC.md "Module `legend`")
 
 A legend on page 1 of the exported PDF: one entry per staff position the sheet uses, named in
 the app's language.

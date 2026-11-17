@@ -22,7 +22,7 @@ from numpy.lib.stride_tricks import sliding_window_view
 
 LABELS = [36, 38, 47, 42, 49]  # activation columns: KD, SD, TT, HH, CY (ADTOF's order)
 
-# Default until it is chosen on MDB and ENST (SPEC.md, Release 8, method 2); on the song's
+# Default until it is chosen on MDB and ENST (SPEC.md, Release 7, method 2); on the song's
 # common scale, after the moving average is subtracted.
 THRESHOLD = 0.1
 

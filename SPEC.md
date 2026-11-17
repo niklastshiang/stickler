@@ -30,9 +30,9 @@ User stories:
 | Transcription | `adt_str` | pier-maker92/ADT_STR (2026), `setting-tau-0.8`, 26 classes | CC BY-SA |
 | Transcription | `muscriptor_s`, `muscriptor_m` | muscriptor/muscriptor (2026), small/medium | MIT / weights CC BY-NC |
 | ~~Transcription~~ | ~~`yourmt3`~~ | YourMT3+, removed 2026-11-13 (last on the own songs; transformers with known vulnerabilities could not be updated) | – |
-| Transcription | `drumsep_onset` | DrumSep MDX23C 6-stem (via python-audio-separator 0.48.0) + onsets per stem (release 8) | Code MIT, weights without a formal licence (community model) |
-| Transcription | `muscriptor_l` | muscriptor/muscriptor large (release 8) | MIT / weights CC BY-NC |
-| Transcription | `sad` | Separate-and-Detect (ddman1101, 2026), 5 drum stems by latent diffusion + onsets per stem (release 8; owner's exception: research code) | MIT |
+| Transcription | `drumsep_onset` | DrumSep MDX23C 6-stem (via python-audio-separator 0.48.0) + onsets per stem (release 7) | Code MIT, weights without a formal licence (community model) |
+| Transcription | `muscriptor_l` | muscriptor/muscriptor large (release 7) | MIT / weights CC BY-NC |
+| Transcription | `sad` | Separate-and-Detect (ddman1101, 2026), 5 drum stems by latent diffusion + onsets per stem (release 7; owner's exception: research code) | MIT |
 | Beats | `beat_this` | CPJKU/beat_this | MIT |
 
 ## Tech Stack
@@ -1518,8 +1518,8 @@ src/stickler_gtk/ui/menu.py, window.py # the menu entry and its alert
 
 ### Module `legend`
 
-> Status: **approved** by the owner on 2026-11-17, release 7 (owner, 2026-11-17: the legend
-> comes before the new models, which became release 8), after a fresh-context review against the code
+> Status: **deferred by the owner on 2026-11-17** ("maybe later, not needed now"): the code, names and tests stay, but the PDF export does not draw the legend (`ui/window.py`); switching it back on is one line. Task 91's owner check and Checkpoint Q wait with it.
+> Before: **approved** by the owner on 2026-11-17, after a fresh-context review against the code
 > (Verovio experiments on 2026-11-17; their findings are in the assumptions). The owner's wish
 > after release 6: "a legend, so that untrained readers can check in the exported sheet what it
 > means". Plan: `tasks/plan.md` ("`legend`"), tasks 88–91 in `tasks/todo.md`.
@@ -1624,10 +1624,10 @@ po/*.po                                # the names
 
 - None (the cymbal's name and the hint line were decided on 2026-11-17).
 
-## Release 8: New candidates
+## Release 7: New candidates
 
 > Status: **approved** by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
-> after a web check of each (facts and sources below). Plan: `tasks/plan.md` ("Release 8"),
+> after a web check of each (facts and sources below). Plan: `tasks/plan.md` ("Release 7"),
 > tasks 12 and 82–86 in `tasks/todo.md`.
 
 ### Objective

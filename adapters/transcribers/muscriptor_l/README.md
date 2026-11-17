@@ -12,7 +12,7 @@ tokens). Stickler only takes the drum track. The same adapter as `muscriptor_m` 
 | License | Code MIT, weights CC BY-NC 4.0 (ADR 0002) |
 | Input | Mix or stem; in the benchmark on the Demucs stem only, like medium |
 
-Added for release 8 (SPEC.md): a candidate for Quality only, and only within 20 minutes for a
+Added for release 7 (SPEC.md): a candidate for Quality only, and only within 20 minutes for a
 4-minute song on the laptop. The download (> 2 GB) was approved by the owner on 2026-11-16.
 
 ## Usage

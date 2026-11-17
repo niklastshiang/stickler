@@ -14,7 +14,7 @@ turns them into hits.
 
 Tested as an exception (owner, 2026-11-16): the project is research code without visible
 maintenance (CLAUDE.md asks for maintained projects). Measured on RunPod for the datasets and
-the owner's songs (SPEC.md, Release 8).
+the owner's songs (SPEC.md, Release 7).
 
 ## Usage
 ```bash
