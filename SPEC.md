@@ -1732,6 +1732,149 @@ docs/report.md, README.md              # results, candidates table
    for a 4-minute song, on the laptop or, if too slow there, on a strong GPU, which Quality then
    requires (method, point 5).
 
+## Release 8: macOS app
+
+> Status: **approved** by the owner on 2026-11-17 (capability map with `mac-design`, minimum
+> scope, open questions 1 and 2 decided). Module specs are written and approved one at a time, in
+> build order, as for the GTK application. Starts from the macOS research in `tasks/todo.md`
+> (2026-11-16).
+
+A native macOS app (SwiftUI) for the same drummers as the GTK app: open or drop a song, wait for
+the analysis, read the sheet music, export it. Apple Silicon only. The Python core (models,
+`stickler.api`, Verovio) is the same on both systems; each app is a thin interface over it.
+
+### Objective
+- **User:** a drummer with a Mac (Apple Silicon, macOS 26 or newer) who is not technical.
+- **First version (minimum, owner 2026-11-17):** open or drop a song, set up the models with
+  consent, analyse it with progress and cancel, read the sheet music, export MusicXML, PDF and the
+  drum track, recent songs, English, German and Spanish. Fast mode; Quality too if release 7's
+  decision on the modes is done by the time `core-bridge` is specified (owner, 2026-11-17).
+- **Later releases:** playback (`mac-playback`), corrections (`mac-corrections`), the GPU through
+  Metal (`mac-gpu`, measured against the CPU first).
+- **Success:** a drummer installs the `.dmg` from a GitHub release on a Mac they own and gets
+  sheet music for a song without a terminal.
+
+### Decisions for all modules (owner, 2026-11-17)
+- **macOS only** in this release; Windows gets its own spec later.
+- **Native interface (SwiftUI)**, not GTK: this replaces the decision of 2026-11-16 ("GTK on
+  Windows and macOS to start with") for macOS. The GTK app stays the Linux app.
+- **One shared core, two thin interfaces.** Everything that is not a widget lives in Python and is
+  used by both apps: the app logic of `stickler_gtk/logic` moves to a neutral package
+  `stickler_app` (GTK imports it in process; the Mac app reaches it through `stickler serve`).
+  New features are built once, in Python, and tested once; Swift only draws and forwards.
+- **One source for translations:** `po/*.po` stays the only place to translate. A script turns it
+  into the Mac app's String Catalog (`.xcstrings`) at build time, mapping placeholders (`{name}`
+  ↔ positional `%@`) and plural forms. Text the core produces (step names, errors, setup texts)
+  arrives already translated from Python.
+- **Distribution without paying:** an ad-hoc signed `.dmg`, built on GitHub's free macOS arm64
+  runners and attached to every release like the Flatpak and the AppImage. macOS 15 and later
+  block its first start; the install guide shows "System Settings → Privacy & Security → Open
+  Anyway" with pictures. The Apple Developer Program (99 USD a year) is reconsidered if the Mac
+  app finds users.
+- **CPU only** in this release. Metal (MPS) is `mac-gpu`, a later module: Demucs and MuScriptor
+  measured on a Mac against the CPU (identical notes) before it is used.
+- **Testing on a Mac:** no Mac is available to Claude. Swift code is built, linted and tested on
+  GitHub's macOS runners (screenshots of the windows as artifacts); the owner checks the app on
+  their own Mac (Apple Silicon, macOS 26) at every checkpoint. Modules are cut small for that.
+- **Quality bar:** CONSTRAINTS.md is extended to Swift with the same rules: no suppressions
+  (`swiftlint:disable`, `// swiftlint:` comments), no stubs (`fatalError("TODO")`,
+  `preconditionFailure` as a placeholder), no skipped tests (`XCTSkip` without a reason in the
+  commit), SwiftLint clean, XCTest coverage ≥ 95 % outside pure views (pure SwiftUI views are
+  excluded as `ui/` is in GTK). The extension is written when `mac-shell` fixes the paths.
+- **Out of this release:** everything under "Not Doing" for the GTK app's first version, plus
+  playback, corrections, the GPU, the Mac App Store, Intel Macs (Demucs holds them at torch < 2.3),
+  Homebrew (a tap stays an idea for technical users).
+
+### Capability map
+
+| Module id | Responsibility | Depends on | Spec |
+|---|---|---|---|
+| `shared-core` | `stickler_gtk/logic` and `i18n` move to `stickler_app` (no visible change on Linux, the existing tests guard it); `scripts/xcstrings.py` writes the String Catalog from `po/` | – | to write |
+| `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | to write |
+| `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | to write |
+| `core-bridge` | `stickler serve`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | to write |
+| `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped | `core-bridge`, `mac-design` | to write |
+| `mac-setup` | Setup assistant: consent, model download with progress, resumable, "Remove Downloaded Models…" | `mac-shell` | to write |
+| `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | to write |
+| `mac-package` | `.app` with `uv` and the core's sources, a Python fetched by `uv` at setup (as in the AppImage), ad-hoc signed `.dmg`, release workflow, install guide with pictures | all | to write |
+
+Build order: `shared-core`, `mac-design`, `mac-core` (in parallel) → `core-bridge` →
+`mac-shell` → `mac-setup`, `mac-sheet` → `mac-package`.
+
+Out of order on purpose, like the Flatpak sandbox trial before: a **packaging spike** early in
+`mac-package` (an ad-hoc signed `.app` from a macOS runner that runs `uv`, builds ADTOF's
+environment and analyses a clip on the owner's Mac after "Open Anyway"), because a failure
+changes `mac-setup` and `core-bridge`.
+
+### Tech stack
+- Swift 6 and SwiftUI with the Observation framework, deployment target macOS 26 (owner, 2026-11-17), `WKWebView` for the
+  sheet music, Swift Package Manager; Xcode as installed on GitHub's `macos-26` arm64 runner
+  (Xcode 26.x default, checked on 2026-11-17; the exact version is pinned in the workflow when
+  `mac-shell` starts, newest stable at that time).
+- SwiftLint, newest release at that time (0.65.x on 2026-11-17), as a pinned binary in CI.
+- The Python core unchanged: `uv`, Python 3.12–3.14, the adapters' own environments.
+- No new Python dependencies for the bridge (JSON lines over stdin/stdout, standard library).
+
+### Commands (planned)
+```
+uv run stickler serve                      # the core for the Mac app (JSON lines)
+uv run python scripts/xcstrings.py         # po/*.po → mac/Stickler/Localizable.xcstrings
+xcodebuild -scheme Stickler -destination 'platform=macOS' test   # on a macOS runner
+swiftlint --strict mac/
+scripts/check.sh task                      # unchanged; also checks the String Catalog is current
+```
+
+### Project structure (additions)
+```
+src/stickler_app/         # the shared app logic (was src/stickler_gtk/logic) and i18n
+src/stickler_gtk/         # GTK widgets only, importing stickler_app
+mac/                      # the Swift package / Xcode project of the Mac app
+mac/Stickler/             # SwiftUI views and the bridge client
+mac/SticklerTests/        # XCTest
+scripts/xcstrings.py      # String Catalog from po/
+.github/workflows/mac.yml # build, lint, test, screenshots; the .dmg on release
+docs/install-macos.md     # install guide with the "Open Anyway" pictures
+```
+
+### Testing strategy
+- The bridge's contract is tested in Python (pytest, the 95 % rule): every message, errors,
+  cancellation, a fake analysis as in the GTK widget tests.
+- Swift: XCTest for the bridge client and the view models against a recorded or fake core;
+  pure views are checked by screenshots on the runner and by the owner.
+- `mac-core`: the existing test suite on a macOS arm64 runner, plus the adapters' smoke tests
+  for ADTOF and Beat This! on the runner's CPU.
+- The String Catalog: a test that every `msgid` is in it, placeholders and plurals kept, for
+  every language in `po/LINGUAS`.
+
+### Boundaries
+- **Always:** keep the Linux app and the benchmark unchanged in behaviour; run `scripts/check.sh
+  task` before every commit; every Swift change goes through the macOS workflow before it counts.
+- **Ask first:** paying for anything (Apple Developer Program, runners beyond the free tier);
+  changing a model's environment beyond widening its platforms; a new Python dependency; moving a
+  feature from Python into Swift.
+- **Never:** ship model weights; ship a feature in Swift that the core could do; weaken
+  CONSTRAINTS.md for Swift; claim a Mac check that the owner has not done.
+
+### Success criteria
+1. On the owner's Mac (macOS 26), the `.dmg` from a GitHub release installs after "Open Anyway", the setup
+   assistant downloads the Fast models, and a song becomes sheet music; export of MusicXML, PDF
+   and the drum track works.
+2. The app is in English, German and Spanish from the same `po/` files as the GTK app.
+3. The Linux app, the command line and the benchmark behave as before (all tests green, cache
+   keys unchanged except the documented `digests.yaml` pair).
+4. The macOS workflow builds, lints and tests on every push; the release attaches the `.dmg`.
+5. CONSTRAINTS.md covers Swift; coverage ≥ 95 % outside pure views.
+
+### Open questions
+Decided (owner, 2026-11-17): Quality in the first Mac version if release 7's decision on the
+modes is done by then, else Fast only; the oldest macOS is 26 (the owner tests on it; the torch
+wheels need 14, so 26 is the app's own floor).
+
+1. The bridge's process model: one long-running `stickler serve` per window, or one per request?
+   Decided in `core-bridge`.
+2. Does `uv` run the models from inside an ad-hoc signed `.app` after "Open Anyway" (quarantine
+   of the downloaded `uv`, Python and wheels)? Answered by the packaging spike.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
