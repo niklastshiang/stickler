@@ -744,7 +744,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `scripts/check.sh task`; `scripts/gtk.sh test`; `grep -rn "stickler_gtk.logic\|stickler_gtk/logic\|stickler_gtk.i18n" src tests scripts packaging docs CONSTRAINTS.md pyproject.toml` empty
   - Dependencies: none · Files: `src/stickler_app/*` (moved), `src/stickler_gtk/*`, `tests/app/*` (moved), `tests/gtk/test_boundaries.py`, `pyproject.toml`, `CONSTRAINTS.md`, `scripts/i18n.sh`, `scripts/demo.py`
 
-- [ ] **Task 93: Packaging paths, both packages built** (S)
+- [x] **Task 93: Packaging paths, both packages built** (S): done 2026-11-17 (caf4933). The Flatpak (built from a manifest copy pinned to the commit, not installed: the owner's own Stickler Flatpak stays as it is) and the AppImage (pinned Arch image, from `git archive`) both hold `stickler`, `stickler_app` and `stickler_gtk`; inside each, the app and GTK modules import and German loads ("Song öffnen …"). The windows were not opened here; the owner's check (95) covers the running app.
   - Acceptance: the Flatpak manifest and `scripts/appimage.sh` copy `src/stickler_app`; both packages build locally from the commit (pinned, see the local Flatpak note) and start; the app opens the demo song in each.
   - Verify: local Flatpak and AppImage builds; a headless start of each (as for `packaging`)
   - Dependencies: 92 · Files: `packaging/flatpak/ng.tshia.Stickler.yml`, `scripts/appimage.sh`
