@@ -9,7 +9,7 @@ transcribers: [adt_str, adtof, muscriptor_m, muscriptor_l, drumsep_onset, sad]
 # in every measurement (MDB Punk, first 7 MDB songs: macro-F1 0.51-0.58, first own song 0.47);
 # MuScriptor medium on the full mix is the most expensive job (~7x real time) and ranked below
 # ADTOF on the mix and below every separated variant. Medium stays on separated stems.
-skip: ["none+muscriptor_m", "none+muscriptor_l", "roformer+muscriptor_l", "roformer+drumsep_onset", "roformer+sad"]  # release 7 candidates: Demucs (and oracle) only
+skip: ["none+muscriptor_m", "none+muscriptor_l", "roformer+muscriptor_l", "roformer+drumsep_onset", "roformer+sad", "oracle+sad", "demucs+sad"]  # release 7 candidates: Demucs (and oracle) only; sad closed on MDB (SPEC Release 7, method 3)
 device: auto
 schemes: ["5", "3"]
 timeout:

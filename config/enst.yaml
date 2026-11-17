@@ -6,7 +6,7 @@
 datasets: [enst]
 separators: [none, oracle, demucs, roformer]
 transcribers: [adt_str, adtof, muscriptor_m, muscriptor_l, drumsep_onset, sad]
-skip: ["none+muscriptor_m", "none+muscriptor_l", "roformer+muscriptor_l", "roformer+drumsep_onset", "roformer+sad"]  # release 7 candidates: Demucs (and oracle) only
+skip: ["none+muscriptor_m", "none+muscriptor_l", "roformer+muscriptor_l", "roformer+drumsep_onset", "roformer+sad", "oracle+sad", "demucs+sad"]  # release 7 candidates: Demucs (and oracle) only; sad closed on MDB (SPEC Release 7, method 3)
 device: auto
 schemes: ["5", "3"]
 timeout:

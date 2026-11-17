@@ -1663,12 +1663,14 @@ RoFormer DrumSep variants (no downloadable weights).
    threshold on MDB and ENST, as in Phase 5c; the own songs are the final check only.
 3. **Measured on all three datasets**; laptop runtimes (RTF, peak RAM) for every candidate that
    can run there, RunPod for the rest (the laptop stays the reference for the app's modes).
-   **Exception for `sad`, in stages** (owner, 2026-11-17, to save about 4 GPU hours): first MDB
-   and ENST only, its threshold tuned there; on the own songs only if it then comes within 0.03
-   of `demucs+muscriptor_l` in macro-F1 (3 classes) on MDB and on ENST. Otherwise it is left out
-   and the report says so, with its numbers. Known risk: MDB choices transferred badly to the
-   owner's rock/metal songs before (report, "Lessons"); accepted, since `sad` was 0.106 behind on
-   MDB (0.725 vs 0.831, untuned).
+   **Exception for `sad`: tuned on MDB first, closed there** (owner, 2026-11-17; the rule of
+   commit 9d5ff60, stricter than the stages written the same afternoon): if `sad` with tuned
+   thresholds stays more than 0.03 macro-F1 behind tuned `drumsep_onset` and `muscriptor_l` on
+   MDB's oracle stems, it is closed as tested and inferior and its ENST and own-song runs are
+   skipped. **Result (2026-11-17): closed.** Tuned on MDB oracle (`stickler tune`, 23 tracks),
+   mean F1 over 5 classes `sad` ≈ 0.60 (KD 0.937, SD 0.700, TT 0.318, HH 0.668, CY 0.361) against
+   `drumsep_onset` ≈ 0.73 and `muscriptor_l` 0.81 (untuned); the report and ADR 0008 say so. Known
+   risk, accepted: MDB choices transferred badly to the owner's rock/metal songs before.
 4. **Measured first, listened to only where it can matter** (owner, 2026-11-16): all candidates
    are compared on measured scores. A candidate whose measured macro-F1 on the own songs comes
    within 0.01 of a mode's, or beats it, gets a listening round of about 40 new spots drawn from
@@ -1719,7 +1721,7 @@ docs/report.md, README.md              # results, candidates table
 
 ### Success criteria
 1. Each of the three candidates produces MIDI or a logged error on all MDB, ENST and own songs
-   (`sad` on the own songs only if it passes the stage of method 3; owner, 2026-11-17).
+   (`sad` on MDB only: closed there by method 3's rule; owner, 2026-11-17).
 2. `metrics.csv`, `report.html` and `docs/report.md` contain them next to Fast and Quality.
 3. A decision per mode, recorded as an ADR: unchanged, or replaced (owner).
 4. README candidates and results tables updated; `scripts/check.sh task` green.
@@ -2008,6 +2010,61 @@ keeping MuScriptor large's platforms in step.
 
 **Decided (owner, 2026-11-17):** no Hugging Face token in CI; MuScriptor is only resolved on the
 runner and runs on the owner's Mac at the checkpoint (if Quality is in the first Mac version).
+
+### Module `mac-design`
+
+> Status: **draft** (2026-11-17), awaiting the owner's approval.
+
+**Objective.** Mockups of every screen of the Mac app's first version, made with the owner on
+the design canvas, following Apple's Human Interface Guidelines for macOS 26. No code. The Mac
+modules build what is drawn here, as the GTK modules built the `design` screens.
+
+**Screens** (the minimum of release 8; playback and corrections come later):
+
+| # | Screen | Module |
+|---|---|---|
+| M1 | First start: consent (what is downloaded, sizes, ADTOF's non-commercial licence) | `mac-setup` |
+| M2 | First start: download with the setup steps | `mac-setup` |
+| M3 | First start: a server is not answering (names it, keeps what is done, retry) | `mac-setup` |
+| M4 | Empty window: drop area, "Open a Song…", recent songs | `mac-shell` |
+| M5 | Analysis: the steps, cancel | `mac-shell` |
+| M6 | Sheet music: title, artist, tempo and time signature in the window; zoom | `mac-sheet` |
+| M7 | Export: menu or toolbar button, the save panel's start, the "saved" note | `mac-shell` |
+| M8 | The menu bar: Stickler, File (Open, Open Recent, Export), View (zoom, appearance follows the system), Window, Help | `mac-shell` |
+| M9 | Light and dark: M4 and M6 in both | all |
+
+**Carried over from the GTK `design` (same app, same words):** one step list for setup and
+analysis (done, running, waiting, a short line each; model names only in setup); English copy
+written for drummers, German and Spanish through `po/`; the sheet music inverted in dark mode,
+the bar marker blue; tempo and time signature in the window, not on the page; the cost of the
+drum track export announced before it starts.
+
+**Different on the Mac (proposed, to settle on the canvas):**
+- **Native controls:** SwiftUI's toolbar, buttons, progress and sheets in the system's look and
+  accent colour; no libadwaita look.
+- **The menu bar carries the commands** (macOS apps put open, export, zoom and appearance there);
+  the toolbar keeps open and export only. No hamburger menu.
+- **Appearance follows the system**; no three-way switch in the app (macOS apps rarely have one).
+- **Note size** as View → Zoom In / Zoom Out / Actual Size (⌘+, ⌘−, ⌘0) instead of the GTK
+  menu's "− 100 % +" row.
+- **Recent songs** also in File → Open Recent (the system's list), besides the empty window.
+- **Errors** as alerts or inline text as the HIG says; the GTK app's toasts become a short note
+  in the window.
+- **App icon:** the macOS shape (a rounded square the system masks) built from the GTK icon's
+  layers (paper, staff, notes, sticks), drawn on the canvas with the screens.
+
+**Success criteria.**
+1. Every screen M1–M9 is on the canvas, in light and dark where M9 says so, and approved by the
+   owner.
+2. The canvas sources are copied to `docs/design/mac/` (the live canvas stays private, as for
+   the GTK mockups), and the decisions are written here.
+3. Every text on the screens exists in `po/` or is listed for `mac-shell` to add.
+
+**Out of scope.** Playback and corrections screens; narrow windows (macOS windows have a minimum
+size; decided in `mac-shell`); the install guide's "Open Anyway" pictures (`mac-package`).
+
+**Decided (owner, 2026-11-17):** a design canvas of its own for the Mac screens (the GTK canvas
+stays as it is); the macOS app icon is part of this module.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
