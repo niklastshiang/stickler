@@ -5,7 +5,8 @@ Taken from the app (headless, `scripts/gtk.sh test` style) for the AppStream Met
 
 The README's animated overview `overview.gif` is recorded with
 `scripts/gtk.sh demo <path to Fluffing a Duck>` (scripts/demo.py): on an invisible screen with
-private settings and cache, the app opens the song, analyses it with the checkout's models (Fast)
+private settings and an empty results cache, the app opens the song, analyses it with the
+checkout's models (Fast)
 and steps through it; the analysis plays faster than it ran.
 
 The song is "Fluffing a Duck" by Kevin MacLeod ([incompetech.com](https://incompetech.com)),

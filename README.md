@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/screenshots/sheet.png" width="800" alt="Stickler showing the drum sheet music of a song, the bar that is sounding marked in blue, with play controls and the choice of song, hits or both below" />
+  <img src="docs/screenshots/overview.gif" width="800" alt="Animation: Stickler opens a song, works through detecting the hits, finding the beat and writing the notes, then shows the drum sheet music with the sounding bar marked in blue as the song plays" />
 </p>
 
 <p align="center">
