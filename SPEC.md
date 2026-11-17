@@ -1791,7 +1791,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 |---|---|---|---|
 | `shared-core` | `stickler_gtk/logic` and `i18n` move to `stickler_app` (no visible change on Linux, the existing tests guard it); `scripts/xcstrings.py` writes the String Catalog from `po/` | – | done, below |
 | `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | to write |
-| `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | to write |
+| `mac-core` | (approved, below) The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | to write |
 | `core-bridge` | `stickler serve`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | to write |
 | `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped | `core-bridge`, `mac-design` | to write |
 | `mac-setup` | Setup assistant: consent, model download with progress, resumable, "Remove Downloaded Models…" | `mac-shell` | to write |
@@ -1940,6 +1940,74 @@ Linux user could see.
 **Out of scope.** `stickler serve` (`core-bridge`); extracting Swift texts (`mac-shell`); any
 change of behaviour or text; the Xcode project (only the catalog's path under `mac/` is fixed
 here).
+
+### Module `mac-core`
+
+> Status: **approved** by the owner on 2026-11-17 (the peak RAM fix counts as behaviour-neutral on
+> Linux, with `digests.yaml` pairs; no Hugging Face token in CI). Plan: `tasks/plan.md`
+> ("`mac-core`"), tasks 96–99.
+
+**Objective.** The Python core and the app's models run on macOS arm64 (CPU), checked on every
+push by a macOS runner, before any Swift exists. Linux behaves exactly as before.
+
+**Assumptions** (from the code and the research of 2026-11-16, checked 2026-11-17):
+1. The app's models are those of its modes: ADTOF and Beat This! (Fast), Demucs and MuScriptor
+   medium (Quality). A release 7 candidate that replaces one of them is added here when Task 86
+   decides it.
+2. ADTOF's and Beat This!'s locks already hold torch 2.15 wheels for `macosx_14_0_arm64`;
+   Demucs', MuScriptor medium's and MuScriptor large's `pyproject.toml` restrict
+   `environments` to `sys_platform == 'linux'` (a leftover from an old torch on Intel Macs).
+3. The process handling (`os.killpg`, `start_new_session`, `SIGKILL`) and `resource` are POSIX
+   and exist on macOS; `torch.cuda` is false there, so `choose_device("auto")` gives the CPU.
+4. **Found while writing this spec:** `stickler_adapter._peak_rss_mb` divides `ru_maxrss` by
+   1024 because Linux reports KiB; macOS reports bytes, so every Mac `meta.json` would show a
+   peak RAM 1024 times too high.
+5. ffmpeg and ffprobe come from the `PATH` (Homebrew on the runner); how the app finds them is
+   `mac-package`'s question.
+
+**Scope.**
+1. **Wider platforms:** Demucs and MuScriptor medium get `environments = ["sys_platform ==
+   'linux'", "sys_platform == 'darwin' and platform_machine == 'arm64'"]` and a new lock.
+   MuScriptor large likewise (a release 7 candidate; cheap to keep in step). **The Linux
+   resolution must stay identical:** a script compares every package, version and wheel hash
+   that applies to Linux before and after; only then is the change behaviour-neutral on Linux,
+   and the old → new digests go into `src/stickler/digests.yaml` (CLAUDE.md). If anything for
+   Linux moves, the change is a real one: stop and ask the owner (results would be recomputed).
+2. **Peak RAM on macOS:** `_peak_rss_mb` reads bytes on `darwin`, KiB elsewhere. This edits
+   `adapters/_common`, so every adapter's digest changes; on Linux the result is the same
+   number, so each adapter gets a `digests.yaml` pair (taken with `stickler cache-digests`
+   before and after, in the same commit). A test fixes both units.
+3. **macOS in CI:** a job on GitHub's `macos-26` arm64 runner (free for a public repository)
+   with Python 3.14 and Homebrew's ffmpeg runs `scripts/check.sh task` (no GTK there; the GTK
+   tests stay Linux-only as today). A test that cannot hold on macOS is marked
+   `skipif(sys.platform == "darwin", reason=...)` with the reason, never skipped silently, and
+   named in the commit message (CONSTRAINTS.md).
+4. **The models on the runner's CPU:** the smoke tests of ADTOF, Beat This! and Demucs
+   (`pytest -m adapters`, their synthetic clips) after `stickler setup` for those three, in the
+   same job or a second one that runs on pushes touching `adapters/` or `src/stickler/`, and
+   weekly. MuScriptor is gated (Hugging Face login): on the runner only its lock is checked
+   (`uv sync --locked`); it runs on the owner's Mac at the checkpoint if Quality goes into the
+   first Mac version.
+5. **Times on the runner:** the smoke tests' `meta.json` seconds and peak RAM are printed into
+   the job summary, a first look at the CPU cost on Apple Silicon (the owner's Mac gives the
+   real numbers later).
+
+**Success criteria.**
+1. The macOS job is green on every push: lint, floor guard, all tests with ≥ 95 % coverage.
+2. ADTOF, Beat This! and Demucs pass their smoke tests on the runner's CPU, with a plausible
+   peak RAM (MB, not GB × 1024).
+3. On Linux: every adapter's Linux packages identical before and after (the comparison
+   script's output in the commit), all cache entries found under the new digests (nothing
+   recomputed: `stickler eval` for the three configs still reads every result), CI green on
+   3.12 and 3.14.
+4. No test skipped without a stated reason.
+
+**Out of scope.** Metal/MPS (`mac-gpu`); `stickler serve` (`core-bridge`); how the `.app`
+ships Python, ffmpeg and `uv` (`mac-package`); Intel Macs; the release 7 candidates other than
+keeping MuScriptor large's platforms in step.
+
+**Decided (owner, 2026-11-17):** no Hugging Face token in CI; MuScriptor is only resolved on the
+runner and runs on the owner's Mac at the checkpoint (if Quality is in the first Mac version).
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

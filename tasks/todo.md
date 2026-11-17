@@ -762,6 +762,31 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 ### Checkpoint R
 - [x] All success criteria of SPEC.md "Module `shared-core`" met (owner, 2026-11-17); then the next module specs of release 8 (`mac-design`, `mac-core`, in parallel)
 
+## Phase 19: Release 8 (macOS app), module `mac-core` (approved 2026-11-17, SPEC.md "Module `mac-core`")
+
+- [ ] **Task 96: Peak RAM in the right unit on macOS** (S)
+  - Acceptance: `stickler_adapter._peak_rss_mb` reads `ru_maxrss` as bytes on `darwin` and KiB elsewhere; a test fixes both (the Linux number unchanged); a `digests.yaml` pair for every adapter (taken with `stickler cache-digests` before and after).
+  - Verify: `uv run pytest -q tests/test_adapter_common.py` (or where `_peak_rss_mb` is tested); `stickler eval` for `config/benchmark.yaml` and `config/own.yaml` reads every result (ENST after the pod run)
+  - Dependencies: none · Files: `adapters/_common/src/stickler_adapter/__init__.py`, a test, `src/stickler/digests.yaml`
+
+- [ ] **Task 97: Demucs and MuScriptor on macOS arm64** (M)
+  - Acceptance: `environments` widened by `sys_platform == 'darwin' and platform_machine == 'arm64'` for Demucs, MuScriptor medium and large; new locks; `scripts/lock_platforms.py` shows the Linux packages, versions and hashes identical before and after (its output in the commit message); `digests.yaml` pairs; nothing for Linux moved, else stop and ask.
+  - Verify: the comparison script; `uv run pytest -q`; `stickler eval` as in 96
+  - Dependencies: 96 · Files: `adapters/separators/demucs/{pyproject.toml,uv.lock}`, `adapters/transcribers/muscriptor_{m,l}/{pyproject.toml,uv.lock}`, `scripts/lock_platforms.py`, its test, `src/stickler/digests.yaml`
+
+- [ ] **Task 98: The test suite on a macOS runner** (M)
+  - Acceptance: a job on `macos-26` (arm64), Python 3.14, Homebrew ffmpeg, runs `scripts/check.sh task` green; every test that cannot hold on macOS is fixed or skipped with `skipif(sys.platform == "darwin", reason=...)`, each named in the commit message; Linux jobs unchanged.
+  - Verify: the workflow run on GitHub, all jobs green
+  - Dependencies: 97 · Files: `.github/workflows/check.yml` (or `mac.yml`), tests as needed
+
+- [ ] **Task 99: The models' smoke tests on the macOS runner** (S)
+  - Acceptance: `stickler setup` for ADTOF, Beat This! and Demucs and their smoke tests (`pytest -m adapters`) on the runner's CPU, on pushes touching `adapters/` or `src/stickler/` and weekly; MuScriptor's lock checked with `uv sync --locked`; each smoke run's seconds and peak RAM in the job summary, peak RAM plausible.
+  - Verify: the workflow run on GitHub; the job summary
+  - Dependencies: 98 · Files: the workflow, `tests/test_adapter_smoke.py` only if a model needs a platform note
+
+### Checkpoint S
+- [ ] All success criteria of SPEC.md "Module `mac-core`" met (owner, from the CI results); then `core-bridge`'s spec (and `mac-design` with the owner)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **Later release: click volume follows the song** (done in module `polish`) (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.

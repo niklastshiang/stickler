@@ -363,6 +363,31 @@ Order: move (92) → packaging paths and builds (93) → String Catalog (94) →
 | The pot changes beyond source references | Low | Diff of `msgid`/`msgstr` lines before and after `scripts/i18n.sh` |
 | Xcode reads the generated catalog differently than assumed | Medium | Format from Apple's documentation; the first real check is `mac-shell` on a runner, so the script stays small and easy to adjust |
 
+## Release 8 (macOS app): `mac-core` (approved 2026-11-17, SPEC.md "Module `mac-core`")
+
+The Python core and the app's models on macOS arm64 (CPU), checked by a macOS runner; Linux
+unchanged.
+
+Design decisions:
+- **Digest edits one at a time** (96, then 97): each takes `stickler cache-digests` before and
+  after and adds its own pairs, so a chain stays readable and a mistake is one revert.
+- **The Linux comparison is a script, kept** (`scripts/lock_platforms.py`): it lists every
+  package, version and wheel hash a lock resolves for Linux; the next platform change (Windows)
+  needs it again.
+- **Verifying the pairs without touching `results/enst`** while the pod run writes it: `stickler
+  eval` for MDB and the own songs at once, ENST after the pod run.
+- **CI before the smoke tests** (98, then 99): the plain suite on macOS shows the platform spots
+  first; the model runs build on a green job.
+
+Order: peak RAM (96) → wider platforms (97) → macOS job (98) → smoke tests on the runner (99).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The relock moves a Linux package | High | The comparison script must show no difference; else stop, ask the owner |
+| A pair is added for an edit that changes Linux results | High | Peak RAM: a test fixes the Linux number; locks: the comparison; `stickler eval` finds every result |
+| Tests assume Linux (paths, /proc, GTK) | Medium | Seen in the first macOS run; each one fixed or skipped with its reason in the commit |
+| macOS runner minutes or a flaky model download | Low | Smoke tests only on relevant pushes and weekly; weights cached between runs |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
