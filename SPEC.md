@@ -1663,6 +1663,12 @@ RoFormer DrumSep variants (no downloadable weights).
    threshold on MDB and ENST, as in Phase 5c; the own songs are the final check only.
 3. **Measured on all three datasets**; laptop runtimes (RTF, peak RAM) for every candidate that
    can run there, RunPod for the rest (the laptop stays the reference for the app's modes).
+   **Exception for `sad`, in stages** (owner, 2026-11-17, to save about 4 GPU hours): first MDB
+   and ENST only, its threshold tuned there; on the own songs only if it then comes within 0.03
+   of `demucs+muscriptor_l` in macro-F1 (3 classes) on MDB and on ENST. Otherwise it is left out
+   and the report says so, with its numbers. Known risk: MDB choices transferred badly to the
+   owner's rock/metal songs before (report, "Lessons"); accepted, since `sad` was 0.106 behind on
+   MDB (0.725 vs 0.831, untuned).
 4. **Measured first, listened to only where it can matter** (owner, 2026-11-16): all candidates
    are compared on measured scores. A candidate whose measured macro-F1 on the own songs comes
    within 0.01 of a mode's, or beats it, gets a listening round of about 40 new spots drawn from
@@ -1712,7 +1718,8 @@ docs/report.md, README.md              # results, candidates table
 - **Never:** tune on the own songs; change the scoring to favour a candidate.
 
 ### Success criteria
-1. Each of the three candidates produces MIDI or a logged error on all MDB, ENST and own songs.
+1. Each of the three candidates produces MIDI or a logged error on all MDB, ENST and own songs
+   (`sad` on the own songs only if it passes the stage of method 3; owner, 2026-11-17).
 2. `metrics.csv`, `report.html` and `docs/report.md` contain them next to Fast and Quality.
 3. A decision per mode, recorded as an ADR: unchanged, or replaced (owner).
 4. README candidates and results tables updated; `scripts/check.sh task` green.
