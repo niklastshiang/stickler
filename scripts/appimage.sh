@@ -49,7 +49,7 @@ install -Dm755 /tmp/uv-x86_64-unknown-linux-musl/uv /usr/bin/uv
 
 echo "== Stickler into /usr"
 site=$(python3 -c 'import sysconfig; print(sysconfig.get_path("purelib"))')
-cp -r src/stickler src/stickler_gtk "$site/"
+cp -r src/stickler src/stickler_app src/stickler_gtk "$site/"
 install -Dm755 packaging/flatpak/stickler-gtk /usr/bin/stickler-gtk
 find adapters -type f \
 	-not -path '*/.venv*' -not -path '*/weights/*' -not -path '*/__pycache__/*' |
