@@ -2013,7 +2013,9 @@ runner and runs on the owner's Mac at the checkpoint (if Quality is in the first
 
 ### Module `mac-design`
 
-> Status: **draft** (2026-11-17), awaiting the owner's approval.
+> Status: **approved** by the owner on 2026-11-17; mockups in progress on the owner's private
+> design canvas ("Stickler Mac screens", a canvas of its own), copied to `docs/design/mac/` when
+> approved. Draft 1: M4 and M6, light and dark.
 
 **Objective.** Mockups of every screen of the Mac app's first version, made with the owner on
 the design canvas, following Apple's Human Interface Guidelines for macOS 26. No code. The Mac
