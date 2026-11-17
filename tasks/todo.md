@@ -684,6 +684,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
     5. Thresholds of `drumsep_onset` and `sad` on MDB and ENST, without the own songs: `uv run stickler tune --transcriber drumsep_onset --inputs demucs --config config/benchmark.yaml --config config/enst.yaml --name drumsep_tuned` (likewise `sad`); the printed `fusions` entry goes into all three configs and is scored from the cached activations (nothing recomputed).
     6. Laptop time budget (SPEC Release 7, method 5): one 4-minute own song with `demucs+muscriptor_l` and `demucs+sad` on the laptop CPU (`meta.json` seconds); above 20 minutes, measure on the pod's GPU (the reference for a Quality that requires a GPU).
     7. `uv run stickler eval` for the three configs and `uv run stickler report`.
+    - Lesson (2026-11-17): `--config config/enst.yaml` lets the pod fetch ENST from Zenodo (9.6 GB, about 30 minutes, and it nearly filled the 70 GB disk next to every adapter's CUDA environment). Next time upload the prepared `data/enst` (1.9 GB), or free the environments of adapters whose results are all cached.
   - Risk: `stickler setup --device cuda` builds `.venv-cuda` from each lock's torch version; sad's lock pairs torch 2.15 with torchaudio 2.11.1 (fine on CPU, not checked on CUDA). If its setup fails on the pod, the other candidates still run (a failed adapter is logged, not blocking).
   - `sad` in stages (owner, 2026-11-17; SPEC Release 7, method 3): MDB and ENST first, threshold tuned there; the own songs only if it then comes within 0.03 of `demucs+muscriptor_l` (macro-F1, 3 classes) on MDB and on ENST, else left out with its numbers in the report. Pod plan: `config/enst.yaml --pod-id <id> --wipe` with the output in `results/remote-release7-enst.log`; `own.yaml` only for `sad` if it passes, on a later pod.
   - Acceptance: `demucs+drumsep_onset`, `demucs+muscriptor_l`, `demucs+sad` (and a combination like Quality's for a candidate that is strong on some classes) on MDB, ENST and the 25 own songs; every combination gives MIDI or a logged error (SPEC Release 7, criterion 1); `metrics.csv` and `report.html` updated; RunPod pods stopped.
@@ -735,6 +736,31 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 
 ### Checkpoint Q
 - [ ] All success criteria of SPEC.md "Module `legend`" met (owner)
+
+## Phase 18: Release 8 (macOS app), module `shared-core` (approved 2026-11-17, SPEC.md "Module `shared-core`")
+
+- [ ] **Task 92: Move the app logic and i18n to `stickler_app`** (M)
+  - Acceptance: `src/stickler_app/` holds the 15 modules of `stickler_gtk/logic/` (same names), `i18n.py`, and `APP_ID`, `APP_NAME`, `prefix()` in `__init__.py`; `stickler_gtk/logic/` and `stickler_gtk/i18n.py` are gone, no shims; every import updated (`stickler_gtk/ui`, `main.py`, `scripts/demo.py`, tests); `pyproject.toml` packages and coverage; `scripts/i18n.sh` scans both packages; logic tests in `tests/app/`, widget and boundary tests in `tests/gtk/`; boundary tests: `stickler_app` imports no `gi` and no `stickler_gtk`, `stickler` neither `stickler_app` nor Verovio; CONSTRAINTS.md rows name `stickler_app` (same rules). After `scripts/i18n.sh` the pot's `msgid` lines are unchanged.
+  - Verify: `scripts/check.sh task`; `scripts/gtk.sh test`; `grep -rn "stickler_gtk.logic\|stickler_gtk/logic\|stickler_gtk.i18n" src tests scripts packaging docs CONSTRAINTS.md pyproject.toml` empty
+  - Dependencies: none · Files: `src/stickler_app/*` (moved), `src/stickler_gtk/*`, `tests/app/*` (moved), `tests/gtk/test_boundaries.py`, `pyproject.toml`, `CONSTRAINTS.md`, `scripts/i18n.sh`, `scripts/demo.py`
+
+- [ ] **Task 93: Packaging paths, both packages built** (S)
+  - Acceptance: the Flatpak manifest and `scripts/appimage.sh` copy `src/stickler_app`; both packages build locally from the commit (pinned, see the local Flatpak note) and start; the app opens the demo song in each.
+  - Verify: local Flatpak and AppImage builds; a headless start of each (as for `packaging`)
+  - Dependencies: 92 · Files: `packaging/flatpak/ng.tshia.Stickler.yml`, `scripts/appimage.sh`
+
+- [ ] **Task 94: `scripts/xcstrings.py`, the String Catalog from `po/`** (M)
+  - Acceptance: as SPEC.md "Module `shared-core`", scope 5: positional placeholders by name (reordering kept), plurals as `one`/`other`, an error for another plural rule, `Translators:` comments, missing and fuzzy entries left out, deterministic output, `--check`; `mac/Stickler/Localizable.xcstrings` generated and committed; `scripts/check.sh` runs `--check`.
+  - Verify: `uv run pytest -q tests/test_xcstrings.py`; `uv run python scripts/xcstrings.py --check`
+  - Dependencies: none (92 only for the source paths in comments) · Files: `scripts/xcstrings.py`, `tests/test_xcstrings.py`, `mac/Stickler/Localizable.xcstrings`, `scripts/check.sh`
+
+- [ ] **Task 95: The owner's check** (S)
+  - Acceptance: on the laptop, `scripts/gtk.sh` in German: open a song, analysis, sheet music, playback, corrections, export of MusicXML and PDF behave as before.
+  - Verify: by hand (owner)
+  - Dependencies: 92, 93
+
+### Checkpoint R
+- [ ] All success criteria of SPEC.md "Module `shared-core`" met (owner); then the next module specs of release 8 (`mac-design`, `mac-core`, in parallel)
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 

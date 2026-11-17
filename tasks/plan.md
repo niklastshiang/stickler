@@ -338,6 +338,31 @@ PDF and the owner's check (91).
 | Quality writes many positions and the legend wraps | Low | A test with every STAFF entry in the longest language stays one line; if not, smaller lyrics |
 | The blank credits leak into the exported MusicXML | Medium | They are added in memory for the A4 pages only; a test reads the stored file |
 
+## Release 8 (macOS app): `shared-core` (approved 2026-11-17, SPEC.md "Module `shared-core`")
+
+The app's logic and translations move from `stickler_gtk` to a neutral package `stickler_app`,
+and the Mac app's String Catalog is generated from `po/`. No change a Linux user could see.
+
+Design decisions:
+- **A move, not a rewrite:** `git mv` keeps each module's history; names stay
+  (`stickler_gtk.logic.session` → `stickler_app.session`); no re-export shims, so a missed import
+  fails loudly in the tests instead of working by accident.
+- **One commit for the move** (Task 92): imports, `pyproject.toml`, CONSTRAINTS.md, tests and the
+  i18n script must change together, or the checks fail in between. Packaging paths follow in
+  their own task (93) because they are verified by building.
+- **The catalog generator is test-first** (Task 94): placeholder mapping and plurals are where a
+  silent mistake would show the wrong number in a translated sentence.
+
+Order: move (92) → packaging paths and builds (93) → String Catalog (94) → owner's check (95).
+93 and 94 are independent of each other.
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| A path to `stickler_gtk/logic` is missed (scripts, packaging, docs) | Medium | `grep -rn "stickler_gtk.logic\|stickler_gtk/logic\|stickler_gtk.i18n"` must be empty; both packages built and started |
+| Translations stop loading (localedir via `prefix()`) | Medium | `test_translations.py` moves along and still loads de and es; the owner's check in German |
+| The pot changes beyond source references | Low | Diff of `msgid`/`msgstr` lines before and after `scripts/i18n.sh` |
+| Xcode reads the generated catalog differently than assumed | Medium | Format from Apple's documentation; the first real check is `mac-shell` on a runner, so the script stays small and easy to adjust |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

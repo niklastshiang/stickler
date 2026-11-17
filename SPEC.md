@@ -1875,6 +1875,72 @@ wheels need 14, so 26 is the app's own floor).
 2. Does `uv` run the models from inside an ad-hoc signed `.app` after "Open Anyway" (quarantine
    of the downloaded `uv`, Python and wheels)? Answered by the packaging spike.
 
+### Module `shared-core`
+
+> Status: **approved** by the owner on 2026-11-17 (the Mac app shares the app ID
+> `ng.tshia.Stickler`). Plan: `tasks/plan.md` ("`shared-core`"), tasks 92–95.
+
+**Objective.** The app's logic and its translations no longer belong to the GTK app but to a
+neutral package that both apps use: GTK in process as today, the Mac app later through
+`core-bridge`. The Mac app's String Catalog is generated from `po/`. Nothing changes that a
+Linux user could see.
+
+**Assumptions** (from the code on 2026-11-17):
+1. `src/stickler_gtk/logic/` (15 modules, about 1,500 lines) imports no GTK; it depends only on
+   `stickler`, Verovio, `stickler_gtk.i18n` and `stickler_gtk.prefix` (`paths.py`).
+2. `po/stickler.pot` has 158 texts, 2 with plural forms, no `msgctxt`, no `%` formats; the
+   placeholders are named (`{reason}`, `{name}`, …), one with a format spec (`{size:n}`). German
+   and Spanish use `nplurals=2; plural=(n != 1)`.
+3. The Mac app's bundle identifier is the same app ID, `ng.tshia.Stickler`.
+
+**Scope.**
+1. **Package `src/stickler_app/`:** the 15 modules of `stickler_gtk/logic/` with their names
+   unchanged (`stickler_app.session`, `stickler_app.engraving`, …), `i18n.py`, and in
+   `__init__.py` what both apps share: `APP_ID`, `APP_NAME`, `prefix()`. `stickler_gtk/logic/`
+   and `stickler_gtk/i18n.py` are removed, without re-export shims; `stickler_gtk` imports from
+   `stickler_app`. Only moves and import changes: no behaviour, text or signature changes.
+2. **Everything that names the old paths:** `pyproject.toml` (packages, coverage source and
+   omit), `scripts/i18n.sh` (both packages scanned), the Flatpak manifest and
+   `scripts/appimage.sh` (copy `src/stickler_app` too), `scripts/demo.py`, CONSTRAINTS.md (the
+   boundary and coverage rows name `stickler_app`).
+3. **Boundaries, tested in `tests/gtk/test_boundaries.py`:** `stickler_app` imports no `gi` and
+   no `stickler_gtk`; `stickler` imports neither `stickler_app` nor Verovio; `stickler_app` may
+   import Verovio (LGPL, the app's alone, as before).
+4. **Tests:** the tests of the moved logic move to `tests/app/` (they need no GTK); the widget
+   tests (`test_widgets.py`, `test_player.py`) and the boundary test stay in `tests/gtk/`.
+5. **`scripts/xcstrings.py`:** writes `mac/Stickler/Localizable.xcstrings` (String Catalog, JSON,
+   `"version": "1.0"`, `"sourceLanguage": "en"`) from `po/stickler.pot` and every language in
+   `po/LINGUAS`:
+   - **Key and placeholders:** the key is the English text with each named placeholder replaced
+     by a positional one in order of first appearance: `{reason}` → `%1$@`, a number such as the
+     `n` of a plural → `%1$lld`, `{size:n}` → `%1$@` (the core formats sizes). A translation
+     uses the same numbers by name, so a reordered sentence stays right.
+   - **Plurals:** a `msgid_plural` entry becomes `variations.plural` with `one` (msgstr[0]) and
+     `other` (msgstr[1]); a language whose `Plural-Forms` differs from `(n != 1)` makes the
+     script stop with an error instead of guessing.
+   - **Comments:** `Translators:` comments become the entry's `comment`.
+   - **Missing or fuzzy translations** are left out (the app shows English), as gettext does.
+   - **Deterministic:** sorted keys, fixed indentation; `--check` exits non-zero when the file in
+     the repository differs from what it would write, and `scripts/check.sh` runs it.
+   - Swift's own texts (menus, buttons) come into `po/` through extraction from Swift sources,
+     which `mac-shell` specifies; this script turns whatever is in `po/` into the catalog.
+
+**Success criteria.**
+1. All tests green, coverage ≥ 95 % with `stickler_app` counted; `scripts/gtk.sh test` green.
+2. `scripts/gtk.sh` starts the app and an analysis, export and playback work as before (owner's
+   quick check on the laptop).
+3. Flatpak and AppImage build from the branch and start (as for `packaging`).
+4. `po/stickler.pot` is unchanged after `scripts/i18n.sh` (same texts, only source references
+   change).
+5. `scripts/xcstrings.py --check` passes in `scripts/check.sh`; its tests cover placeholder
+   mapping incl. reordering, plurals, comments, left-out entries, determinism and the error for
+   an unknown plural rule.
+6. Adapter cache keys unchanged (no adapter file touched).
+
+**Out of scope.** `stickler serve` (`core-bridge`); extracting Swift texts (`mac-shell`); any
+change of behaviour or text; the Xcode project (only the catalog's path under `mac/` is fixed
+here).
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
