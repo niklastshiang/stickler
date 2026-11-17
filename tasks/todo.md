@@ -749,7 +749,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: local Flatpak and AppImage builds; a headless start of each (as for `packaging`)
   - Dependencies: 92 · Files: `packaging/flatpak/ng.tshia.Stickler.yml`, `scripts/appimage.sh`
 
-- [ ] **Task 94: `scripts/xcstrings.py`, the String Catalog from `po/`** (M)
+- [x] **Task 94: `scripts/xcstrings.py`, the String Catalog from `po/`** (M): done 2026-11-17. 14 tests (written first): positional placeholders by name incl. reordering, format specs dropped, `%%` only in texts with placeholders, plurals keyed by the plural form with the count as `%1$lld` (English `one`/`other` too), the errors for two placeholders in a plural and for another plural rule, comments, fuzzy/missing left out, multi-line and escapes, Xcode-shaped stable JSON, `--check`; the committed catalog (156 texts, de, es) is checked by a test, so `scripts/check.sh task` covers it; `scripts/i18n.sh` regenerates it.
   - Acceptance: as SPEC.md "Module `shared-core`", scope 5: positional placeholders by name (reordering kept), plurals as `one`/`other`, an error for another plural rule, `Translators:` comments, missing and fuzzy entries left out, deterministic output, `--check`; `mac/Stickler/Localizable.xcstrings` generated and committed; `scripts/check.sh` runs `--check`.
   - Verify: `uv run pytest -q tests/test_xcstrings.py`; `uv run python scripts/xcstrings.py --check`
   - Dependencies: none (92 only for the source paths in comments) · Files: `scripts/xcstrings.py`, `tests/test_xcstrings.py`, `mac/Stickler/Localizable.xcstrings`, `scripts/check.sh`

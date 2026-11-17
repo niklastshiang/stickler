@@ -22,3 +22,5 @@ for lang in "${languages[@]}"; do
   msgattrib --no-obsolete --output-file="po/$lang.po" "po/$lang.po"  # drop removed texts
 done
 echo "po/stickler.pot: $(grep -c '^msgid ' po/stickler.pot) entries (including the header)"
+# the Mac app's String Catalog follows po/ (SPEC.md, module `shared-core`)
+uv run python scripts/xcstrings.py
