@@ -4,7 +4,7 @@ detected hits as clicks, so play, pause and seek always move both.
     song  ─ uridecodebin ─ audioconvert ─ audioresample ─ caps ─ volume ─┐
     clicks ─ uridecodebin ─ audioconvert ─ audioresample ─ caps ─ volume ─┴ audiomixer ─ sink
 
-What to play and how loud is `stickler_gtk.logic.playback`'s business."""
+What to play and how loud is `stickler_app.playback`'s business."""
 
 from __future__ import annotations
 

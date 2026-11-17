@@ -5,8 +5,7 @@ from __future__ import annotations
 import os
 import sys
 
-from stickler_gtk import i18n
-from stickler_gtk.logic import paths
+from stickler_app import i18n, paths
 from stickler_gtk.ui.application import Application
 
 

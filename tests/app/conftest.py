@@ -1,0 +1,20 @@
+"""The app logic's tests never read or write the user's real data, cache or settings (the
+same fixtures as tests/gtk/conftest.py, which the widget tests use)."""
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _private_xdg_folders(tmp_path, monkeypatch):
+    for name in ("XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_CONFIG_HOME"):
+        folder = tmp_path / name.lower()
+        folder.mkdir()
+        monkeypatch.setenv(name, str(folder))
+
+
+@pytest.fixture(autouse=True)
+def _models_set_up(monkeypatch):
+    """The models count as set up (CI has none); setup tests say otherwise."""
+    from stickler import api
+
+    monkeypatch.setattr(api, "mode_ready", lambda *a, **kw: [])

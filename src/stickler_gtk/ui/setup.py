@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from gi.repository import Adw, Gtk
 
-from stickler_gtk.i18n import _, ngettext
-from stickler_gtk.logic import setup
-from stickler_gtk.logic.steps import model_name
+from stickler_app import setup
+from stickler_app.i18n import _, ngettext
+from stickler_app.steps import model_name
 
 
 def consent_page(missing: tuple[str, ...]) -> Gtk.Widget:

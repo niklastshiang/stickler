@@ -1,5 +1,5 @@
 """The main menu (design screen 9) with the appearance switch, the shortcuts dialog and the
-about dialog. The appearance is a setting (`stickler_gtk.logic.settings`) applied through
+about dialog. The appearance is a setting (`stickler_app.settings`) applied through
 Adw.StyleManager."""
 
 from __future__ import annotations
@@ -7,9 +7,8 @@ from __future__ import annotations
 from gi.repository import Adw, Gio, GLib, Gtk
 
 import stickler
-from stickler_gtk import APP_ID, APP_NAME
-from stickler_gtk.i18n import N_, _
-from stickler_gtk.logic import settings
+from stickler_app import APP_ID, APP_NAME, settings
+from stickler_app.i18n import N_, _
 
 COLOR_SCHEMES = {
     "system": Adw.ColorScheme.DEFAULT,

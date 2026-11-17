@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-17 08:22+0000\n"
+"POT-Creation-Date: 2026-11-17 16:25+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/stickler_gtk/logic/corrections.py:56
+#: src/stickler_app/corrections.py:56
 #, python-brace-format
 msgid "Beat {number}"
 msgstr "Tiempo {number}"
 
-#: src/stickler_gtk/logic/exports.py:36
+#: src/stickler_app/exports.py:36
 #, python-brace-format
 msgid "{title} (drums)"
 msgstr "{title} (batería)"
 
-#: src/stickler_gtk/logic/exports.py:49
+#: src/stickler_app/exports.py:49
 #, python-brace-format
 msgid "Separating the drums takes about {minutes} minute on this computer."
 msgid_plural ""
@@ -39,232 +39,232 @@ msgstr[1] ""
 "Separar la batería tarda aproximadamente {minutes} minutos en esta "
 "computadora."
 
-#: src/stickler_gtk/logic/exports.py:54
+#: src/stickler_app/exports.py:54
 #, python-brace-format
 msgid "Before that, Demucs is downloaded once (about {size:n} GB)."
 msgstr "Antes, Demucs se descarga una sola vez (aproximadamente {size:n} GB)."
 
-#: src/stickler_gtk/logic/legend.py:14
+#: src/stickler_app/legend.py:14
 msgid "China"
 msgstr "China"
 
-#: src/stickler_gtk/logic/legend.py:15
+#: src/stickler_app/legend.py:15
 msgid "Cymbal"
 msgstr "Platillo"
 
-#: src/stickler_gtk/logic/legend.py:16
+#: src/stickler_app/legend.py:16
 msgid "Hi-Hat"
 msgstr "Hi-hat"
 
-#: src/stickler_gtk/logic/legend.py:17
+#: src/stickler_app/legend.py:17
 msgid "Open Hi-Hat"
 msgstr "Hi-hat abierto"
 
-#: src/stickler_gtk/logic/legend.py:18
+#: src/stickler_app/legend.py:18
 msgid "Ride"
 msgstr "Ride"
 
-#: src/stickler_gtk/logic/legend.py:19
+#: src/stickler_app/legend.py:19
 msgid "Ride Bell"
 msgstr "Campana del ride"
 
-#: src/stickler_gtk/logic/legend.py:20
+#: src/stickler_app/legend.py:20
 msgid "Splash"
 msgstr "Splash"
 
-#: src/stickler_gtk/logic/legend.py:21
+#: src/stickler_app/legend.py:21
 msgid "High Tom"
 msgstr "Tom agudo"
 
-#: src/stickler_gtk/logic/legend.py:22
+#: src/stickler_app/legend.py:22
 msgid "Mid Tom"
 msgstr "Tom medio"
 
-#: src/stickler_gtk/logic/legend.py:23
+#: src/stickler_app/legend.py:23
 msgid "Snare"
 msgstr "Redoblante"
 
-#: src/stickler_gtk/logic/legend.py:24
+#: src/stickler_app/legend.py:24
 msgid "Side Stick"
 msgstr "Aro (side stick)"
 
-#: src/stickler_gtk/logic/legend.py:25
+#: src/stickler_app/legend.py:25
 msgid "Other Percussion"
 msgstr "Otra percusión"
 
-#: src/stickler_gtk/logic/legend.py:26
+#: src/stickler_app/legend.py:26
 msgid "Floor Tom"
 msgstr "Tom de piso"
 
-#: src/stickler_gtk/logic/legend.py:27
+#: src/stickler_app/legend.py:27
 msgid "Bass Drum"
 msgstr "Bombo"
 
-#: src/stickler_gtk/logic/legend.py:28
+#: src/stickler_app/legend.py:28
 msgid "Pedal Hi-Hat"
 msgstr "Hi-hat con pedal"
 
-#: src/stickler_gtk/logic/playback.py:57
+#: src/stickler_app/playback.py:57
 #, python-brace-format
 msgid "Bar {number} of {total}"
 msgstr "Compás {number} de {total}"
 
-#: src/stickler_gtk/logic/recent.py:78
+#: src/stickler_app/recent.py:78
 msgid "opened today"
 msgstr "abierto hoy"
 
-#: src/stickler_gtk/logic/recent.py:80
+#: src/stickler_app/recent.py:80
 msgid "opened yesterday"
 msgstr "abierto ayer"
 
-#: src/stickler_gtk/logic/recent.py:82
+#: src/stickler_app/recent.py:82
 msgid "%-d %B"
 msgstr "%-d de %B"
 
 #. Translators: a date in strftime format, as in "12 November"
-#: src/stickler_gtk/logic/recent.py:82
+#: src/stickler_app/recent.py:82
 #, python-brace-format
 msgid "opened {date}"
 msgstr "abierto el {date}"
 
-#: src/stickler_gtk/logic/recent.py:95
+#: src/stickler_app/recent.py:95
 msgid "file not found"
 msgstr "archivo no encontrado"
 
-#: src/stickler_gtk/logic/session.py:228
+#: src/stickler_app/session.py:228
 #, python-brace-format
 msgid "“{name}” cannot be read. Is it a complete sound file?"
 msgstr "No se puede leer «{name}». ¿Es un archivo de audio completo?"
 
-#: src/stickler_gtk/logic/session.py:232
+#: src/stickler_app/session.py:232
 msgid "Cannot Read This File"
 msgstr "No se puede leer este archivo"
 
-#: src/stickler_gtk/logic/session.py:238
+#: src/stickler_app/session.py:238
 #, python-brace-format
 msgid "Saving the drum track of “{name}” did not work."
 msgstr "No se pudo guardar la pista de batería de «{name}»."
 
-#: src/stickler_gtk/logic/session.py:240
+#: src/stickler_app/session.py:240
 msgid "The Export Failed"
 msgstr "La exportación falló"
 
-#: src/stickler_gtk/logic/session.py:242
+#: src/stickler_app/session.py:242
 #, python-brace-format
 msgid "Something went wrong while listening to “{name}”."
 msgstr "Algo salió mal al escuchar «{name}»."
 
-#: src/stickler_gtk/logic/session.py:244
+#: src/stickler_app/session.py:244
 msgid "The Analysis Failed"
 msgstr "El análisis falló"
 
-#: src/stickler_gtk/logic/setup.py:51 src/stickler_gtk/logic/setup.py:123
+#: src/stickler_app/setup.py:51 src/stickler_app/setup.py:123
 #, python-brace-format
 msgid "{size:n} GB"
 msgstr "{size:n} GB"
 
-#: src/stickler_gtk/logic/setup.py:52
+#: src/stickler_app/setup.py:52
 #, python-brace-format
 msgid "{size:n} MB"
 msgstr "{size:n} MB"
 
-#: src/stickler_gtk/logic/setup.py:61
+#: src/stickler_app/setup.py:61
 #, python-brace-format
 msgid "{done} of {total}"
 msgstr "{done} de {total}"
 
-#: src/stickler_gtk/logic/setup.py:68
+#: src/stickler_app/setup.py:68
 msgid "the Python package servers (pypi.org, download.pytorch.org, github.com)"
 msgstr ""
-"los servidores de paquetes de Python (pypi.org, download.pytorch.org, github."
-"com)"
+"los servidores de paquetes de Python (pypi.org, download.pytorch.org, "
+"github.com)"
 
-#: src/stickler_gtk/logic/setup.py:70
+#: src/stickler_app/setup.py:70
 msgid "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)"
 msgstr "la JKU Linz (cloud.cp.jku.at) y la copia de Stickler (github.com)"
 
-#: src/stickler_gtk/logic/setup.py:71
+#: src/stickler_app/setup.py:71
 msgid "the model’s server"
 msgstr "el servidor del modelo"
 
-#: src/stickler_gtk/logic/setup.py:102
+#: src/stickler_app/setup.py:102
 msgid "detects the hits"
 msgstr "detecta los golpes"
 
-#: src/stickler_gtk/logic/setup.py:103
+#: src/stickler_app/setup.py:103
 msgid ""
 "Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0)."
 msgstr ""
 "Su modelo entrenado es libre solo para uso no comercial (CC BY-NC-SA 4.0)."
 
-#: src/stickler_gtk/logic/setup.py:106
+#: src/stickler_app/setup.py:106
 msgid "finds the beat and the bars"
 msgstr "encuentra el pulso y los compases"
 
-#: src/stickler_gtk/logic/setup.py:107
+#: src/stickler_app/setup.py:107
 msgid "MIT licence. Its model comes from the JKU Linz server."
 msgstr "Licencia MIT. Su modelo viene del servidor de la JKU Linz."
 
-#: src/stickler_gtk/logic/steps.py:13
+#: src/stickler_app/steps.py:13
 msgid "Only the drum track, without the band"
 msgstr "Solo la pista de batería, sin la banda"
 
-#: src/stickler_gtk/logic/steps.py:13
+#: src/stickler_app/steps.py:13
 msgid "Separate the drums"
 msgstr "Separar la batería"
 
-#: src/stickler_gtk/logic/steps.py:14
+#: src/stickler_app/steps.py:14
 msgid "Detect the hits"
 msgstr "Detectar los golpes"
 
-#: src/stickler_gtk/logic/steps.py:14
+#: src/stickler_app/steps.py:14
 msgid "Kick, snare, toms, hi-hat, cymbals"
 msgstr "Bombo, redoblante, toms, hi-hat, platillos"
 
-#: src/stickler_gtk/logic/steps.py:15
+#: src/stickler_app/steps.py:15
 msgid "Find the beat and the bars"
 msgstr "Encontrar el pulso y los compases"
 
-#: src/stickler_gtk/logic/steps.py:15
+#: src/stickler_app/steps.py:15
 msgid "Tempo, time signature, the first “one”"
 msgstr "Tempo, tipo de compás, el primer «uno»"
 
-#: src/stickler_gtk/logic/steps.py:16
+#: src/stickler_app/steps.py:16
 msgid "Bars, repeats, beams"
 msgstr "Compases, repeticiones, barras"
 
-#: src/stickler_gtk/logic/steps.py:16
+#: src/stickler_app/steps.py:16
 msgid "Write the notes"
 msgstr "Escribir las notas"
 
-#: src/stickler_gtk/logic/steps.py:17
+#: src/stickler_app/steps.py:17
 msgid "Make the PDF"
 msgstr "Crear el PDF"
 
-#: src/stickler_gtk/logic/steps.py:17 src/stickler_gtk/ui/window.py:282
+#: src/stickler_app/steps.py:17 src/stickler_gtk/ui/window.py:282
 msgid "To print or to read on a tablet"
 msgstr "Para imprimir o leer en una tableta"
 
-#: src/stickler_gtk/logic/steps.py:48
+#: src/stickler_app/steps.py:48
 #, python-brace-format
 msgid "Download the programs for {model}"
 msgstr "Descargar los programas de {model}"
 
-#: src/stickler_gtk/logic/steps.py:49
+#: src/stickler_app/steps.py:49
 msgid "Once; later songs use them too"
 msgstr "Una sola vez; las próximas canciones también los usan"
 
-#: src/stickler_gtk/logic/steps.py:51
+#: src/stickler_app/steps.py:51
 #, python-brace-format
 msgid "Download the {model} model"
 msgstr "Descargar el modelo {model}"
 
-#: src/stickler_gtk/logic/steps.py:52
+#: src/stickler_app/steps.py:52
 msgid "Once; later songs use it too"
 msgstr "Una sola vez; las próximas canciones también lo usan"
 
 #. Translators: a percentage; German puts a no-break space before the sign
-#: src/stickler_gtk/logic/zoom.py:36
+#: src/stickler_app/zoom.py:36
 #, python-brace-format
 msgid "{percent}%"
 msgstr "{percent} %"
@@ -333,93 +333,93 @@ msgstr "Más fácil de leer"
 msgid "Back to Detected"
 msgstr "Volver a lo detectado"
 
-#: src/stickler_gtk/ui/menu.py:49
+#: src/stickler_gtk/ui/menu.py:48
 msgid "Follow System Style"
 msgstr "Seguir el estilo del sistema"
 
-#: src/stickler_gtk/ui/menu.py:50
+#: src/stickler_gtk/ui/menu.py:49
 msgid "Light Style"
 msgstr "Estilo claro"
 
-#: src/stickler_gtk/ui/menu.py:51
+#: src/stickler_gtk/ui/menu.py:50
 msgid "Dark Style"
 msgstr "Estilo oscuro"
 
-#: src/stickler_gtk/ui/menu.py:75 src/stickler_gtk/ui/menu.py:127
+#: src/stickler_gtk/ui/menu.py:74 src/stickler_gtk/ui/menu.py:126
 msgid "Zoom Out"
 msgstr "Alejar"
 
-#: src/stickler_gtk/ui/menu.py:80 src/stickler_gtk/ui/menu.py:128
+#: src/stickler_gtk/ui/menu.py:79 src/stickler_gtk/ui/menu.py:127
 msgid "Fit the Window's Width"
 msgstr "Ajustar al ancho de la ventana"
 
-#: src/stickler_gtk/ui/menu.py:84 src/stickler_gtk/ui/menu.py:126
+#: src/stickler_gtk/ui/menu.py:83 src/stickler_gtk/ui/menu.py:125
 msgid "Zoom In"
 msgstr "Acercar"
 
-#: src/stickler_gtk/ui/menu.py:101 src/stickler_gtk/ui/window.py:54
+#: src/stickler_gtk/ui/menu.py:100 src/stickler_gtk/ui/window.py:54
 msgid "Open a Song…"
 msgstr "Abrir una canción…"
 
-#: src/stickler_gtk/ui/menu.py:102 src/stickler_gtk/ui/menu.py:130
+#: src/stickler_gtk/ui/menu.py:101 src/stickler_gtk/ui/menu.py:129
 msgid "Keyboard Shortcuts"
 msgstr "Atajos de teclado"
 
-#: src/stickler_gtk/ui/menu.py:103
+#: src/stickler_gtk/ui/menu.py:102
 msgid "About Stickler"
 msgstr "Acerca de Stickler"
 
-#: src/stickler_gtk/ui/menu.py:107
+#: src/stickler_gtk/ui/menu.py:106
 msgid "Remove Downloaded Models…"
 msgstr "Quitar los modelos descargados…"
 
-#: src/stickler_gtk/ui/menu.py:113 src/stickler_gtk/ui/menu.py:129
+#: src/stickler_gtk/ui/menu.py:112 src/stickler_gtk/ui/menu.py:128
 msgid "Main Menu"
 msgstr "Menú principal"
 
-#: src/stickler_gtk/ui/menu.py:118 src/stickler_gtk/ui/window.py:126
+#: src/stickler_gtk/ui/menu.py:117 src/stickler_gtk/ui/window.py:126
 #: src/stickler_gtk/ui/window.py:131 src/stickler_gtk/ui/window.py:312
 msgid "Open a Song"
 msgstr "Abrir una canción"
 
-#: src/stickler_gtk/ui/menu.py:119 src/stickler_gtk/ui/window.py:105
+#: src/stickler_gtk/ui/menu.py:118 src/stickler_gtk/ui/window.py:105
 #: src/stickler_gtk/ui/window.py:109
 msgid "Export"
 msgstr "Exportar"
 
-#: src/stickler_gtk/ui/menu.py:120
+#: src/stickler_gtk/ui/menu.py:119
 msgid "Cancel the Analysis or Export"
 msgstr "Cancelar el análisis o la exportación"
 
-#: src/stickler_gtk/ui/menu.py:121
+#: src/stickler_gtk/ui/menu.py:120
 msgid "Play or Pause"
 msgstr "Reproducir o pausar"
 
-#: src/stickler_gtk/ui/menu.py:122
+#: src/stickler_gtk/ui/menu.py:121
 msgid "Previous Bar"
 msgstr "Compás anterior"
 
-#: src/stickler_gtk/ui/menu.py:123
+#: src/stickler_gtk/ui/menu.py:122
 msgid "Next Bar"
 msgstr "Compás siguiente"
 
-#: src/stickler_gtk/ui/menu.py:124
+#: src/stickler_gtk/ui/menu.py:123
 msgid "Go to the Start"
 msgstr "Ir al inicio"
 
-#: src/stickler_gtk/ui/menu.py:125 src/stickler_gtk/ui/window.py:118
+#: src/stickler_gtk/ui/menu.py:124 src/stickler_gtk/ui/window.py:118
 msgid "Corrections"
 msgstr "Correcciones"
 
-#: src/stickler_gtk/ui/menu.py:131
+#: src/stickler_gtk/ui/menu.py:130
 msgid "Close the Window"
 msgstr "Cerrar la ventana"
 
-#: src/stickler_gtk/ui/menu.py:132
+#: src/stickler_gtk/ui/menu.py:131
 msgid "Quit"
 msgstr "Salir"
 
-#: src/stickler_gtk/ui/menu.py:170
+#: src/stickler_gtk/ui/menu.py:169
 msgid "Writes the drums of a song as sheet music, so you can play along."
 msgstr ""
 "Escribe la batería de una canción como partitura, para que puedas tocar "
@@ -563,12 +563,12 @@ msgstr "En espera"
 msgid "Open…"
 msgstr "Abrir…"
 
-#: src/stickler_gtk/ui/window.py:149 src/stickler_gtk/ui/window.py:520
-#: src/stickler_gtk/ui/window.py:685
+#: src/stickler_gtk/ui/window.py:149 src/stickler_gtk/ui/window.py:523
+#: src/stickler_gtk/ui/window.py:688
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/stickler_gtk/ui/window.py:155 src/stickler_gtk/ui/window.py:879
+#: src/stickler_gtk/ui/window.py:155 src/stickler_gtk/ui/window.py:882
 msgid "Writing the Drum Part"
 msgstr "Escribiendo la parte de batería"
 
@@ -635,76 +635,76 @@ msgstr "La corrección no funcionó: {reason}"
 msgid "The correction could not be saved: {reason}"
 msgstr "No se pudo guardar la corrección: {reason}"
 
-#: src/stickler_gtk/ui/window.py:485 src/stickler_gtk/ui/window.py:506
+#: src/stickler_gtk/ui/window.py:488 src/stickler_gtk/ui/window.py:509
 #, python-brace-format
 msgid "Could not save: {reason}"
 msgstr "No se pudo guardar: {reason}"
 
-#: src/stickler_gtk/ui/window.py:519
+#: src/stickler_gtk/ui/window.py:522
 msgid "Save the Drum Track?"
 msgstr "¿Guardar la pista de batería?"
 
-#: src/stickler_gtk/ui/window.py:521
+#: src/stickler_gtk/ui/window.py:524
 msgid "Choose Where to Save…"
 msgstr "Elegir dónde guardar…"
 
-#: src/stickler_gtk/ui/window.py:555
+#: src/stickler_gtk/ui/window.py:558
 msgid "Open"
 msgstr "Abrir"
 
-#: src/stickler_gtk/ui/window.py:555
+#: src/stickler_gtk/ui/window.py:558
 #, python-brace-format
 msgid "Saved “{name}”"
 msgstr "Se guardó «{name}»"
 
-#: src/stickler_gtk/ui/window.py:577
+#: src/stickler_gtk/ui/window.py:580
 #, python-brace-format
 msgid "Recent songs could not be saved: {reason}"
 msgstr "No se pudieron guardar las canciones recientes: {reason}"
 
-#: src/stickler_gtk/ui/window.py:590
+#: src/stickler_gtk/ui/window.py:593
 msgid "Remove from the List"
 msgstr "Quitar de la lista"
 
-#: src/stickler_gtk/ui/window.py:670 src/stickler_gtk/ui/window.py:753
+#: src/stickler_gtk/ui/window.py:673 src/stickler_gtk/ui/window.py:756
 #, python-brace-format
 msgid "Could not check the models: {reason}"
 msgstr "No se pudieron revisar los modelos: {reason}"
 
-#: src/stickler_gtk/ui/window.py:677
+#: src/stickler_gtk/ui/window.py:680
 #, python-brace-format
 msgid "This frees {size}. Stickler asks before it downloads the models again."
 msgstr ""
 "Esto libera {size}. Stickler te preguntará antes de volver a descargar los "
 "modelos."
 
-#: src/stickler_gtk/ui/window.py:680
+#: src/stickler_gtk/ui/window.py:683
 msgid "Also remove settings, recent songs and corrections"
 msgstr ""
 "Quitar también la configuración, las canciones recientes y las correcciones"
 
-#: src/stickler_gtk/ui/window.py:682
+#: src/stickler_gtk/ui/window.py:685
 msgid "Remove Downloaded Models?"
 msgstr "¿Quitar los modelos descargados?"
 
-#: src/stickler_gtk/ui/window.py:686
+#: src/stickler_gtk/ui/window.py:689
 msgid "Remove"
 msgstr "Quitar"
 
-#: src/stickler_gtk/ui/window.py:713
+#: src/stickler_gtk/ui/window.py:716
 msgid "The downloaded models are removed"
 msgstr "Se quitaron los modelos descargados"
 
-#: src/stickler_gtk/ui/window.py:718
+#: src/stickler_gtk/ui/window.py:721
 #, python-brace-format
 msgid "Could not remove everything: {reason}"
 msgstr "No se pudo quitar todo: {reason}"
 
-#: src/stickler_gtk/ui/window.py:863
+#: src/stickler_gtk/ui/window.py:866
 msgid "Downloading the Models"
 msgstr "Descargando los modelos"
 
-#: src/stickler_gtk/ui/window.py:866
+#: src/stickler_gtk/ui/window.py:869
 msgid ""
 "If this is interrupted, Stickler picks up where it stopped the next time you "
 "open it."
@@ -712,6 +712,6 @@ msgstr ""
 "Si esto se interrumpe, Stickler continúa donde se quedó la próxima vez que "
 "lo abras."
 
-#: src/stickler_gtk/ui/window.py:874
+#: src/stickler_gtk/ui/window.py:877
 msgid "Saving the Drum Track"
 msgstr "Guardando la pista de batería"

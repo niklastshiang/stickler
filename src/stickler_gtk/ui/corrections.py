@@ -9,8 +9,8 @@ from collections.abc import Callable
 from gi.repository import Adw, Gtk
 
 from stickler import api
-from stickler_gtk.i18n import _
-from stickler_gtk.logic import corrections
+from stickler_app import corrections
+from stickler_app.i18n import _
 
 WIDTH = 340  # design screen 7
 

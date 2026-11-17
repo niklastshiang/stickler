@@ -1461,7 +1461,7 @@ def test_the_app_side_of_the_library_loads_no_benchmark_scoring():
     import sys
 
     code = (
-        "import sys, stickler.api, stickler_gtk.logic.analysis, stickler_gtk.logic.session; "
+        "import sys, stickler.api, stickler_app.analysis, stickler_app.session; "
         "print(sorted(m for m in ('mir_eval', 'scipy') if m in sys.modules))"
     )
     loaded = subprocess.run(

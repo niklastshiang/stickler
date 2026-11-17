@@ -23,8 +23,8 @@ Checked by `uv run python scripts/floor_guard.py` (diff-based, exit 0 clean / 1 
 | Format | Zero files needing reformat | `uv run ruff format --check .` | every edit, CI |
 | Floor | Zero floor violations in the diff | `uv run python scripts/floor_guard.py` (CI: `--base` = the state before the push) | every edit, CI |
 | Tests | All tests pass | `uv run pytest -q` | task end, pre-commit, CI |
-| Coverage | `src/stickler` and `src/stickler_gtk` line coverage >= 95% (excluding `cli.py`, `stickler_gtk/main.py` and `stickler_gtk/ui/`) | `uv run pytest -q --cov --cov-fail-under=95` | task end, pre-commit, CI |
-| GTK boundary | No `gi` import in `src/stickler` or `src/stickler_gtk/logic` | `tests/gtk/test_boundaries.py` | task end, pre-commit, CI |
+| Coverage | `src/stickler`, `src/stickler_app` and `src/stickler_gtk` line coverage >= 95% (excluding `cli.py`, `stickler_gtk/main.py` and `stickler_gtk/ui/`) | `uv run pytest -q --cov --cov-fail-under=95` | task end, pre-commit, CI |
+| GTK boundary | No `gi` import in `src/stickler` or `src/stickler_app`; `stickler_app` imports no `stickler_gtk`, `stickler` neither app package | `tests/gtk/test_boundaries.py` | task end, pre-commit, CI |
 | Secrets | No secrets anywhere in the git history | `gitleaks git . --redact --no-banner` | CI (`.github/workflows/check.yml`) |
 
 Reasons:
@@ -33,6 +33,7 @@ Reasons:
 - **Violations block:** The git hook `.githooks/pre-commit` runs `scripts/check.sh task`. A red check prevents the commit.
 - **CI (2026-11-13):** `.github/workflows/check.yml` runs the same checks on every push to main and every pull request, plus gitleaks over the whole history as a check that does not depend on our own tests.
 - **GTK application (2026-11-14, approved with the `app-shell` spec):** the app's decisions live in `stickler_gtk/logic`, which imports no GTK and counts for coverage like the harness; `stickler_gtk/ui` and `main.py` only show what the logic decides and are excluded like `cli.py`. Widget smoke tests need a display and run with `scripts/gtk.sh test`, not in CI.
+- **Shared app logic (2026-11-17, approved with the `shared-core` spec):** `stickler_gtk/logic` moved to `stickler_app`, shared by the GTK app and the Mac app; the same rules apply to it (no GTK, counted for coverage), and it may depend on neither app.
 - **Time budget:** `scripts/check.sh fast` < 5 s, `scripts/check.sh task` < 90 s. Slow model tests (`pytest -m adapters`) are not part of the default run and run for tasks that concern adapters.
 
 ## Measured, not yet enforced

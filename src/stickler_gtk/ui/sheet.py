@@ -1,7 +1,7 @@
 """The sheet music on the result page (SPEC.md, module `sheet-view`; design screen 6): Verovio's
 pages one under the other, drawn with librsvg, as wide as the window, with zoom; inverted in
 dark style; the marked bar in blue. What is engraved where, and which bar a time or a click
-means, is `stickler_gtk.logic`'s business (engraving, marker)."""
+means, is `stickler_app`'s business (engraving, marker)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import cairo
 from gi.repository import Adw, Gdk, GLib, Gtk, Rsvg
 
 from stickler import api
-from stickler_gtk.logic import engraving, marker, zoom
+from stickler_app import engraving, marker, zoom
 
 GUTTER = 12  # pixels around the pages
 RELAYOUT_AFTER_MS = 150  # wait for resizing to pause before engraving anew

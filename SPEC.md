@@ -1888,7 +1888,7 @@ Linux user could see.
 **Assumptions** (from the code on 2026-11-17):
 1. `src/stickler_gtk/logic/` (15 modules, about 1,500 lines) imports no GTK; it depends only on
    `stickler`, Verovio, `stickler_gtk.i18n` and `stickler_gtk.prefix` (`paths.py`).
-2. `po/stickler.pot` has 158 texts, 2 with plural forms, no `msgctxt`, no `%` formats; the
+2. `po/stickler.pot` has 156 texts, 2 with plural forms, no `msgctxt`, no `%` formats; the
    placeholders are named (`{reason}`, `{name}`, …), one with a format spec (`{size:n}`). German
    and Spanish use `nplurals=2; plural=(n != 1)`.
 3. The Mac app's bundle identifier is the same app ID, `ng.tshia.Stickler`.

@@ -1,5 +1,5 @@
 """The main window (design screens 4 and 5, the result header of 6). It draws the state that
-`stickler_gtk.logic.session` decides; analyses run in a worker thread."""
+`stickler_app.session` decides; analyses run in a worker thread."""
 
 from __future__ import annotations
 
@@ -12,9 +12,8 @@ from pathlib import Path
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from stickler import adapters, api
-from stickler_gtk import APP_NAME
-from stickler_gtk.i18n import _
-from stickler_gtk.logic import (
+from stickler_app import (
+    APP_NAME,
     analysis,
     corrections,
     engraving,
@@ -28,7 +27,8 @@ from stickler_gtk.logic import (
     setup,
     zoom,
 )
-from stickler_gtk.logic.steps import StepRow
+from stickler_app.i18n import _
+from stickler_app.steps import StepRow
 from stickler_gtk.ui import corrections as corrections_ui
 from stickler_gtk.ui import menu, pdf, worker
 from stickler_gtk.ui import setup as setup_ui

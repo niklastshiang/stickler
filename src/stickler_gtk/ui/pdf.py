@@ -8,7 +8,7 @@ from pathlib import Path
 import cairo
 from gi.repository import Rsvg
 
-from stickler_gtk.logic import engraving
+from stickler_app import engraving
 
 A4_POINTS = (595.28, 841.89)  # 210 × 297 mm
 

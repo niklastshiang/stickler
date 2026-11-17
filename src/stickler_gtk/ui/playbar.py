@@ -11,8 +11,8 @@ from pathlib import Path
 from gi.repository import Adw, GLib, Gtk
 
 from stickler import api
-from stickler_gtk.i18n import _
-from stickler_gtk.logic import playback, settings
+from stickler_app import playback, settings
+from stickler_app.i18n import _
 from stickler_gtk.ui.player import Player
 
 TICK_MS = 50  # how often the time, the slider and the marker follow the song

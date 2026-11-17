@@ -31,7 +31,7 @@ def test_the_empty_window_offers_to_open_a_song():
 
 
 def test_the_window_speaks_german(monkeypatch):
-    from stickler_gtk import i18n
+    from stickler_app import i18n
     from stickler_gtk.ui.window import Window
 
     monkeypatch.setenv("LANGUAGE", "de")
@@ -177,7 +177,7 @@ def test_a_song_without_models_asks_for_them_and_opens_once_they_are_there(monke
 
 def test_a_server_that_does_not_answer_is_named_and_the_download_can_be_retried(monkeypatch):
     from stickler import api
-    from stickler_gtk.logic import settings
+    from stickler_app import settings
     from stickler_gtk.ui.window import Window
 
     settings.update(settings.store_path(), setup_agreed=True)
@@ -241,7 +241,7 @@ def test_recent_songs_open_or_can_be_removed(monkeypatch, tmp_path):
     from datetime import date
     from pathlib import Path
 
-    from stickler_gtk.logic import recent
+    from stickler_app import recent
     from stickler_gtk.ui.window import Window
 
     there = tmp_path / "there.flac"
@@ -299,7 +299,7 @@ def test_the_drum_track_export_runs_with_steps_and_returns_to_the_result(monkeyp
 def test_the_appearance_switch_applies_and_remembers_the_choice():
     from gi.repository import Adw, Gtk
 
-    from stickler_gtk.logic import settings
+    from stickler_app import settings
     from stickler_gtk.ui import menu
     from stickler_gtk.ui.window import Window
 
@@ -349,8 +349,7 @@ def test_every_page_fits_the_narrowest_window(monkeypatch, language):
     playback bar's one-row layout must fit where the narrow breakpoint (550 sp) ends."""
     from gi.repository import Gtk
 
-    from stickler_gtk import i18n
-    from stickler_gtk.logic import session, steps
+    from stickler_app import i18n, session, steps
     from stickler_gtk.ui.window import MINIMUM_SIZE, Window
 
     monkeypatch.setenv("LANGUAGE", language)
@@ -464,7 +463,7 @@ def test_the_pdf_has_one_a4_page_per_print_page(tmp_path):
     gi.require_version("Poppler", "0.18")
     from gi.repository import Poppler
 
-    from stickler_gtk.logic import engraving
+    from stickler_app import engraving
     from stickler_gtk.ui import pdf
 
     pages = engraving.a4_pages(_groove_score().musicxml)
@@ -485,7 +484,7 @@ def test_the_pdf_has_the_legend_on_page_1_only(tmp_path):
     from gi.repository import Poppler
 
     from stickler import notation
-    from stickler_gtk.logic import engraving, legend
+    from stickler_app import engraving, legend
     from stickler_gtk.ui import pdf
 
     bars = 160  # three pages
@@ -531,7 +530,7 @@ def test_a_pinch_zooms_once_the_fingers_pause(monkeypatch, tmp_path):
 
 
 def test_the_note_size_is_shown_in_the_menu_and_kept_for_the_next_song():
-    from stickler_gtk.logic import settings
+    from stickler_app import settings
     from stickler_gtk.ui.window import Window
 
     window = Window()
@@ -564,7 +563,7 @@ def test_a_pinch_scales_the_drawn_pages_at_once_and_lays_them_out_after(monkeypa
 def test_the_app_finds_its_own_icon():
     from gi.repository import Gdk, Gtk
 
-    from stickler_gtk import APP_ID
+    from stickler_app import APP_ID
     from stickler_gtk.ui import application
 
     application.register_icons()
@@ -653,7 +652,7 @@ def test_at_the_end_playback_stops_and_starts_again_from_the_top(monkeypatch, tm
 
 
 def test_what_to_hear_and_the_volumes_reach_the_player_and_are_remembered(monkeypatch, tmp_path):
-    from stickler_gtk.logic import settings
+    from stickler_app import settings
 
     window = _playing_window(monkeypatch, tmp_path)
     try:
@@ -776,7 +775,7 @@ def test_f9_opens_and_closes_the_corrections_sidebar(monkeypatch, tmp_path):
 
 def test_a_correction_applies_at_once_is_remembered_and_can_be_taken_back(monkeypatch, tmp_path):
     from stickler import api
-    from stickler_gtk.logic import corrections
+    from stickler_app import corrections
 
     window = _playing_window(monkeypatch, tmp_path)
     song = tmp_path / "eye.flac"
@@ -863,7 +862,7 @@ def _fake_setup(monkeypatch, missing=("adtof", "beat_this"), block=None):
 
 
 def test_the_first_start_asks_then_downloads_then_shows_the_empty_window(monkeypatch):
-    from stickler_gtk.logic import settings, setup
+    from stickler_app import settings, setup
     from stickler_gtk.ui.window import Window
 
     done = _fake_setup(monkeypatch)
@@ -897,7 +896,7 @@ def test_not_now_shows_the_empty_window(monkeypatch):
 def test_an_agreed_setup_goes_on_by_itself_and_can_be_cancelled(monkeypatch):
     import threading
 
-    from stickler_gtk.logic import settings
+    from stickler_app import settings
     from stickler_gtk.ui.window import Window
 
     settings.update(settings.store_path(), setup_agreed=True)
@@ -916,7 +915,7 @@ def test_an_agreed_setup_goes_on_by_itself_and_can_be_cancelled(monkeypatch):
 def test_progress_updates_keep_the_running_steps_row_so_its_spinner_runs_on():
     """The owner saw the spinner stutter during the download: every report rebuilt the list."""
     from stickler import api
-    from stickler_gtk.logic import session
+    from stickler_app import session
     from stickler_gtk.ui.window import Window
 
     window = Window()
@@ -962,7 +961,7 @@ def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
     import os
     from pathlib import Path
 
-    from stickler_gtk.logic import paths, recent, session, settings
+    from stickler_app import paths, recent, session, settings
     from stickler_gtk.ui.window import Window
 
     monkeypatch.setenv("APPIMAGE", "/x/Stickler.AppImage")
@@ -993,7 +992,7 @@ def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
 def test_after_removing_the_models_a_song_asks_for_them_instead_of_failing(monkeypatch, tmp_path):
     """The shipped model sources went with the models, so the next song failed with "unknown
     transcriber 'adtof'" until a restart (owner, 2026-11-15)."""
-    from stickler_gtk.logic import paths, session
+    from stickler_app import paths, session
     from stickler_gtk.ui.window import Window
 
     monkeypatch.setenv("APPIMAGE", "/x/Stickler.AppImage")

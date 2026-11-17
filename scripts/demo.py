@@ -67,7 +67,7 @@ class Recorder:
 
 
 def record(song: Path, out: Path) -> None:
-    from stickler_gtk.logic import session
+    from stickler_app import session
     from stickler_gtk.ui.window import Window
 
     window = Window()

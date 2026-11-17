@@ -1,4 +1,4 @@
-"""The widgets. They show what `stickler_gtk.logic` decides and hold no logic of their own.
+"""The widgets. They show what `stickler_app` decides and hold no logic of their own.
 
 Importing this package pins the GTK versions, before any module imports `gi.repository`."""
 
