@@ -1672,8 +1672,9 @@ RoFormer DrumSep variants (no downloadable weights).
    `drumsep_onset` ≈ 0.73 and `muscriptor_l` 0.81 (untuned); the report and ADR 0008 say so. Known
    risk, accepted: MDB choices transferred badly to the owner's rock/metal songs before.
 4. **Measured first, listened to only where it can matter** (owner, 2026-11-16): all candidates
-   are compared on measured scores. A candidate whose measured macro-F1 on the own songs comes
-   within 0.01 of a mode's, or beats it, gets a listening round of about 40 new spots drawn from
+   are compared on measured scores. A candidate whose measured macro-F1 on the own songs (5-class
+   scheme, as the modes were chosen and corrected; owner, 2026-11-17) comes within 0.01 of a
+   mode's, or beats it, gets a listening round of about 40 new spots drawn from
    its own errors with release 3's procedure (blind, fixed seed, drawn once); its corrected score
    comes from those verdicts. The others go into the report with measured scores only.
 5. **Time budget** (owner, 2026-11-16): Fast stays the fast mode that runs on any laptop
