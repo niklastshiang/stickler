@@ -1740,6 +1740,7 @@ docs/report.md, README.md              # results, candidates table
 - [0005 YourMT3+ variant PS](docs/adr/0005-yourmt3-variante.md)
 - [0006 Sequential version numbers](docs/adr/0006-versionierung.md)
 - [0007 GPL-3.0-or-later instead of MIT](docs/adr/0007-gpl.md)
+- [0008 Two modes, Fast and Quality](docs/adr/0008-modi.md)
 
 ## Resolved Questions
 1. MuScriptor: the user accepts the license on Hugging Face and logs in with `uvx hf auth login`.

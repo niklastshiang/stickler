@@ -323,7 +323,7 @@ owner decided against fine-tuning.
 | Own songs: quality thresholds, ≥ 2 min, missing passages no reason to reject, approval by ear | references must be good, but real transcriptions are never perfect | section 3 |
 | ENST: minus-one tracks, 2/3 drums + 1/3 accompaniment | the common evaluation set with accompaniment | `stickler.datasets.enst` |
 | Tune on the target music, with cross-validation | MDB choices did not transfer | section 6 |
-| Modes: Fast = ADTOF on the mix with its default thresholds; Quality = the combination | best and robust on all three datasets; Quality slightly better on the target music and kept because it can be clearly better for a particular song; after correcting for reference errors Fast is ahead, Quality stays for now (owner, 2026-11-14) | sections 1, 5, 5.5 |
+| Modes: Fast = ADTOF on the mix with its default thresholds; Quality = the combination | best and robust on all three datasets; Quality slightly better on the target music and kept because it can be clearly better for a particular song; after correcting for reference errors Fast is ahead, Quality stays for now (owner, 2026-11-14) | [ADR 0008](adr/0008-modi.md), sections 1, 5, 5.5 |
 | Estimate reference errors by ear: 100 error spots, drawn once, judged blind; scoring unchanged | the references are third-party transcriptions; honest numbers without changing the benchmark | section 5.5, SPEC.md "Release 3" |
 | torch 2.15 in every model, after Dependabot alerts | known vulnerabilities in older versions; outputs checked before/after (identical, or within the model's own run-to-run variation) | tasks/todo.md |
 
