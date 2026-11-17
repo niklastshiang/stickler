@@ -37,6 +37,17 @@ grid: [none+adtof, demucs+muscriptor_m, combo+quality]
 # folds of a cross-validation on the 25 own songs (2026-11-13), cymbal F1 on unseen songs
 # 0.680 -> 0.710; the other classes stay at ADTOF's defaults (tuning them gave nothing).
 fusions:
+  # drumsep_onset with thresholds tuned on MDB and ENST, Demucs stem (stickler tune,
+  # 2026-11-17; 87 tracks; the own songs were not used): SPEC Release 7, method 2
+  drumsep_tuned:
+    inputs: [demucs]
+    transcriber: drumsep_onset
+    classes:
+      KD: {weights: [1.0], threshold: 0.08}
+      SD: {weights: [1.0], threshold: 0.08}
+      TT: {weights: [1.0], threshold: 0.26}
+      HH: {weights: [1.0], threshold: 0.18}
+      CY: {weights: [1.0], threshold: 0.16}
   adtof_cy:
     inputs: [none]
     classes:
