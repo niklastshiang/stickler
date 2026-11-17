@@ -37,9 +37,10 @@ jobs:
             uv run stickler setup --adapter "$adapter"
           done
       - name: MuScriptor installs from its lock on macOS (not run; gated)
+        # without the harness's UV_PYTHON, as stickler runs adapters (their own Python)
         run: |
-          uv sync --locked --project adapters/transcribers/muscriptor_m
-          uv sync --locked --project adapters/transcribers/muscriptor_l
+          env -u UV_PYTHON uv sync --locked --project adapters/transcribers/muscriptor_m
+          env -u UV_PYTHON uv sync --locked --project adapters/transcribers/muscriptor_l
       - name: Smoke tests on the CPU
         env:
           STICKLER_SMOKE_REPORT: ${{ runner.temp }}/smoke.jsonl
