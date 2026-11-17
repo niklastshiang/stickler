@@ -780,13 +780,13 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: the workflow run on GitHub, all jobs green
   - Dependencies: 97 · Files: `.github/workflows/check.yml` (or `mac.yml`), tests as needed
 
-- [ ] **Task 99: The models' smoke tests on the macOS runner** (S)
+- [x] **Task 99: The models' smoke tests on the macOS runner** (S): done 2026-11-17. `models-macos.yml` (pushes touching `adapters/` or `src/stickler/`, Mondays, by hand): ADTOF, Beat This! and Demucs set up and their smoke tests green on macos-15 arm64; MuScriptor medium and large install from their locks (run with the adapters' own Python, not the job's `UV_PYTHON`). The smoke tests now assert peak RAM between 10 MB and 32 GB. First numbers on the runner's CPU, 10 s clip: ADTOF 2.8 s / 529 MB, Beat This! 1.2 s / 416 MB, Demucs 44.3 s / 2.0 GB (the laptop: 1.4 s / 406 MB, 1.5 s / 405 MB, 20.7 s / 1.6 GB); the owner's Mac gives the real numbers.
   - Acceptance: `stickler setup` for ADTOF, Beat This! and Demucs and their smoke tests (`pytest -m adapters`) on the runner's CPU, on pushes touching `adapters/` or `src/stickler/` and weekly; MuScriptor's lock checked with `uv sync --locked`; each smoke run's seconds and peak RAM in the job summary, peak RAM plausible.
   - Verify: the workflow run on GitHub; the job summary
   - Dependencies: 98 · Files: the workflow, `tests/test_adapter_smoke.py` only if a model needs a platform note
 
 ### Checkpoint S
-- [ ] All success criteria of SPEC.md "Module `mac-core`" met (owner, from the CI results); then `core-bridge`'s spec (and `mac-design` with the owner)
+- [ ] All success criteria of SPEC.md "Module `mac-core`" met (owner, from the CI results; evidence 2026-11-17: (1) the `macos` job green, 745 tests, coverage ≥ 95 %; (2) the three models' smoke tests green with plausible RAM; (3) Linux unchanged: lock comparison 0 differences, `stickler eval` byte-identical, CI green on 3.12 and 3.14; (4) no test skipped. On macos-15 for now, see Task 98); then `core-bridge`'s spec (and `mac-design` with the owner)
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
