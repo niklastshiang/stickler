@@ -12,7 +12,7 @@ import locale
 import re
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import verovio
 
@@ -88,11 +88,97 @@ def c_numbers() -> Iterator[None]:
 A4 = (2100, 2970)  # Verovio units (tenths of a millimetre): a staff 7.2 mm high in print
 
 
-def a4_pages(musicxml: str) -> list[Page]:
-    """Pages for printing: A4, the title and artist on the first (Verovio's header)."""
+# Room for the legend (module `legend`): a blank header line, right-aligned at the bottom of the
+# header, pushes page 1's music down (Verovio stacks top-aligned lines between title and band).
+BLANK_CREDIT = (
+    '<credit page="1"><credit-words justify="right" valign="bottom">\u00a0</credit-words></credit>'
+)
+LEGEND_GAP = 0.25  # staff heights between the band and the legend
+MAX_BLANKS = 80
+# The legend is engraved on a page this wide and cut to its staff (Verovio's adjustPageWidth),
+# so its names keep their natural spacing; wider than the page (more than about 12 entries in
+# German) it is drawn smaller rather than squeezed, where names would overlap.
+LEGEND_WIDTH = 6000
+
+
+def a4_pages(musicxml: str, legend: str | None = None) -> list[Page]:
+    """Pages for printing: A4, the title and artist on the first (Verovio's header). With a
+    `legend` (its MusicXML, `logic.legend.score`) page 1 gets room under the band and the legend
+    is drawn into it; the blank header lines that make the room exist only here, never in the
+    MusicXML that is stored or exported. Bars may move to later pages (owner, 2026-11-17)."""
     settings = options(*A4, scale=BASE_SCALE)
     settings.update({"adjustPageHeight": False, "header": "auto"})
-    return render(musicxml, settings)
+    if not legend:
+        return render(musicxml, settings)
+    key = render(
+        legend, options(LEGEND_WIDTH, PAGE_HEIGHT, BASE_SCALE) | {"adjustPageWidth": True}
+    )[0]
+    pages = render(musicxml, settings)
+    fit = min(1.0, pages[0].width / key.width)
+    start = _staff_top(pages[0])  # what sits above the staff (tempo, cymbals) keeps its room
+    gap = LEGEND_GAP * STAFF_UNITS * pages[0].scale
+    blanks = 0
+    while _staff_top(pages[0]) - start < key.height * fit + gap and blanks < MAX_BLANKS:
+        blanks += 1
+        pages = render(
+            musicxml.replace("<part-list>", BLANK_CREDIT * blanks + "<part-list>", 1), settings
+        )
+    return [_with_legend(pages[0], key, header_bottom(pages[0]) + gap, fit), *pages[1:]]
+
+
+def header_bottom(page: Page) -> float:
+    """Pixels from the top of the page to the bottom of its header (title, band), or to the top
+    margin when it has none. Blank lines (the legend's room) do not count."""
+    root = ET.fromstring(page.svg)
+    dx, dy = _margin(root)
+    bottom = 0.0
+    for head in root.iter(f"{SVG}g"):
+        if head.get("class") != "pgHead":
+            continue
+        for rend in head.iter(f"{SVG}tspan"):
+            y = rend.get("y")
+            if y is None or not "".join(rend.itertext()).strip():  # str.strip drops U+00A0 too
+                continue
+            sizes = [
+                float(t.get("font-size").removesuffix("px"))
+                for t in rend.iter(f"{SVG}tspan")
+                if t.get("font-size")
+            ]
+            bottom = max(bottom, float(y) + 0.3 * max(sizes, default=0.0))
+    return (bottom + dy) * page.scale
+
+
+def legend_box(page: Page) -> Box | None:
+    """Where the legend is drawn on a page, in pixels, or None."""
+    for child in ET.fromstring(page.svg):
+        if child.tag == f"{SVG}svg" and child.get("class") == "legend":
+            return Box(
+                float(child.get("x")),
+                float(child.get("y")),
+                float(child.get("width").removesuffix("px")),
+                float(child.get("height").removesuffix("px")),
+            )
+    return None
+
+
+def _margin(root: ET.Element) -> tuple[float, float]:
+    inner = next(e for e in root.iter(f"{SVG}svg") if e.get("class") == "definition-scale")
+    margin = next((e for e in inner.iter(f"{SVG}g") if e.get("class") == "page-margin"), None)
+    return _translate(margin.get("transform") if margin is not None else None)
+
+
+def _staff_top(page: Page) -> float:
+    """Pixels from the top of the page to the first staff line on it."""
+    return min(b.y for b in page.bars.values()) + PAD * STAFF_UNITS * page.scale
+
+
+def _with_legend(page: Page, key: Page, top: float, fit: float) -> Page:
+    """`page` with the legend's SVG nested at `top`, its size times `fit`."""
+    size = f'width="{key.width * fit:.1f}px" height="{key.height * fit:.1f}px"'
+    root = re.sub(r'width="[^"]*" height="[^"]*"', size, key.svg, count=1)
+    legend = root.replace("<svg ", f'<svg class="legend" x="0" y="{top:.1f}" ', 1)
+    head, _, tail = page.svg.rpartition("</svg>")
+    return replace(page, svg=head + legend + "</svg>" + tail)
 
 
 def render(musicxml: str, settings: dict) -> list[Page]:

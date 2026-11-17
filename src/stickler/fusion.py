@@ -1,7 +1,7 @@
 """Fusing a transcriber's frame activations from several inputs of one song (e.g. the mix and a
 drum stem) and tuning the fusion weights and the peak-picking threshold per instrument class.
 
-Any transcriber that saves `activations.npz` (ADTOF; drumsep_onset and sad since release 7) can be
+Any transcriber that saves `activations.npz` (ADTOF; drumsep_onset and sad since release 8) can be
 fused and tuned; its columns are named by GM pitch in the file's `labels`.
 
 Fusion is a weighted mean of the activations over their common length; onsets are then picked

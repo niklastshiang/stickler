@@ -1,6 +1,8 @@
 """Engraving with Verovio (SPEC.md, module `sheet-view`): pages for a width and zoom, and for
 each written bar its page and rectangle, taken from the staff lines."""
 
+import re
+
 import pytest
 
 from stickler import notation
@@ -26,7 +28,6 @@ def _xml(notes=None, beats=BEATS, downbeats=DOWNBEATS, **kw):
 
 
 def _written(musicxml: str) -> list[int]:
-    import re
 
     return [int(n) for n in re.findall(r'<measure number="(\d+)"', musicxml)]
 
@@ -136,7 +137,6 @@ def test_the_tempo_mark_keeps_its_spaces_around_the_equals_sign():
     xml:space="preserve") and a trailing one unless preserved, so "♩ = 109" read "♩=109"
     (owner, 2026-11-15). The leading space becomes an explicit shift (dx) of about one space,
     the trailing one is preserved."""
-    import re
 
     svg = engraving.engrave(_xml(), width=800)[0].svg
     tempo = re.search(r'class="tempo".*?</g>', svg, re.S).group(0)
@@ -147,3 +147,98 @@ def test_the_tempo_mark_keeps_its_spaces_around_the_equals_sign():
     assert float(equals.group(2)) == pytest.approx(
         engraving.SPACE_EM * int(equals.group(1)), rel=0.01
     )
+
+
+# --- The legend on page 1 (module `legend`) ---------------------------------------------------
+
+
+def _long(bars=120, **kw):
+    beats = [k * 0.5 for k in range(bars * 4 + 1)]
+    return notation.engrave(groove(bars), beats, beats[:-1:4], **kw).musicxml
+
+
+def _legend(xml):
+    from stickler_gtk.logic import legend
+
+    return legend.score(xml)
+
+
+def _staff_top(page):
+    return min(b.y for b in page.bars.values()) + engraving.PAD * engraving.STAFF_UNITS * page.scale
+
+
+@pytest.mark.parametrize("artist", ["The Band", ""])
+def test_the_legend_sits_under_the_band_and_above_the_music(artist):
+    xml = _long(title="Groove Song", artist=artist)
+    plain = engraving.a4_pages(xml)
+    pages = engraving.a4_pages(xml, legend=_legend(xml))
+    box = engraving.legend_box(pages[0])
+    assert box is not None
+    assert box.y >= engraving.header_bottom(pages[0])
+    above = _staff_top(plain[0]) - engraving.header_bottom(plain[0])  # tempo, cymbals
+    assert box.y + box.height <= _staff_top(pages[0]) - above + 1
+    assert "Bass Drum" in pages[0].svg and "Hi-Hat" in pages[0].svg
+
+
+def test_only_page_one_gets_the_legend_and_later_pages_keep_their_top_margin():
+    xml = _long(title="Groove Song", artist="The Band")
+    plain = engraving.a4_pages(xml)
+    pages = engraving.a4_pages(xml, legend=_legend(xml))
+    assert len(plain) >= 2 and len(pages) in (len(plain), len(plain) + 1)
+    assert all(engraving.legend_box(p) is None for p in pages[1:])
+    assert _staff_top(pages[1]) == pytest.approx(_staff_top(plain[1]), abs=1)
+    assert sum(len(p.bars) for p in pages) == sum(len(p.bars) for p in plain)
+
+
+def test_the_room_never_reaches_the_musicxml_it_was_given():
+    xml = _long(bars=8, title="Groove Song", artist="The Band")
+    before = str(xml)
+    engraving.a4_pages(xml, legend=_legend(xml))
+    assert xml == before and " </credit-words>" not in xml
+
+
+def test_without_a_legend_the_pages_are_as_before():
+    xml = _long(bars=8, title="Groove Song", artist="The Band")
+
+    def plain(pages):  # Verovio draws new ids on every render
+        ids = {i.rsplit("-", 1)[-1] for p in pages for i in re.findall(r' id="([^"]+)"', p.svg)}
+        found = re.compile(rf"\b({'|'.join(ids)})\b")
+        return [found.sub("ID", p.svg) for p in pages]
+
+    assert plain(engraving.a4_pages(xml, legend=None)) == plain(engraving.a4_pages(xml))
+
+
+def test_every_position_with_the_longest_names_stays_one_line_on_the_page():
+    """The longest name of each position across the app's languages (po/*.po): one staff,
+    drawn smaller rather than squeezed when it is wider than the page."""
+    from pathlib import Path
+
+    from stickler_gtk.logic import legend
+
+    po = Path(__file__).resolve().parents[2] / "po"
+    longest = {name: name for name in legend.NAMES.values()}
+    for catalogue in po.glob("*.po"):
+        pairs = re.findall(r'^msgid "(.+)"\nmsgstr "(.+)"$', catalogue.read_text(), re.M)
+        for msgid, msgstr in pairs:
+            if msgid in longest and len(msgstr) > len(longest[msgid]):
+                longest[msgid] = msgstr
+    positions = list(legend.NAMES)
+    xml = notation.legend_musicxml(positions, [longest[legend.NAMES[s]] for s in positions])
+    sheet = _long(bars=8, title="Groove Song", artist="The Band")
+    page = engraving.a4_pages(sheet, legend=xml)[0]
+    box = engraving.legend_box(page)
+    assert page.svg.count('class="system"') > 1  # the legend's one and the music's
+    legend_svg = page.svg[page.svg.index('class="legend"') :]
+    assert legend_svg.count('class="system"') == 1
+    assert box.x + box.width <= page.width
+    assert box.width == pytest.approx(page.width, abs=1)  # 15 long names fill the page
+
+
+def test_a_short_legend_keeps_the_size_of_the_music():
+    xml = _long(bars=8, title="Groove Song", artist="The Band")
+    page = engraving.a4_pages(xml, legend=_legend(xml))[0]
+    box = engraving.legend_box(page)
+    settings = engraving.options(engraving.A4[0], engraving.PAGE_HEIGHT, engraving.BASE_SCALE)
+    alone = engraving.render(_legend(xml), settings)[0]
+    assert box.width < page.width / 2
+    assert box.height == pytest.approx(alone.height, abs=0.1)
