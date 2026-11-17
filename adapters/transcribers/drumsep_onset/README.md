@@ -26,7 +26,7 @@ six stems of a song by the same value, the largest of any stem, so a quiet stem 
 Peaks are then picked exactly as the harness picks ADTOF's activations (madmom's method:
 moving average subtracted, local maximum, close peaks combined; `pick` is a copy of
 `stickler.peaks.pick`, kept identical by a test). The threshold (`THRESHOLD`, on the song's common
-scale) is a default until it is chosen on MDB and ENST (SPEC.md, Release 7, method 2). The
+scale) is a default until it is chosen on MDB and ENST (SPEC.md, Release 8, method 2). The
 envelopes are saved as `activations.npz` (5 columns, ADTOF's order and format, ride and crash
 merged by maximum), so `stickler tune --transcriber drumsep_onset` can choose thresholds without
 running the model again, and they reproduce this adapter's MIDI.

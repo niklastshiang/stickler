@@ -101,7 +101,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
   - Verify: `pytest -m adapters -k yourmt3`
   - Dependencies: 5 · Files: `adapters/transcribers/yourmt3/*`
 
-- [x] **Task 12: Transcriber `drumsep_onset`** (M): done 2026-11-16 (release 7). DrumSep's weights still come from audio-separator's own mirror (the original host answers 404); onsets per stem through `stickler_adapter.onsets` (shared with `sad`, peaks picked as `stickler.peaks`, tunable with `stickler tune --transcriber drumsep_onset`). MDB in a cloud container, oracle stems, untuned threshold: 10 of 23 tracks before the container's 2-hour limit stopped the run twice; KD 0.96, SD 0.89, TT 0.14, HH 0.77, CY 0.58, macro-F1 0.668 (5 classes), 0.873 (3 classes); 40 minutes for 10 minutes of audio on a shared CPU. The full MDB run is part of Task 84 (`config/benchmark.yaml` holds it).
+- [x] **Task 12: Transcriber `drumsep_onset`** (M): done 2026-11-16 (release 8). DrumSep's weights still come from audio-separator's own mirror (the original host answers 404); onsets per stem through `stickler_adapter.onsets` (shared with `sad`, peaks picked as `stickler.peaks`, tunable with `stickler tune --transcriber drumsep_onset`). MDB in a cloud container, oracle stems, untuned threshold: 10 of 23 tracks before the container's 2-hour limit stopped the run twice; KD 0.96, SD 0.89, TT 0.14, HH 0.77, CY 0.58, macro-F1 0.668 (5 classes), 0.873 (3 classes); 40 minutes for 10 minutes of audio on a shared CPU. The full MDB run is part of Task 84 (`config/benchmark.yaml` holds it).
   - Acceptance: The 6-stem model DrumSep (MDX23C) and librosa onset detection per stem yield GM MIDI.
   - Verify: `pytest -m adapters -k drumsep`, run on MDB
   - Dependencies: 5 · Files: `adapters/transcribers/drumsep_onset/*`
@@ -109,7 +109,7 @@ Each task is only done once `scripts/check.sh task` is green and one commit has 
 ### Checkpoint B
 - [x] Full matrix on MDB: every combination yields a MIDI or a logged error (Success Criterion 2)
 - [x] Review with the user (owner, 2026-11-16)
-  - Evidence (2026-11-16): report 5.2 scores every active MDB combination (ADTOF, ADT_STR, MuScriptor medium on oracle, Demucs, RoFormer; ADTOF also on the mix); the combinations left out are skipped by decision in `config/benchmark.yaml` (ADT_STR and MuScriptor medium on the mix, MuScriptor small), not missing. The release 7 candidates have their own criterion (SPEC "Release 7", criterion 1).
+  - Evidence (2026-11-16): report 5.2 scores every active MDB combination (ADTOF, ADT_STR, MuScriptor medium on oracle, Demucs, RoFormer; ADTOF also on the mix); the combinations left out are skipped by decision in `config/benchmark.yaml` (ADT_STR and MuScriptor medium on the mix, MuScriptor small), not missing. The release 8 candidates have their own criterion (SPEC "Release 8", criterion 1).
 
 ## Phase 4: Report and own songs
 
@@ -650,7 +650,7 @@ Method: tune on MDB and ENST, keep the own songs (the target music) for the fina
 ### Checkpoint O
 - [x] All 4 success criteria of SPEC.md `polish` met (the owner listens, prints and removes; 2026-11-15). Found on the way and fixed: removal took the shipped model sources too (b5f5b78), libsndfile failed on some MP3s (e904c8e), the model download overshot its size (c07afbc)
 
-## Phase 16: Release 7, new candidates (approved 2026-11-16, SPEC.md "Release 7")
+## Phase 16: Release 8, new candidates (approved 2026-11-16, SPEC.md "Release 8")
 
 Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
 
@@ -682,10 +682,10 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
     3. A RunPod pod (RTX 4090, Secure Cloud in the EU, as for the own songs before) with a driver for CUDA 13.2 (`nvidia-smi` shows the CUDA version): torch 2.15 has CUDA wheels only on cu132 (found 2026-11-16 in the Windows research; the CUDA setup now tries cu132 first); Hugging Face login on the laptop (MuScriptor large is gated; the token goes to the pod over SSH input).
     4. `uv run stickler remote root@<ip> --port <port> --config config/benchmark.yaml`, then the same with `config/enst.yaml --wipe` and `config/own.yaml --pod-id <id> --wipe` (licensed data and the owner's songs are deleted from the pod; the last run stops it). Check the first run's times before starting the others: Separate-and-Detect's speed on the GPU is not measured yet.
     5. Thresholds of `drumsep_onset` and `sad` on MDB and ENST, without the own songs: `uv run stickler tune --transcriber drumsep_onset --inputs demucs --config config/benchmark.yaml --config config/enst.yaml --name drumsep_tuned` (likewise `sad`); the printed `fusions` entry goes into all three configs and is scored from the cached activations (nothing recomputed).
-    6. Laptop time budget (SPEC Release 7, method 5): one 4-minute own song with `demucs+muscriptor_l` and `demucs+sad` on the laptop CPU (`meta.json` seconds); above 20 minutes, measure on the pod's GPU (the reference for a Quality that requires a GPU).
+    6. Laptop time budget (SPEC Release 8, method 5): one 4-minute own song with `demucs+muscriptor_l` and `demucs+sad` on the laptop CPU (`meta.json` seconds); above 20 minutes, measure on the pod's GPU (the reference for a Quality that requires a GPU).
     7. `uv run stickler eval` for the three configs and `uv run stickler report`.
   - Risk: `stickler setup --device cuda` builds `.venv-cuda` from each lock's torch version; sad's lock pairs torch 2.15 with torchaudio 2.11.1 (fine on CPU, not checked on CUDA). If its setup fails on the pod, the other candidates still run (a failed adapter is logged, not blocking).
-  - Acceptance: `demucs+drumsep_onset`, `demucs+muscriptor_l`, `demucs+sad` (and a combination like Quality's for a candidate that is strong on some classes) on MDB, ENST and the 25 own songs; every combination gives MIDI or a logged error (SPEC Release 7, criterion 1); `metrics.csv` and `report.html` updated; RunPod pods stopped.
+  - Acceptance: `demucs+drumsep_onset`, `demucs+muscriptor_l`, `demucs+sad` (and a combination like Quality's for a candidate that is strong on some classes) on MDB, ENST and the 25 own songs; every combination gives MIDI or a logged error (SPEC Release 8, criterion 1); `metrics.csv` and `report.html` updated; RunPod pods stopped.
   - Verify: `uv run stickler eval` for the three configs; the time per 4-minute song on the laptop for each candidate in the report
   - Dependencies: 12, 82, 83 · Files: `config/*.yaml`, results (not committed)
 
@@ -694,18 +694,18 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Verify: `uv run pytest -q tests/test_errors.py tests/test_api.py -k "sample or correct"`; `results/own/corrected.csv`
   - Dependencies: 84 · Files: `src/stickler/{errors,api}.py` if the sample needs a candidate filter, tests
 
-- [ ] **Task 86: Decision, report and release 7** (S)
+- [ ] **Task 86: Decision, report and release 8** (S)
   - Acceptance: ADR 0008 with the decision per mode (unchanged or replaced; owner), and the modes' history since the owner chose them (Fast and Quality, 2026-11-13; kept on 2026-11-14 after the correction), which closes Checkpoint C (owner, 2026-11-16); `docs/report.md` section on the new candidates; README candidates and results tables; release steps of ADR 0006 incl. the hand-tried feature list.
-  - Verify: SPEC Release 7 success criteria; `scripts/check.sh task`
+  - Verify: SPEC Release 8 success criteria; `scripts/check.sh task`
   - Dependencies: 84, 85 · Files: `docs/adr/0008-*.md`, `docs/report.md`, `README.md`, version files
 
 - [x] **Task 87: Cache keys cover everything that defines an adapter** (M) (owner, 2026-11-16): done 2026-11-16. The digest covers every Python module and `pyproject.toml` of the adapter and `adapters/_common` (before: only `run.py`, `setup.py`, `pyproject.toml`, so a changed helper such as `onsets.py` kept old results valid). Pairs of equivalent digests are listed in `src/stickler/digests.yaml`; `cache_dir_for` renames an entry under an earlier digest to the current key on first use, but only along a chain that ends at the current digest, in the benchmark and the app, so neither the laptop nor installed apps compute anything again. Listed: every adapter unchanged since release 6; not drumsep_onset (its helper changed under the same old digest). A fresh-context review found three problems in the first version, all fixed: a listed digest stayed valid after later real changes (now pairs and chains), `cache-migrate` set listed entries aside (it now knows the pairs, and refuses snapshots of the old definition), and the digest depended on the machine (a `.venv` in the path, stray files; now only imported modules, relative names). The key now also covers `uv.lock` and `.python-version`. Same digests on Python 3.12 and 3.14.
   - Verify: `uv run pytest -q tests/test_cache_keys.py tests/test_runner.py tests/test_cachemigration.py`; on the laptop, the first `stickler run` after the update finds every cached result (nothing computed)
 
 ### Checkpoint P
-- [ ] All success criteria of SPEC.md "Release 7" met; the decision per mode by the owner; release 7
+- [ ] All success criteria of SPEC.md "Release 8" met; the decision per mode by the owner; release 8
 
-## Phase 17: `legend` (approved 2026-11-17, SPEC.md "Module `legend`")
+## Phase 17: `legend`, release 7 (approved 2026-11-17, SPEC.md "Module `legend`")
 
 - [x] **Task 88: Positions and the legend's MusicXML** (S): done 2026-11-17. Verovio 6.4.1 sets the legend of eight positions as one system, stemless, the time signature hidden (an empty element with `visibility="hidden"`), the names as lyrics. STAFF also has ride bell, china and splash: Task 89 names them too.
   - Acceptance: `notation.legend_positions(musicxml)` gives the distinct `Staff` values of the sheet's instruments, top to bottom, STAFF's order for ties, `OTHER` included, none for an empty sheet; `notation.legend_musicxml(entries, labels)` writes one stemless measure with each entry's step, octave and notehead and the labels as lyrics, hidden time signature.
@@ -728,7 +728,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Dependencies: 90 · Files: tests (`ui/pdf.py` unchanged)
 
 ### Checkpoint Q
-- [ ] All success criteria of SPEC.md "Module `legend`" met (owner)
+- [ ] All success criteria of SPEC.md "Module `legend`" met (owner); then release 7 (owner, 2026-11-17: the legend is release 7, the new models release 8)
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
@@ -753,7 +753,7 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Style (owner, 2026-11-16): a landing page like GymMane's (https://inlitx.github.io/GymMane/), but with light and dark following the system. Look at that page closely before starting (the session's network did not reach it on 2026-11-16).
   - Domain: maybe `stickler.tshia.ng` (owner, 2026-11-16: not decided). It works next to the site on the VPS: a CNAME `stickler` → `niklastshiang.github.io` at the DNS of `tshia.ng`, the custom domain in the repo's Pages settings, the domain verified in the GitHub account (TXT `_github-pages-challenge-niklastshiang`), and `letsencrypt.org` allowed if `tshia.ng` has a CAA record.
 - [ ] **Windows and macOS packages (owner, 2026-11-16: idea):** `.msi` and `.exe` for Windows, the fitting format for macOS (a `.dmg` with the `.app`; see the macOS note below). To check first, before a spec: GTK 4 and libadwaita on Windows (MSYS2 or gvsbuild, as other GTK apps ship them) and on macOS; `uv` and the models' PyTorch wheels per platform (CPU everywhere, CUDA on Windows, MPS on Apple Silicon), and which adapter locks are resolved for Linux only (Demucs, MuScriptor); ffmpeg, GStreamer and the Leipzig font in the package; the installer tools (WiX for `.msi`, Inno Setup or NSIS for `.exe`) and code signing (unsigned installers warn on both systems); CI runners for both. Stickler never ships model weights, so the setup assistant downloads them on every platform, as today.
-- [ ] **Interfaces for Windows and macOS, effort (2026-11-16):** the owner has access to a Mac and a Windows computer for testing at checkpoints. Measured on today's app: `ui/` about 2,100 lines, `logic/` about 1,400 (GTK-free on purpose), widget tests about 2,500, built over releases 4–6. Options: (1) GTK everywhere, only packaging and the POSIX spots, looks like GNOME on both; (2) Qt (PySide6 6.12, LGPL, wheels for macOS universal2 and Windows x64/ARM; native menu bar and dialogs on the Mac, Windows 11 style) for Mac and Windows: `ui/` once more in Python, `logic/` and the engine reused, two interfaces to maintain (GTK on Linux, Qt elsewhere); (3) fully native (SwiftUI, WinUI): two interfaces in two new languages, `logic/` ported or put behind a new bridge to the Python core, sheet view in a web view, system playback instead of GStreamer, two more translation formats; about three to four times option 2, and every later feature built three times. Claude's suggestion was GTK first, Qt later; the owner does not like Qt's look (2026-11-16), so option 2 is out. Left: GTK everywhere (looks like GNOME on Mac and Windows; native window buttons on the Mac since libadwaita 1.8, no global menu bar) or fully native. **Decided (owner, 2026-11-16): GTK on Windows and macOS to start with**; a native interface stays possible later. Windows and macOS come as a release of their own after release 7 (owner, 2026-11-16); its spec starts from the research notes below.
+- [ ] **Interfaces for Windows and macOS, effort (2026-11-16):** the owner has access to a Mac and a Windows computer for testing at checkpoints. Measured on today's app: `ui/` about 2,100 lines, `logic/` about 1,400 (GTK-free on purpose), widget tests about 2,500, built over releases 4–6. Options: (1) GTK everywhere, only packaging and the POSIX spots, looks like GNOME on both; (2) Qt (PySide6 6.12, LGPL, wheels for macOS universal2 and Windows x64/ARM; native menu bar and dialogs on the Mac, Windows 11 style) for Mac and Windows: `ui/` once more in Python, `logic/` and the engine reused, two interfaces to maintain (GTK on Linux, Qt elsewhere); (3) fully native (SwiftUI, WinUI): two interfaces in two new languages, `logic/` ported or put behind a new bridge to the Python core, sheet view in a web view, system playback instead of GStreamer, two more translation formats; about three to four times option 2, and every later feature built three times. Claude's suggestion was GTK first, Qt later; the owner does not like Qt's look (2026-11-16), so option 2 is out. Left: GTK everywhere (looks like GNOME on Mac and Windows; native window buttons on the Mac since libadwaita 1.8, no global menu bar) or fully native. **Decided (owner, 2026-11-16): GTK on Windows and macOS to start with**; a native interface stays possible later. Windows and macOS come as a release of their own after release 8 (owner, 2026-11-16); its spec starts from the research notes below.
 - [ ] **Windows research (2026-11-16, at the owner's request; two research subagents, key facts checked):**
   - Models: all four app models resolve for win_amd64 (trial locks in copies; Demucs and MuScriptor need `sys_platform == 'win32'` in `environments`; torch 2.15.0+cpu and torchaudio 2.11.1 have win_amd64 wheels). CUDA on Windows works through cu132; AMD and Intel GPUs on Windows: CPU (DirectML is stale, ROCm for Windows does not cover the Radeon 840M).
   - Harness, POSIX-only spots: `os.killpg`/`SIGKILL` and `start_new_session` for cancelling (adapters.py, about lines 177 and 193; on Windows a Job Object or `taskkill /T`), `import resource` for peak RAM in `adapters/_common` (the adapter would not start; `GetProcessMemoryInfo` via ctypes keeps it stdlib-only), `bin/python` vs `Scripts\python.exe` (adapters.py, doctor.py); ffmpeg, ffprobe and MuseScore paths.
