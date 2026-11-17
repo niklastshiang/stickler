@@ -754,13 +754,13 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `uv run pytest -q tests/test_xcstrings.py`; `uv run python scripts/xcstrings.py --check`
   - Dependencies: none (92 only for the source paths in comments) · Files: `scripts/xcstrings.py`, `tests/test_xcstrings.py`, `mac/Stickler/Localizable.xcstrings`, `scripts/check.sh`
 
-- [ ] **Task 95: The owner's check** (S)
+- [x] **Task 95: The owner's check** (S): done 2026-11-17 by the owner on the laptop.
   - Acceptance: on the laptop, `scripts/gtk.sh` in German: open a song, analysis, sheet music, playback, corrections, export of MusicXML and PDF behave as before.
   - Verify: by hand (owner)
   - Dependencies: 92, 93
 
 ### Checkpoint R
-- [ ] All success criteria of SPEC.md "Module `shared-core`" met (owner); then the next module specs of release 8 (`mac-design`, `mac-core`, in parallel)
+- [x] All success criteria of SPEC.md "Module `shared-core`" met (owner, 2026-11-17); then the next module specs of release 8 (`mac-design`, `mac-core`, in parallel)
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 

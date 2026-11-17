@@ -1789,7 +1789,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 
 | Module id | Responsibility | Depends on | Spec |
 |---|---|---|---|
-| `shared-core` | `stickler_gtk/logic` and `i18n` move to `stickler_app` (no visible change on Linux, the existing tests guard it); `scripts/xcstrings.py` writes the String Catalog from `po/` | – | to write |
+| `shared-core` | `stickler_gtk/logic` and `i18n` move to `stickler_app` (no visible change on Linux, the existing tests guard it); `scripts/xcstrings.py` writes the String Catalog from `po/` | – | done, below |
 | `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | to write |
 | `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | to write |
 | `core-bridge` | `stickler serve`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | to write |
@@ -1877,8 +1877,8 @@ wheels need 14, so 26 is the app's own floor).
 
 ### Module `shared-core`
 
-> Status: **approved** by the owner on 2026-11-17 (the Mac app shares the app ID
-> `ng.tshia.Stickler`). Plan: `tasks/plan.md` ("`shared-core`"), tasks 92–95.
+> Status: **done** 2026-11-17 (tasks 92–95, Checkpoint R; the owner checked the app). Approved
+> by the owner on 2026-11-17 (the Mac app shares the app ID `ng.tshia.Stickler`). Plan: `tasks/plan.md` ("`shared-core`"), tasks 92–95.
 
 **Objective.** The app's logic and its translations no longer belong to the GTK app but to a
 neutral package that both apps use: GTK in process as today, the Mac app later through
