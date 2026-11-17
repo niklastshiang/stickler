@@ -712,7 +712,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Verify: `uv run pytest -q tests/test_notation.py -k legend`
   - Dependencies: none · Files: `src/stickler/notation.py`, `tests/test_notation.py`
 
-- [ ] **Task 89: The names** (S)
+- [x] **Task 89: The names** (S): done 2026-11-17. 15 names, one per staff position (incl. ride bell, china, splash, side stick, other percussion), as `N_()` in `logic/legend.py`; `legend.entries` and `legend.score` give a sheet's names and the legend's MusicXML. German "Becken" for the cymbal (owner), "Standtom", "Bassdrum", "Hi-Hat mit Fuß"; Spanish "Platillo", "Redoblante", "Tom de piso", "Bombo", for the teacher's review with the rest. msgmerge pre-filled "Open Hi-Hat" with "Open With…"'s translation again; translated by hand.
   - Acceptance: `stickler_gtk/logic/legend.py` with `N_()` names per position (Cymbal, Ride, Hi-Hat, Open Hi-Hat, Pedal Hi-Hat, High Tom, Mid Tom, Floor Tom, Snare, Side Stick, Bass Drum, Other Percussion; the cymbal position A5 is "Cymbal"), the entries of a sheet in the app's language; German ("Becken" for the cymbal) and Spanish complete.
   - Verify: `uv run pytest -q tests/gtk/test_translations.py tests/gtk/test_legend.py`
   - Dependencies: 88 · Files: `src/stickler_gtk/logic/legend.py`, `po/*`, tests
