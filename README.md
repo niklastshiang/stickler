@@ -117,6 +117,10 @@ Quality 0.842.
   errors, Fast is ahead. Try Quality when Fast misses things in a particular song.
 - **The references are the weak spot:** about half of the disagreements judged by ear were errors
   of the transcriptions. Fast gets about 87 % of the hits right on real music, not 77 %.
+- **Newer models did not beat the modes** (release 7): MuScriptor large 0.704, DrumSep with onset
+  detection 0.589 on the own songs; Separate-and-Detect stayed far behind on MDB. MuScriptor
+  large is the strongest single model on MDB but weaker than ADTOF at hi-hat and cymbals on real
+  songs.
 - **Snapping to the beat grid** for the sheet music costs almost nothing.
 - **Fusion, voting, threshold tuning and bar filling did not help on real music:** they all
   looked good on MDB and did not transfer to rock and metal. Details, per-instrument tables and every decision: [**benchmark report**](docs/report.md).
@@ -163,7 +167,9 @@ On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
 | Separation | `roformer` | [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator), BS-Roformer-SW | MIT / weights unclear |
 | Transcription | `adtof` | [ADTOF-pytorch](https://github.com/xavriley/ADTOF-pytorch) (Zehren et al.) | CC BY-NC-SA |
 | Transcription | `adt_str` | [ADT_STR](https://huggingface.co/Pierfrancesco/adt-str) (2026), τ = 0.8 | CC BY-SA |
-| Transcription | `muscriptor_s`, `muscriptor_m` | [MuScriptor](https://github.com/muscriptor/muscriptor) (Kyutai/IRCAM, 2026) | MIT / weights CC BY-NC |
+| Transcription | `muscriptor_s`, `muscriptor_m`, `muscriptor_l` | [MuScriptor](https://github.com/muscriptor/muscriptor) (Kyutai/IRCAM, 2026); large since release 7 | MIT / weights CC BY-NC |
+| Transcription | `drumsep_onset` | [MDX23C DrumSep](https://github.com/nomadkaraoke/python-audio-separator) (aufr33/jarredou) with onsets per drum stem (release 7) | MIT / weights unclear |
+| Transcription | `sad` | [Separate-and-Detect](https://github.com/ddman1101/Separate-and-detect) (Hsu et al., 2026; release 7) | MIT |
 | ~~Transcription~~ | ~~`yourmt3`~~ | YourMT3+, removed 2026-11-13: last on the own songs, outdated dependencies with known vulnerabilities; results stay in the [report](docs/report.md) | – |
 | Beats | `beat_this` | [Beat This!](https://github.com/CPJKU/beat_this) (CPJKU, 2024) | MIT |
 
@@ -279,10 +285,15 @@ scripts/check.sh task
 - [x] Click volume that follows the song's loudness; the band's name in the PDF; removing the models from the app
 - [x] **Release 6:** polish for the app
 
+**Release 7**
+
+- [x] New candidate models: DrumSep with onset detection, MuScriptor large, Separate-and-Detect (none beats Fast or Quality on real songs)
+- [x] The app starts the models without a network connection
+- [ ] **Release 7:** new candidates
+
 **Next**
 
 - [ ] Quality mode in the app (today it runs Fast)
-- [ ] New candidate models: DrumSep with onset detection, MuScriptor large, models from 2026
 - [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
 - [ ] Ultrareview of the finished application
 

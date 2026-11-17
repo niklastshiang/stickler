@@ -5,8 +5,9 @@ every result and every decision of the Stickler benchmark in one place, readable
 code. Raw numbers are in `results/` after `stickler eval`, the decisions in detail in
 [`docs/adr/`](adr/).
 
-> **Status: release 3 (2026-11-14).** Complete: 25 own songs, MDB Drums (23 tracks), ENST-Drums
-> (64 tracks); errors of the own songs' references estimated by ear (section 5.5).
+> **Status: release 7 (2026-11-17).** Complete: 25 own songs, MDB Drums (23 tracks), ENST-Drums
+> (64 tracks); errors of the own songs' references estimated by ear (section 5.5); three newer
+> candidates measured, none replaces a mode (section 5.6).
 
 ---
 
@@ -35,6 +36,9 @@ only.*
 - **Small samples mislead.** On the first 10 songs Quality led by +0.027 and MuScriptor looked
   much better at toms; with 25 songs both effects shrank to almost nothing.
 - **Snapping the notes to the beat grid**, as the sheet music needs, costs almost nothing.
+- **Three newer models did not beat the modes** on the owner's music (release 7, section 5.6):
+  MuScriptor large is better than medium on MDB and ENST but not on the own songs; DrumSep with
+  onset detection and Separate-and-Detect stay far behind.
 - Several ways to squeeze out more (fusing inputs, voting between models, tuning thresholds,
   consensus across repeated bars) **did not help on the target music** (section 6). ADTOF's own
   settings are already close to optimal there.
@@ -127,6 +131,9 @@ version.
 | Transcription | `adtof` | ADTOF Frame_RNN (Zehren et al. 2023), PyTorch port | CC BY-NC-SA |
 | Transcription | `adt_str` | ADT_STR (2026), stems only | CC BY-SA |
 | Transcription | `muscriptor_m` (`_s`) | MuScriptor medium (small) (Kyutai/IRCAM, 2026) | code MIT, weights CC BY-NC |
+| Transcription | `muscriptor_l` | MuScriptor large (~1.4 B parameters; release 7) | code MIT, weights CC BY-NC (gated) |
+| Transcription | `drumsep_onset` | MDX23C DrumSep (aufr33/jarredou) via python-audio-separator, onsets per drum stem (release 7) | MIT / weights unclear |
+| Transcription | `sad` | Separate-and-Detect (Hsu et al., 2026): diffusion-generated drum stems, onsets per stem (release 7) | MIT |
 | Transcription | `yourmt3` | YourMT3+ YPTF.MoE+Multi (PS); **removed on 2026-11-13** (last on the own songs, its pinned transformers version has known vulnerabilities), results kept here | Apache-2.0 / GPL-3.0 |
 | Beats | `beat_this` | Beat This! (CPJKU, ISMIR 2024) | MIT |
 
@@ -215,10 +222,16 @@ Real-time factor (RTF) = processing time ÷ song length; 0.5 means a 4-minute so
 | YourMT3+ (removed) | 1.76 | ~2.6 GB | ~0.2 |
 | Demucs | 1.84 | ~2.7–4.0 GB | ~0.2 |
 | BS-RoFormer | 4.17 | ~2.4–2.7 GB | 0.13 |
+| MuScriptor large³ | 2.85 | ~10.7 GB | 0.17 |
+| DrumSep with onsets³ | 2.86 | ~1.9 GB | 0.08 |
+| Separate-and-Detect³ | ~550 | ~10.2 GB | 2.4 |
 
 ¹ AMD Ryzen AI 5 340 (12 threads), median over the songs. ² RTX 4090 on a 5-min song, RTX 3090 on
 ENST (incl. model loading). On the laptop's Radeon 840M (ROCm), every model was slower than
 on the CPU, so Stickler computes on the CPU there ([ADR 0003](adr/0003-rocm-kanal.md)).
+³ Release 7, on the Demucs stem (Demucs not included). Laptop: one 4-minute own song (MuScriptor
+large and DrumSep) or the first 10 s of an MDB track (Separate-and-Detect, 92 minutes); GPU: RTX
+4090 on MDB.
 
 ### 5.5 What the errors are, and how many are the reference's
 
@@ -277,6 +290,46 @@ between 0.851 and 0.895 (Fast) and 0.833 and 0.866 (Quality).
 - Hits where the reference and the model are wrong in the same way cannot be found this way.
 - The two modes' intervals overlap: Fast ahead is likely, not certain.
 
+### 5.6 Release 7: newer candidates
+
+Three models published or found since the benchmark, measured like every pipeline (SPEC.md
+"Release 7"). A candidate replaces a mode only if it beats it on the own songs; one that comes
+within 0.01 of a mode would first get a listening round like section 5.5. None came close, so
+none was needed ([ADR 0008](adr/0008-modi.md)).
+
+| Pipeline | Own songs | Kick | Snare | Toms | Hi-hat | Cymbals | MDB | ENST, drummer 3 |
+|---|---|---|---|---|---|---|---|---|
+| **Quality** (combination) | **0.776** | 0.895 | 0.896 | **0.650** | **0.758** | **0.680** | **0.785** | 0.783 |
+| **Fast**: ADTOF, mix | 0.770 | 0.887 | 0.878 | 0.647 | **0.758** | **0.680** | 0.718 | **0.810** |
+| MuScriptor medium, Demucs | 0.714 | 0.89 | 0.90 | 0.65 | 0.70 | 0.43 | 0.747 | 0.718 |
+| MuScriptor large, Demucs | 0.704 | **0.898** | **0.899** | 0.619 | 0.715 | 0.386 | 0.781 | 0.795 |
+| DrumSep with onsets, Demucs | 0.589 | 0.887 | 0.788 | 0.430 | 0.626 | 0.215 | 0.541 | 0.691 |
+| DrumSep with onsets, tuned¹ | 0.568 | 0.881 | 0.769 | 0.378 | 0.575 | 0.238 | 0.607 | 0.716 |
+| Separate-and-Detect, Demucs² | – | | | | | | 0.497 | – |
+
+*Macro-F1 over 5 classes; class columns: own songs. ¹ Thresholds per class tuned on MDB and ENST
+(Demucs stem), never on the own songs. ² Not run on ENST and the own songs, see below.*
+
+On the isolated drum stems (oracle), MuScriptor large reaches 0.811 on MDB and 0.851 on ENST
+drummer 3 (medium: 0.766 and 0.791), DrumSep 0.587 and 0.764, Separate-and-Detect 0.517 on MDB.
+
+- **MuScriptor large is the strongest single model on MDB** (0.781 on the Demucs stem, ADTOF
+  0.762) and second to ADTOF on ENST drummer 3, clearly better than medium on both, but on the
+  own songs it is not: slightly better at kick and snare (+0.003 each),
+  worse at toms (−0.031), and like medium far behind ADTOF at hi-hat and cymbals. In place of
+  medium inside Quality it would give 0.771 instead of 0.776; large for kick and snare with
+  medium for toms 0.777, a tie that needs both models. Demucs plus MuScriptor large takes about
+  19 minutes for a 4-minute song on the laptop, just inside the 20-minute budget for Quality.
+- With 3 classes (kick, snare, hi-hat) MuScriptor large comes close: 0.837 against Fast 0.841 and
+  Quality 0.849. The decision uses 5 classes, as the modes were chosen on (owner, 2026-11-17).
+- **DrumSep with onset detection** finds kicks and snares well, but its toms
+  and cymbals are weak everywhere (toms 0.05 on MDB). Tuning its thresholds on MDB and ENST
+  helped there (MDB +0.07, ENST drummer 3 +0.03) and made the own songs worse (−0.02), as in section 6.
+- **Separate-and-Detect** generates drum stems with a diffusion model, about 2.4 times real time
+  on an RTX 4090 and far too slow for a laptop CPU. With thresholds tuned on MDB's isolated stems
+  its mean F1 stayed about 0.60, against 0.73 for DrumSep and 0.81 for MuScriptor large, so it was
+  closed there by a rule set before the run (SPEC.md "Release 7", method 3).
+
 ---
 
 ## 6. What was tried and did not help
@@ -324,6 +377,7 @@ owner decided against fine-tuning.
 | ENST: minus-one tracks, 2/3 drums + 1/3 accompaniment | the common evaluation set with accompaniment | `stickler.datasets.enst` |
 | Tune on the target music, with cross-validation | MDB choices did not transfer | section 6 |
 | Modes: Fast = ADTOF on the mix with its default thresholds; Quality = the combination | best and robust on all three datasets; Quality slightly better on the target music and kept because it can be clearly better for a particular song; after correcting for reference errors Fast is ahead, Quality stays for now (owner, 2026-11-14) | [ADR 0008](adr/0008-modi.md), sections 1, 5, 5.5 |
+| Release 7: Fast and Quality unchanged; MuScriptor large, DrumSep with onsets and Separate-and-Detect stay in the benchmark only | none beats a mode on the own songs (5 classes), none came within 0.01, so no listening round (owner, 2026-11-17) | [ADR 0008](adr/0008-modi.md), section 5.6 |
 | Estimate reference errors by ear: 100 error spots, drawn once, judged blind; scoring unchanged | the references are third-party transcriptions; honest numbers without changing the benchmark | section 5.5, SPEC.md "Release 3" |
 | torch 2.15 in every model, after Dependabot alerts | known vulnerabilities in older versions; outputs checked before/after (identical, or within the model's own run-to-run variation) | tasks/todo.md |
 

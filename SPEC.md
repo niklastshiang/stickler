@@ -1628,7 +1628,9 @@ po/*.po                                # the names
 
 > Status: **approved** by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
 > after a web check of each (facts and sources below). Plan: `tasks/plan.md` ("Release 7"),
-> tasks 12 and 82–86 in `tasks/todo.md`.
+> tasks 12 and 82–86 in `tasks/todo.md`. **Result (2026-11-17):** measured on all three datasets;
+> no candidate beats or comes within 0.01 of a mode on the own songs, so Fast and Quality stay
+> unchanged (owner; ADR 0008, `docs/report.md` section 5.6).
 
 ### Objective
 **Find out whether a newer model makes Fast or Quality better on the owner's music.** A
@@ -1955,8 +1957,7 @@ push by a macOS runner, before any Swift exists. Linux behaves exactly as before
 
 **Assumptions** (from the code and the research of 2026-11-16, checked 2026-11-17):
 1. The app's models are those of its modes: ADTOF and Beat This! (Fast), Demucs and MuScriptor
-   medium (Quality). A release 7 candidate that replaces one of them is added here when Task 86
-   decides it.
+   medium (Quality). Release 7 replaced none of them (ADR 0008, 2026-11-17).
 2. ADTOF's and Beat This!'s locks already hold torch 2.15 wheels for `macosx_14_0_arm64`;
    Demucs', MuScriptor medium's and MuScriptor large's `pyproject.toml` restrict
    `environments` to `sys_platform == 'linux'` (a leftover from an old torch on Intel Macs).
