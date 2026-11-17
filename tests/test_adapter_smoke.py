@@ -6,6 +6,7 @@ so that no audio lives in the repository.
 
 import json
 import math
+import os
 import struct
 import wave
 from pathlib import Path
@@ -18,6 +19,23 @@ from stickler.midi import read_drum_notes
 
 ROOT = Path(__file__).resolve().parents[1]
 pytestmark = pytest.mark.adapters
+
+
+def _report(adapter_id: str, result: adapters.AdapterResult) -> None:
+    """Checks the run's meta.json and, when STICKLER_SMOKE_REPORT names a file, adds a line to
+    it (the macOS workflow's job summary: seconds and peak RAM per model). Peak RAM must be in
+    megabytes on every platform: macOS reports ru_maxrss in bytes (Task 96)."""
+    meta = result.meta or {}
+    assert 10 < meta.get("peak_rss_mb", 0) < 32 * 1024, f"implausible peak RAM: {meta}"
+    report = os.environ.get("STICKLER_SMOKE_REPORT")
+    if report:
+        row = {
+            "adapter": adapter_id,
+            "seconds": meta.get("seconds"),
+            "peak_rss_mb": meta["peak_rss_mb"],
+        }
+        with open(report, "a", encoding="utf-8") as f:
+            f.write(json.dumps(row) + "\n")
 
 
 def synth_drums(path: Path, seconds: float = 10.0, sr: int = 44100) -> None:
@@ -63,6 +81,7 @@ def test_transcriber_produces_midi(adapter_id, drum_clip, tmp_path):
     assert notes, "no notes detected"
     assert all(35 <= pitch <= 81 for _, pitch in notes), "pitches outside the GM drum range"
     assert json.loads((tmp_path / adapter_id / "meta.json").read_text())["device"] == "cpu"
+    _report(adapter_id, result)
 
 
 @pytest.fixture(scope="module")
@@ -96,6 +115,7 @@ def test_separator_produces_drum_stem(adapter_id, drum_clip, tmp_path):
     with wave.open(str(result.output)) as w:
         seconds = w.getnframes() / w.getframerate()
     assert seconds == pytest.approx(10.0, abs=0.1)
+    _report(adapter_id, result)
 
 
 def test_beat_tracker_finds_120_bpm(drum_clip, tmp_path):
@@ -108,6 +128,7 @@ def test_beat_tracker_finds_120_bpm(drum_clip, tmp_path):
     assert len(data["beats"]) >= 15
     assert sorted(gaps)[len(gaps) // 2] == pytest.approx(0.5, abs=0.03)
     assert set(data["downbeats"]) <= set(data["beats"])
+    _report("beat_this", result)
 
 
 def test_fast_mode_model_runs_without_network(drum_clip, tmp_path, monkeypatch):

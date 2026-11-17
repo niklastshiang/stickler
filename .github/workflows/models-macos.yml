@@ -1,0 +1,66 @@
+# The Mac app's models on Apple Silicon's CPU (SPEC.md, module `mac-core`, scope 4 and 5): ADTOF,
+# Beat This! and Demucs set up and run on their smoke clips; MuScriptor (gated, no token in CI)
+# only installed from its lock. Each model's seconds and peak RAM go into the job summary.
+name: models-macos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "adapters/**"
+      - "src/stickler/**"
+      - "tests/test_adapter_smoke.py"
+      - ".github/workflows/models-macos.yml"
+  schedule:
+    - cron: "0 4 * * 1" # Mondays, 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  models:
+    # macos-15 while GitHub could not assign a macos-26 runner (see check.yml)
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      UV_PYTHON: "3.14"
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Tools
+        run: brew install ffmpeg
+      - run: uv sync --locked
+      - name: Set up ADTOF, Beat This! and Demucs
+        run: |
+          for adapter in adtof beat_this demucs; do
+            uv run stickler setup --adapter "$adapter"
+          done
+      - name: MuScriptor installs from its lock on macOS (not run; gated)
+        run: |
+          uv sync --locked --project adapters/transcribers/muscriptor_m
+          uv sync --locked --project adapters/transcribers/muscriptor_l
+      - name: Smoke tests on the CPU
+        env:
+          STICKLER_SMOKE_REPORT: ${{ runner.temp }}/smoke.jsonl
+        run: >
+          uv run pytest -q -m adapters tests/test_adapter_smoke.py
+          -k "(transcriber_produces_midi and adtof) or (separator_produces_drum_stem and demucs)
+          or beat_tracker or without_network"
+      - name: Times and memory into the job summary
+        if: always()
+        env:
+          REPORT: ${{ runner.temp }}/smoke.jsonl
+        run: |
+          uv run python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json, os, platform
+          from pathlib import Path
+          report = Path(os.environ["REPORT"])
+          rows = [json.loads(line) for line in report.read_text().splitlines()] if report.exists() else []
+          print(f"### Models on {platform.machine()} macOS {platform.mac_ver()[0]}, CPU, 10 s clip\n")
+          print("| Model | Seconds | Peak RAM (MB) |\n|---|---|---|")
+          for r in rows:
+              print(f"| {r['adapter']} | {r['seconds']} | {r['peak_rss_mb']} |")
+          if not rows:
+              print("| (no results) | | |")
+          EOF
