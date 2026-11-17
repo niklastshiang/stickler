@@ -726,6 +726,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
 - [ ] **Task 91: The PDF and the owner's check** (S)
   - Acceptance: the written PDF has the legend on page 1 only (widget test with Poppler); the owner exports two songs (Fast and Quality) and checks names and layout.
   - Verify: `scripts/gtk.sh test`; by hand on the laptop
+  - Owner's check on the laptop (planned for the evening of 2026-11-17): `git pull origin claude/gifted-curie-4n4pz4`, `scripts/gtk.sh`, export one song with Fast and one with Quality as PDF. Look for: the legend under title and band, clear of the tempo mark; the right names, each notehead in its place; page 2 without a legend and with its usual top margin. The widget test (Poppler: legend on page 1 only) is still to be written; it runs only where GTK is installed, so it is checked on the laptop too.
   - Dependencies: 90 · Files: tests (`ui/pdf.py` unchanged)
 
 ### Checkpoint Q
