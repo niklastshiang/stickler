@@ -717,10 +717,11 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Verify: `uv run pytest -q tests/gtk/test_translations.py tests/gtk/test_legend.py`
   - Dependencies: 88 · Files: `src/stickler_gtk/logic/legend.py`, `po/*`, tests
 
-- [ ] **Task 90: Room on page 1 and the legend drawn into it** (M)
+- [x] **Task 90: Room on page 1 and the legend drawn into it** (M)
   - Acceptance: the A4 pages of a sheet with positions get blank right/bottom credits after the band, in memory only; the legend's SVG sits under the band and above the first system (read from page 1's SVG), with and without a band; pages 2 and later start at the same top margin; the stored MusicXML is unchanged; every STAFF entry in the longest language stays one line.
   - Verify: `uv run pytest -q tests/gtk/test_engraving.py -k legend`
   - Dependencies: 88, 89 · Files: `src/stickler_gtk/logic/engraving.py`, tests
+  - Done 2026-11-17: `engraving.a4_pages(xml, legend=...)`, `header_bottom`, `legend_box`; the room counts what sits above the first staff (tempo, cymbals), measured with and without blanks. All 15 positions in German are wider than A4 and Verovio squeezed the names into each other, so the legend is engraved at its natural width and drawn smaller only when it does not fit (SPEC point 5). The PDF export passes the legend (`ui/window.py`); its widget test is Task 91.
 
 - [ ] **Task 91: The PDF and the owner's check** (S)
   - Acceptance: the written PDF has the legend on page 1 only (widget test with Poppler); the owner exports two songs (Fast and Quality) and checks names and layout.

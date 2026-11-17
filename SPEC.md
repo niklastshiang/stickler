@@ -1557,7 +1557,10 @@ src/stickler_gtk/ui/menu.py, window.py # the menu entry and its alert
 5. **Where it is drawn:** the legend is a small score of its own, engraved by Verovio like the
    sheet (the same font and noteheads, names as lyrics, one stemless measure, hidden time
    signature), and nested into page 1's SVG in `logic/engraving.py`. `ui/pdf.py` stays as it
-   is, so everything but the final PDF is tested without a display.
+   is, so everything but the final PDF is tested without a display. It is engraved at its
+   natural width; wider than the page (all 15 positions in German, more than about 12 entries)
+   it is drawn smaller as a whole, since Verovio would otherwise squeeze the names into each
+   other (2026-11-17).
 6. **The names are in the app's language** (English, German, Spanish; the Spanish ones for the
    teacher's review with the rest). The strings are `N_()` constants in the GTK-free
    `stickler_gtk/logic/legend.py`, where `scripts/i18n.sh` finds them; `notation` takes the

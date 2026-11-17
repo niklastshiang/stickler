@@ -19,6 +19,7 @@ from stickler_gtk.logic import (
     corrections,
     engraving,
     exports,
+    legend,
     paths,
     playback,
     recent,
@@ -480,7 +481,8 @@ class Window(Adw.ApplicationWindow):
         def save(dest: Path) -> None:
             try:
                 xml = result.notation.musicxml.read_text(encoding="utf-8")
-                pdf.write_pdf(engraving.a4_pages(xml), dest, title=result.title)
+                pages = engraving.a4_pages(xml, legend=legend.score(xml))
+                pdf.write_pdf(pages, dest, title=result.title)
             except OSError as exc:
                 self.toast(_("Could not save: {reason}").format(reason=exc.strerror))
                 return
