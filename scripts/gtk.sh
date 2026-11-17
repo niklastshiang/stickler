@@ -85,8 +85,9 @@ if [[ "${1:-}" == "test" || "${1:-}" == "demo" ]]; then
     # private settings, cache and recent songs, in English, as for the screenshots
     private=$(mktemp -d)
     trap 'kill "$(cat "${pidfile:-/dev/null}")" 2>/dev/null; rm -rf "$private"' EXIT
+    # an empty results cache too, so the analysis really runs and is seen in the recording
     XDG_CONFIG_HOME="$private/config" XDG_CACHE_HOME="$private/cache" \
-      XDG_DATA_HOME="$private/data" LANGUAGE=en \
+      XDG_DATA_HOME="$private/data" STICKLER_RESULTS_CACHE="$private/results" LANGUAGE=en \
       .venv-gtk/bin/python scripts/demo.py "$@"
     exit
   fi

@@ -63,7 +63,12 @@ def adapters_root(env: Mapping[str, str] = os.environ) -> Path:
 
 
 def results_cache(env: Mapping[str, str] = os.environ) -> Path:
-    """The models' cached results: the app's cache folder when packaged, else the library's."""
+    """The models' cached results: $STICKLER_RESULTS_CACHE (the README's recording starts from
+    an empty one, so its analysis really runs); the app's cache folder when packaged, else the
+    library's."""
+    chosen = env.get("STICKLER_RESULTS_CACHE")
+    if chosen:
+        return Path(chosen)
     return cache_home(env) / "results" if packaged(env) else api.CACHE_DIR
 
 

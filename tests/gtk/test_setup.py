@@ -106,6 +106,8 @@ def test_a_packaged_app_keeps_models_and_results_in_its_own_folders(tmp_path):
         assert paths.results_cache(env) == Path("/c/stickler/results")
     assert paths.adapters_root({**flatpak, "STICKLER_ADAPTERS": "/try"}) == Path("/try")
     assert paths.results_cache({}) == api.CACHE_DIR  # from the checkout: as before
+    assert paths.results_cache({**flatpak, "STICKLER_RESULTS_CACHE": "/r"}) == Path("/r")
+    assert paths.results_cache({"STICKLER_RESULTS_CACHE": "/r"}) == Path("/r")
     assert paths.adapter_sources({"STICKLER_ADAPTER_SOURCES": "/app/a"}) == Path("/app/a")
     assert paths.adapter_sources({}) is None
 
