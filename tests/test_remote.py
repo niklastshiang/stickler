@@ -356,3 +356,18 @@ def test_setup_starts_after_the_code_and_before_the_big_uploads(tmp_path, plan):
     data = next(i for i, c in enumerate(cmds) if c[0] == "rsync" and "data/mdb" in c[-1])
     assert code < start < data
     assert rec.calls[start][1] == "tok\n"  # the token goes over stdin here, too
+
+
+def test_track_ids_reach_the_host_unchanged_by_its_shell():
+    """ENST has "rock'n'roll" in three ids; unquoted, the host's bash dropped the apostrophes,
+    found no such track and skipped them silently (2026-11-17)."""
+    import subprocess
+
+    only = ["a", "d1_137_MIDI-minus-one_rock'n'roll-188_sticks", "b c"]
+    script = remote.remote_script("config/enst.yaml", only=only)
+    for line in (s for s in script.splitlines() if "--only" in s):
+        words = line.split("--only", 1)[1]
+        out = subprocess.run(
+            ["bash", "-c", f"printf '%s\\n' {words}"], capture_output=True, text=True, check=True
+        ).stdout.splitlines()
+        assert out[0] == ",".join(only)

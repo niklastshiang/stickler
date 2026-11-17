@@ -176,7 +176,8 @@ def remote_script(config: str, fetch: list[str] = (), only: list[str] | None = N
     """Bash script run on the host after the uploads; the first stdin line is the Hugging Face
     token. Waits for the background setup, then computes (only the given tracks)."""
     fetches = "\n".join(f"uv run stickler fetch {name}" for name in fetch)
-    restrict = f" --only {','.join(only)}" if only else ""
+    # quoted: ids may hold shell characters (ENST's "rock'n'roll" lost its apostrophes)
+    restrict = f" --only {shlex.quote(','.join(only))}" if only else ""
     return f"""set -euo pipefail
 read -r HF_TOKEN || true
 export HF_TOKEN
