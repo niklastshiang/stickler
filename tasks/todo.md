@@ -769,7 +769,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `uv run pytest -q tests/test_adapter_common.py` (or where `_peak_rss_mb` is tested); `stickler eval` for `config/benchmark.yaml` and `config/own.yaml` reads every result (ENST after the pod run)
   - Dependencies: none · Files: `adapters/_common/src/stickler_adapter/__init__.py`, a test, `src/stickler/digests.yaml`
 
-- [ ] **Task 97: Demucs and MuScriptor on macOS arm64** (M)
+- [x] **Task 97: Demucs and MuScriptor on macOS arm64** (M): done 2026-11-17. `environments` widened for demucs, muscriptor_m and muscriptor_l; relocked (macOS gets its own fork: torch 2.15.0 and torchaudio 2.11.1 from the CPU index without `+cpu`). `scripts/lock_platforms.py` (8 tests; follows dependency markers from the root, a marker only counts as "not Linux" when every `or` clause names another platform): 34, 60 and 60 Linux packages, 0 differences each; `uv sync --dry-run --locked` would change nothing in the three Linux environments. `digests.yaml` pairs; `stickler eval` for MDB, ENST and the own songs byte-identical.
   - Acceptance: `environments` widened by `sys_platform == 'darwin' and platform_machine == 'arm64'` for Demucs, MuScriptor medium and large; new locks; `scripts/lock_platforms.py` shows the Linux packages, versions and hashes identical before and after (its output in the commit message); `digests.yaml` pairs; nothing for Linux moved, else stop and ask.
   - Verify: the comparison script; `uv run pytest -q`; `stickler eval` as in 96
   - Dependencies: 96 · Files: `adapters/separators/demucs/{pyproject.toml,uv.lock}`, `adapters/transcribers/muscriptor_{m,l}/{pyproject.toml,uv.lock}`, `scripts/lock_platforms.py`, its test, `src/stickler/digests.yaml`
