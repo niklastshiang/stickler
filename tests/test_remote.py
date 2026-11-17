@@ -60,7 +60,21 @@ def test_adapters_for_config_skips_builtin_separators(tmp_path):
     assert remote.adapters_for(cfg) == ["demucs", "adtof"]
 
 
-def test_enst_is_downloaded_on_the_host_not_uploaded(tmp_path, monkeypatch):
+def test_enst_is_uploaded_when_prepared_here(tmp_path, monkeypatch):
+    """The host's own ffmpeg writes other bytes into the mixes (its version tag), so their
+    cache keys would differ and the host would recompute what is cached (2026-11-17)."""
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text("datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n")
+    (tmp_path / "data" / "enst" / "mix").mkdir(parents=True)
+    (tmp_path / "data" / "enst" / "mix" / "t.wav").write_bytes(b"RIFF")
+    monkeypatch.setattr(remote, "tracked_files", lambda root: [])
+    plan = remote.sync_plan(
+        cfg, project_root=tmp_path, references_dir=tmp_path, data_dir=tmp_path / "data"
+    )
+    assert plan.data_dirs == ["data/mdb", "data/enst"] and plan.fetch == []
+
+
+def test_enst_is_downloaded_on_the_host_when_missing_here(tmp_path, monkeypatch):
     cfg = tmp_path / "c.yaml"
     cfg.write_text("datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n")
     monkeypatch.setattr(remote, "tracked_files", lambda root: [])
