@@ -39,6 +39,26 @@ jobs:
             uv run python scripts/floor_guard.py --base "$BASE"
           fi
 
+  # The Mac app's core (SPEC.md, module `mac-core`): the same checks on Apple Silicon. The GTK
+  # tests stay on Linux (pytest's default selection leaves them out, as above).
+  macos:
+    runs-on: macos-26 # arm64, free for a public repository
+    env:
+      UV_PYTHON: "3.14"
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0 # the floor guard and a cache-key test read earlier commits
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Tools
+        run: |
+          brew install ffmpeg
+          git config --global user.name "CI"
+          git config --global user.email "ci@users.noreply.github.com"
+      - run: uv sync --locked
+      - name: Lint, format, floor guard, tests with coverage
+        run: scripts/check.sh task
+
   metadata:
     runs-on: ubuntu-26.04
     steps:
