@@ -103,3 +103,11 @@ def test_fetch_rejects_a_damaged_download(tmp_path, root, monkeypatch):
     monkeypatch.setattr(enst, "_download", lambda url, dest: dest.write_bytes(archive.read_bytes()))
     with pytest.raises(RuntimeError, match="checksum"):
         enst.fetch(tmp_path / "data" / "enst")
+
+
+def test_only_gnu_tar_gets_the_wildcards_option(tmp_path):
+    """macOS has BSD tar, which matches the patterns anyway and rejects --wildcards."""
+    gnu = enst.unpack_command(tmp_path / "a.tar.zst", tmp_path, "tar (GNU tar) 1.35")
+    bsd = enst.unpack_command(tmp_path / "a.tar.zst", tmp_path, "bsdtar 3.7.4 - libarchive 3.7.4")
+    assert "--wildcards" in gnu and "--wildcards" not in bsd
+    assert gnu[-len(enst.NEEDED) :] == list(enst.NEEDED) == bsd[-len(enst.NEEDED) :]

@@ -149,6 +149,16 @@ def _download(url: str, dest: Path) -> None:
                 log.info("ENST download: %d GB", done // step)
 
 
+def unpack_command(archive: Path, target: Path, tar_version: str | None = None) -> list[str]:
+    """tar call that unpacks only NEEDED. GNU tar needs `--wildcards` for the patterns; BSD
+    tar (macOS) matches them as patterns anyway and rejects the option."""
+    if tar_version is None:
+        tar_version = subprocess.run(["tar", "--version"], capture_output=True, text=True).stdout
+    wildcards = ["--wildcards"] if "GNU tar" in tar_version else []
+    cmd = ["tar", "--zstd", "-xf", str(archive), "-C", str(target), "--strip-components=1"]
+    return [*cmd, *wildcards, *NEEDED]
+
+
 def fetch(target: Path) -> int:
     """Downloads ENST-Drums from Zenodo unless it is already there; returns the track count."""
     if _sources(target):
@@ -163,20 +173,6 @@ def fetch(target: Path) -> int:
         part.unlink()
         raise RuntimeError(f"ENST download damaged: checksum {digest}, expected {MD5}")
     part.rename(archive)
-    subprocess.run(
-        [
-            "tar",
-            "--zstd",
-            "-xf",
-            str(archive),
-            "-C",
-            str(target),
-            "--strip-components=1",
-            "--wildcards",
-            *NEEDED,
-        ],
-        check=True,
-        capture_output=True,
-    )
+    subprocess.run(unpack_command(archive, target), check=True, capture_output=True)
     archive.unlink()
     return prepare(target)

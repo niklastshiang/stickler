@@ -1,6 +1,7 @@
 """Shared test setup."""
 
 import os
+import subprocess
 import time
 
 import pytest
@@ -15,7 +16,14 @@ def _isolate_from_outer_git(monkeypatch):
 
 
 def _states() -> list[tuple[int, str, int]]:
-    """(pid, state, process group) of every process, read from /proc."""
+    """(pid, state, process group) of every process: from /proc on Linux, from `ps` where
+    there is none (macOS, 2026-11-17)."""
+    if not os.path.isdir("/proc"):
+        out = subprocess.run(
+            ["ps", "-A", "-o", "pid=,stat=,pgid="], capture_output=True, text=True, check=True
+        ).stdout
+        rows = (line.split() for line in out.splitlines() if line.strip())
+        return [(int(pid), stat[0], int(pgid)) for pid, stat, pgid in rows]
     found = []
     for entry in os.scandir("/proc"):
         if not entry.name.isdigit():
