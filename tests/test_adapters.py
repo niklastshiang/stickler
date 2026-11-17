@@ -308,6 +308,16 @@ def test_a_set_up_adapter_starts_without_network(tmp_path, monkeypatch):
     assert 'version = "1"' in (spec.path / "uv.lock").read_text(encoding="utf-8")
 
 
+def test_an_adapter_without_environment_may_still_go_online_to_make_one(tmp_path):
+    """`--offline` also forbids fetching a Python: an adapter run before its setup (a fresh
+    checkout, CI on another Python) must let uv create its environment as before (CI on 3.14,
+    2026-11-17)."""
+    spec = _local_adapter(tmp_path, weights=False)
+    assert "--offline" not in adapters.cpu_python(spec)
+    adapters.setup_adapter(spec)
+    assert "--offline" in adapters.cpu_python(spec)
+
+
 def test_weights_count_only_after_setup_py_finished(tmp_path):
     spec = _local_adapter(tmp_path)
     adapters.setup_adapter(spec)

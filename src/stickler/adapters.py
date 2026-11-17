@@ -221,13 +221,15 @@ def _fail(out_dir: Path, message: str) -> AdapterResult:
 
 
 def cpu_python(spec: AdapterSpec) -> list[str]:
-    """Command that runs Python in the adapter's CPU environment, never touching the network.
-    A plain `uv run` revalidates the metadata of direct URL dependencies over HTTP (ADTOF's
-    GitHub tarball) and failed offline although everything was installed (2026-11-17).
-    `--offline` still checks the lock against pyproject.toml, from uv's cache, so a changed
-    adapter never runs in its old environment (`--frozen` would); what the cache cannot
-    resolve fails, and `stickler setup` (online) fixes it."""
-    return ["uv", "run", "--offline", "--quiet", "--project", str(spec.path), "python"]
+    """Command that runs Python in the adapter's CPU environment; once that environment
+    exists, without touching the network. A plain `uv run` revalidates the metadata of direct
+    URL dependencies over HTTP (ADTOF's GitHub tarball) and failed offline although everything
+    was installed (2026-11-17). `--offline` still checks the lock against pyproject.toml, from
+    uv's cache, so a changed adapter never runs in its old environment (`--frozen` would);
+    what the cache cannot resolve fails, and `stickler setup` (online) fixes it. Before the
+    environment exists uv may go online to make it, a Python included, as before."""
+    offline = ["--offline"] if (spec.path / ".venv").is_dir() else []
+    return ["uv", "run", *offline, "--quiet", "--project", str(spec.path), "python"]
 
 
 def run_adapter(
