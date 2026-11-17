@@ -220,6 +220,16 @@ def _fail(out_dir: Path, message: str) -> AdapterResult:
     return AdapterResult(ok=False, output=None, meta=None, error=message)
 
 
+def cpu_python(spec: AdapterSpec) -> list[str]:
+    """Command that runs Python in the adapter's CPU environment, never touching the network.
+    A plain `uv run` revalidates the metadata of direct URL dependencies over HTTP (ADTOF's
+    GitHub tarball) and failed offline although everything was installed (2026-11-17).
+    `--offline` still checks the lock against pyproject.toml, from uv's cache, so a changed
+    adapter never runs in its old environment (`--frozen` would); what the cache cannot
+    resolve fails, and `stickler setup` (online) fixes it."""
+    return ["uv", "run", "--offline", "--quiet", "--project", str(spec.path), "python"]
+
+
 def run_adapter(
     spec: AdapterSpec,
     audio: Path,
@@ -245,7 +255,7 @@ def run_adapter(
     elif variant == "cuda":
         python = [str(_cuda_python(spec))]
     else:
-        python = ["uv", "run", "--quiet", "--project", str(spec.path), "python"]
+        python = cpu_python(spec)
     args = ["--in", str(audio), "--out", str(out_dir), "--device", device]
     cmd = [*python, str(spec.path / "run.py"), *args]
     log.info("%s: %s", spec.id, audio.name)
@@ -452,7 +462,7 @@ def setup_environment(
     if device == "cuda":
         return [str(_setup_cuda(spec))]
     _check_group(["uv", "sync", "--quiet", "--project", str(spec.path)], spec, cancel)
-    return ["uv", "run", "--quiet", "--project", str(spec.path), "python"]
+    return cpu_python(spec)
 
 
 def setup_weights(

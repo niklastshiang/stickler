@@ -2,6 +2,7 @@
 
 import json
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -277,6 +278,34 @@ def test_setup_steps_can_run_one_by_one(tmp_path):
     adapters.setup_weights(spec, python)
     assert adapters.missing_setup(spec) == []
     assert not adapters.needs_weights(_local_adapter(tmp_path, "nw", weights=False))
+
+
+def dead_network(monkeypatch) -> None:
+    """Every HTTP request of uv goes to a closed local port."""
+    for var in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "ALL_PROXY"):
+        monkeypatch.setenv(var, "http://127.0.0.1:9")
+    monkeypatch.setenv("UV_HTTP_RETRIES", "0")
+
+
+def _python(spec: adapters.AdapterSpec, code: str) -> subprocess.CompletedProcess:
+    cmd = [*adapters.cpu_python(spec), "-c", code]
+    return subprocess.run(cmd, capture_output=True, text=True, env=adapters.adapter_env())
+
+
+def test_a_set_up_adapter_starts_without_network(tmp_path, monkeypatch):
+    """Offline, ADTOF failed to start (2026-11-17; the real case is in test_adapter_smoke).
+    Without network a set-up adapter starts, and a changed pyproject.toml still reaches its
+    lock (so it never runs in the old environment)."""
+    spec = _local_adapter(tmp_path, weights=False)
+    adapters.setup_adapter(spec)
+    dead_network(monkeypatch)
+    proc = _python(spec, "print('ok')")
+    assert (proc.returncode, proc.stdout.strip()) == (0, "ok"), proc.stderr
+    pyproject = spec.path / "pyproject.toml"
+    text = pyproject.read_text(encoding="utf-8")
+    pyproject.write_text(text.replace('version = "0"', 'version = "1"'), encoding="utf-8")
+    assert _python(spec, "print('ok')").returncode == 0
+    assert 'version = "1"' in (spec.path / "uv.lock").read_text(encoding="utf-8")
 
 
 def test_weights_count_only_after_setup_py_finished(tmp_path):

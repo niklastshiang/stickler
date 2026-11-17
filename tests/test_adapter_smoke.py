@@ -108,3 +108,14 @@ def test_beat_tracker_finds_120_bpm(drum_clip, tmp_path):
     assert len(data["beats"]) >= 15
     assert sorted(gaps)[len(gaps) // 2] == pytest.approx(0.5, abs=0.03)
     assert set(data["downbeats"]) <= set(data["beats"])
+
+
+def test_fast_mode_model_runs_without_network(drum_clip, tmp_path, monkeypatch):
+    """ADTOF's dependency is a GitHub tarball; a plain `uv run` revalidated it over the network
+    and failed offline (2026-11-17)."""
+    for var in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "ALL_PROXY"):
+        monkeypatch.setenv(var, "http://127.0.0.1:9")
+    monkeypatch.setenv("UV_HTTP_RETRIES", "0")
+    spec = adapters.discover(ROOT / "adapters")["adtof"]
+    result = adapters.run_adapter(spec, drum_clip, tmp_path / "adtof", device="cpu")
+    assert result.ok, result.error
