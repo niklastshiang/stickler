@@ -76,10 +76,11 @@ def write_drum_midi(path: Path, notes: Iterable[tuple[float, int, int]]) -> None
     path.write_bytes(header + b"MTrk" + struct.pack(">I", len(track)) + bytes(track))
 
 
-def _peak_rss_mb() -> float:
+def _peak_rss_mb(platform: str = sys.platform) -> float:
     own = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     children = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
-    return max(own, children) / 1024  # Linux: KiB
+    per_mb = 1024 * 1024 if platform == "darwin" else 1024  # macOS reports bytes, Linux KiB
+    return max(own, children) / per_mb
 
 
 def run(fn: Callable[[Path, Path, str], None], *, stage: str, adapter: str, version: str) -> None:

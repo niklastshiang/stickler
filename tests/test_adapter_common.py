@@ -46,3 +46,17 @@ def test_write_drum_midi_empty(tmp_path):
     path = tmp_path / "leer.mid"
     sa.write_drum_midi(path, [])
     assert read_drum_notes(path) == []
+
+
+class _Usage:
+    def __init__(self, maxrss: int):
+        self.ru_maxrss = maxrss
+
+
+@pytest.mark.parametrize(
+    ("platform", "maxrss"),
+    [("linux", 2048 * 1024), ("darwin", 2048 * 1024 * 1024)],  # KiB on Linux, bytes on macOS
+)
+def test_peak_ram_is_in_megabytes_on_linux_and_macos(monkeypatch, platform, maxrss):
+    monkeypatch.setattr(sa.resource, "getrusage", lambda who: _Usage(maxrss))
+    assert sa._peak_rss_mb(platform) == 2048.0

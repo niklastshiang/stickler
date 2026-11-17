@@ -764,7 +764,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 
 ## Phase 19: Release 8 (macOS app), module `mac-core` (approved 2026-11-17, SPEC.md "Module `mac-core`")
 
-- [ ] **Task 96: Peak RAM in the right unit on macOS** (S)
+- [x] **Task 96: Peak RAM in the right unit on macOS** (S): done 2026-11-17. `_peak_rss_mb(platform)` divides by 1024² on `darwin`, 1024 elsewhere; a test fixes both. Every adapter's digest changed (`adapters/_common`); a pair each in `digests.yaml`, the first ones for drumsep_onset and sad. `stickler eval` for MDB, ENST and the own songs: every earlier row identical; ENST gained rows from new results (oracle+drumsep_onset 62 instead of 61 tracks, oracle+sad 1 track from the stopped pod). Two tests adjusted for the edit: the fixture digest (its docstring says a `_common` edit changes it) and the release-6 chain test, which now names the two adapters added after release 6.
   - Acceptance: `stickler_adapter._peak_rss_mb` reads `ru_maxrss` as bytes on `darwin` and KiB elsewhere; a test fixes both (the Linux number unchanged); a `digests.yaml` pair for every adapter (taken with `stickler cache-digests` before and after).
   - Verify: `uv run pytest -q tests/test_adapter_common.py` (or where `_peak_rss_mb` is tested); `stickler eval` for `config/benchmark.yaml` and `config/own.yaml` reads every result (ENST after the pod run)
   - Dependencies: none · Files: `adapters/_common/src/stickler_adapter/__init__.py`, a test, `src/stickler/digests.yaml`

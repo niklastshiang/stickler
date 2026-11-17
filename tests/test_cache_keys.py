@@ -107,10 +107,12 @@ def _release6_digest(spec: adapters.AdapterSpec) -> str:
 
 
 def test_a_chain_leads_from_each_listed_adapter_s_release_6_digest_to_today_s():
-    """Each listed adapter is unchanged since release 6 (checked against b4ca4a5 when listed),
-    so its digest of the old definition, computed on today's files, must be reachable."""
+    """Each adapter listed by Task 87 is unchanged since release 6 (checked against b4ca4a5 when
+    listed), so its digest of the old definition, computed on today's files, must be reachable.
+    drumsep_onset and sad came after release 6; they are listed since Task 96 for a later edit
+    only, so they have no release 6 digest to reach."""
     registry = adapters.discover(ROOT / "adapters")
-    for spec_id in runner.load_equivalents():
+    for spec_id in set(runner.load_equivalents()) - {"drumsep_onset", "sad"}:
         spec = registry[spec_id]
         assert _release6_digest(spec) in runner.equivalent_digests(spec), spec_id
 
