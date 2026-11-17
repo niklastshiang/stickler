@@ -48,12 +48,12 @@ jobs:
           uv run pytest -q -m adapters tests/test_adapter_smoke.py
           -k "(transcriber_produces_midi and adtof) or (separator_produces_drum_stem and demucs)
           or beat_tracker or without_network"
-      - name: Times and memory into the job summary
+      - name: Times and memory into the job summary and the log
         if: always()
         env:
           REPORT: ${{ runner.temp }}/smoke.jsonl
         run: |
-          uv run python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          uv run python - <<'EOF' | tee -a "$GITHUB_STEP_SUMMARY"
           import json, os, platform
           from pathlib import Path
           report = Path(os.environ["REPORT"])
