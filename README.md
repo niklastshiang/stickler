@@ -217,16 +217,16 @@ scripts/check.sh task
 
 ```json
 {
-  "adapter": { "separation": 2, "transcription": 4, "beats": 1 },
+  "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 667,
-  "app_widget_tests": 48,
-  "smoke_tests_with_models": 8,
+  "tests": 746,
+  "app_widget_tests": 49,
+  "smoke_tests_with_models": 12,
   "coverage_percent": 98,
   "coverage_minimum": 95,
-  "adrs": 7,
-  "version": 6,
-  "status": "release 6: polish for the app"
+  "adrs": 8,
+  "version": 7,
+  "status": "release 7: new candidates"
 }
 ```
 
@@ -289,7 +289,7 @@ scripts/check.sh task
 
 - [x] New candidate models: DrumSep with onset detection, MuScriptor large, Separate-and-Detect (none beats Fast or Quality on real songs)
 - [x] The app starts the models without a network connection
-- [ ] **Release 7:** new candidates
+- [x] **Release 7:** new candidates
 
 **Next**
 
@@ -309,14 +309,14 @@ that it runs offline.
 Software, or install it in a terminal; the GNOME runtime comes from Flathub:
 
 ```bash
-flatpak install --user Stickler-6.flatpak
+flatpak install --user Stickler-7.flatpak
 ```
 
 **AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
 and start it.
 
 ```bash
-chmod +x Stickler-6-x86_64.AppImage && ./Stickler-6-x86_64.AppImage
+chmod +x Stickler-7-x86_64.AppImage && ./Stickler-7-x86_64.AppImage
 ```
 
 ### Removing it
@@ -428,9 +428,9 @@ On a subscription the real cost differs; this is what the same work would cost o
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–15 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 1,478 | 1.5 M | 629 M | 183 USD |
-| 13–15 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
-| | **Total, release 6** | | | | **about 192 USD** |
+| 13–17 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 2,133 | 1.9 M | 806 M | 237 USD |
+| 13–17 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
+| | **Total, release 7** | | | | **about 245 USD** |
 
 ---
 

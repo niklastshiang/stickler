@@ -82,6 +82,15 @@
   </keywords>
 
   <releases>
+    <release version="7" date="2026-11-17">
+      <description>
+        <p>Three newer models measured; the app's models stay, as none was better on real songs.</p>
+        <ul>
+          <li>The models start without a network connection</li>
+          <li>Results computed before the update are found again, nothing is computed twice</li>
+        </ul>
+      </description>
+    </release>
     <release version="6" date="2026-11-15">
       <description>
         <p>Polish after the first app release.</p>
