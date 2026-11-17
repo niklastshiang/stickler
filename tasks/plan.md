@@ -314,6 +314,30 @@ benchmark runs (84) → listening if needed (85) → decision ADR, report, READM
 | MuScriptor large or Separate-and-Detect exceed 20 min per song | High (likely) | Measured on the laptop on one song early; reported, not put into the app |
 | RunPod cost | Low | Runs planned per dataset, pod stopped automatically |
 
+## `legend` (approved 2026-11-17, SPEC.md "Module `legend`")
+
+A legend on page 1 of the exported PDF: one entry per staff position the sheet uses, named in
+the app's language.
+
+Design decisions:
+- **Positions** (`notation`): the distinct `Staff` values of the engraved MusicXML's
+  instruments, sorted top to bottom with STAFF's order for ties; the legend's MusicXML is one
+  stemless measure with those noteheads and the given labels as lyrics.
+- **Names** (`logic/legend.py`): `N_()` constants per position, translated with `_()` at use;
+  `notation` stays free of strings and of gi.
+- **Room and drawing** (`logic/engraving.py`): blank right/bottom credits after the band, added
+  in memory for the A4 pages only; the legend's top read from page 1's SVG; the legend's SVG
+  nested into page 1's. `ui/pdf.py` unchanged.
+
+Order: positions and legend MusicXML (88) → names (89) → room and drawing on page 1 (90) → the
+PDF and the owner's check (91).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The legend overlaps the first system or the band | Medium | Its place is read from the engraved page 1 (first system's top), tested with and without a band |
+| Quality writes many positions and the legend wraps | Low | A test with every STAFF entry in the longest language stays one line; if not, smaller lyrics |
+| The blank credits leak into the exported MusicXML | Medium | They are added in memory for the A4 pages only; a test reads the stored file |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

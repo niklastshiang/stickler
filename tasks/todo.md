@@ -705,6 +705,31 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
 ### Checkpoint P
 - [ ] All success criteria of SPEC.md "Release 7" met; the decision per mode by the owner; release 7
 
+## Phase 17: `legend` (approved 2026-11-17, SPEC.md "Module `legend`")
+
+- [ ] **Task 88: Positions and the legend's MusicXML** (S)
+  - Acceptance: `notation.legend_positions(musicxml)` gives the distinct `Staff` values of the sheet's instruments, top to bottom, STAFF's order for ties, `OTHER` included, none for an empty sheet; `notation.legend_musicxml(entries, labels)` writes one stemless measure with each entry's step, octave and notehead and the labels as lyrics, hidden time signature.
+  - Verify: `uv run pytest -q tests/test_notation.py -k legend`
+  - Dependencies: none · Files: `src/stickler/notation.py`, `tests/test_notation.py`
+
+- [ ] **Task 89: The names** (S)
+  - Acceptance: `stickler_gtk/logic/legend.py` with `N_()` names per position (Cymbal, Ride, Hi-Hat, Open Hi-Hat, Pedal Hi-Hat, High Tom, Mid Tom, Floor Tom, Snare, Side Stick, Bass Drum, Other Percussion; the cymbal position A5 is "Cymbal"), the entries of a sheet in the app's language; German ("Becken" for the cymbal) and Spanish complete.
+  - Verify: `uv run pytest -q tests/gtk/test_translations.py tests/gtk/test_legend.py`
+  - Dependencies: 88 · Files: `src/stickler_gtk/logic/legend.py`, `po/*`, tests
+
+- [ ] **Task 90: Room on page 1 and the legend drawn into it** (M)
+  - Acceptance: the A4 pages of a sheet with positions get blank right/bottom credits after the band, in memory only; the legend's SVG sits under the band and above the first system (read from page 1's SVG), with and without a band; pages 2 and later start at the same top margin; the stored MusicXML is unchanged; every STAFF entry in the longest language stays one line.
+  - Verify: `uv run pytest -q tests/gtk/test_engraving.py -k legend`
+  - Dependencies: 88, 89 · Files: `src/stickler_gtk/logic/engraving.py`, tests
+
+- [ ] **Task 91: The PDF and the owner's check** (S)
+  - Acceptance: the written PDF has the legend on page 1 only (widget test with Poppler); the owner exports two songs (Fast and Quality) and checks names and layout.
+  - Verify: `scripts/gtk.sh test`; by hand on the laptop
+  - Dependencies: 90 · Files: tests (`ui/pdf.py` unchanged)
+
+### Checkpoint Q
+- [ ] All success criteria of SPEC.md "Module `legend`" met (owner)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **Later release: click volume follows the song** (done in module `polish`) (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.
