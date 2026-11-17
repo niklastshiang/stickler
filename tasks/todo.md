@@ -696,9 +696,9 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Verify: `uv run pytest -q tests/test_errors.py tests/test_api.py -k "sample or correct"`; `results/own/corrected.csv`
   - Dependencies: 84 · Files: `src/stickler/{errors,api}.py` if the sample needs a candidate filter, tests
 
-- [ ] **Task 86: Decision, report and release 7** (S)
+- [x] **Task 86: Decision, report and release 7** (S): done 2026-11-17, release 7 published (bb1e4d6, tag v7, Flatpak and AppImage attached).
   - Prepared 2026-11-17: `docs/adr/0008-modi.md` holds the modes and their history (Checkpoint C closed); the decision per mode goes into its "Release 7" entry.
-  - Decision 2026-11-17 (owner): Fast and Quality unchanged. Done: ADR 0008's release 7 entry, `docs/report.md` section 5.6 (plus status, summary, candidates, runtime, decisions), README candidates, results and roadmap, SPEC Release 7 status. Left: the release steps of ADR 0006.
+  - Decision 2026-11-17 (owner): Fast and Quality unchanged. ADR 0008's release 7 entry, `docs/report.md` section 5.6, README, SPEC Release 7 status; release steps of ADR 0006 (no open Dependabot alerts; the owner skipped the hand test before the tag).
   - Acceptance: ADR 0008 with the decision per mode (unchanged or replaced; owner), and the modes' history since the owner chose them (Fast and Quality, 2026-11-13; kept on 2026-11-14 after the correction), which closes Checkpoint C (owner, 2026-11-16); `docs/report.md` section on the new candidates; README candidates and results tables; release steps of ADR 0006 incl. the hand-tried feature list.
   - Verify: SPEC Release 7 success criteria; `scripts/check.sh task`
   - Dependencies: 84, 85 · Files: `docs/adr/0008-*.md`, `docs/report.md`, `README.md`, version files
@@ -707,7 +707,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
   - Verify: `uv run pytest -q tests/test_cache_keys.py tests/test_runner.py tests/test_cachemigration.py`; on the laptop, the first `stickler run` after the update finds every cached result (nothing computed)
 
 ### Checkpoint P
-- [ ] All success criteria of SPEC.md "Release 7" met; the decision per mode by the owner; release 7
+- [x] All success criteria of SPEC.md "Release 7" met; the decision per mode by the owner; release 7 (2026-11-17)
 
 ## Phase 17: `legend` (approved 2026-11-17, SPEC.md "Module `legend`"), deferred
 
