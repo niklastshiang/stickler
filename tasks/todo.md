@@ -707,7 +707,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
 
 ## Phase 17: `legend` (approved 2026-11-17, SPEC.md "Module `legend`")
 
-- [ ] **Task 88: Positions and the legend's MusicXML** (S)
+- [x] **Task 88: Positions and the legend's MusicXML** (S): done 2026-11-17. Verovio 6.4.1 sets the legend of eight positions as one system, stemless, the time signature hidden (an empty element with `visibility="hidden"`), the names as lyrics. STAFF also has ride bell, china and splash: Task 89 names them too.
   - Acceptance: `notation.legend_positions(musicxml)` gives the distinct `Staff` values of the sheet's instruments, top to bottom, STAFF's order for ties, `OTHER` included, none for an empty sheet; `notation.legend_musicxml(entries, labels)` writes one stemless measure with each entry's step, octave and notehead and the labels as lyrics, hidden time signature.
   - Verify: `uv run pytest -q tests/test_notation.py -k legend`
   - Dependencies: none · Files: `src/stickler/notation.py`, `tests/test_notation.py`

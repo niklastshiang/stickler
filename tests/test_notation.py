@@ -507,3 +507,50 @@ def test_the_tempo_mark_comes_before_the_attributes_of_the_first_bar():
     first = _measures(notation.to_musicxml(notes, BEATS, DOWNBEATS))[0]
     assert "<multiple-rest>" in first
     assert first.index("<metronome>") < first.index("<attributes>")
+
+
+def _sheet(pitches):
+    """A two-bar sheet hitting each pitch once on its own beat."""
+    beats = [k * 0.5 for k in range(9)]
+    notes = [(i * 0.5, p, 100) for i, p in enumerate(pitches)]
+    return notation.engrave(notes, beats, beats[:-1:4]).musicxml
+
+
+def test_legend_positions_run_from_the_top_of_the_staff_down():
+    positions = notation.legend_positions(_sheet([36, 38, 42]))
+    assert positions == [notation.STAFF[42], notation.STAFF[38], notation.STAFF[36]]
+
+
+def test_legend_positions_merge_pitches_on_one_position_and_keep_others_apart():
+    positions = notation.legend_positions(_sheet([35, 36, 37, 38, 41, 45, 48, 70]))
+    assert positions == [
+        notation.STAFF[48],  # high tom, E5
+        notation.STAFF[45],  # mid tom, D5
+        notation.STAFF[37],  # side stick, C5 (before the snare: STAFF's order)
+        notation.STAFF[38],  # snare, C5
+        notation.OTHER,  # B4
+        notation.STAFF[41],  # floor tom, A4
+        notation.STAFF[36],  # kick, F4 (35 and 36 are one position)
+    ]
+
+
+def test_a_sheet_without_hits_has_no_legend():
+    assert notation.legend_positions(_sheet([])) == []
+
+
+def test_the_legend_score_writes_each_position_stemless_with_its_name():
+    positions = [notation.STAFF[49], notation.STAFF[42], notation.STAFF[36]]
+    xml = notation.legend_musicxml(positions, ["Cymbal", "Hi-Hat", "Bass Drum"])
+    notes = list(parse(xml).recurse().notes)
+    assert len(notes) == 3
+    assert [n.lyric for n in notes] == ["Cymbal", "Hi-Hat", "Bass Drum"]
+    assert xml.count("<stem>none</stem>") == 3
+    assert "<notehead>x</notehead>" in xml and "<notehead>normal</notehead>" in xml
+    assert '<time print-object="no">' in xml
+    steps = [s for s in xml.split("<display-step>")[1:]]
+    assert [s[0] for s in steps] == ["A", "G", "F"]
+
+
+def test_the_legend_needs_one_name_per_position():
+    with pytest.raises(ValueError, match="name"):
+        notation.legend_musicxml([notation.STAFF[36]], [])

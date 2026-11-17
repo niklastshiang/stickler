@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from dataclasses import dataclass
 from html import escape
@@ -716,3 +717,52 @@ def engrave(
         f'<part id="P1">{"".join(out)}</part></score-partwise>\n'
     )
     return Engraving(musicxml, bar_map, tempo, (num, den))
+
+
+# --- Legend (module `legend`): which staff positions a sheet uses, and a score that names them -
+
+
+def _height(staff: Staff) -> int:
+    return staff.octave * 7 + "CDEFGAB".index(staff.step)
+
+
+def legend_positions(musicxml: str) -> list[Staff]:
+    """The staff positions a sheet uses (one per distinct `Staff`: pitches written alike are one
+    position), from the top of the staff down; at one height STAFF's order decides, `OTHER`
+    last. Read from the sheet's instruments, so it is what remains after quantizing and
+    simplifying, not the raw hits."""
+    pitches = [int(p) for p in re.findall(r"<instrument-name>GM (\d+)</instrument-name>", musicxml)]
+    used = {STAFF.get(p, OTHER) for p in pitches}
+    order = list(dict.fromkeys([*STAFF.values(), OTHER]))
+    return sorted(used, key=lambda s: (-_height(s), order.index(s)))
+
+
+def legend_musicxml(positions: list[Staff], labels: list[str]) -> str:
+    """One measure with each position's notehead in its place, stemless, its label below as a
+    lyric, and the time signature hidden; engraved like the sheet, it is the legend."""
+    if len(labels) != len(positions):
+        raise ValueError(f"{len(positions)} positions need as many names, got {len(labels)}")
+    notes = "".join(
+        "<note>"
+        f"<unpitched><display-step>{s.step}</display-step>"
+        f"<display-octave>{s.octave}</display-octave></unpitched>"
+        f"<duration>{DIVISIONS}</duration><voice>1</voice><type>quarter</type>"
+        f"<stem>none</stem><notehead>{s.notehead}</notehead>"
+        f'<lyric number="1"><syllabic>single</syllabic><text>{escape(label)}</text></lyric>'
+        "</note>"
+        for s, label in zip(positions, labels, strict=True)
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" '
+        '"http://www.musicxml.org/dtds/partwise.dtd">\n'
+        '<score-partwise version="4.0">'
+        '<part-list><score-part id="P1"><part-name print-object="no">Legend</part-name>'
+        "</score-part></part-list>"
+        '<part id="P1"><measure number="1"><attributes>'
+        f"<divisions>{DIVISIONS}</divisions><key><fifths>0</fifths></key>"
+        f'<time print-object="no"><beats>{max(1, len(positions))}</beats>'
+        "<beat-type>4</beat-type></time>"
+        "<clef><sign>percussion</sign><line>2</line></clef></attributes>"
+        f"{notes}</measure></part></score-partwise>\n"
+    )
