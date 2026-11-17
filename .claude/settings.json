@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "tokeneconomizer": {
+      "source": {
+        "source": "github",
+        "repo": "microsoft/TokenEconomizer",
+        "ref": "b57d03f81585a18b936a0eaecbd1eb51cdcecf71"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "tokeneconomizer@tokeneconomizer": true
+  }
+}

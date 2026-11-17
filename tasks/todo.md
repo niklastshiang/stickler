@@ -672,6 +672,7 @@ Task 12 (DrumSep + onsets, Phase 3) is part of this phase and comes first.
     - ENST: only oracle `muscriptor_l` 0.827 and oracle `drumsep_onset` 0.834 (61 of 64 tracks, 3 errors); oracle `sad` and every `demucs+` candidate missing.
     - Own songs: `demucs+muscriptor_l` 0.837, `demucs+drumsep_onset` 0.767 (Quality 0.849, `none+adtof` 0.841); `demucs+sad` missing.
     - GPU speed: `sad` 3194 s for 1309 s of MDB audio (about 2.4× real time, so roughly 10 minutes per 4-minute song); `muscriptor_l` about 0.17× real time; `drumsep_onset` about 0.08×.
+    - Laptop time (step 6, 2026-11-17, AMD Ryzen AI 5 340, 12 threads, CPU): `drumsep_onset` on the cached Demucs stem of `eye_of_the_tiger` (245.6 s): 702 s, peak 1.9 GB (Demucs not included). `muscriptor_l` not measured yet; `sad` goes to the pod (92 minutes for 10 s on CPU).
     - Still open: the missing ENST and own runs (step 4), the 3 ENST errors, tuning (step 5), laptop times (step 6), eval and report (step 7). Check that no RunPod pod is still running.
   - Noticed 2026-11-16: an adapter's cache key covered only `run.py`, `setup.py` and `pyproject.toml`, not helper modules; fixed in Task 87.
   - Runbook (2026-11-16; runs from the laptop, a cloud session cannot reach a pod over SSH). No config of its own: `config/benchmark.yaml`, `config/enst.yaml` and `config/own.yaml` already hold the candidates (Demucs stem; oracle on MDB and ENST); everything cached is skipped.
