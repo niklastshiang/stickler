@@ -476,6 +476,30 @@ def test_the_pdf_has_one_a4_page_per_print_page(tmp_path):
     assert (round(width), round(height)) == (595, 842)
 
 
+def test_the_pdf_has_the_legend_on_page_1_only(tmp_path):
+    """Exported as the window does (module `legend`, Task 91): the names are text in the PDF,
+    so Poppler finds them on page 1 and on no later page."""
+    import gi
+
+    gi.require_version("Poppler", "0.18")
+    from gi.repository import Poppler
+
+    from stickler import notation
+    from stickler_gtk.logic import engraving, legend
+    from stickler_gtk.ui import pdf
+
+    bars = 160  # three pages
+    beats = [k * 0.5 for k in range(bars * 4 + 1)]
+    notes = [(b * 2.0 + k * 0.5, 36 + (k % 2) * 2, 100) for b in range(bars) for k in range(4)]
+    xml = notation.engrave(notes, beats, beats[:-1:4], repeats=False).musicxml
+    pages = engraving.a4_pages(xml, legend=legend.score(xml))
+    document = Poppler.Document.new_from_file(pdf.write_pdf(pages, tmp_path / "s.pdf").as_uri())
+    texts = [document.get_page(i).get_text() for i in range(document.get_n_pages())]
+    assert len(texts) >= 2
+    assert "Snare" in texts[0] and "Bass Drum" in texts[0]
+    assert not any("Snare" in t or "Bass Drum" in t for t in texts[1:])
+
+
 def test_the_window_can_be_made_narrow_while_the_sheet_is_shown(monkeypatch, tmp_path):
     """The pages must not set the window's minimum width, or it cannot shrink and Verovio
     never lays the song out for the narrower width (found by the owner, 2026-11-15)."""
