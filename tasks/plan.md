@@ -425,6 +425,39 @@ test and demo with real models (105) → GTK onto the controller (106).
 | The bridge outlives a crashed app | Medium | stdin EOF ends it; a test closes stdin during an analysis and looks for processes |
 | Large SVG lines for long songs | Low | Pages only on request, never in the state; measured in 105 (Eye of the Tiger) |
 
+## Release 8 (macOS app): `mac-shell` (approved 2026-11-18, SPEC.md "Module `mac-shell`")
+
+The first Swift: a Foundation-only package that talks to the core, and the SwiftUI app over it,
+with the setup assistant. Built and tested on GitHub's runners; the owner tries the CI's app on
+their Mac against a checkout.
+
+Design decisions:
+- **CI and the quality bar first** (107): the Swift rules in CONSTRAINTS.md, the floor guard's
+  Swift patterns and both CI jobs exist before the first real Swift line, so nothing is written
+  unchecked. No one here has Xcode; the runner is the only compiler for the app.
+- **`SticklerCore` before the app** (108–110): decoding, the process client and the window's
+  model are tested on Linux in WSL and CI against the real bridge, so the app's views only draw
+  a model that is already proven. `docs/bridge.md`'s example lines are the decoding tests, as
+  in Python.
+- **One screen group per task** (111–115), each with its screenshots in light and dark as CI
+  artifacts, so the owner can compare with the canvas without a Mac at hand.
+- **The PDF is its own task** (115): it carries the one real risk (WebKit and the Leipzig font).
+- **The owner's Mac only at the end** (116), after the review; the artifact works from 111 on
+  for an early look if the owner wants one.
+
+Order: CI and constraints (107) → protocol types (108) → process client (109) → window model
+(110) → app shell and empty window (111) → analysis, errors, the stopped core (112) → setup
+and removal (113) → exports and the saved bar (114) → PDF (115) → Mac guide, review, owner's
+check (116).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Swift compiles only on the runner: slow feedback for the app target | Medium | Logic in `SticklerCore`, tested locally on Linux; the app target thin |
+| Foundation on Linux differs from macOS (line reading, `Process`) | Medium | The client reads with `read(upToCount:)` on its own thread; its tests run on both |
+| WebKit lacks the Leipzig font in the PDF | Medium | A test checks the tempo mark's text; embed the font in the SVG or register it |
+| XcodeGen's output changes with a new release | Low | Pinned version; the project is generated in CI only |
+| "Open Anyway" missing on the owner's Mac | Low | `xattr` in `docs/mac-development.md` |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

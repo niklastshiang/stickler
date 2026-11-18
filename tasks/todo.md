@@ -830,6 +830,61 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 ### Checkpoint T
 - [ ] All success criteria of SPEC.md "Module `core-bridge`" met (owner); then `mac-shell`'s spec
 
+## Phase 21: Release 8 (macOS app), module `mac-shell` (approved 2026-11-18, SPEC.md "Module `mac-shell`")
+
+- [ ] **Task 107: CI and the Swift quality bar** (M)
+  - Acceptance: CONSTRAINTS.md covers Swift (SPEC "mac-shell" scope 5); `scripts/floor_guard.py` flags `swiftlint:disable`, `// swiftlint:`, `fatalError("TODO")`, placeholder `preconditionFailure`, `XCTSkip` and disabled tests in a diff (tests for each); `mac/SticklerCore/` a package with one passing test; `.github/workflows/mac.yml`: `ubuntu-26.04` runs `swift test` and SwiftLint 0.65.1 (pinned binary, SHA-256 checked); `macos-26` with Xcode 26.6 selected runs the same plus `swiftlint --strict`.
+  - Verify: `uv run pytest -q tests/test_floor_guard.py`; `swift test` in `mac/SticklerCore` (WSL, Swift 6.4 via swiftly); both jobs green
+  - Dependencies: none · Files: `CONSTRAINTS.md`, `scripts/floor_guard.py`, its tests, `mac/SticklerCore/`, `.github/workflows/mac.yml`, `.swiftlint.yml`
+
+- [ ] **Task 108: The protocol in Swift** (M)
+  - Acceptance: `Codable` types for `hello`, `state` (every kind and field of `docs/bridge.md`), `recent`, `notice`, replies and errors; commands encoded as one line each; every example line of `docs/bridge.md` decodes (the test reads the document, as `tests/app/test_bridge_doc.py`), an unknown state kind or field fails loudly in tests and is kept as `unknown` at run time.
+  - Verify: `swift test` on Linux and macOS; coverage ≥ 95 %
+  - Dependencies: 107 · Files: `mac/SticklerCore/Sources/`, tests
+
+- [ ] **Task 109: The process client** (M)
+  - Acceptance: starts `uv run stickler-bridge` in a given folder with `STICKLER_PACKAGED=macos` and `STICKLER_ADAPTER_SOURCES`, reads lines with `read(upToCount:)` on its own thread (lines split across reads, long `pages` lines), matches replies to commands by `id` (async `send` returning the reply), delivers events in order, reports the end of the process with its status and stderr's last 40 lines; `quit` waits at most 3 s, then terminates.
+  - Verify: `swift test` against the real bridge with the stand-in models of `tests/app/test_bridge_process.py` (`hello`, `open` until `result`, `cancel`, `quit`, a killed core reported), on Linux and macOS
+  - Dependencies: 108 · Files: `mac/SticklerCore/`, a helper script for the stand-ins if needed
+
+- [ ] **Task 110: The window's model** (M)
+  - Acceptance: an `@Observable` `AppModel`: the latest state, recent songs, the notices (the newest shown, each with `opens`), the stopped core (details, `startAgain()`), the core's folder (checked for `pyproject.toml` and `adapters/`, remembered, `uv` found in `~/.local/bin`, `/opt/homebrew/bin`, `PATH`); every user action forwards one command and nothing decides a flow.
+  - Verify: `swift test` with a fake core on Linux and macOS; coverage ≥ 95 %
+  - Dependencies: 109 · Files: `mac/SticklerCore/`
+
+- [ ] **Task 111: The app, its window and menus** (M)
+  - Acceptance: `mac/project.yml` (XcodeGen, pinned) with the app target (Swift 6, macOS 26) using `SticklerCore` and the String Catalog; the toolbar with title, subtitle and the Open/Export capsule; the empty window (M4) with drop area, "Open a Song…" and recent songs; the menu bar (M8) incl. Open Recent and "Choose Stickler Folder…"; the first start's folder choice; the result placeholder; minimum 640 × 480; `mac.yml` builds the app, runs its tests with coverage, saves screenshots of M4 (light, dark) and the ad-hoc signed `Stickler.app` as a `ditto` zip.
+  - Verify: the `macos-26` job green; the screenshots against the canvas
+  - Dependencies: 110 · Files: `mac/project.yml`, `mac/Stickler/`, `mac/SticklerTests/`, `.github/workflows/mac.yml`, `po/*` for new texts
+
+- [ ] **Task 112: Analysis, errors, the stopped core** (M)
+  - Acceptance: the step list with Cancel (M5), the error page with Technical Details, "Open Another Song…" and "Try Again", the page "Stickler Stopped Unexpectedly" with "Start Again"; drop and open start an analysis; screenshots light and dark.
+  - Verify: the app's model tests with a fake core; screenshots
+  - Dependencies: 111 · Files: `mac/Stickler/`, tests, `po/*`
+
+- [ ] **Task 113: The setup assistant and the removal** (M)
+  - Acceptance: M1–M3 as sheets over the empty window (consent with models, licences and sizes; download with Cancel and the amount; a failed download with server, details, "Try Again", "Later"); "Remove Downloaded Models…" with sizes, the checkbox and a destructive button; screenshots light and dark.
+  - Verify: tests with a fake core; screenshots against the canvas
+  - Dependencies: 112 · Files: `mac/Stickler/`, tests, `po/*`
+
+- [ ] **Task 114: Exports and the saved bar** (M)
+  - Acceptance: the Export menu with second lines (M7); MusicXML and the drum track through `NSSavePanel` with the core's names; the drum track's cost alert first; Open With… for the MusicXML; the bar with "Show in Finder" after saving, other notices in it.
+  - Verify: tests up to the save panel's answer with a fake core; screenshots
+  - Dependencies: 112 · Files: `mac/Stickler/`, tests, `po/*`
+
+- [ ] **Task 115: The PDF** (M)
+  - Acceptance: `a4_pages` → each SVG rendered by WebKit, `createPDF`, joined with PDFKit, the title set; a test writes the PDF from a fixed reply: page count, A4 size, the tempo mark's text drawn (the Leipzig font: embedded or registered).
+  - Verify: the test on `macos-26`; one PDF as artifact, compared with the GTK app's for the same song
+  - Dependencies: 114 · Files: `mac/Stickler/`, tests
+
+- [ ] **Task 116: The Mac guide, the review and the owner's check** (S)
+  - Acceptance: `docs/mac-development.md` (Homebrew, `uv`, `ffmpeg`, `git clone`, the artifact, "Open Anyway" and the `xattr` fallback, choosing the folder, what to check); a fresh-context review of 107–115 against SPEC.md, its findings fixed or answered; the owner's check on the Mac.
+  - Verify: the owner follows the guide and SPEC "mac-shell" success criteria 1–4
+  - Dependencies: 113, 115 · Files: `docs/mac-development.md`
+
+### Checkpoint U
+- [ ] All success criteria of SPEC.md "Module `mac-shell`" met (owner); then `mac-sheet`'s spec
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [ ] **A website for Stickler, built like [tuxtalk.app](https://tuxtalk.app/)** (owner, 2026-11-18; an idea, not yet a spec): one long static page (plain HTML, self-hosted fonts, no tracking, no cookies) with a few separate pages (about, privacy). Read on 2026-11-18, TuxTalk's order: a navigation with anchors; a hero with a one-line promise, a subline, Download and "Watch it work" buttons and four short facts; a live demo; how it works in numbered steps; examples ("you say / it types"); the models and hardware with CPU/GPU times and download sizes; feature sections with screenshots; a screenshot gallery; videos with a download fallback; "How it's made" (AI-assisted); a privacy statement; download cards per package with a copyable command; supported desktops; uninstall; a footer with the links. For Stickler, from what exists: hero with the animated overview (`docs/screenshots/overview.gif`), "drop a song, get sheet music"; steps (open, wait about 15 s, read, export); the honest numbers (report, macro-F1 on the own songs, Fast and Quality); a song next to its sheet as the example; the models with sizes and licences; download cards for the Flatpak, the AppImage and later the Mac `.dmg`; privacy ("everything runs on your computer"); remove the models. Open: host (GitHub Pages from the repo?), languages (English, German, Spanish like the app?), when (after release 8?).

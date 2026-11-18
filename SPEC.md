@@ -1800,18 +1800,17 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 | `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | done, below |
 | `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | approved, below |
 | `core-bridge` | `stickler-bridge`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | approved, below |
-| `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped | `core-bridge`, `mac-design` | to write |
-| `mac-setup` | Setup assistant: consent, model download with progress, resumable, "Remove Downloaded Models…" | `mac-shell` | to write |
+| `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped; the setup assistant (consent, model download with progress, resumable, "Remove Downloaded Models…"), moved here from `mac-setup` (owner, 2026-11-18) | `core-bridge`, `mac-design` | approved, below |
 | `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | to write |
 | `mac-package` | `.app` with `uv` and the core's sources, a Python fetched by `uv` at setup (as in the AppImage), ad-hoc signed `.dmg`, release workflow, install guide with pictures | all | to write |
 
 Build order: `shared-core`, `mac-design`, `mac-core` (in parallel) → `core-bridge` →
-`mac-shell` → `mac-setup`, `mac-sheet` → `mac-package`.
+`mac-shell` (with the setup, owner 2026-11-18) → `mac-sheet` → `mac-package`.
 
 Out of order on purpose, like the Flatpak sandbox trial before: a **packaging spike** early in
 `mac-package` (an ad-hoc signed `.app` from a macOS runner that runs `uv`, builds ADTOF's
 environment and analyses a clip on the owner's Mac after "Open Anyway"), because a failure
-changes `mac-setup` and `core-bridge`.
+changes `mac-shell`'s setup and `core-bridge`.
 
 ### Tech stack
 - Swift 6 and SwiftUI with the Observation framework, deployment target macOS 26 (owner, 2026-11-17), `WKWebView` for the
@@ -2027,9 +2026,9 @@ modules build what is drawn here, as the GTK modules built the `design` screens.
 
 | # | Screen | Module |
 |---|---|---|
-| M1 | First start: consent (what is downloaded, sizes, ADTOF's non-commercial licence) | `mac-setup` |
-| M2 | First start: download with the setup steps | `mac-setup` |
-| M3 | First start: a server is not answering (names it, keeps what is done, retry) | `mac-setup` |
+| M1 | First start: consent (what is downloaded, sizes, ADTOF's non-commercial licence) | `mac-shell` (was `mac-setup`, owner 2026-11-18) |
+| M2 | First start: download with the setup steps | `mac-shell` (was `mac-setup`, owner 2026-11-18) |
+| M3 | First start: a server is not answering (names it, keeps what is done, retry) | `mac-shell` (was `mac-setup`, owner 2026-11-18) |
 | M4 | Empty window: drop area, "Open a Song…", recent songs | `mac-shell` |
 | M5 | Analysis: the steps, cancel | `mac-shell` |
 | M6 | Sheet music: title, artist, tempo and time signature in the window; zoom | `mac-sheet` |
@@ -2218,6 +2217,144 @@ than one window.
 task (scope 7), so no flow exists twice even for a while.
 **Decided (owner, 2026-11-18, after Task 100):** the controller reports what the window showed
 as a toast as a `Notice`, and the bridge sends it as a `notice` event.
+
+### Module `mac-shell`
+
+> Status: **approved** by the owner on 2026-11-18. Plan: `tasks/plan.md` ("`mac-shell`"),
+> tasks 107–116. Decided before the draft (owner,
+> 2026-11-18): the owner tries each stage as an app built by CI that starts the core from a
+> checkout on the Mac; the Swift code that talks to the core is a package of its own that also
+> builds and tests on Linux; when the core stops, the window says so and offers to start it
+> again; until `mac-sheet`, a result shows a placeholder and every export works; the setup
+> assistant (screens M1–M3) is part of this module, not of a later `mac-setup`.
+
+**Objective.** The first Stickler that runs on a Mac: the SwiftUI window of `mac-design` (M1–M5,
+M7, M8 and M9 for M4) over the core that `core-bridge` made. A drummer opens or drops a song,
+agrees to the download on the first start, watches the steps, cancels, sees errors, and saves
+MusicXML, PDF and the drum track. The sheet music itself comes with `mac-sheet`; the `.dmg`
+with `mac-package`.
+
+**Assumptions** (from the code and the web on 2026-11-18):
+1. The bridge (`docs/bridge.md`) carries every state, command and text this module needs,
+   translated; the app enables buttons and menu items from the state's `can_*` fields alone.
+2. A packaged Mac app runs the core with `STICKLER_PACKAGED=macos` and
+   `STICKLER_ADAPTER_SOURCES` (the adapters' sources it ships): models, results and settings go
+   to `~/Library/Application Support/Stickler`, scores to `~/Library/Caches/Stickler`, and
+   "Remove Downloaded Models…" is allowed (`stickler_app.paths`).
+3. GitHub's `macos-26` arm64 runner has Xcode 26.6 as its default (26.0.1–26.6 installed,
+   runner-images README of 2026-11-02); the `ubuntu-26.04` runner has Swift 6.4.2; SwiftLint
+   0.65.1 (2026-08-21) has macOS and Linux binaries; XcodeGen 2.47.0 (2026-11-17) generates
+   Xcode 26 projects.
+4. On Linux, Foundation has `Process`, pipes and `JSONDecoder`, but not `FileHandle.bytes`
+   (swift-corelibs-foundation, main, 2026-11-18): the client reads lines itself.
+5. `actions/upload-artifact` drops file permissions in its zip; a `.app` keeps its executable
+   bit and signature only as a `ditto` zip or a tar uploaded with `archive: false`.
+6. An ad-hoc signed app downloaded in a browser is blocked on its first start; macOS 15 and
+   later open it only through System Settings › Privacy & Security › Open Anyway (Apple, support
+   article 102445, 2026-05-27).
+
+**Scope.**
+1. **`SticklerCore`, a Swift package with Foundation only** (`mac/SticklerCore/`): starts the
+   core as a subprocess (`uv run stickler-bridge` in the checkout, with the environment of
+   assumption 2), writes commands as JSON lines and reads its lines on a thread of its own (no
+   `FileHandle.bytes`), decodes `hello`, `state`, `recent`, `notice` and replies into Swift types
+   that mirror `docs/bridge.md`, matches each reply to its command by `id`, and notices when the
+   process ends (its exit status and stderr's last 40 lines kept for the error page). An
+   `@Observable` model for the window holds the latest state, the recent songs and the notices;
+   it never decides a flow, it only forwards commands (SPEC "Release 8", one shared core).
+   Builds and tests on Linux (Swift 6.4) and macOS.
+2. **The app, `mac/Stickler/`** (SwiftUI, Swift 6, Observation, deployment target macOS 26):
+   - **Window** (M4, M5, M9): the unified toolbar with title and, once a song is open, the
+     subtitle line; the capsule with Open and Export; the empty window with the drop area,
+     "Open a Song…" and the recent songs (a missing file dimmed with a remove button, as in
+     GTK); the step list with Cancel for analysis and drum track; the error page with
+     "Technical Details", "Open Another Song…" and "Try Again" when `can_retry`.
+   - **Result placeholder** (until `mac-sheet`): the grey desk with one centred line, "Sheet
+     music ready. Export it as PDF to read it." Never in a release: `mac-package` requires
+     `mac-sheet`.
+   - **Setup** (M1–M3) as sheets over the empty window: consent with the models, their
+     licences and sizes, "Download" and "Not Now"; the download's step list with Cancel and the
+     amount downloaded; a failed download naming the server, "Technical Details", "Try Again"
+     and "Later". "Remove Downloaded Models…" in the Stickler menu: sizes from
+     `removal_sizes`, the checkbox for settings, recent songs and corrections, a destructive
+     button.
+   - **Exports** (M7): the Export menu with second lines (PDF, MusicXML, Drum Track; Open With…
+     opens the MusicXML with the system's chooser); `NSSavePanel` with the core's file name;
+     the drum track's cost in an alert first (`drum_track_cost`); the PDF drawn in Swift from
+     `a4_pages` (each page's SVG rendered by WebKit, `createPDF`, the pages joined with PDFKit),
+     as `ui/pdf.py` does with cairo for GTK. After saving, the bar at the bottom with "Show in
+     Finder" (M7); other notices in the same bar.
+   - **Menu bar** (M8): Stickler (About, Remove Downloaded Models…, Hide, Quit), File (Open…
+     ⌘O, Open Recent with the core's recent songs and Clear Menu, Export, Close Window ⌘W),
+     Edit, View (Full Screen only until `mac-sheet` brings zoom), Window, Help (opens the
+     README on GitHub).
+   - **The core stopped:** when the bridge exits or does not start (no `uv`, a wrong folder, a
+     crash), the window shows "Stickler Stopped Unexpectedly", the technical details (exit
+     status, stderr's last lines) and "Start Again", which starts a new core and sends `start`.
+     A running analysis is lost; finished results stay in the cache.
+   - **Where the core is** (until `mac-package`): on the first start the app asks for the
+     Stickler folder (an open panel, the checkout), remembers it, and checks it holds
+     `pyproject.toml` and `adapters/`; File › "Choose Stickler Folder…" changes it. `uv` is
+     looked for in `~/.local/bin`, `/opt/homebrew/bin` and `PATH`. Gone in `mac-package`, whose
+     `.app` brings the core along.
+   - **Quitting** sends `quit` and waits at most 3 s for the core to exit, then ends it.
+   - **Texts:** every text comes from `po/` through the String Catalog (`scripts/xcstrings.py`);
+     the new ones of `mac-design` ("Show in Finder", "Takes about 15 seconds") and of this module
+     are added to `po/` with German and Spanish. Window size: at least 640 × 480 points.
+3. **The Xcode project** is generated from `mac/project.yml` by XcodeGen (pinned, in CI), not
+   committed: a hand-edited `.xcodeproj` cannot be written or reviewed without Xcode, and no one
+   here has one. The generated project is a CI artifact for the owner.
+4. **CI, `.github/workflows/mac.yml`:** on `macos-26` with Xcode 26.6 pinned: generate, build,
+   `swiftlint --strict`, `xcodebuild test` with coverage; screenshots of every screen in light
+   and dark (rendered by the tests from fixed states, saved as artifacts); the ad-hoc signed
+   `Stickler.app` as a `ditto` zip artifact. On `ubuntu-26.04`: `swift test` for `SticklerCore`
+   against the real bridge with stand-in models (as `tests/app/test_bridge_process.py`).
+5. **CONSTRAINTS.md for Swift** (SPEC "Release 8", quality bar): no `swiftlint:disable` or `//
+   swiftlint:` comments, no `fatalError("TODO")` or placeholder `preconditionFailure`, no
+   `XCTSkip`/disabled tests without a reason in the commit, SwiftLint clean, coverage ≥ 95 % for
+   `SticklerCore` and the app's models (pure SwiftUI views excluded, as `ui/` in GTK);
+   `scripts/floor_guard.py` learns the Swift patterns.
+6. **`docs/mac-development.md`:** the owner's Mac set up once (Homebrew, `uv`, `ffmpeg`, `git
+   clone`), downloading the CI artifact, "Open Anyway", choosing the folder; what to check at the
+   checkpoint.
+
+**Testing.**
+- `SticklerCore` on Linux and macOS: decoding of every example line in `docs/bridge.md` (the
+  same lines the Python doc test checks), replies matched to commands, lines split across
+  reads, a core that exits (status and stderr kept), and the real bridge as a subprocess with
+  stand-in models: `hello`, `open` until `result`, `cancel`, `quit`.
+- The app's models with a fake core (XCTest): each state to what the window offers, the setup
+  sheets, the export flows up to the save panel's answer, the core stopped and started again.
+- Screenshots: each screen of M1–M5, M7 and the stopped core, light and dark, from fixed states;
+  the owner compares them with the canvas.
+- The PDF: a test writes it from a fixed `a4_pages` reply and checks the page count, A4 size and
+  that the tempo mark's text is drawn (Verovio sets it in the Leipzig font; WebKit must have it).
+
+**Success criteria.**
+1. On the owner's Mac (macOS 26), the CI's `Stickler.app` opens after "Open Anyway", finds the
+   checkout, asks for consent, downloads the Fast models into `~/Library/Application
+   Support/Stickler`, and turns a dropped song into a result; Cancel works during the analysis
+   and the download.
+2. MusicXML, PDF and the drum track are saved; the PDF has the same pages as the GTK app's for
+   that song; "Show in Finder" shows the file.
+3. Killing the core (`kill` on its process) shows the stopped page; "Start Again" works.
+4. Every screen matches the canvas in light and dark (screenshots, the owner's check); English,
+   German and Spanish follow the system's language.
+5. `mac.yml` is green on every push: build, SwiftLint strict, tests, coverage ≥ 95 % outside
+   pure views; `SticklerCore`'s tests green on Linux too. The Linux app and the core unchanged
+   (`scripts/check.sh task` green, no adapter file touched).
+
+**Out of scope.** The sheet music, zoom and the bar marker (`mac-sheet`); the `.dmg`, the
+bundled core and Python, the install guide (`mac-package`); playback, corrections, Quality, the
+GPU; Intel Macs; the Mac App Store.
+
+**Risks.**
+- WebKit draws the page's text without the Leipzig font: the PDF test catches it; Verovio can
+  embed the font in the SVG, or the app registers `packaging/fonts/Leipzig.ttf`.
+- "Open Anyway" missing on the owner's Mac (reported on macOS 15.1): `xattr -dr
+  com.apple.quarantine Stickler.app` in `docs/mac-development.md`.
+- Line reading on Linux differs from macOS (old `readabilityHandler` end-of-file reports): the
+  client reads with `read(upToCount:)` on its own thread, tested on both.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
