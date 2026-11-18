@@ -69,11 +69,12 @@ struct ContentView: View {
             case .analysing(let analysing):
                 StepsPage(
                     title: "Writing the Drum Part", subtitle: "Takes about 15 seconds",
-                    steps: analysing.steps, cancel: model.cancel)
+                    steps: analysing.steps, canCancel: model.state.can.cancel,
+                    cancel: model.cancel)
             case .exporting(let exporting):
                 StepsPage(
                     title: "Saving the Drum Track", subtitle: nil, steps: exporting.steps,
-                    cancel: model.cancel)
+                    canCancel: model.state.can.cancel, cancel: model.cancel)
             case .failed(let failure):
                 FailurePage(model: model, failure: failure)
             case .result:

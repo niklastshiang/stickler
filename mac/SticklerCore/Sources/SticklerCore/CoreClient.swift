@@ -62,6 +62,12 @@ public enum CoreClientError: Error, Equatable {
 public final class CoreClient: @unchecked Sendable {
     public static let detailLines = 40
 
+    /// A write to a core that has just died must be an error (`notRunning`), not SIGPIPE,
+    /// whose default ends the whole app.
+    private static let ignoreBrokenPipes: Void = {
+        signal(SIGPIPE, SIG_IGN)
+    }()
+
     public let executable: URL
     public let arguments: [String]
     public let directory: URL?
@@ -69,6 +75,7 @@ public final class CoreClient: @unchecked Sendable {
 
     // Everything below is guarded by `lock`.
     private let lock = NSLock()
+    private let writing = NSLock()  // guards stdin's writes only, so a full pipe blocks no reader
     private var process: Process?
     private var input: FileHandle?
     private var nextID = 1
@@ -101,6 +108,7 @@ public final class CoreClient: @unchecked Sendable {
         executable: URL, arguments: [String], directory: URL? = nil,
         environment: [String: String] = [:]
     ) {
+        _ = Self.ignoreBrokenPipes
         self.executable = executable
         self.arguments = arguments
         self.directory = directory
@@ -157,53 +165,66 @@ public final class CoreClient: @unchecked Sendable {
         }
     }
 
-    /// Sends `command` and waits for its reply. Throws `refused` for an error reply and
-    /// `notRunning` when the core is not there or ends first.
+    /// Sends `command` and waits for its reply. Throws `refused` for an error reply,
+    /// `notRunning` when the core is not there or ends first, and `CancellationError` when the
+    /// waiting task is cancelled (the reply, if it comes, is dropped).
     public func send(_ command: Command) async throws -> Reply {
-        try await withCheckedThrowingContinuation { continuation in
-            lock.lock()
-            guard let input, !ended else {
+        let id = lock.withLock {
+            defer { nextID += 1 }
+            return nextID
+        }
+        let line = try command.line(id: id) + Data("\n".utf8)
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                lock.lock()
+                guard let input, !ended else {
+                    lock.unlock()
+                    continuation.resume(throwing: CoreClientError.notRunning)
+                    return
+                }
+                if Task.isCancelled {
+                    lock.unlock()
+                    continuation.resume(throwing: CancellationError())
+                    return
+                }
+                waiting[id] = continuation
                 lock.unlock()
-                continuation.resume(throwing: CoreClientError.notRunning)
-                return
+                do {
+                    // one writer at a time: a long line must not interleave with another
+                    try writing.withLock { try input.write(contentsOf: line) }
+                } catch {
+                    lock.withLock { waiting.removeValue(forKey: id) }?
+                        .resume(throwing: CoreClientError.notRunning)
+                }
             }
-            let id = nextID
-            nextID += 1
-            let line: Data
-            do {
-                line = try command.line(id: id) + Data("\n".utf8)
-            } catch {
-                lock.unlock()
-                continuation.resume(throwing: error)
-                return
-            }
-            waiting[id] = continuation
-            lock.unlock()
-            do {
-                try input.write(contentsOf: line)
-            } catch {
-                lock.withLock { waiting.removeValue(forKey: id) }?
-                    .resume(throwing: CoreClientError.notRunning)
-            }
+        } onCancel: {
+            lock.withLock { waiting.removeValue(forKey: id) }?
+                .resume(throwing: CancellationError())
         }
     }
 
-    /// Ends the core politely: `quit`, then stdin closed; after `seconds` without an exit it is
-    /// terminated. Returns once it is gone.
+    /// Ends the core politely within `seconds`: `quit`, then stdin closed; still running at
+    /// the deadline, it gets SIGTERM, and a second later SIGKILL. Returns once it is gone.
     public func quit(seconds: Double = 3) async {
+        let deadline = Date().addingTimeInterval(seconds)
         _ = try? await withTimeout(seconds) { try await self.send(.quit) }
         lock.withLock {
             try? input?.close()
             input = nil
         }
-        let deadline = Date().addingTimeInterval(seconds)
-        while isRunning, Date() < deadline {
-            try? await Task.sleep(for: .milliseconds(20))
-        }
+        await waitForExit(until: deadline)
         if isRunning {
             terminate()
+            await waitForExit(until: Date().addingTimeInterval(1))
         }
-        while isRunning {
+        if let pid = processIdentifier {
+            kill(pid, SIGKILL)
+            await waitForExit(until: Date().addingTimeInterval(2))
+        }
+    }
+
+    private func waitForExit(until deadline: Date) async {
+        while isRunning, Date() < deadline {
             try? await Task.sleep(for: .milliseconds(20))
         }
     }

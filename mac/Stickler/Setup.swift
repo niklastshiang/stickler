@@ -14,7 +14,9 @@ func localized(_ key: String, _ arguments: any CVarArg...) -> String {
 enum SetupSheet: String, Identifiable {
     case consent, download, failed
 
-    var id: String { rawValue }
+    /// One identity for all three, so the sheet stays up from consent to download to a
+    /// failure instead of closing and opening again; its content follows the state.
+    var id: String { "setup" }
 
     init?(_ screen: Screen) {
         switch screen {
@@ -40,7 +42,8 @@ struct SetupSheetView: View {
                     subtitle: LocalizedStringKey(
                         "If this is interrupted, Stickler picks up where it stopped the next "
                             + "time you open it."),
-                    steps: settingUp.steps, cancel: model.cancel)
+                    steps: settingUp.steps, canCancel: model.state.can.cancel,
+                    cancel: model.cancel)
             case .setupFailed(let failed):
                 SetupFailedSheet(model: model, failed: failed)
             default:
@@ -109,8 +112,10 @@ struct ConsentSheet: View {
                 Spacer()
                 Button("Not Now") { model.notNow() }
                     .keyboardShortcut(.cancelAction)
+                    .disabled(!model.state.can.notNow)
                 Button(localized("Download %1$@", consent.totalSize)) { model.agree() }
                     .keyboardShortcut(.defaultAction)
+                    .disabled(!model.state.can.agree)
             }
         }
         .padding(24)
@@ -174,8 +179,10 @@ struct SetupFailedSheet: View {
                 Spacer()
                 Button("Later") { model.notNow() }
                     .keyboardShortcut(.cancelAction)
+                    .disabled(!model.state.can.notNow)
                 Button("Try Again") { model.retrySetup() }
                     .keyboardShortcut(.defaultAction)
+                    .disabled(!model.state.can.retrySetup)
             }
         }
         .padding(24)

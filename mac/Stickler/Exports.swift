@@ -139,9 +139,10 @@ struct NoticeBar: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(.bar)
-        .task(id: notice) {
+        .task(id: model.noticeSerial) {
+            let shown = model.noticeSerial
             try? await Task.sleep(for: .seconds(8))
-            if model.notice == notice {
+            if model.noticeSerial == shown {
                 model.dismissNotice()
             }
         }

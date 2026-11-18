@@ -113,7 +113,7 @@ struct RecentRowView: View {
         .contentShape(Rectangle())
         .opacity(row.missing ? 0.5 : 1)
         .onTapGesture {
-            if !row.missing {
+            if !row.missing, model.state.can.open {
                 model.open(row.path)
             }
         }

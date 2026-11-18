@@ -280,3 +280,33 @@ func bridgeProcess(under uvPID: Int32) async throws -> Int32 {
         "LANGUAGE": "de-DE:en"
     ])
 }
+
+@Test(.timeLimit(.minutes(1))) func quittingACoreThatNeitherAnswersNorStopsIsBounded() async {
+    // a core stuck in a command: it reads nothing, ignores SIGTERM, and never answers
+    let client = fakeCore("""
+        import signal, time
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        print('{"event": "hello", "protocol": 1, "version": "8", "language": "en"}', flush=True)
+        time.sleep(60)
+        """)
+    let seen = Recorder()
+    seen.start(client)
+    #expect(await eventually(10) { !seen.events.isEmpty })
+    let start = Date()
+    await client.quit(seconds: 1)
+    #expect(Date().timeIntervalSince(start) < 5)
+    #expect(!client.isRunning)
+    #expect(await eventually(5) { seen.ended?.reason == .signalled(SIGKILL) })
+}
+
+@Test(.timeLimit(.minutes(1))) func aCancelledSendGivesUpWaiting() async throws {
+    let client = fakeCore("import time; time.sleep(30)")  // reads nothing, answers nothing
+    let seen = Recorder()
+    seen.start(client)
+    let waiting = Task { try await client.send(.start) }
+    try await Task.sleep(for: .milliseconds(200))
+    waiting.cancel()
+    await #expect(throws: CancellationError.self) { try await waiting.value }
+    client.terminate()
+    #expect(await eventually(10) { seen.ended != nil })
+}

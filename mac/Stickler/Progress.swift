@@ -6,6 +6,7 @@ struct StepsPage: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey?
     let steps: [Step]
+    let canCancel: Bool
     let cancel: () -> Void
 
     var body: some View {
@@ -32,6 +33,7 @@ struct StepsPage: View {
             Button("Cancel", action: cancel)
                 .controlSize(.large)
                 .keyboardShortcut(.cancelAction)
+                .disabled(!canCancel)
         }
         .padding(32)
     }
@@ -97,6 +99,7 @@ struct FailurePage: View {
         ) {
             Button("Open Another Song…") { Panels.openSong(model) }
                 .controlSize(.large)
+                .disabled(!model.state.can.open)
             if model.state.can.retry {
                 Button("Try Again") { model.retry() }
                     .buttonStyle(.borderedProminent)

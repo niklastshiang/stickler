@@ -37,7 +37,11 @@ public final class AppModel {
     public private(set) var state = AppState.empty
     public private(set) var recent: [RecentRow] = []
     /// The newest notice; the window shows it until it is dismissed or a newer one comes.
-    public private(set) var notice: Notice?
+    public private(set) var notice: Notice? {
+        didSet { noticeSerial += 1 }
+    }
+    /// Counts the notices, so a second one that says the same still restarts its timer.
+    public private(set) var noticeSerial = 0
     /// The core's language (`hello`).
     public private(set) var language: String?
     public private(set) var folder: URL?
@@ -70,6 +74,7 @@ public final class AppModel {
     private let makeCore: @Sendable (URL, URL, [String]) -> any Core
     private var core: (any Core)?
     private var listener: Task<Void, Never>?
+    private var outbox: AsyncStream<Command>.Continuation?  // commands, in the reader's order
     private var lastSeq = 0
 
     /// `uvPlaces`: where `uv` may be, first found wins (a Mac app started from the Finder
@@ -130,14 +135,26 @@ public final class AppModel {
 
     /// Quitting: the core ends politely (at most 3 s, then it is terminated).
     public func quit() async {
+        await letGo()?.quit(seconds: 3)
+    }
+
+    /// Stops listening to the current core and sending to it; returns it for ending.
+    private func letGo() -> (any Core)? {
         listener?.cancel()
         listener = nil
-        let ending = core
-        core = nil
-        await ending?.quit(seconds: 3)
+        outbox?.finish()
+        outbox = nil
+        defer { core = nil }
+        return core
     }
 
     private func use(_ url: URL, remember: Bool) {
+        // a running core ends first, politely and in the background: two cores would share
+        // the same settings, recent songs and cache
+        if let old = letGo() {
+            Task { await old.quit(seconds: 3) }
+            state = .empty
+        }
         if let problem = Self.problem(with: url) {
             phase = .needsFolder(problem)
             return
@@ -171,7 +188,7 @@ public final class AppModel {
     }
 
     private func startCore(_ next: any Core) {
-        listener?.cancel()
+        _ = letGo()
         core = next
         state = .empty
         lastSeq = 0
@@ -182,6 +199,18 @@ public final class AppModel {
         listener = Task { [weak self] in
             for await signal in signals {
                 self?.handle(signal, from: next)
+            }
+        }
+        // one sender keeps the reader's order; a task per command would not
+        let (commands, post) = AsyncStream<Command>.makeStream()
+        outbox = post
+        Task { [weak self] in
+            for await command in commands {
+                do {
+                    _ = try await next.send(command)
+                } catch {
+                    self?.refused(error)
+                }
             }
         }
         next.start(
@@ -210,7 +239,7 @@ public final class AppModel {
         case .incoming(.reply):
             break  // replies go to their `send`
         case .ended(let end):
-            core = nil
+            _ = letGo()
             phase = .stopped(end)
         }
     }
@@ -261,14 +290,7 @@ public final class AppModel {
     }
 
     private func send(_ command: Command) {
-        guard let core else { return }
-        Task {
-            do {
-                _ = try await core.send(command)
-            } catch {
-                self.refused(error)
-            }
-        }
+        outbox?.yield(command)
     }
 
     private func ask<T: Decodable & Sendable>(_ command: Command, _ type: T.Type) async -> T? {

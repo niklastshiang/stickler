@@ -91,7 +91,13 @@ final class PageLoad: NSObject, WKNavigationDelegate {
         end(.failure(error))
     }
 
+    /// WebKit's drawing process died: the export fails instead of waiting for ever.
+    func webViewWebContentProcessDidTerminate(_: WKWebView) {
+        end(.failure(SheetPDF.Failure.notDrawn))
+    }
+
     private func end(_ result: Result<Void, any Error>) {
+        guard outcome == nil else { return }
         outcome = result
         waiting?.resume(with: result)
         waiting = nil

@@ -236,6 +236,42 @@ let analysing = #"{"kind": "analysing", "song": "/m/a.flac", "name": "a", "steps
         #expect(await settled { harness.core.sent == [.start] })
     }
 
+    @Test func anotherFolderEndsTheRunningCoreFirst() async throws {
+        let harness = try Harness()
+        let model = harness.model()
+        model.choose(folder: harness.folder)
+        let first = harness.core
+        model.choose(folder: harness.folder)
+        #expect(harness.cores.count == 2 && model.phase == .running)
+        #expect(await settled { first.quitWith == 3 })
+        first.stop(CoreEnd(reason: .exited(0), details: []))  // its end is not the new core's
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(model.phase == .running)
+    }
+
+    @Test func aFolderThatCannotRunEndsTheRunningCoreToo() async throws {
+        let harness = try Harness()
+        let model = harness.model()
+        model.choose(folder: harness.folder)
+        let first = harness.core
+        let elsewhere = harness.folder.deletingLastPathComponent()
+        model.choose(folder: elsewhere)
+        #expect(model.phase == .needsFolder(.notStickler(elsewhere.path)))
+        #expect(await settled { first.quitWith == 3 })
+        try first.emit(#"{"event": "state", "seq": 1, "state": \#(analysing)}"#)
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(model.state == .empty)  // a core that was let go is not listened to
+    }
+
+    @Test func eachNoticeCountsEvenWhenItSaysTheSame() throws {
+        let model = try Harness().model()
+        let saved = Notice(text: "Saved “a.pdf”", opens: "/d/a.pdf")
+        model.tell(saved)
+        let first = model.noticeSerial
+        model.tell(saved)
+        #expect(model.noticeSerial == first + 1)
+    }
+
     @Test func startAgainWithoutAFolderAsksForOne() throws {
         let harness = try Harness()
         let model = harness.model()
@@ -280,9 +316,7 @@ func refusal(_ message: String) -> String {
             .exportDrumTrack(dest: "/d/a.flac"), .removeModels(everything: true)
         ]
         #expect(await settled { harness.core.sent.count == expected.count })
-        // each in its own task: the order is the scheduler's, the commands are exact
-        let sent = harness.core.sent
-        #expect(expected.allSatisfy { command in sent.contains(command) }, "\(sent)")
+        #expect(harness.core.sent == expected)  // in the order the reader gave them
     }
 
     @Test func aRefusedCommandSaysWhyAndAStoppedCoreSaysNothing() async throws {

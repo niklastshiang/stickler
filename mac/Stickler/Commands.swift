@@ -24,6 +24,7 @@ struct SticklerCommands: Commands {
             Menu("Open Recent") {
                 ForEach(model.recent.filter { !$0.missing }, id: \.path) { row in
                     Button(row.title) { model.open(row.path) }
+                        .disabled(!model.state.can.open)
                 }
                 Divider()
                 Button("Clear Menu") { model.clearRecent() }
