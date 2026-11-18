@@ -2138,8 +2138,9 @@ exists.
    - **Events:** `{"event": "state", "seq": <int>, "state": {...}}` after every change, the
      whole state each time (a few kB; the SVG pages are not part of it), and `{"event":
      "recent", "rows": [...]}` when the recent songs change, and `{"event": "notice", "text":
-     "<translated>"}` for a short message the GTK window shows as a toast (a correction or the
-     recent songs not saved; the state stays). `seq` grows by one per event, so Swift can drop
+     "<translated>", "opens": <path or null>}` for a short message the GTK window shows as a
+     toast (a correction or the recent songs not saved, a file saved: `opens` names it, so the
+     app can offer to open it; the state stays). `seq` grows by one per event, so Swift can drop
      a late one.
    - **The state** as JSON: `kind` (`empty`, `consent`, `setting_up`, `setup_failed`,
      `analysing`, `result`, `exporting`, `failed`) and the fields Swift draws, already
@@ -2160,7 +2161,9 @@ exists.
    - **Errors:** a line that is not JSON, an unknown command or a wrong argument gets an error
      reply (`bad_request`, `unknown_command`, `bad_argument`) and the bridge keeps running; a
      command that does not fit the state (`export_musicxml` without a result) gets `not_now`.
-     A failure inside a flow becomes a `failed` or `setup_failed` state, as in GTK.
+     A failure inside a flow becomes a `failed` or `setup_failed` state, as in GTK. A command
+     that fails for an unforeseen reason (a bug) gets `internal`, its traceback goes to stderr,
+     and the bridge keeps running (owner, 2026-11-18).
    - **Ending:** `quit`, or stdin closing (the app quit or crashed), cancels the running job,
      waits for its clean-up (at most 2 s, as the GTK window does) and exits 0. The models run
      in their own process groups and are killed by the cancel, so nothing outlives the app.
