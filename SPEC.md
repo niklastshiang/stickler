@@ -2430,8 +2430,9 @@ GPU; Intel Macs; the Mac App Store.
   with a `<source media>` per scheme. So each screenshot and the overview exist twice, light
   and dark, made from the app in its light and dark style.
 - **No tracking, no cookies, no third-party requests:** fonts, images and videos served from
-  the site. JavaScript only where HTML and CSS cannot do it (today: the copy button of the
-  Flatpak command; without script the command is still selectable).
+  the site. JavaScript only where HTML and CSS cannot do it: `site.js` copies the Flatpak
+  command and holds the overview video still under `prefers-reduced-motion` (task 120);
+  without it the command is still selectable and the video keeps its pause button.
 - **No Spanish, no documentation pages** (the report and the CLI guide stay on GitHub, linked).
 
 ### Accessibility and good practice (owner, 2026-11-18: as accessible as the layout allows, and the usual best practices)
@@ -2471,7 +2472,9 @@ Target: **WCAG 2.2, level AA**, for both languages and both colour schemes.
 - HTML5, CSS (custom properties, `prefers-color-scheme`, `clamp()` for type), the typeface as
   WOFF2 subsets (Latin incl. German), served from the site with its licence.
 - Images: the screenshots in light and dark as WebP with a PNG fallback through `<picture>`;
-  the overview as a muted looping MP4 `<video>` in light and dark, the GIF as fallback.
+  the overview as a muted looping `<video>` in light and dark, each as AV1 WebM (open-source
+  Chromium and some Linux Firefox builds have no H.264) and H.264 MP4 (Safari), with a link
+  as fallback; about 80–100 KB each.
   `scripts/demo.py` learns to record in the dark style and to write the screenshots, so both
   sets come from the same run of the app ("Fluffing a Duck", Fast).
 - Typeface: Figtree (SIL Open Font License 1.1), weights 400, 500 and 700 as WOFF2 subsets

@@ -67,13 +67,19 @@ def names(*, dark: bool) -> Names:
 
 
 def video_command(frames: Path, out: Path) -> list[str]:
-    """The overview as H.264 that every browser plays: no sound, its index first (so it starts
-    before it is loaded), even sides as yuv420p needs."""
+    """The overview without sound, even sides as yuv420p needs. `.webm` is AV1, for browsers
+    without H.264 (open-source Chromium, some Linux Firefox builds); `.mp4` is H.264 with its
+    index first (so it starts before it is loaded), for Safari and the rest."""
+    codec = (
+        ["-c:v", "libsvtav1", "-preset", "6", "-crf", "40"]
+        if out.suffix == ".webm"
+        else ["-c:v", "libx264", "-preset", "slow", "-crf", "28", "-movflags", "+faststart"]
+    )
     return (
         ["ffmpeg", "-v", "error", "-y", "-framerate", str(FPS)]
         + ["-i", str(frames / "frame%05d.png"), "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"]
-        + ["-c:v", "libx264", "-preset", "slow", "-crf", "28", "-pix_fmt", "yuv420p"]
-        + ["-an", "-movflags", "+faststart", str(out)]
+        + codec
+        + ["-pix_fmt", "yuv420p", "-an", str(out)]
     )
 
 
@@ -172,7 +178,8 @@ def record(options: Options) -> None:
             _gif(Path(tmp), options.gif)
         if options.video is not None:
             options.video.mkdir(parents=True, exist_ok=True)
-            _run(video_command(Path(tmp), options.video / f"{named.overview}.mp4"))
+            for kind in ("webm", "mp4"):
+                _run(video_command(Path(tmp), options.video / f"{named.overview}.{kind}"))
         if options.stills is not None:
             options.stills.mkdir(parents=True, exist_ok=True)
             window.playbar.seek(STILL_AT)  # marks the bar under it

@@ -36,6 +36,7 @@ def test_each_scheme_has_its_own_file_names(tmp_path):
 
 def test_the_video_is_h264_without_sound_and_starts_at_once(tmp_path):
     command = demo.video_command(tmp_path, tmp_path / "overview.mp4")
+    assert demo.video_command(tmp_path, tmp_path / "overview.webm") != command
     assert command[0] == "ffmpeg"
     joined = " ".join(command)
     for part in ("-c:v libx264", "-pix_fmt yuv420p", "-an", "-movflags +faststart"):
@@ -47,3 +48,10 @@ def test_a_picture_becomes_webp(tmp_path):
     command = demo.webp_command(tmp_path / "sheet.png")
     assert "-c:v" in command and "libwebp" in command
     assert command[-1] == str(tmp_path / "sheet.webp")
+
+
+def test_the_video_is_also_av1_for_browsers_without_h264(tmp_path):
+    joined = " ".join(demo.video_command(tmp_path, tmp_path / "overview.webm"))
+    for part in ("-c:v libsvtav1", "-pix_fmt yuv420p", "-an"):
+        assert part in joined
+    assert joined.endswith("overview.webm")
