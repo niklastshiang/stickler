@@ -947,17 +947,17 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 
 ## Phase 23: Release 8 (macOS app), module `mac-sheet` (approved 2026-11-18, SPEC.md "Module `mac-sheet`")
 
-Starts after checkpoint U (the owner's check of `mac-shell` on the Mac).
+Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 after checkpoint U (the owner's check of `mac-shell` on the Mac).
 
 - [ ] **Task 126: The sheet's model in SticklerCore** (M)
   - Acceptance: the model reads the note size and percent from `settings` at start; asks for `pages` of the shown result at the sheet's width when a result arrives (a song or a correction), when the width has settled for 0.3 s, and after every zoom reply; `zoomIn`, `zoomOut`, `actualSize` and `setZoom` send their commands and keep the reply's size; a reply overtaken by a newer request is dropped; while pages are on their way the old ones stay; a refused `pages` keeps them and shows the core's message as a notice.
   - Verify: `swift test` in `mac/SticklerCore` on Linux (WSL) and in the `mac` workflow, coverage ≥ 95 %; a test sends five widths within 0.3 s and sees one `pages` request
-  - Dependencies: checkpoint U · Files: `mac/SticklerCore/Sources/SticklerCore/` (the model, `Command`), its tests
+  - Dependencies: none (owner, 2026-11-18) · Files: `mac/SticklerCore/Sources/SticklerCore/` (the model, `Command`), its tests
 
 - [ ] **Task 127: The sheet in the window** (M)
   - Acceptance: `SheetHTML` builds the page for the web view from the pages and the appearance (the pages one under the other on M6's grey desk, each white with the canvas's soft shadow `0 1px 3px`, inverted in dark mode, no script); a `WKWebView` (`NSViewRepresentable`, JavaScript off) shows it, scrolling vertically only, and reports its width in points to the model; it replaces `ResultPlaceholder`; VoiceOver reads it as one image labelled with the title and the page count.
   - Verify: `LogicTests` for `SheetHTML` (no `<script>`, inversion only in dark, pages in order) under `scripts/xccov_gate.py` with `SheetHTML` added; screenshots of M6 light and dark from a fixed `pages` reply (the groove of `tests/app/fakes.py`) compared with the canvas
-  - Dependencies: 126 · Files: `mac/Stickler/` (the sheet view, `SheetHTML`, `ContentView.swift`, `Pages.swift`), `mac/SticklerTests/`, `scripts/xccov_gate.py`
+  - Dependencies: 126, checkpoint U · Files: `mac/Stickler/` (the sheet view, `SheetHTML`, `ContentView.swift`, `Pages.swift`), `mac/SticklerTests/`, `scripts/xccov_gate.py`
 
 - [ ] **Task 128: Note size from the View menu and a pinch** (S)
   - Acceptance: View › Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0, enabled only with a result; a trackpad pinch on the sheet sends one `set_zoom` once the fingers rest; "Zoom In", "Zoom Out", "Actual Size" and the VoiceOver label in `po/` with German and Spanish, and in the String Catalog.

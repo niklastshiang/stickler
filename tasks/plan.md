@@ -463,8 +463,8 @@ check (116).
 ## Release 8 (macOS app): `mac-sheet` (approved 2026-11-18, SPEC.md "Module `mac-sheet`")
 
 The sheet music in the Mac app, from the core's SVG pages, as wide as the window, with the note
-size of the View menu and a pinch. Starts after `mac-shell`'s checkpoint U (the owner's check on
-the Mac).
+size of the View menu and a pinch. The model (126) starts at once (owner, 2026-11-18); the view
+(127–129) after `mac-shell`'s checkpoint U (the owner's check on the Mac).
 
 Design decisions:
 - **The model before the view** (126): what is asked for and when (a new result, a settled
