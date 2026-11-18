@@ -22,6 +22,11 @@ public struct CoreEnd: Equatable, Sendable {
     /// read.
     public var details: [String]
 
+    public init(reason: Reason, details: [String]) {
+        self.reason = reason
+        self.details = details
+    }
+
     /// One line on how it ended, for "Technical Details" (not translated, as the rest there).
     public var summary: String {
         switch reason {
