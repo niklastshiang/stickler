@@ -58,4 +58,11 @@ public struct RemovalSizes: Codable, Equatable, Sendable {
     public var everything: Int64
     public var modelsText: String
     public var everythingText: String
+
+    public init(models: Int64, everything: Int64, modelsText: String, everythingText: String) {
+        self.models = models
+        self.everything = everything
+        self.modelsText = modelsText
+        self.everythingText = everythingText
+    }
 }

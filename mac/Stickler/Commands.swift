@@ -10,6 +10,13 @@ struct SticklerCommands: Commands {
     static let help = URL(string: "https://github.com/niklastshiang/stickler#readme")
 
     var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            Divider()
+            Button("Remove Downloaded Models…") {
+                Task { await Removal.ask(model) }
+            }
+            .disabled(!(model.phase == .running && model.state.can.removeModels))
+        }
         CommandGroup(replacing: .newItem) {
             Button("Open…") { Panels.openSong(model) }
                 .keyboardShortcut("o")

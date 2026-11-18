@@ -156,6 +156,101 @@ final class ScreenshotTests: XCTestCase {
         try shoot(model, "stopped")
     }
 
+    static let consent = #"{"event": "state", "seq": 2, "state": {"kind": "consent", "#
+        + #""song": null, "models": [{"id": "adtof", "name": "ADTOF", "#
+        + #""does": "detects the hits", "#
+        + #""licence": "Its trained model is free for non-commercial use only "#
+        + #"(CC BY-NC-SA 4.0).", "#
+        + #""size": "1.3 GB"}, {"id": "beat_this", "name": "Beat This!", "#
+        + #""does": "finds the beat and the bars", "#
+        + #""licence": "MIT licence. Its model comes from the JKU Linz server.", "#
+        + #""size": "0.9 GB"}], "#
+        + #""total_size": "2.2 GB", "can_open": true, "can_close": true, "can_agree": true, "#
+        + #""can_not_now": true}}"#
+
+    static let settingUp = #"{"event": "state", "seq": 3, "state": {"kind": "setting_up", "#
+        + #""song": null, "steps": [{"id": "environment:adtof", "#
+        + #""label": "Download the programs for ADTOF", "detail": "", "state": "done"}, "#
+        + #"{"id": "environment:beat_this", "label": "Download the programs for Beat This!", "#
+        + #""detail": "410 MB of 660 MB", "state": "running"}, {"id": "weights:beat_this", "#
+        + #""label": "Download the Beat This! model", "detail": "Once; later songs use it too", "#
+        + #""state": "waiting"}], "can_open": true, "can_cancel": true, "can_close": true}}"#
+
+    static let setupFailed = #"{"event": "state", "seq": 4, "state": {"kind": "setup_failed", "#
+        + #""song": null, "steps": [{"id": "environment:beat_this", "#
+        + #""label": "Download the programs for Beat This!", "detail": "", "state": "done"}, "#
+        + #"{"id": "weights:beat_this", "label": "Download the Beat This! model", "#
+        + #""detail": "Once; later songs use it too", "state": "running"}], "#
+        + #""step": "weights:beat_this", "#
+        + #""server": "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)", "#
+        + #""details": "Beat This! model not downloaded. JKU Linz: 500", "can_open": true, "#
+        + #""can_close": true, "can_not_now": true, "can_retry_setup": true}}"#
+
+    /// A sheet's content alone (a sheet is a window of its own, not in the window's picture).
+    func shootSheet(_ model: AppModel, _ name: String) throws {
+        for (appearance, look) in [(NSAppearance.Name.aqua, "light"), (.darkAqua, "dark")] {
+            let host = NSHostingView(rootView: SetupSheetView(model: model))
+            host.appearance = NSAppearance(named: appearance)
+            host.frame.size = host.fittingSize
+            let window = NSWindow(
+                contentRect: host.frame, styleMask: [.titled], backing: .buffered, defer: false)
+            window.appearance = NSAppearance(named: appearance)
+            window.contentView = host
+            window.orderFront(nil)
+            RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+            let bitmap = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+            host.cacheDisplay(in: host.bounds, to: bitmap)
+            window.orderOut(nil)
+            XCTAssertGreaterThan(colours(in: bitmap), 2, "\(name) \(look) is blank")
+            let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+            try FileManager.default.createDirectory(
+                at: Self.folder, withIntermediateDirectories: true)
+            try png.write(to: Self.folder.appendingPathComponent("\(name)-\(look).png"))
+        }
+    }
+
+    func testTheFirstStartAsksBeforeItDownloads() async throws {
+        let model = try await model([Self.empty, Self.consent])
+        XCTAssertEqual(SetupSheet(model.state.screen), .consent)
+        try shoot(model, "M1-window")  // the empty window under the sheet
+        try shootSheet(model, "M1-consent")
+    }
+
+    func testTheDownloadShowsItsSteps() async throws {
+        let model = try await model([Self.empty, Self.settingUp])
+        XCTAssertEqual(SetupSheet(model.state.screen), .download)
+        try shootSheet(model, "M2-download")
+    }
+
+    func testAServerThatDoesNotAnswerIsNamed() async throws {
+        let model = try await model([Self.empty, Self.setupFailed])
+        XCTAssertEqual(SetupSheet(model.state.screen), .failed)
+        try shootSheet(model, "M3-server")
+    }
+
+    func testTheRemovalQuestionSaysWhatEachChoiceFrees() {
+        let question = RemovalQuestion(
+            sizes: RemovalSizes(
+                models: 2_213_000_000, everything: 2_213_400_000,
+                modelsText: "This frees 2.2 GB.", everythingText: "This frees 2.3 GB."))
+        XCTAssertEqual(question.alert.informativeText, "This frees 2.2 GB.")
+        XCTAssertFalse(question.everything)
+        question.checkbox.state = .on
+        question.toggled()
+        XCTAssertEqual(question.alert.informativeText, "This frees 2.3 GB.")
+        XCTAssertTrue(question.everything)
+        XCTAssertEqual(question.alert.buttons.count, 2)
+        XCTAssertTrue(question.alert.buttons[0].hasDestructiveAction)
+    }
+
+    func testPlaceholdersAreFilledFromTheCatalog() {
+        XCTAssertEqual(localized("about %1$@", "2.2 GB"), "about 2.2 GB")
+        XCTAssertTrue(localized(
+            "To hear the drums, Stickler needs %1$lld trained models. They are downloaded once; "
+                + "after that, everything runs on this computer, offline.", 1)
+            .hasPrefix("To hear the drums, Stickler needs a trained model."))
+    }
+
     func testOnlySoundFilesAreTakenWhenDropped() {
         XCTAssertTrue(Panels.isSong(URL(fileURLWithPath: "/m/Eye of the Tiger.flac")))
         XCTAssertTrue(Panels.isSong(URL(fileURLWithPath: "/m/a.MP3")))

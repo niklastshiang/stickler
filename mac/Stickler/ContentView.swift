@@ -23,11 +23,21 @@ struct ContentView: View {
                     .disabled(!canOpen)
                 }
             }
+            .sheet(item: setupSheet) { _ in
+                SetupSheetView(model: model)
+            }
             .dropDestination(for: URL.self) { urls, _ in
                 guard canOpen, let song = urls.first(where: Panels.isSong) else { return false }
                 model.open(song.path)
                 return true
             }
+    }
+
+    /// The first start's sheet the core's state calls for; only its next state closes it.
+    private var setupSheet: Binding<SetupSheet?> {
+        Binding(
+            get: { model.phase == .running ? SetupSheet(model.state.screen) : nil },
+            set: { _ in })
     }
 
     private var canOpen: Bool {
