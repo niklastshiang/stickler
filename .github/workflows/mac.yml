@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-26.04 # Swift 6.4.2 preinstalled (runner image of 2026-11-11)
     steps:
       - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: The core, for the client's tests against the real bridge
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          uv sync --locked
       - name: SwiftLint
         run: |
           curl -fsSLO "https://github.com/realm/SwiftLint/releases/download/$SWIFTLINT/swiftlint_linux_amd64.zip"
@@ -36,6 +41,11 @@ jobs:
     runs-on: macos-26 # the app's deployment target; arm64, free for a public repository
     steps:
       - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: The core, for the client's tests against the real bridge
+        run: |
+          brew install ffmpeg
+          uv sync --locked
       - name: Xcode 26.6 # the image's default on 2026-11-18, pinned so an image update is seen
         run: |
           sudo xcode-select -s /Applications/Xcode_26.6.app

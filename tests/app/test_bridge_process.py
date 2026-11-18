@@ -3,101 +3,37 @@ stickler_app.bridge` with stand-in models called `adtof` and `beat_this`, which 
 real chain (their own uv environment and process group, the results cache), so closing stdin
 during an analysis must end the model too and leave no half-written cache entry."""
 
+import importlib.util
 import json
 import os
 import subprocess
 import sys
 import time
-import wave
 from pathlib import Path
 
 import pytest
 
 from stickler import adapters, runner
 
-COMMON = Path(__file__).resolve().parents[2] / "adapters" / "_common"
-
-PYPROJECT = """[project]
-name = "stand-in-{name}"
-version = "0"
-requires-python = ">=3.12,<3.13"
-dependencies = ["stickler-adapter"]
-
-[tool.uv.sources]
-stickler-adapter = {{ path = "{common}", editable = true }}
-"""
-
-TRANSCRIBER = '''"""Stand-in for ADTOF: a groove; with STICKLER_TEST_HOLD it writes its pid
-there and waits like a long model."""
-
-import os
-import time
-from pathlib import Path
-
-from stickler_adapter import run, write_drum_midi
-
-
-def transcribe(audio: Path, out_dir: Path, device: str) -> None:
-    hold = os.environ.get("STICKLER_TEST_HOLD")
-    if hold:
-        Path(hold).write_text(str(os.getpid()), encoding="utf-8")
-        time.sleep(60)
-    notes = [(k * 0.5, 36 if k % 2 == 0 else 38, 100) for k in range(16)]
-    write_drum_midi(out_dir / "drums.mid", notes)
-
-
-if __name__ == "__main__":
-    run(transcribe, stage="transcribers", adapter="adtof", version="stand-in")
-'''
-
-BEATS = '''"""Stand-in for Beat This!: a beat every half second, a bar every two seconds."""
-
-import json
-from pathlib import Path
-
-from stickler_adapter import run
-
-
-def track_beats(audio: Path, out_dir: Path, device: str) -> None:
-    beats = [k * 0.5 for k in range(17)]
-    data = {"beats": beats, "downbeats": beats[::4]}
-    (out_dir / "beats.json").write_text(json.dumps(data), encoding="utf-8")
-
-
-if __name__ == "__main__":
-    run(track_beats, stage="beats", adapter="beat_this", version="stand-in")
-'''
+ROOT = Path(__file__).resolve().parents[2]
+_spec = importlib.util.spec_from_file_location(
+    "bridge_stand_ins", ROOT / "scripts" / "bridge_stand_ins.py"
+)
+assert _spec and _spec.loader
+stand_ins = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(stand_ins)
 
 
 @pytest.fixture(scope="module")
 def models(tmp_path_factory) -> Path:
     """The stand-ins, set up once (uv sync, offline: their only dependency is local)."""
-    root = tmp_path_factory.mktemp("models")
-    for stage, name, code in (
-        ("transcribers", "adtof", TRANSCRIBER),
-        ("beats", "beat_this", BEATS),
-    ):
-        folder = root / stage / name
-        folder.mkdir(parents=True)
-        (folder / "run.py").write_text(code, encoding="utf-8")
-        (folder / "pyproject.toml").write_text(
-            PYPROJECT.format(name=name, common=COMMON.as_posix()), encoding="utf-8"
-        )
-    for spec in adapters.discover(root).values():
-        adapters.setup_adapter(spec)
-    return root
+    return stand_ins.set_up(tmp_path_factory.mktemp("models"))
 
 
 @pytest.fixture
 def song(tmp_path) -> Path:
     """Eight seconds of quiet: enough for ffprobe and the stand-ins."""
-    path = tmp_path / "Groove.wav"
-    with wave.open(str(path), "wb") as out:
-        out.setnchannels(1)
-        out.setsampwidth(2)
-        out.setframerate(8000)
-        out.writeframes(b"\0\0" * 8000 * 8)
-    return path
+    return stand_ins.quiet_song(tmp_path / "Groove.wav")
 
 
 class Process:
