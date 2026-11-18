@@ -498,7 +498,22 @@ audio {
   font-weight: 400;
 }
 
-/* a look around */
+/* a look around: four wide pictures in two rows, the narrow window beside them */
+@media (min-width: 48rem) {
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 0.62fr);
+  }
+
+  .gallery .tall {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+}
+
+.gallery .tall img {
+  max-width: 20rem;
+}
+
 .gallery figure {
   display: flex;
   flex-direction: column;

@@ -30,8 +30,9 @@ def test_the_website_takes_the_dark_style_a_video_and_stills_without_a_gif(tmp_p
 
 
 def test_each_scheme_has_its_own_file_names(tmp_path):
-    assert demo.names(dark=False) == demo.Names("overview", "sheet", "corrections")
-    assert demo.names(dark=True) == demo.Names("overview-dark", "sheet-dark", "corrections-dark")
+    light = ("overview", "sheet", "corrections", "empty", "analysing", "narrow")
+    assert demo.names(dark=False) == demo.Names(*light)
+    assert demo.names(dark=True) == demo.Names(*(name + "-dark" for name in light))
 
 
 def test_the_video_is_h264_without_sound_and_starts_at_once(tmp_path):

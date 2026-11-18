@@ -27,6 +27,7 @@ FPS = 10
 WIDTH = 800  # of the GIF
 README_GIF = Path(__file__).resolve().parents[1] / "docs" / "screenshots" / "overview.gif"
 STILL_AT = 8.0  # seconds into the song: the bar marked on the sheet still
+NARROW = (400, 760)  # a phone-sized window for the narrow still
 
 
 class Options(NamedTuple):
@@ -41,6 +42,9 @@ class Names(NamedTuple):
     overview: str
     sheet: str
     corrections: str
+    empty: str
+    analysing: str
+    narrow: str
 
 
 def parse(argv: list[str]) -> Options:
@@ -157,15 +161,23 @@ def record(options: Options) -> None:
     _pump(1.0)
     with tempfile.TemporaryDirectory() as tmp:
         rec = Recorder(window, Path(tmp))
+        named = names(dark=options.dark)
+        stills = options.stills
+        if stills is not None:
+            stills.mkdir(parents=True, exist_ok=True)
+            rec.still(stills / f"{named.empty}.png")
         rec.hold(1.5)  # the empty window: "Drop a Song Here"
         window.open_song(options.song)
-        started = time.monotonic()
+        started, analysing = time.monotonic(), stills is None
         while not isinstance(window.state, session.Result):
             if time.monotonic() - started > 600:
                 sys.exit(f"no result after 10 minutes (state: {type(window.state).__name__})")
             if not isinstance(window.state, session.Analysing):
                 sys.exit(f"the analysis did not run: {type(window.state).__name__}")
             _pump(0.4)  # the analysis' frames at a quarter of the rate: it plays faster
+            if not analysing and any(s.state == "done" for s in window.state.steps):
+                rec.still(stills / f"{named.analysing}.png")  # the first step done
+                analysing = True
             rec.frame()
         rec.hold(1.5)  # the sheet music
         for k in range(round(6 * FPS)):  # 12 s of the song in 6 s
@@ -173,21 +185,23 @@ def record(options: Options) -> None:
             _pump(1 / FPS)
             rec.frame()
         rec.hold(1.0)
-        named = names(dark=options.dark)
         if options.gif is not None:
             _gif(Path(tmp), options.gif)
         if options.video is not None:
             options.video.mkdir(parents=True, exist_ok=True)
             for kind in ("webm", "mp4"):
                 _run(video_command(Path(tmp), options.video / f"{named.overview}.{kind}"))
-        if options.stills is not None:
-            options.stills.mkdir(parents=True, exist_ok=True)
+        if stills is not None:
             window.playbar.seek(STILL_AT)  # marks the bar under it
             _pump(0.5)
-            rec.still(options.stills / f"{named.sheet}.png")
+            rec.still(stills / f"{named.sheet}.png")
             window.set_corrections_open(True)
             _pump(1.0)
-            rec.still(options.stills / f"{named.corrections}.png")
+            rec.still(stills / f"{named.corrections}.png")
+            window.set_corrections_open(False)
+            window.set_default_size(*NARROW)
+            _pump(1.5)
+            rec.still(stills / f"{named.narrow}.png")
     print(f"{rec.count} frames recorded")
 
 
