@@ -1,5 +1,7 @@
 # Implementation Plan: Stickler
 
+Source spec: SPEC.md
+
 ## Overview
 Stickler compares pipelines of drum-stem separation and drum transcription on MDB Drums, later ENST, and on your own songs. The best pipeline produces MusicXML. The basis is [SPEC.md](../SPEC.md); the quality limits are in [CONSTRAINTS.md](../CONSTRAINTS.md). The tasks are in [todo.md](todo.md).
 

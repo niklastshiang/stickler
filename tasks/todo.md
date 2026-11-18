@@ -837,7 +837,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `uv run pytest -q tests/test_floor_guard.py`; `swift test` in `mac/SticklerCore` (WSL, Swift 6.4 via swiftly); both jobs green
   - Dependencies: none · Files: `CONSTRAINTS.md`, `scripts/floor_guard.py`, its tests, `mac/SticklerCore/`, `.github/workflows/mac.yml`, `.swiftlint.yml`
 
-- [ ] **Task 108: The protocol in Swift** (M)
+- [x] **Task 108: The protocol in Swift** (M): done 2026-11-18 (d754bf1, `mac` green on Linux and `macos-26`: 18 tests, coverage 99.16 %, SwiftLint 0 violations). `AppState` (screen enum with the eight kinds, `Abilities` from the `can_*` fields), `Incoming` (hello, events with `seq`, replies with typed payloads via `Reply.payload(_:)`), `BridgeError`, `Command` (22 commands, one line each). The tests read `docs/bridge.md`: every example decodes and encodes back to the same JSON; commands, state kinds, events and error codes match its sections. A newer core's unknown kind, event or error code is kept; a missing `can_*` field means not allowed; a line that is neither event nor reply (or not UTF-8) is refused. SwiftLint: the protocol's names `x`, `y`, `ok`, `id` allowed in `.swiftlint.yml`.
   - Acceptance: `Codable` types for `hello`, `state` (every kind and field of `docs/bridge.md`), `recent`, `notice`, replies and errors; commands encoded as one line each; every example line of `docs/bridge.md` decodes (the test reads the document, as `tests/app/test_bridge_doc.py`), an unknown state kind or field fails loudly in tests and is kept as `unknown` at run time.
   - Verify: `swift test` on Linux and macOS; coverage ≥ 95 %
   - Dependencies: 107 · Files: `mac/SticklerCore/Sources/`, tests
