@@ -51,7 +51,7 @@ final class LogicTests: XCTestCase {
     }
 
     /// Waits up to two seconds for `condition` (commands go out on tasks of their own).
-    func until(_ condition: () -> Bool) async throws {
+    func until(_ condition: @escaping () -> Bool) async throws {
         var waited = 0
         while !condition(), waited < 200 {
             waited += 1
