@@ -921,7 +921,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `uv run pytest -q tests/test_site.py`; the owner reads the German text
   - Dependencies: 120 · Files: `site/de/`, `site/about.html`, `site/privacy.html`, `site/404.html`, `tests/test_site.py`
 
-- [ ] **Task 122: Meta, icons, policy, sitemap** (S)
+- [x] **Task 122: Meta, icons, policy, sitemap** (S): done 2026-11-18. Every page: the CSP as the first meta after the charset (only `'self'`; `script-src 'self'` covers `site.js` as a file, so no hash), the referrer policy, SVG and 32 px PNG favicons, a 180 px `apple-touch-icon`; every page but 404: a description (120–148 characters), `canonical` and `hreflang` (en, de, x-default) on `https://stickler.tshia.ng/`, Open Graph (`share.png`, 1200×630 from the light sheet, en_GB or de_DE) and a large Twitter card. `robots.txt` and `sitemap.xml` (six pages with their language pairs); 404 is `noindex`. Checked with Playwright: no console message, no failed request, Figtree loaded, on all six pages under the CSP.
   - Acceptance: per page `<title>`, description, `canonical`, `hreflang`, Open Graph title, description and image (a 1200×630 picture from the sheet, light); favicon (SVG and PNG) and `apple-touch-icon` from the app icon; the CSP meta (only `'self'`, the copy script by hash) and the referrer policy; `robots.txt` and `sitemap.xml`; the test checks each.
   - Verify: `uv run pytest -q tests/test_site.py`; the page shared in a messenger shows its card (owner)
   - Dependencies: 121 · Files: the `site/` pages, `site/images/`, `site/robots.txt`, `site/sitemap.xml`, `tests/test_site.py`

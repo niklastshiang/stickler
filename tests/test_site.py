@@ -225,3 +225,66 @@ def test_the_missing_page_speaks_both_languages_from_any_folder():
             url = attrs.get(name, "")
             if url and _local(url) and not url.startswith("#"):
                 assert url.startswith("/"), url
+
+
+ORIGIN = "https://stickler.tshia.ng/"
+CSP = (
+    "default-src 'self'; img-src 'self'; media-src 'self'; font-src 'self'; "
+    "style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
+)
+
+
+def _meta(page: Page) -> dict[str, str]:
+    found = {}
+    for attrs in page.all("meta"):
+        key = attrs.get("name") or attrs.get("property") or attrs.get("http-equiv")
+        if key:
+            found[key.lower()] = attrs.get("content", "")
+    return found
+
+
+def _url(path: Path) -> str:
+    rel = str(path.relative_to(SITE))
+    return ORIGIN + rel.removesuffix("index.html")
+
+
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+def test_every_page_is_safe_and_names_itself(path):
+    page = _page(path)
+    meta = _meta(page)
+    assert meta["content-security-policy"] == CSP
+    assert meta["referrer"] == "strict-origin-when-cross-origin"
+    assert page.all("title")
+    links = {(a.get("rel"), a.get("hreflang", "")): a.get("href", "") for a in page.all("link")}
+    assert ("icon", "") in links and ("apple-touch-icon", "") in links
+    if path.name == "404.html":
+        assert meta["robots"] == "noindex"
+        return
+    assert 50 <= len(meta["description"]) <= 160, meta["description"]
+    assert links[("canonical", "")] == _url(path)
+    english = SITE / path.relative_to(SITE / "de") if path.parent.name == "de" else path
+    german = SITE / "de" / english.relative_to(SITE)
+    assert links[("alternate", "en")] == _url(english)
+    assert links[("alternate", "de")] == _url(german)
+    assert links[("alternate", "x-default")] == _url(english)
+    assert meta["og:url"] == _url(path) and meta["og:title"] and meta["og:description"]
+    assert meta["og:image"] == ORIGIN + "images/share.png"
+    assert meta["og:locale"] == ("de_DE" if path.parent.name == "de" else "en_GB")
+
+
+def test_the_share_picture_and_icons_have_their_sizes():
+    import struct
+
+    for name, size in (("share.png", (1200, 630)), ("icon-180.png", (180, 180))):
+        head = (SITE / "images" / name).read_bytes()[:24]
+        assert struct.unpack(">II", head[16:24]) == size, name
+
+
+def test_search_engines_find_every_page_in_both_languages():
+    robots = (SITE / "robots.txt").read_text(encoding="utf-8")
+    assert "Sitemap: " + ORIGIN + "sitemap.xml" in robots
+    sitemap = (SITE / "sitemap.xml").read_text(encoding="utf-8")
+    pages = [p for p in PAGES if p.name != "404.html"]
+    for path in pages:
+        assert f"<loc>{_url(path)}</loc>" in sitemap, path
+    assert sitemap.count("<url>") == len(pages)
