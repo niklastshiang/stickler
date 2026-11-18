@@ -319,6 +319,12 @@ func refusal(_ message: String) -> String {
         #expect(model.notice?.text == "No result.")
     }
 
+    @Test func theAppsOwnNoticeShowsLikeTheCores() throws {
+        let model = try Harness().model()
+        model.tell(Notice(text: "Saved “a.pdf”", opens: "/d/a.pdf"))
+        #expect(model.notice == Notice(text: "Saved “a.pdf”", opens: "/d/a.pdf"))
+    }
+
     @Test func withoutACoreQuestionsHaveNoAnswer() async throws {
         let model = try Harness().model()
         #expect(await model.drumTrackCost() == nil)

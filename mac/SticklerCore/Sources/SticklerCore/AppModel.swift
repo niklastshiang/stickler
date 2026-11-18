@@ -236,6 +236,11 @@ public final class AppModel {
         }
     }
 
+    /// A notice of the app's own (a PDF it wrote itself), shown like the core's.
+    public func tell(_ notice: Notice) {
+        self.notice = notice
+    }
+
     public func dismissNotice() {
         notice = nil
     }

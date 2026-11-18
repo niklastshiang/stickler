@@ -9,6 +9,12 @@ struct ExportMenu: View {
 
     var body: some View {
         Button {
+            Task { await Exports.pdf(model) }
+        } label: {
+            Text("Sheet Music (PDF)…")
+            Text("To print or to read on a tablet")
+        }
+        Button {
             Exports.musicXML(model)
         } label: {
             Text("MusicXML…")
@@ -39,6 +45,21 @@ enum Exports {
             return result
         }
         return nil
+    }
+
+    /// The sheet music as an A4 PDF, written by the app (the core engraves the pages).
+    static func pdf(_ model: AppModel) async {
+        guard let result = result(model), let dest = save(ExportName.pdf(result.song)),
+            let pages = await model.a4Pages()
+        else { return }
+        do {
+            try await SheetPDF.make(pages).write(to: dest)
+            let saved = localized("Saved “%1$@”", dest.lastPathComponent)
+            model.tell(Notice(text: saved, opens: dest.path))
+        } catch {
+            let failed = localized("Could not save: %1$@", error.localizedDescription)
+            model.tell(Notice(text: failed, opens: nil))
+        }
     }
 
     static func musicXML(_ model: AppModel) {

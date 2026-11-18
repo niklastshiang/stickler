@@ -98,6 +98,11 @@ public struct Notice: Codable, Equatable, Sendable {
     public var text: String
     public var opens: String?
 
+    public init(text: String, opens: String?) {
+        self.text = text
+        self.opens = opens
+    }
+
     private enum CodingKeys: String, CodingKey { case text, opens }
 
     public func encode(to encoder: any Encoder) throws {

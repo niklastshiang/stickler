@@ -28,6 +28,11 @@ targets:
     platform: macOS
     sources:
       - path: Stickler
+      # the music font for the PDF's text (the tempo mark), with its licence (SIL OFL 1.1)
+      - path: ../packaging/fonts/Leipzig.ttf
+        buildPhase: resources
+      - path: ../packaging/fonts/OFL.txt
+        buildPhase: resources
     dependencies:
       - package: SticklerCore
     settings:
