@@ -801,7 +801,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `uv run pytest -q tests/app/test_controller.py`: consent and download, a failed step and Try Again, cancel during the setup, the drum track with and without the download, the removal; coverage ≥ 95 %
   - Dependencies: 100 · Files: `src/stickler_app/controller.py`, its tests
 
-- [ ] **Task 102: The Mac kind in `paths`** (S)
+- [x] **Task 102: The Mac kind in `paths`** (S): done 2026-11-18. `packaged()` gives `"macos"` with `STICKLER_PACKAGED=macos` (Flatpak and AppImage are checked first); `data_home`, `cache_home` and the new `config_home` give `~/Library/Application Support/Stickler` and `~/Library/Caches/Stickler` there, XDG variables still win. Every store path now comes from `paths` (`recent`, `corrections`, `settings` built their XDG paths themselves). The Mac app's results sit in its data folder (SPEC point 4: macOS may empty Caches), so "Remove Downloaded Models…" takes `results` there too; the list of everything has no duplicate (its settings sit in the data folder). New `tests/app/test_paths.py` (7 tests): the Linux table (checkout, AppImage, Flatpak) passes on the code before this task too; the Linux tests elsewhere unchanged.
   - Acceptance: `packaged()` returns `"macos"` with `STICKLER_PACKAGED=macos`; models, results and settings under `~/Library/Application Support/Stickler`, scores and clicks under `~/Library/Caches/Stickler`, XDG variables still win; Linux results unchanged.
   - Verify: `uv run pytest -q tests/app/test_paths.py` (Linux cases untouched, new Mac cases)
   - Dependencies: none · Files: `src/stickler_app/paths.py` (and `settings.py`, `recent.py`, `corrections.py` if their store paths need it), tests

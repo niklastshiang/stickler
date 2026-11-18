@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
-from stickler_app import zoom
+from stickler_app import paths, zoom
 
 APPEARANCES = ("system", "light", "dark")
 
@@ -25,8 +25,8 @@ class Settings:
 
 
 def store_path(env: Mapping[str, str] = os.environ) -> Path:
-    base = env.get("XDG_CONFIG_HOME") or str(Path(env.get("HOME") or Path.home()) / ".config")
-    return Path(base) / "stickler" / "settings.json"
+    """$XDG_CONFIG_HOME/stickler/settings.json; in the Mac app its data folder."""
+    return paths.config_home(env) / "settings.json"
 
 
 def load(store: Path) -> Settings:

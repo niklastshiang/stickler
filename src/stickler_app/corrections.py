@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from stickler import api
+from stickler_app import paths
 from stickler_app.i18n import _
 
 DETECTED = api.Corrections()
@@ -56,15 +57,12 @@ def beat_label(beat: int) -> str:
     return _("Beat {number}").format(number=beat)
 
 
-# the store: $XDG_DATA_HOME/stickler/corrections.json, {song path: {field: value}}
+# the store: corrections.json in the app's data folder, {song path: {field: value}}
 
 
 def store_path(env: Mapping[str, str] = os.environ) -> Path:
     """Next to the recent songs (the Flatpak points XDG_DATA_HOME into its folder)."""
-    base = env.get("XDG_DATA_HOME") or str(
-        Path(env.get("HOME") or Path.home()) / ".local" / "share"
-    )
-    return Path(base) / "stickler" / "corrections.json"
+    return paths.data_home(env) / "corrections.json"
 
 
 def load(store: Path) -> dict[Path, api.Corrections]:

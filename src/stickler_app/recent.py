@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
+from stickler_app import paths
 from stickler_app.i18n import _
 
 LIMIT = 10
@@ -32,11 +33,9 @@ class Row:
 
 
 def store_path(env: Mapping[str, str] = os.environ) -> Path:
-    """$XDG_DATA_HOME/stickler/recent.json (the Flatpak points XDG_DATA_HOME into its folder)."""
-    base = env.get("XDG_DATA_HOME") or str(
-        Path(env.get("HOME") or Path.home()) / ".local" / "share"
-    )
-    return Path(base) / "stickler" / "recent.json"
+    """$XDG_DATA_HOME/stickler/recent.json (the Flatpak points XDG_DATA_HOME into its folder;
+    the Mac app's data folder, see paths.data_home)."""
+    return paths.data_home(env) / "recent.json"
 
 
 def add(songs: list[Recent], song: Recent) -> list[Recent]:

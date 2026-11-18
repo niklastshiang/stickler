@@ -1,5 +1,7 @@
 """Where the app reads and writes. It writes only into its own folders (in the Flatpak they
-are inside the sandbox); songs come in, exports go out through portals."""
+are inside the sandbox); songs come in, exports go out through portals. On Linux these are the
+XDG folders; the Mac app keeps its files in Apple's folders under ~/Library (SPEC.md, module
+`core-bridge`), unless XDG variables are set."""
 
 from __future__ import annotations
 
@@ -18,10 +20,25 @@ def is_audio(path: Path) -> bool:
     return path.suffix.lower() in AUDIO_SUFFIXES
 
 
+MAC_NAME = "Stickler"  # the folder under ~/Library/Application Support and ~/Library/Caches
+
+
+def _home(env: Mapping[str, str]) -> Path:
+    return Path(env.get("HOME") or Path.home())
+
+
+def _mac(env: Mapping[str, str], folder: str) -> Path:
+    return _home(env) / "Library" / folder / MAC_NAME
+
+
 def cache_home(env: Mapping[str, str] = os.environ) -> Path:
-    """$XDG_CACHE_HOME/stickler (the Flatpak points XDG_CACHE_HOME into the app's folder)."""
-    base = env.get("XDG_CACHE_HOME") or str(Path(env.get("HOME") or Path.home()) / ".cache")
-    return Path(base) / "stickler"
+    """$XDG_CACHE_HOME/stickler (the Flatpak points XDG_CACHE_HOME into the app's folder); in
+    the Mac app ~/Library/Caches/Stickler."""
+    if env.get("XDG_CACHE_HOME"):
+        return Path(env["XDG_CACHE_HOME"]) / "stickler"
+    if packaged(env) == "macos":
+        return _mac(env, "Caches")
+    return _home(env) / ".cache" / "stickler"
 
 
 def score_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
@@ -37,19 +54,33 @@ def hits_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
 
 
 def packaged(env: Mapping[str, str] = os.environ) -> str | None:
-    """ "flatpak" or "appimage" when installed as one; None when run from the checkout."""
+    """ "flatpak", "appimage" or "macos" when installed as one; None when run from the
+    checkout. The Mac app's launcher sets STICKLER_PACKAGED=macos."""
     if env.get("FLATPAK_ID") == APP_ID:
         return "flatpak"
     if env.get("APPIMAGE") and env.get("SHARUN_DIR"):  # ours: another AppImage has no SHARUN_DIR
         return "appimage"
+    if env.get("STICKLER_PACKAGED") == "macos":
+        return "macos"
     return None
 
 
 def data_home(env: Mapping[str, str] = os.environ) -> Path:
-    base = env.get("XDG_DATA_HOME") or str(
-        Path(env.get("HOME") or Path.home()) / ".local" / "share"
-    )
-    return Path(base) / "stickler"
+    """$XDG_DATA_HOME/stickler; in the Mac app ~/Library/Application Support/Stickler."""
+    if env.get("XDG_DATA_HOME"):
+        return Path(env["XDG_DATA_HOME"]) / "stickler"
+    if packaged(env) == "macos":
+        return _mac(env, "Application Support")
+    return _home(env) / ".local" / "share" / "stickler"
+
+
+def config_home(env: Mapping[str, str] = os.environ) -> Path:
+    """$XDG_CONFIG_HOME/stickler; in the Mac app the settings sit with its data."""
+    if env.get("XDG_CONFIG_HOME"):
+        return Path(env["XDG_CONFIG_HOME"]) / "stickler"
+    if packaged(env) == "macos":
+        return _mac(env, "Application Support")
+    return _home(env) / ".config" / "stickler"
 
 
 def adapters_root(env: Mapping[str, str] = os.environ) -> Path:
@@ -64,12 +95,16 @@ def adapters_root(env: Mapping[str, str] = os.environ) -> Path:
 
 def results_cache(env: Mapping[str, str] = os.environ) -> Path:
     """The models' cached results: $STICKLER_RESULTS_CACHE (the README's recording starts from
-    an empty one, so its analysis really runs); the app's cache folder when packaged, else the
+    an empty one, so its analysis really runs); the app's cache folder when packaged (the Mac
+    app's data folder: macOS may empty Caches, and a result takes minutes), else the
     library's."""
     chosen = env.get("STICKLER_RESULTS_CACHE")
     if chosen:
         return Path(chosen)
-    return cache_home(env) / "results" if packaged(env) else api.CACHE_DIR
+    kind = packaged(env)
+    if kind == "macos" and not env.get("XDG_CACHE_HOME"):
+        return data_home(env) / "results"
+    return cache_home(env) / "results" if kind else api.CACHE_DIR
 
 
 def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
