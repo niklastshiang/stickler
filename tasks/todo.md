@@ -787,7 +787,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Dependencies: 98 · Files: the workflow, `tests/test_adapter_smoke.py` only if a model needs a platform note
 
 ### Checkpoint S
-- [ ] All success criteria of SPEC.md "Module `mac-core`" met (owner, from the CI results; evidence 2026-11-17: (1) the `macos` job green, 745 tests, coverage ≥ 95 %; (2) the three models' smoke tests green with plausible RAM; (3) Linux unchanged: lock comparison 0 differences, `stickler eval` byte-identical, CI green on 3.12 and 3.14; (4) no test skipped. On macos-15 for now, see Task 98); then `core-bridge`'s spec (and `mac-design` with the owner)
+- [x] All success criteria of SPEC.md "Module `mac-core`" met (owner, 2026-11-18, from the CI results; evidence 2026-11-17: (1) the `macos` job green, 745 tests, coverage ≥ 95 %; (2) the three models' smoke tests green with plausible RAM; (3) Linux unchanged: lock comparison 0 differences, `stickler eval` byte-identical, CI green on 3.12 and 3.14; (4) no test skipped. On macos-15 for now, see Task 98); then `core-bridge`'s spec (and `mac-design` with the owner)
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
