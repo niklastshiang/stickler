@@ -5,21 +5,33 @@ The host passes `post`, which the controller calls with each `Event` in the orde
 happen, from whichever thread made them; `post` must not block (GTK: `GLib.idle_add`, the
 bridge: a queue its writer drains). The flows are the GTK window's of release 7, copied, not
 redesigned: one job at a time, a new song cancels the running job, a correction waits for the
-changes to pause."""
+changes to pause, the setup's download is measured twice a second."""
 
 from __future__ import annotations
 
+import contextlib
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from stickler import api
-from stickler_app import analysis, corrections, paths, recent, session
+from stickler import adapters, api
+from stickler_app import (
+    analysis,
+    corrections,
+    exports,
+    paths,
+    recent,
+    removal,
+    session,
+    settings,
+    setup,
+)
 from stickler_app.i18n import _
 
 CORRECT_AFTER = 0.25  # seconds a correction waits for the changes to pause
+SAMPLE = 0.5  # seconds between two measurements of a download
 BUSY = session.Analysing | session.Exporting | session.SettingUp
 
 
@@ -39,9 +51,20 @@ class RecentChanged:
 
 @dataclass(frozen=True)
 class Notice:
-    """A short message for the reader (a toast in GTK); the state stays as it is."""
+    """A short message for the reader (a toast in GTK); the state stays as it is. `opens`: a
+    file just saved, which the host may offer to open."""
 
     text: str
+    opens: Path | None = None
+
+
+@dataclass(frozen=True)
+class DrumTrackCost:
+    """What a drum track costs, said before it starts (design screen 8)."""
+
+    minutes: int
+    text: str
+    download: bool  # Demucs is downloaded first
 
 
 Event = Changed | RecentChanged | Notice
@@ -57,6 +80,9 @@ class Controller:
         self._token: api.CancelToken | None = None
         self._thread: threading.Thread | None = None
         self._timer: threading.Timer | None = None  # a correction waiting for a pause
+        self._sampling: threading.Event | None = None  # set to stop measuring a download
+        self._grown: Callable[[], int] = lambda: 0  # what the running setup step has added
+        self._removing = False  # models being removed
 
     @property
     def state(self) -> session.State:
@@ -67,6 +93,16 @@ class Controller:
     def recent(self) -> tuple[recent.Recent, ...]:
         with self._lock:
             return tuple(self._recent)
+
+    @property
+    def can_remove_models(self) -> bool:
+        """Only an installed app removes its models, and not while something runs."""
+        with self._lock:
+            return (
+                paths.packaged() is not None
+                and not isinstance(self._state, BUSY)
+                and not self._removing
+            )
 
     # what the reader does
 
@@ -118,12 +154,177 @@ class Controller:
             self._timer.start()
             return True
 
+    # the setup assistant (SPEC.md, module `setup-assistant`)
+
+    def start(self) -> None:
+        """At start, in a thread: are the models there? (a few uv checks, under 0.1 s) A
+        packaged app first copies its shipped adapters' sources into its models folder. Leads
+        to the consent, the download (agreed before, interrupted) or stays empty."""
+        root = paths.adapters_root()
+
+        def check() -> list[str]:
+            shipped = paths.adapter_sources()
+            if shipped is not None:
+                setup.sync_adapters(shipped, root)
+            return api.mode_ready(adapters_root=root)
+
+        def checked(missing: list[str]) -> None:
+            if not isinstance(self._state, session.Empty):
+                return  # the reader has started something meanwhile
+            agreed = settings.load(settings.store_path()).setup_agreed
+            page = setup.start_page(missing, agreed=agreed)
+            if page == "consent":
+                self._set(session.consent(tuple(missing)))
+            elif page == "download":
+                self._start_setup(tuple(missing), None)
+
+        self._run(
+            check,
+            checked,
+            lambda exc: self._notice(_("Could not check the models: {reason}").format(reason=exc)),
+            job=False,
+        )
+
+    def agree(self) -> bool:
+        """The models may be downloaded: remembered, and the download starts."""
+        with self._lock:
+            state = self._state
+            if not isinstance(state, session.Consent):
+                return False
+            with contextlib.suppress(OSError):  # unsaved, the download still runs now
+                settings.update(settings.store_path(), setup_agreed=True)
+            self._start_setup(state.missing, state.song)
+            return True
+
+    def not_now(self) -> bool:
+        """ "Not Now" on the consent, "Later" after a failed download: the empty window."""
+        with self._lock:
+            if not isinstance(self._state, session.Consent | session.SetupFailed):
+                return False
+            self._set(session.Empty())
+            return True
+
+    def retry_setup(self) -> bool:
+        """Goes on from where it failed: steps already done are quick (api.setup_adapters)."""
+        with self._lock:
+            state = self._state
+            if not isinstance(state, session.SetupFailed):
+                return False
+            self._start_setup(state.missing, state.song)
+            return True
+
+    # exports (design screen 8)
+
+    def export_musicxml(self, dest: Path) -> bool:
+        """Copies the result's MusicXML to `dest`; False without a result."""
+        with self._lock:
+            result = self._state
+            if not isinstance(result, session.Result):
+                return False
+            try:
+                exports.save_musicxml(result.notation.musicxml, dest)
+            except OSError as exc:
+                self._notice(_("Could not save: {reason}").format(reason=exc.strerror))
+            else:
+                self._saved(dest)
+            return True
+
+    def drum_track_cost(self) -> DrumTrackCost | None:
+        """What saving the drum track would cost now; None without a result."""
+        with self._lock:
+            result = self._state
+            if not isinstance(result, session.Result):
+                return None
+            download = self._separator_missing()
+            cost = exports.drum_track_cost(result.info.seconds, download=download)
+            return DrumTrackCost(cost.minutes, cost.text, download)
+
+    def export_drum_track(self, dest: Path) -> bool:
+        """Separates the drums (Demucs downloaded first if missing) and saves them at `dest`,
+        with steps and Cancel; back to the result after. False without a result."""
+        with self._lock:
+            result = self._state
+            if not isinstance(result, session.Result):
+                return False
+            download = self._separator_missing()
+            self._stop_job()
+            self._token = token = api.CancelToken()
+            state = session.export_drums(result, dest, setup=download)
+            job = state.job
+            self._set(state)
+
+            def report(step: api.Step) -> None:
+                with self._lock:
+                    self._set(session.on_step(self._state, job, step))
+
+            def done(saved: Path) -> None:
+                state = session.exported(self._state, job)
+                if state is not self._state:
+                    self._set(state)
+                    self._saved(saved)
+
+            self._run(
+                lambda: exports.drum_track(result.song, dest, report, token, setup=download),
+                done,
+                lambda exc: self._set(session.failed(self._state, job, exc)),
+            )
+            return True
+
+    # removing the downloaded models (SPEC.md, module `polish`)
+
+    @staticmethod
+    def removal_sizes() -> tuple[int, int]:
+        """Bytes that would go: the models alone, and everything (settings, recent songs and
+        corrections too). Walks the folders: call it off the interface's thread."""
+        return (
+            removal.size(removal.targets(everything=False)),
+            removal.size(removal.targets(everything=True)),
+        )
+
+    def remove_models(self, everything: bool) -> bool:
+        """Removes the models in a thread; the next download is asked for again. With
+        `everything`, the settings, recent songs and corrections go too. False when it cannot
+        run now (see `can_remove_models`)."""
+        with self._lock:
+            if not self.can_remove_models:
+                return False
+            self._stop_job()
+            self._removing = True
+            self._set(session.Empty())
+            chosen = removal.targets(everything=everything)
+
+            def remove() -> None:
+                removal.remove(chosen)
+                shipped = paths.adapter_sources()
+                if shipped is not None:  # the models' sources went too; without them no song runs
+                    setup.sync_adapters(shipped, paths.adapters_root())
+
+            def done(_result: None) -> None:
+                self._removing = False
+                if everything:
+                    self._recent = []
+                    self._post(RecentChanged(()))
+                else:
+                    with contextlib.suppress(OSError):  # asks again before the next download
+                        settings.update(settings.store_path(), setup_agreed=False)
+                self._set(session.Empty())
+                self._notice(_("The downloaded models are removed"))
+
+            def failed(exc: BaseException) -> None:
+                self._removing = False
+                self._set(session.Empty())
+                self._notice(_("Could not remove everything: {reason}").format(reason=exc))
+
+            self._run(remove, done, failed)
+            return True
+
     def shutdown(self, seconds: float = 2.0) -> None:
         """Cancels the running job and waits until it has cleaned up (its half-written cache
         folder removed), at most `seconds`, so that quitting leaves nothing behind."""
         with self._lock:
             if self._timer is not None:
                 self._timer.cancel()
+            self._stop_sampling()
             self._stop_job()
             thread = self._thread
         if thread is not None:
@@ -214,6 +415,64 @@ class Controller:
             self._notice(_("Recent songs could not be saved: {reason}").format(reason=exc.strerror))
         self._post(RecentChanged(tuple(songs)))
 
+    def _start_setup(self, missing: tuple[str, ...], song: Path | None) -> None:
+        root = paths.adapters_root()
+        registry = adapters.discover(root)
+        ids = setup.step_ids(list(missing), lambda a: adapters.needs_weights(registry[a]))
+        self._stop_job()
+        self._token = token = api.CancelToken()
+        state = session.start_setup(ids, song, missing)
+        job = state.job
+        self._set(state)
+
+        def step(reported: api.Step) -> None:
+            with self._lock:
+                if reported.state == "started" and reported.adapter in registry:
+                    folder = registry[reported.adapter].path
+                    self._grown = setup.meter(reported.id, root, folder)
+                self._set(session.on_setup_step(self._state, job, reported))
+
+        def run_setup() -> None:
+            for adapter in missing:
+                api.setup_adapters(adapter, "cpu", root, progress=step, cancel=token)
+
+        def done(_result: None) -> None:
+            state = session.setup_done(self._state, job)
+            if state is not self._state:
+                self._set(state)
+                if song is not None:
+                    self.open(song)
+
+        self._sample(job)
+        self._run(run_setup, done, lambda exc: self._set(session.failed(self._state, job, exc)))
+
+    def _sample(self, job: int) -> None:
+        """Measures the running download twice a second until its setup ends."""
+        self._stop_sampling()
+        self._sampling = stop = threading.Event()
+
+        def sample() -> None:
+            while not stop.wait(SAMPLE):
+                with self._lock:
+                    state = self._state
+                    if not (isinstance(state, session.SettingUp) and state.job == job):
+                        return
+                    self._set(session.setup_grew(state, job, self._grown()))
+
+        threading.Thread(target=sample, name="stickler-meter", daemon=True).start()
+
+    def _stop_sampling(self) -> None:
+        if self._sampling is not None:
+            self._sampling.set()
+            self._sampling = None
+
+    def _separator_missing(self) -> bool:
+        missing = api.mode_ready(drums=True, adapters_root=paths.adapters_root())
+        return api.DRUM_TRACK_SEPARATOR in missing
+
+    def _saved(self, dest: Path) -> None:
+        self._notice(_("Saved “{name}”").format(name=dest.name), opens=dest)
+
     # plumbing; every change happens under the lock, so events reach `post` in order
 
     def _set(self, state: session.State) -> None:
@@ -221,8 +480,8 @@ class Controller:
             self._state = state
             self._post(Changed(state))
 
-    def _notice(self, text: str) -> None:
-        self._post(Notice(text))
+    def _notice(self, text: str, opens: Path | None = None) -> None:
+        self._post(Notice(text, opens))
 
     def _stop_job(self) -> None:
         if self._token is not None:
@@ -231,15 +490,18 @@ class Controller:
 
     def _run(
         self,
-        job: Callable[[], Any],
+        work: Callable[[], Any],
         done: Callable[[Any], None],
         failed: Callable[[BaseException], None],
+        *,
+        job: bool = True,
     ) -> None:
-        """Runs `job` in a daemon thread; its value or exception is handled under the lock."""
+        """Runs `work` in a daemon thread; its value or exception is handled under the lock.
+        `job`: the one job `shutdown` waits for (the start's model check is none)."""
 
-        def work() -> None:
+        def run() -> None:
             try:
-                value = job()
+                value = work()
             except Exception as exc:  # becomes a state or a notice, as in the window
                 with self._lock:
                     failed(exc)
@@ -247,5 +509,7 @@ class Controller:
             with self._lock:
                 done(value)
 
-        self._thread = threading.Thread(target=work, name="stickler-job", daemon=True)
-        self._thread.start()
+        thread = threading.Thread(target=run, name="stickler-job", daemon=True)
+        if job:
+            self._thread = thread
+        thread.start()
