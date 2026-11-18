@@ -21,6 +21,25 @@ public struct CoreEnd: Equatable, Sendable {
     /// The last lines the core wrote to stderr, then the last lines it sent that could not be
     /// read.
     public var details: [String]
+
+    /// One line on how it ended, for "Technical Details" (not translated, as the rest there).
+    public var summary: String {
+        switch reason {
+        case .exited(let status):
+            "The core exited with status \(status)."
+        case .signalled(let signal):
+            "The core was ended by signal \(signal)."
+        case .wrongProtocol(let version):
+            "The core speaks protocol \(version); this app speaks \(BridgeProtocol.version)."
+        case .notStarted(let why):
+            "The core could not be started: \(why)"
+        }
+    }
+
+    /// The summary and the details, as "Technical Details" shows them.
+    public var technicalDetails: String {
+        ([summary] + details).joined(separator: "\n")
+    }
 }
 
 /// Errors of `CoreClient.send`.

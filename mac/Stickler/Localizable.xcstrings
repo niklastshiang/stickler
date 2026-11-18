@@ -1824,6 +1824,24 @@
         }
       }
     },
+    "Running" : {
+      "comment" : "Translators: Mac app, a step that is running now (next to \"Done\" and \"Waiting\")",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En curso"
+          }
+        }
+      }
+    },
     "Save As" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2156,6 +2174,23 @@
         }
       }
     },
+    "Start Again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu starten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a iniciar"
+          }
+        }
+      }
+    },
     "Stickler Help" : {
       "comment" : "Translators: Mac app, Help menu",
       "extractionState" : "manual",
@@ -2170,6 +2205,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayuda de Stickler"
+          }
+        }
+      }
+    },
+    "Stickler Stopped Unexpectedly" : {
+      "comment" : "Translators: Mac app, the page shown when the app's Python core has ended",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler wurde unerwartet beendet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler se detuvo inesperadamente"
           }
         }
       }
@@ -2221,6 +2274,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stickler escucha la batería y la escribe como partitura. MP3, FLAC, WAV u OGG; una canción tarda unos 15 segundos."
+          }
+        }
+      }
+    },
+    "Takes about 15 seconds" : {
+      "comment" : "Translators: Mac app, under \"Writing the Drum Part\" (design screen M5)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dauert etwa 15 Sekunden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarda unos 15 segundos"
           }
         }
       }
@@ -2391,6 +2462,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los modelos se pueden quitar cuando termine el trabajo en curso"
+          }
+        }
+      }
+    },
+    "The part of Stickler that listens to the songs has ended. A song it was writing has to be opened again; finished ones are kept." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Teil von Stickler, der die Songs anhört, wurde beendet. Ein Song, an dem er gerade schrieb, muss neu geöffnet werden; fertige bleiben erhalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La parte de Stickler que escucha las canciones se ha detenido. Una canción que estaba escribiendo hay que abrirla de nuevo; las terminadas se conservan."
           }
         }
       }

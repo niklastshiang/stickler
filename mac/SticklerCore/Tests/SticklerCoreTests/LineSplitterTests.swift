@@ -27,3 +27,17 @@ import Testing
     tail.finish()
     #expect(tail.lines == ["d", "(not UTF-8)", "last"])
 }
+
+@Test func theEndSaysHowTheCoreEnded() {
+    let ends: [(CoreEnd.Reason, String)] = [
+        (.exited(3), "The core exited with status 3."),
+        (.signalled(9), "The core was ended by signal 9."),
+        (.wrongProtocol(2), "The core speaks protocol 2; this app speaks 1."),
+        (.notStarted("no uv"), "The core could not be started: no uv")
+    ]
+    for (reason, summary) in ends {
+        #expect(CoreEnd(reason: reason, details: []).summary == summary)
+    }
+    let end = CoreEnd(reason: .exited(1), details: ["Traceback", "MemoryError"])
+    #expect(end.technicalDetails == "The core exited with status 1.\nTraceback\nMemoryError")
+}

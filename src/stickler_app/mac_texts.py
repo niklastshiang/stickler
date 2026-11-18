@@ -24,4 +24,15 @@ TEXTS = (
     N_("Clear Menu"),
     # Translators: Mac app, Help menu
     N_("Stickler Help"),
+    # Translators: Mac app, under "Writing the Drum Part" (design screen M5)
+    N_("Takes about 15 seconds"),
+    # Translators: Mac app, a step that is running now (next to "Done" and "Waiting")
+    N_("Running"),
+    # Translators: Mac app, the page shown when the app's Python core has ended
+    N_("Stickler Stopped Unexpectedly"),
+    N_(
+        "The part of Stickler that listens to the songs has ended. A song it was writing has "
+        "to be opened again; finished ones are kept."
+    ),
+    N_("Start Again"),
 )

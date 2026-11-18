@@ -86,11 +86,14 @@ jobs:
           TEST_RUNNER_STICKLER_SCREENSHOTS: ${{ runner.temp }}/screenshots
         run: |
           xcodebuild test -project mac/Stickler.xcodeproj -scheme Stickler \
-            -destination 'platform=macOS' -derivedDataPath "$RUNNER_TEMP/test" -quiet
+            -destination 'platform=macOS,arch=arm64' -derivedDataPath "$RUNNER_TEMP/test" \
+            -resultBundlePath "$RUNNER_TEMP/test.xcresult" -quiet
+          xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/test.xcresult" \
+            | python3 -c 'import json, sys; r = json.load(sys.stdin); print(r["result"], r["passedTests"], "passed,", r["failedTests"], "failed,", r["skippedTests"], "skipped")'
       - name: The app, ad-hoc signed
         run: |
           xcodebuild build -project mac/Stickler.xcodeproj -scheme Stickler \
-            -configuration Release -destination 'platform=macOS' \
+            -configuration Release -destination 'platform=macOS,arch=arm64' \
             -derivedDataPath "$RUNNER_TEMP/release" -quiet
           app="$RUNNER_TEMP/release/Build/Products/Release/Stickler.app"
           codesign --verify --verbose "$app"

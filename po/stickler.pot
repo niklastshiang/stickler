@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-18 11:50+0100\n"
+"POT-Creation-Date: 2026-11-18 11:57+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -212,6 +212,31 @@ msgstr ""
 #. Translators: Mac app, Help menu
 #: src/stickler_app/mac_texts.py:26
 msgid "Stickler Help"
+msgstr ""
+
+#. Translators: Mac app, under "Writing the Drum Part" (design screen M5)
+#: src/stickler_app/mac_texts.py:28
+msgid "Takes about 15 seconds"
+msgstr ""
+
+#. Translators: Mac app, a step that is running now (next to "Done" and "Waiting")
+#: src/stickler_app/mac_texts.py:30
+msgid "Running"
+msgstr ""
+
+#. Translators: Mac app, the page shown when the app's Python core has ended
+#: src/stickler_app/mac_texts.py:32
+msgid "Stickler Stopped Unexpectedly"
+msgstr ""
+
+#: src/stickler_app/mac_texts.py:34
+msgid ""
+"The part of Stickler that listens to the songs has ended. A song it was "
+"writing has to be opened again; finished ones are kept."
+msgstr ""
+
+#: src/stickler_app/mac_texts.py:37
+msgid "Start Again"
 msgstr ""
 
 #: src/stickler_app/playback.py:57

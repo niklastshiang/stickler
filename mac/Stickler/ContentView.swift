@@ -38,8 +38,20 @@ struct ContentView: View {
         switch model.phase {
         case .needsFolder(let problem):
             FolderView(problem: problem) { Panels.chooseFolder(model) }
-        case .running, .stopped:
+        case .stopped(let end):
+            StoppedPage(model: model, end: end)
+        case .running:
             switch model.state.screen {
+            case .analysing(let analysing):
+                StepsPage(
+                    title: "Writing the Drum Part", subtitle: "Takes about 15 seconds",
+                    steps: analysing.steps, cancel: model.cancel)
+            case .exporting(let exporting):
+                StepsPage(
+                    title: "Saving the Drum Track", subtitle: nil, steps: exporting.steps,
+                    cancel: model.cancel)
+            case .failed(let failure):
+                FailurePage(model: model, failure: failure)
             case .result:
                 ResultPlaceholder()
             default:
