@@ -22,7 +22,18 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any, TextIO
 
-from stickler_app import controller, i18n, paths, recent, session, setup, steps
+from stickler_app import (
+    controller,
+    engraving,
+    i18n,
+    paths,
+    recent,
+    session,
+    settings,
+    setup,
+    steps,
+    zoom,
+)
 from stickler_app.i18n import _
 
 PROTOCOL = 1
@@ -131,7 +142,6 @@ def _failed(state: session.Failed) -> dict[str, Any]:
         "title": state.title,
         "description": state.description,
         "details": state.details,
-        "can_retry": state.can_retry,
     }
 
 
@@ -201,6 +211,43 @@ def _text(command: dict[str, Any], name: str) -> str:
     return value
 
 
+def _number(command: dict[str, Any], name: str, default: float | None = None) -> float:
+    """A positive, finite number; `default` when the argument is left out."""
+    value = command.get(name, default)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise _bad_argument(name)
+    if not 0 < value < float("inf"):
+        raise _bad_argument(name)
+    return float(value)
+
+
+def _flag(command: dict[str, Any], name: str) -> bool:
+    value = command.get(name)
+    if not isinstance(value, bool):
+        raise _bad_argument(name)
+    return value
+
+
+def encode_page(page: engraving.Page) -> dict[str, Any]:
+    """A page as SVG with its size in pixels and the written bars' rectangles, top to bottom
+    (a click on one jumps there; the playing bar is marked on it)."""
+    bars = [
+        {
+            "bar": number,
+            "x": round(box.x, 2),
+            "y": round(box.y, 2),
+            "width": round(box.width, 2),
+            "height": round(box.height, 2),
+        }
+        for number, box in sorted(page.bars.items())
+    ]
+    return {"svg": page.svg, "width": page.width, "height": page.height, "bars": bars}
+
+
+def _zoom_reply(value: float) -> dict[str, Any]:
+    return {"zoom": value, "percent": zoom.percent(value)}
+
+
 # the outgoing lines
 
 
@@ -258,6 +305,23 @@ class Bridge:
             "cancel": lambda _c: self._fits(self._ctl.cancel()),
             "retry": lambda _c: self._fits(self._ctl.retry()),
             "close": self._close,
+            "pages": self._pages,
+            "a4_pages": self._a4_pages,
+            "export_musicxml": lambda c: self._fits(
+                self._ctl.export_musicxml(Path(_text(c, "dest")))
+            ),
+            "drum_track_cost": self._drum_track_cost,
+            "export_drum_track": lambda c: self._fits(
+                self._ctl.export_drum_track(Path(_text(c, "dest")))
+            ),
+            "forget_recent": self._forget_recent,
+            "settings": self._settings,
+            "set_zoom": lambda c: self._zoom(lambda _now: zoom.clamp(_number(c, "zoom"))),
+            "zoom_in": lambda _c: self._zoom(zoom.zoom_in),
+            "zoom_out": lambda _c: self._zoom(zoom.zoom_out),
+            "actual_size": lambda _c: self._zoom(lambda _now: 1.0),
+            "removal_sizes": self._removal_sizes,
+            "remove_models": lambda c: self._fits(self._ctl.remove_models(_flag(c, "everything"))),
             "quit": lambda _c: {},
         }
 
@@ -315,6 +379,10 @@ class Bridge:
         except CommandError as exc:
             self._reply_error(ident, exc.code, exc.message)
             return None
+        except Exception:  # a bug: the reader gets an answer, the bridge goes on
+            log.exception("command %s failed", name)
+            self._reply_error(ident, "internal", _("Something went wrong inside Stickler."))
+            return None
         self._outbox.put("line", {"id": ident, "ok": True, **extra})
         return name
 
@@ -341,6 +409,73 @@ class Bridge:
     def _close(self, _command: dict[str, Any]) -> dict[str, Any]:
         self._ctl.close()
         return {}
+
+    def _result(self) -> session.Result:
+        state = self._ctl.state
+        if not isinstance(state, session.Result):
+            raise _not_now()
+        return state
+
+    def _musicxml(self) -> str:
+        return self._result().notation.musicxml.read_text(encoding="utf-8")
+
+    def _pages(self, command: dict[str, Any]) -> dict[str, Any]:
+        """The sheet `width` pixels wide at `zoom` (the stored note size when left out)."""
+        width = _number(command, "width")
+        stored = settings.load(settings.store_path()).zoom
+        size = zoom.clamp(_number(command, "zoom", stored))
+        pages = engraving.engrave(self._musicxml(), width, size)
+        return {"zoom": size, "pages": [encode_page(p) for p in pages]}
+
+    def _a4_pages(self, _command: dict[str, Any]) -> dict[str, Any]:
+        """The A4 pages for the PDF, which the app writes (SPEC point 3). The legend (module
+        `legend`) is deferred, as in the GTK app."""
+        result = self._result()
+        pages = engraving.a4_pages(self._musicxml())
+        return {"title": result.title, "pages": [encode_page(p) for p in pages]}
+
+    def _drum_track_cost(self, _command: dict[str, Any]) -> dict[str, Any]:
+        cost = self._ctl.drum_track_cost()
+        if cost is None:
+            raise _not_now()
+        return {"minutes": cost.minutes, "text": cost.text, "download": cost.download}
+
+    def _forget_recent(self, command: dict[str, Any]) -> dict[str, Any]:
+        self._ctl.forget_recent(Path(_text(command, "path")))
+        return {}
+
+    @staticmethod
+    def _settings(_command: dict[str, Any]) -> dict[str, Any]:
+        chosen = settings.load(settings.store_path())
+        return {**dataclasses.asdict(chosen), "percent": zoom.percent(chosen.zoom)}
+
+    @staticmethod
+    def _zoom(change: Callable[[float], float]) -> dict[str, Any]:
+        """The note size for every song, remembered; unsaved it still holds for this run (the
+        app keeps the value it is sent)."""
+        new = change(settings.load(settings.store_path()).zoom)
+        try:
+            settings.update(settings.store_path(), zoom=new)
+        except OSError:
+            log.warning("the note size could not be saved")
+        return _zoom_reply(new)
+
+    def _removal_sizes(self, _command: dict[str, Any]) -> dict[str, Any]:
+        """What "Remove Downloaded Models…" would free, with the dialog's text for each
+        choice. Walks the folders: the reply can take a moment."""
+        models, everything = self._ctl.removal_sizes()
+
+        def text(size: int) -> str:
+            return _(
+                "This frees {size}. Stickler asks before it downloads the models again."
+            ).format(size=setup.size_text(size))
+
+        return {
+            "models": models,
+            "everything": everything,
+            "models_text": text(models),
+            "everything_text": text(everything),
+        }
 
     # the writer side
 

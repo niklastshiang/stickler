@@ -13,6 +13,7 @@ import re
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 import verovio
 
@@ -21,6 +22,10 @@ STAFF_UNITS = 720  # Verovio units from the top to the bottom staff line (4 spac
 PAD = 0.5  # the rectangle reaches this many staff heights above and below the staff
 PAGE_HEIGHT = 60000  # Verovio's largest page: a screen shows one long page per song
 
+# Verovio's fonts. Its Python module sets this path for toolkits made on the main thread only;
+# on another thread (the bridge's reader) the default is the wheel's build folder and no font
+# loads, so every toolkit is given the path itself.
+RESOURCES = str(Path(verovio.__file__).parent / "data")
 SVG = "{http://www.w3.org/2000/svg}"
 MEI = "{http://www.music-encoding.org/ns/mei}"
 XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
@@ -184,7 +189,8 @@ def _with_legend(page: Page, key: Page, top: float, fit: float) -> Page:
 def render(musicxml: str, settings: dict) -> list[Page]:
     verovio.enableLog(verovio.LOG_ERROR)  # layout warnings (tight bars) are not the user's
     with c_numbers():
-        toolkit = verovio.toolkit()
+        toolkit = verovio.toolkit(False)  # its fonts load from RESOURCES, on any thread
+        toolkit.setResourcePath(RESOURCES)
         toolkit.setOptions(settings)
         toolkit.loadData(musicxml)
         numbers = _measure_numbers(toolkit.getMEI())

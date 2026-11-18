@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-18 08:23+0000\n"
+"POT-Creation-Date: 2026-11-18 08:31+0000\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -17,23 +17,34 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/stickler_app/bridge.py:188
+#: src/stickler_app/bridge.py:198
 msgid "This is not possible right now."
 msgstr "Ahora mismo no es posible."
 
-#: src/stickler_app/bridge.py:193
+#: src/stickler_app/bridge.py:203
 #, python-brace-format
 msgid "The value of “{argument}” is not valid."
 msgstr "El valor de «{argument}» no es válido."
 
-#: src/stickler_app/bridge.py:306
+#: src/stickler_app/bridge.py:370
 msgid "The request could not be read."
 msgstr "No se pudo leer la solicitud."
 
-#: src/stickler_app/bridge.py:310
+#: src/stickler_app/bridge.py:374
 #, python-brace-format
 msgid "Stickler does not know the command “{name}”."
 msgstr "Stickler no conoce el comando «{name}»."
+
+#: src/stickler_app/bridge.py:384
+msgid "Something went wrong inside Stickler."
+msgstr "Algo salió mal dentro de Stickler."
+
+#: src/stickler_app/bridge.py:470 src/stickler_gtk/ui/window.py:680
+#, python-brace-format
+msgid "This frees {size}. Stickler asks before it downloads the models again."
+msgstr ""
+"Esto libera {size}. Stickler te preguntará antes de volver a descargar los "
+"modelos."
 
 #: src/stickler_app/controller.py:184 src/stickler_gtk/ui/window.py:673
 #: src/stickler_gtk/ui/window.py:756
@@ -217,50 +228,50 @@ msgstr "Algo salió mal al escuchar «{name}»."
 msgid "The Analysis Failed"
 msgstr "El análisis falló"
 
-#: src/stickler_app/setup.py:51 src/stickler_app/setup.py:123
+#: src/stickler_app/setup.py:52 src/stickler_app/setup.py:124
 #, python-brace-format
 msgid "{size:n} GB"
 msgstr "{size:n} GB"
 
-#: src/stickler_app/setup.py:52
+#: src/stickler_app/setup.py:53
 #, python-brace-format
 msgid "{size:n} MB"
 msgstr "{size:n} MB"
 
-#: src/stickler_app/setup.py:61
+#: src/stickler_app/setup.py:62
 #, python-brace-format
 msgid "{done} of {total}"
 msgstr "{done} de {total}"
 
-#: src/stickler_app/setup.py:68
+#: src/stickler_app/setup.py:69
 msgid "the Python package servers (pypi.org, download.pytorch.org, github.com)"
 msgstr ""
 "los servidores de paquetes de Python (pypi.org, download.pytorch.org, github."
 "com)"
 
-#: src/stickler_app/setup.py:70
+#: src/stickler_app/setup.py:71
 msgid "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)"
 msgstr "la JKU Linz (cloud.cp.jku.at) y la copia de Stickler (github.com)"
 
-#: src/stickler_app/setup.py:71
+#: src/stickler_app/setup.py:72
 msgid "the model’s server"
 msgstr "el servidor del modelo"
 
-#: src/stickler_app/setup.py:102
+#: src/stickler_app/setup.py:103
 msgid "detects the hits"
 msgstr "detecta los golpes"
 
-#: src/stickler_app/setup.py:103
+#: src/stickler_app/setup.py:104
 msgid ""
 "Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0)."
 msgstr ""
 "Su modelo entrenado es libre solo para uso no comercial (CC BY-NC-SA 4.0)."
 
-#: src/stickler_app/setup.py:106
+#: src/stickler_app/setup.py:107
 msgid "finds the beat and the bars"
 msgstr "encuentra el pulso y los compases"
 
-#: src/stickler_app/setup.py:107
+#: src/stickler_app/setup.py:108
 msgid "MIT licence. Its model comes from the JKU Linz server."
 msgstr "Licencia MIT. Su modelo viene del servidor de la JKU Linz."
 
@@ -699,13 +710,6 @@ msgstr "Abrir"
 #: src/stickler_gtk/ui/window.py:593
 msgid "Remove from the List"
 msgstr "Quitar de la lista"
-
-#: src/stickler_gtk/ui/window.py:680
-#, python-brace-format
-msgid "This frees {size}. Stickler asks before it downloads the models again."
-msgstr ""
-"Esto libera {size}. Stickler te preguntará antes de volver a descargar los "
-"modelos."
 
 #: src/stickler_gtk/ui/window.py:683
 msgid "Also remove settings, recent songs and corrections"

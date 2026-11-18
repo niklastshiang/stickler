@@ -46,7 +46,8 @@ def fraction(step_id: str, grown: int) -> float | None:
     return min(max(grown / size, 0.0), MOST)
 
 
-def _size(n: float) -> str:
+def size_text(n: float) -> str:
+    """ "650 MB" or "1.3 GB", in the reader's language."""
     if n >= 1_000_000_000:
         return _("{size:n} GB").format(size=round(n / 1e9, 1))
     return _("{size:n} MB").format(size=round(n / 1e6))
@@ -58,7 +59,7 @@ def amount(step_id: str, grown: int) -> str:
     if size is None:
         return ""
     done = min(max(grown, 0), size)
-    return _("{done} of {total}").format(done=_size(done), total=_size(size))
+    return _("{done} of {total}").format(done=size_text(done), total=size_text(size))
 
 
 def server(step_id: str) -> str:

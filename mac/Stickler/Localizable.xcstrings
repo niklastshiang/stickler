@@ -1999,6 +1999,23 @@
         }
       }
     },
+    "Something went wrong inside Stickler." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Stickler ist etwas schiefgegangen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algo salió mal dentro de Stickler."
+          }
+        }
+      }
+    },
     "Something went wrong while listening to “%1$@”." : {
       "extractionState" : "manual",
       "localizations" : {

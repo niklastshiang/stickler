@@ -45,6 +45,22 @@ def test_every_written_bar_gets_one_rectangle_on_a_page_as_wide_as_asked():
         assert box.width > 0 and box.height > 0
 
 
+def test_a_thread_engraves_the_same_pages_as_the_main_thread():
+    """The bridge engraves on its reader thread; Verovio found no fonts there before."""
+    import threading
+
+    xml = _xml()
+    on_main = engraving.engrave(xml, 800)
+    found = []
+    worker = threading.Thread(target=lambda: found.append(engraving.engrave(xml, 800)))
+    worker.start()
+    worker.join()
+    (on_thread,) = found
+    assert [(p.width, p.height, p.bars) for p in on_thread] == [
+        (p.width, p.height, p.bars) for p in on_main
+    ]
+
+
 def test_bars_of_a_system_follow_left_to_right():
     pages = engraving.engrave(_xml(), width=800)
     boxes = [pages[0].bars[n] for n in sorted(pages[0].bars)]

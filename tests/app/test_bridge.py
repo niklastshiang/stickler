@@ -448,15 +448,201 @@ def test_hello_names_the_language_the_bridge_speaks(monkeypatch):
         running.stop()
 
 
-def test_the_commands_of_this_release(running):
-    assert running.bridge.commands == {
-        "start",
-        "agree",
-        "not_now",
-        "retry_setup",
-        "open",
-        "cancel",
-        "retry",
-        "close",
-        "quit",
+# the commands of Task 104
+
+
+def _with_result(monkeypatch, tmp_path) -> Running:
+    FakeApi(monkeypatch)
+    running = Running()
+    running.send("open", path=str(tmp_path / "eye.flac"))
+    running.until("result")
+    return running
+
+
+@pytest.mark.parametrize(
+    ("cmd", "args"),
+    [
+        ("pages", {"width": 800}),
+        ("a4_pages", {}),
+        ("export_musicxml", {"dest": "/x.musicxml"}),
+        ("drum_track_cost", {}),
+        ("export_drum_track", {"dest": "/x.flac"}),
+        ("remove_models", {"everything": False}),
+    ],
+)
+def test_the_result_commands_need_a_result(running, cmd, args):
+    assert running.send(cmd, **args)["error"]["code"] == "not_now"
+
+
+def test_the_pages_come_as_svg_with_their_bars(monkeypatch, tmp_path):
+    from stickler_app import settings
+
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        reply = running.send("pages", width=800)
+        assert reply["zoom"] == 1.0
+        (page,) = reply["pages"]
+        assert page["svg"].startswith("<svg") and page["width"] == 800.0
+        assert [b["bar"] for b in page["bars"]] == list(range(1, 9))
+        assert set(page["bars"][0]) == {"bar", "x", "y", "width", "height"}
+        settings.update(settings.store_path(), zoom=2.0)
+        larger = running.send("pages", width=800)  # the stored note size
+        assert larger["zoom"] == 2.0 and larger["pages"][0]["height"] > page["height"]
+        assert running.send("pages", width=800, zoom=9)["zoom"] == 3.0  # clamped
+        for bad in (
+            {},
+            {"width": 0},
+            {"width": "800"},
+            {"width": True},
+            {"width": 800, "zoom": -1},
+        ):
+            assert running.send("pages", **bad)["error"]["code"] == "bad_argument"
+
+        a4 = running.send("a4_pages")
+        assert a4["title"] == "Eye of the Tiger"
+        assert [(p["width"], p["height"]) for p in a4["pages"]] == [(1050.0, 1485.0)]
+    finally:
+        running.stop()
+
+
+def test_the_musicxml_is_saved_and_a_notice_offers_to_open_it(monkeypatch, tmp_path):
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        dest = tmp_path / "out" / "eye.musicxml"
+        assert running.send("export_musicxml", dest=str(dest)) == {"id": 2, "ok": True}
+        assert dest.is_file()
+        assert wait(lambda: running.events("notice"))
+        notice = running.events("notice")[-1]
+        assert notice["text"] == "Saved “eye.musicxml”" and notice["opens"] == str(dest)
+        assert running.send("export_musicxml")["error"]["code"] == "bad_argument"
+    finally:
+        running.stop()
+
+
+def test_the_drum_track_says_its_cost_then_is_saved(monkeypatch, tmp_path):
+    running = _with_result(monkeypatch, tmp_path)
+    FakeSetup(monkeypatch, missing=())
+    stem = tmp_path / "stem.wav"
+    stem.write_bytes(b"RIFF")
+
+    def transcribe(song, *, drums, progress, cancel, adapters_root, cache_dir):
+        return api.SongTranscription(song, "fast", stem, [], [], [])
+
+    def export(source, dest):
+        dest.write_bytes(source.read_bytes())
+        return dest
+
+    monkeypatch.setattr(api, "transcribe_song", transcribe)
+    monkeypatch.setattr(api, "export_drum_track", export)
+    try:
+        cost = running.send("drum_track_cost")
+        assert cost == {
+            "id": 2,
+            "ok": True,
+            "minutes": 8,
+            "text": "Separating the drums takes about 8 minutes on this computer.",
+            "download": False,
+        }
+        dest = tmp_path / "drums.flac"
+        assert running.send("export_drum_track", dest=str(dest))["ok"]
+        assert wait(lambda: dest.is_file() and running.state()["kind"] == "result")
+        assert any(s["kind"] == "exporting" for s in running.states())
+    finally:
+        running.stop()
+
+
+def test_a_recent_song_can_be_forgotten(tmp_path):
+    gone = tmp_path / "gone.flac"
+    recent.save(recent.store_path(), [recent.opened_now(gone, "Gone", "")])
+    running = Running()
+    try:
+        assert running.send("forget_recent", path=str(gone))["ok"]
+        assert wait(lambda: len(running.events("recent")) == 2)
+        assert running.events("recent")[-1]["rows"] == []
+    finally:
+        running.stop()
+
+
+def test_the_note_size_is_set_stepped_and_remembered(running):
+    from stickler_app import settings
+
+    assert running.send("settings") == {
+        "id": 1,
+        "ok": True,
+        "appearance": "system",
+        "zoom": 1.0,
+        "song_volume": 0.7,
+        "hits_volume": 1.0,
+        "setup_agreed": False,
+        "percent": "100%",
     }
+    assert running.send("zoom_in")["zoom"] == 1.25
+    assert running.send("zoom_in")["percent"] == "156%"
+    assert running.send("zoom_out")["zoom"] == 1.25
+    assert running.send("set_zoom", zoom=9)["zoom"] == 3.0
+    assert running.send("actual_size") == {"id": 6, "ok": True, "zoom": 1.0, "percent": "100%"}
+    assert running.send("set_zoom", zoom=0.6)["zoom"] == 0.6
+    assert settings.load(settings.store_path()).zoom == 0.6
+    assert running.send("set_zoom", zoom="big")["error"]["code"] == "bad_argument"
+
+
+def test_a_note_size_that_cannot_be_saved_still_holds(monkeypatch, running, caplog):
+    from stickler_app import settings
+
+    def read_only(store, **changes):
+        raise OSError(30, "Read-only file system")
+
+    monkeypatch.setattr(settings, "update", read_only)
+    assert running.send("zoom_in")["zoom"] == 1.25
+    assert "could not be saved" in caplog.text
+
+
+def test_removal_sizes_come_with_the_dialogs_texts(running):
+    reply = running.send("removal_sizes")  # from the checkout nothing is removed
+    assert reply == {
+        "id": 1,
+        "ok": True,
+        "models": 0,
+        "everything": 0,
+        "models_text": "This frees 0 MB. Stickler asks before it downloads the models again.",
+        "everything_text": "This frees 0 MB. Stickler asks before it downloads the models again.",
+    }
+
+
+def test_an_installed_app_removes_its_models(monkeypatch, tmp_path):
+    from stickler_app import paths
+
+    monkeypatch.setenv("STICKLER_PACKAGED", "macos")
+    weights = paths.data_home() / "adapters" / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    (weights / "model.ckpt").write_bytes(b"x" * 2_000_000)
+    running = Running()
+    try:
+        assert wait(lambda: running.states())
+        assert running.state()["can_remove_models"]
+        sizes = running.send("removal_sizes")
+        assert sizes["models"] == 2_000_000 and sizes["models_text"].startswith("This frees 2 MB.")
+        assert running.send("remove_models")["error"]["code"] == "bad_argument"
+        assert running.send("remove_models", everything=False)["ok"]
+        assert wait(lambda: running.events("notice"))
+        assert running.events("notice")[-1]["text"] == "The downloaded models are removed"
+        assert not weights.exists()
+    finally:
+        running.stop()
+
+
+def test_a_command_that_fails_unforeseen_gets_internal_and_the_bridge_goes_on(
+    monkeypatch, running, caplog
+):
+    from stickler_app import controller
+
+    def broken(self):
+        raise KeyError("adtof")
+
+    monkeypatch.setattr(controller.Controller, "start", broken)
+    assert running.send("start")["error"] == {
+        "code": "internal",
+        "message": "Something went wrong inside Stickler.",
+    }
+    assert "command start failed" in caplog.text and "KeyError" in caplog.text
+    assert running.send("close")["ok"]
