@@ -34,7 +34,7 @@ from stickler_app.i18n import _
 
 CORRECT_AFTER = 0.25  # seconds a correction waits for the changes to pause
 SAMPLE = 0.5  # seconds between two measurements of a download
-BUSY = session.Analysing | session.Exporting | session.SettingUp
+BUSY = session.BUSY  # kept here for the controller's callers
 
 
 @dataclass(frozen=True)
@@ -107,11 +107,9 @@ class Controller:
     def can_remove_models(self) -> bool:
         """Only an installed app removes its models, and not while something runs."""
         with self._lock:
-            return (
-                paths.packaged() is not None
-                and not isinstance(self._state, BUSY)
-                and not self._removing
-            )
+            return session.abilities(
+                self._state, installed=paths.packaged() is not None, removing=self._removing
+            ).remove_models
 
     # what the reader does
 

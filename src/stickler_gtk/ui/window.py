@@ -612,8 +612,12 @@ class Window(Adw.ApplicationWindow):
 
     def show(self, state: session.State) -> None:
         self.state = state
-        self.actions["retry"].set_enabled(isinstance(state, session.Failed) and state.can_retry)
-        is_result = isinstance(state, session.Result)
+        # one rule for both apps: what the Mac app gets from the bridge as can_* (task 125)
+        can = session.abilities(
+            state, installed=paths.packaged() is not None, removing=self._removing
+        )
+        self.actions["retry"].set_enabled(can.retry)
+        is_result = can.export  # a result: its exports, playback, bars and corrections
         for name in (
             "export",
             "export-pdf",
@@ -631,13 +635,9 @@ class Window(Adw.ApplicationWindow):
             self.playbar.stop()
         self.export_box.set_visible(is_result)
         self.corrections_button.set_visible(is_result)
-        self.actions["cancel"].set_enabled(isinstance(state, controller.BUSY))
-        self.actions["close-song"].set_enabled(session.shows_song(state))
-        self.actions["remove-models"].set_enabled(
-            paths.packaged() is not None
-            and not isinstance(state, controller.BUSY)
-            and not self._removing
-        )
+        self.actions["cancel"].set_enabled(can.cancel)
+        self.actions["close-song"].set_enabled(can.close)
+        self.actions["remove-models"].set_enabled(can.remove_models)
         self.analysing.set_description("")
         if isinstance(state, session.Consent):
             self.heading.set_title(APP_NAME)

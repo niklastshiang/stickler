@@ -159,18 +159,11 @@ ENCODERS: dict[type, Callable[[Any], dict[str, Any]]] = {
 
 def can(state: session.State, *, remove_models: bool) -> dict[str, bool]:
     """Which commands fit now, so the Mac app enables its buttons and menu items from the
-    state alone (the GTK window's action rules)."""
-    return {
-        "can_open": True,
-        "can_cancel": isinstance(state, controller.BUSY),
-        "can_retry": isinstance(state, session.Failed) and state.can_retry,
-        "can_close": session.shows_song(state),
-        "can_export": isinstance(state, session.Result),
-        "can_agree": isinstance(state, session.Consent),
-        "can_not_now": isinstance(state, session.Consent | session.SetupFailed),
-        "can_retry_setup": isinstance(state, session.SetupFailed),
-        "can_remove_models": remove_models,
-    }
+    state alone: `session.abilities`, the rule the GTK window uses too. `remove_models` is the
+    controller's answer for this same state (`Controller.can_remove_models`, by that rule)."""
+    found = session.abilities(state, installed=True, removing=False)
+    sent = {f"can_{f.name}": getattr(found, f.name) for f in dataclasses.fields(found)}
+    return {**sent, "can_remove_models": remove_models}
 
 
 def encode(state: session.State, *, remove_models: bool = False) -> dict[str, Any]:

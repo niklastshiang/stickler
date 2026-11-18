@@ -121,10 +121,45 @@ class SetupFailed:
 State = Empty | Analysing | Result | Exporting | Failed | Consent | SettingUp | SetupFailed
 
 
+BUSY = Analysing | Exporting | SettingUp  # a job runs: Cancel stops it
+
+
 def shows_song(state: State) -> bool:
     """A song is in the window (analysed, shown, exported or failed), so "Close Song" fits.
     The setup screens have their own buttons ("Not Now", "Cancel")."""
     return isinstance(state, Analysing | Result | Exporting | Failed)
+
+
+@dataclass(frozen=True)
+class Abilities:
+    """What a state allows: one rule for both apps (the GTK window's actions, the bridge's
+    `can_*` fields for the Mac app), so their buttons never differ."""
+
+    open: bool
+    cancel: bool
+    retry: bool
+    close: bool
+    export: bool
+    agree: bool
+    not_now: bool
+    retry_setup: bool
+    remove_models: bool
+
+
+def abilities(state: State, *, installed: bool, removing: bool) -> Abilities:
+    """`installed`: the packaged app, which may remove its own models; `removing`: a removal
+    runs. Only then does removing the models depend on more than the state."""
+    return Abilities(
+        open=True,  # a new song cancels what runs
+        cancel=isinstance(state, BUSY),
+        retry=isinstance(state, Failed) and state.can_retry,
+        close=shows_song(state),
+        export=isinstance(state, Result),
+        agree=isinstance(state, Consent),
+        not_now=isinstance(state, Consent | SetupFailed),
+        retry_setup=isinstance(state, SetupFailed),
+        remove_models=installed and not removing and not isinstance(state, BUSY),
+    )
 
 
 def open_song(song: Path, previous: State, corrections: api.Corrections = DETECTED) -> Analysing:
