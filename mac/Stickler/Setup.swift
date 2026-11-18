@@ -189,53 +189,13 @@ struct SetupFailedSheet: View {
     }
 }
 
-/// Stickler › "Remove Downloaded Models…": the sizes first, then the question, with the
-/// checkbox for everything else (the body says what each choice frees).
+/// Stickler › "Remove Downloaded Models…": the sizes first, then the question (`Asking`), with
+/// the checkbox for everything else.
 @MainActor
 enum Removal {
     static func ask(_ model: AppModel) async {
-        guard let sizes = await model.removalSizes() else { return }
-        let question = RemovalQuestion(sizes: sizes)
-        if question.run() {
-            model.removeModels(everything: question.everything)
-        }
-    }
-}
-
-@MainActor
-final class RemovalQuestion: NSObject {
-    let sizes: RemovalSizes
-    let alert = NSAlert()
-    let checkbox: NSButton
-
-    init(sizes: RemovalSizes) {
-        self.sizes = sizes
-        checkbox = NSButton(
-            checkboxWithTitle: localized("Also remove settings, recent songs and corrections"),
-            target: nil, action: nil)
-        super.init()
-        alert.messageText = localized("Remove Downloaded Models?")
-        alert.informativeText = sizes.modelsText
-        alert.alertStyle = .warning
-        alert.accessoryView = checkbox
-        let remove = alert.addButton(withTitle: localized("Remove"))
-        remove.hasDestructiveAction = true
-        alert.addButton(withTitle: localized("Cancel"))
-        checkbox.target = self
-        checkbox.action = #selector(toggled)
-    }
-
-    var everything: Bool { checkbox.state == .on }
-
-    /// The body for the choice as it stands.
-    var body: String { everything ? sizes.everythingText : sizes.modelsText }
-
-    @objc func toggled() {
-        alert.informativeText = body
-    }
-
-    /// Whether the reader chose Remove.
-    func run() -> Bool {
-        alert.runModal() == .alertFirstButtonReturn
+        guard let sizes = await model.removalSizes(), let everything = Ask.reader.removal(sizes)
+        else { return }
+        model.removeModels(everything: everything)
     }
 }

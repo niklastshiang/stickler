@@ -90,20 +90,13 @@ struct ContentView: View {
 @MainActor
 enum Panels {
     static func openSong(_ model: AppModel) {
-        let panel = NSOpenPanel()
-        panel.title = String(localized: "Open a Song")
-        panel.allowedContentTypes = [.audio]
-        if panel.runModal() == .OK, let song = panel.url {
+        if let song = Ask.reader.song() {
             model.open(song.path)
         }
     }
 
     static func chooseFolder(_ model: AppModel) {
-        let panel = NSOpenPanel()
-        panel.title = String(localized: "Choose Stickler Folder…")
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        if panel.runModal() == .OK, let folder = panel.url {
+        if let folder = Ask.reader.folder() {
             model.choose(folder: folder)
         }
     }

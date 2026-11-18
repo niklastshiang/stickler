@@ -36,7 +36,8 @@ struct ExportMenu: View {
     }
 }
 
-/// What the Export items do: a save panel with the GTK app's name, then one command.
+/// What the Export items do: where to save (`Asking`) with the GTK app's name, then one
+/// command.
 @MainActor
 enum Exports {
     /// The result being shown, if any.
@@ -49,7 +50,8 @@ enum Exports {
 
     /// The sheet music as an A4 PDF, written by the app (the core engraves the pages).
     static func pdf(_ model: AppModel) async {
-        guard let result = result(model), let dest = save(ExportName.pdf(result.song)),
+        guard let result = result(model),
+            let dest = Ask.reader.saveLocation(named: ExportName.pdf(result.song)),
             let pages = await model.a4Pages()
         else { return }
         do {
@@ -64,21 +66,16 @@ enum Exports {
 
     static func musicXML(_ model: AppModel) {
         guard let result = result(model),
-            let dest = save(ExportName.musicXML(result.song))
+            let dest = Ask.reader.saveLocation(named: ExportName.musicXML(result.song))
         else { return }
         model.exportMusicXML(to: dest.path)
     }
 
     /// The cost first (Demucs may be downloaded before), then where to save.
     static func drumTrack(_ model: AppModel) async {
-        guard let result = result(model), let cost = await model.drumTrackCost() else { return }
-        let alert = NSAlert()
-        alert.messageText = localized("Save the Drum Track?")
-        alert.informativeText = cost.text
-        alert.addButton(withTitle: localized("Choose Where to Save…"))
-        alert.addButton(withTitle: localized("Cancel"))
-        guard alert.runModal() == .alertFirstButtonReturn,
-            let dest = save(drumTrackName(result.song))
+        guard let result = result(model), let cost = await model.drumTrackCost(),
+            Ask.reader.drumTrack(cost: cost.text),
+            let dest = Ask.reader.saveLocation(named: drumTrackName(result.song))
         else { return }
         model.exportDrumTrack(to: dest.path)
     }
@@ -90,24 +87,8 @@ enum Exports {
 
     /// The MusicXML in a program the reader picks.
     static func openWith(_ model: AppModel) {
-        guard let result = result(model) else { return }
-        let panel = NSOpenPanel()
-        panel.title = localized("Open With…")
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.allowedContentTypes = [.application]
-        if panel.runModal() == .OK, let app = panel.url {
-            NSWorkspace.shared.open(
-                [URL(fileURLWithPath: result.musicxml)], withApplicationAt: app,
-                configuration: NSWorkspace.OpenConfiguration())
-        }
-    }
-
-    static func save(_ name: String) -> URL? {
-        let panel = NSSavePanel()
-        panel.title = localized("Save As")
-        panel.nameFieldStringValue = name
-        panel.canCreateDirectories = true
-        return panel.runModal() == .OK ? panel.url : nil
+        guard let result = result(model), let app = Ask.reader.application() else { return }
+        Ask.reader.open(URL(fileURLWithPath: result.musicxml), with: app)
     }
 }
 

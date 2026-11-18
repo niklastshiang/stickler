@@ -90,6 +90,10 @@ jobs:
             -resultBundlePath "$RUNNER_TEMP/test.xcresult" -quiet
           xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/test.xcresult" \
             | python3 -c 'import json, sys; r = json.load(sys.stdin); print(r["result"], r["passedTests"], "passed,", r["failedTests"], "failed,", r["skippedTests"], "skipped")'
+      - name: The app's logic outside views is covered (CONSTRAINTS.md "Swift coverage")
+        run: |
+          xcrun xccov view --report --json "$RUNNER_TEMP/test.xcresult" > "$RUNNER_TEMP/coverage.json"
+          python3 scripts/xccov_gate.py "$RUNNER_TEMP/coverage.json"
       - name: The app, ad-hoc signed
         run: |
           xcodebuild build -project mac/Stickler.xcodeproj -scheme Stickler \
