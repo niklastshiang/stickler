@@ -38,6 +38,6 @@ final class SheetPDFTests: XCTestCase {
         let raw = try XCTUnwrap(String(bytes: single, encoding: .isoLatin1))  // a PDF is bytes
         XCTAssertTrue(raw.contains("Leipzig"), "the tempo mark's font is not in the PDF")
         let text = try XCTUnwrap(PDFDocument(data: single)?.page(at: 0)?.string)
-        XCTAssertTrue(text.contains("Groove"), text)
+        XCTAssertTrue(text.contains("120"), text)  // the tempo mark, next to Leipzig's note
     }
 }

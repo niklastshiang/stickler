@@ -13,7 +13,8 @@ enum SheetPDF {
     }
 
     /// The Leipzig font as a CSS source: WebKit draws in a process of its own, which sees no
-    /// font the app registers, and the tempo mark is set in Leipzig.
+    /// font the app registers, and the tempo mark is set in Leipzig. Verovio embeds a subset
+    /// of it in the SVG too; the whole font here keeps the PDF right if that ever changes.
     static func fontFace() throws -> String {
         guard let url = Bundle.main.url(forResource: "Leipzig", withExtension: "ttf") else {
             throw Failure.noFont
