@@ -497,7 +497,25 @@
         }
       }
     },
-    "Close the Window" : {
+    "Close Song" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Song schließen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar la canción"
+          }
+        }
+      }
+    },
+    "Close Window" : {
+      "comment" : "Translators: Mac app, File menu (⌘W) on the empty window",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
@@ -510,6 +528,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cerrar la ventana"
+          }
+        }
+      }
+    },
+    "Close the Song, Then the Window" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erst den Song, dann das Fenster schließen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar la canción y después la ventana"
           }
         }
       }

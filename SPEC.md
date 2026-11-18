@@ -733,7 +733,9 @@ in light and dark, wide and narrow (screens 4, 5, 8 and 9 of `design`).
    Translations come in through Weblate later (owner's decision 2026-11-14): Weblate commits
    `po/*.po` to the repository, so outside pull requests stay off.
 8. **Keyboard:** every action is reachable by keyboard, and the shortcuts window lists them.
-   GNOME HIG standard shortcuts (checked 2026-11-14): Ctrl+O open, Ctrl+W close the window,
+   GNOME HIG standard shortcuts (checked 2026-11-14): Ctrl+O open, Ctrl+W close the window
+   (since 2026-11-18, owner: first the song, back to the empty window, as "Close Song" in the
+   main menu; then the window),
    Ctrl+Q quit, Ctrl+? shortcuts, F10 main menu. Not in the HIG but common: Escape cancels an
    analysis or export, Ctrl+E opens the export menu (as in GIMP). Later modules use F9 for the
    corrections sidebar (HIG "side pane") and Space for play/pause.
@@ -2285,9 +2287,13 @@ with `mac-package`.
      as `ui/pdf.py` does with cairo for GTK. After saving, the bar at the bottom with "Show in
      Finder" (M7); other notices in the same bar.
    - **Menu bar** (M8): Stickler (About, Remove Downloaded Models…, Hide, Quit), File (Open…
-     ⌘O, Open Recent with the core's recent songs and Clear Menu, Export, Close Window ⌘W),
+     ⌘O, Open Recent with the core's recent songs and Clear Menu, Export, Close Song ⌘W),
      Edit, View (Full Screen only until `mac-sheet` brings zoom), Window, Help (opens the
-     README on GitHub).
+     README on GitHub). **Close Song** (owner, 2026-11-18, for the Mac and the GTK app): while
+     a song is in the window (`can_close`: analysing, result, exporting, failed), ⌘W sends
+     `close` and the empty window comes back; otherwise the item reads "Close Window" and ⌘W
+     closes the window. The canvas's "Close Window" item is replaced; no back button (a Mac
+     app closes a document instead).
    - **The core stopped:** when the bridge exits or does not start (no `uv`, a wrong folder, a
      crash), the window shows "Stickler Stopped Unexpectedly", the technical details (exit
      status, stderr's last lines) and "Start Again", which starts a new core and sends `start`.
@@ -2312,7 +2318,11 @@ with `mac-package`.
 5. **CONSTRAINTS.md for Swift** (SPEC "Release 8", quality bar): no `swiftlint:disable` or `//
    swiftlint:` comments, no `fatalError("TODO")` or placeholder `preconditionFailure`, no
    `XCTSkip`/disabled tests without a reason in the commit, SwiftLint clean, coverage ≥ 95 % for
-   `SticklerCore` and the app's models (pure SwiftUI views excluded, as `ui/` in GTK);
+   `SticklerCore` and the app's models (pure SwiftUI views excluded, as `ui/` in GTK). The
+   app's models include the app target's files that are not views (`Exports`, `Removal`,
+   `SheetPDF`, `Panels`; owner, 2026-11-18): measured with `xccov` in CI, gated at 95 %; what
+   only AppKit can answer (save and open panels, Open With) sits behind a small protocol with a
+   fake in the tests;
    `scripts/floor_guard.py` learns the Swift patterns.
 6. **`docs/mac-development.md`:** the owner's Mac set up once (Homebrew, `uv`, `ffmpeg`, `git
    clone`), downloading the CI artifact, "Open Anyway", choosing the folder; what to check at the

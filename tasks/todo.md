@@ -878,7 +878,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Dependencies: 114 · Files: `mac/Stickler/`, tests
 
 - [ ] **Task 116: The Mac guide, the review and the owner's check** (S): the guide and the review done 2026-11-18; left: the owner's check on the Mac. `docs/mac-development.md`: Homebrew, `uv`, `ffmpeg`, `git clone`, the artifact `Stickler.zip`, Open Anyway (and `xattr` when it is missing), choosing the folder, what to check. The fresh-context review of 107–115 found, each confirmed and fixed with a test where one fits (bd8ba09): quit was not bounded (a task group waits for its children; `send` ignored cancellation), now one deadline, then SIGTERM, then SIGKILL; Choose Stickler Folder… left the running core running, now it ends first; commands could reach the core out of order, now one sender; SIGPIPE ignored; the setup sheet keeps one identity; every button follows its `can_*` field; WebKit's process dying fails the PDF; an equal notice restarts its timer; CI fails without screenshots.
-  - **Open for the owner (noted 2026-11-18, the owner away until later):**
+  - **Asked the owner (noted 2026-11-18); answered 2026-11-18:** 1. "Close Song" in both apps, no back button (done, see below). 2. As recommended: the app target's non-view files gated with `xccov` at 95 % (task 117). 3. The app icon comes with `mac-package`; the MusicXML line keeps the GTK text. 4. Open until the owner's check on the Mac.
     1. **Back to the empty window:** nothing in the app sends `close` (the review). After a result or a failed song, the drop area and the recent songs come back only with a new song or a restart; ⌘W closes the window and so quits the app. A "Close Song" item (File, ⌘W, and ⌘W on the empty window closes it)? The canvas's File menu has "Close Window" only.
     2. **Coverage of the app target:** SPEC scope 5 asks ≥ 95 % for "the app's models"; `SticklerCore` (where `AppModel` lives) is gated at 97.8 %, the app target (views and the AppKit glue: `Exports`, `Removal`, `SheetPDF`, `Panels`) is not measured. Gate its non-view files with `xccov`, or count it as views?
     3. **The canvas, differences:** the Export menu's MusicXML line keeps the GTK text "…or another notation program" (the canvas: "…or Dorico"); the macOS app icon of `mac-design` is not in the app yet (the consent sheet shows the generic icon): in `mac-shell` or with `mac-package`?
@@ -886,6 +886,12 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Acceptance: `docs/mac-development.md` (Homebrew, `uv`, `ffmpeg`, `git clone`, the artifact, "Open Anyway" and the `xattr` fallback, choosing the folder, what to check); a fresh-context review of 107–115 against SPEC.md, its findings fixed or answered; the owner's check on the Mac.
   - Verify: the owner follows the guide and SPEC "mac-shell" success criteria 1–4
   - Dependencies: 113, 115 · Files: `docs/mac-development.md`
+  - Close Song (owner, 2026-11-18), done: `session.shows_song` decides it for both apps; the bridge's `can_close` now holds only while a song is in the window (not on the setup screens). GTK: "Close Song" in the main menu (`win.close-song`), Ctrl+W closes the song, then the window. Mac: File › Close Song ⌘W, "Close Window" on the empty window. Texts in German and Spanish.
+
+- [ ] **Task 117: Coverage of the app target** (S) (owner, 2026-11-18: as recommended)
+  - Acceptance: `mac.yml` measures the app target with `xccov` and fails below 95 % for its files that are not pure views (`Exports`, `Removal`, `SheetPDF`, `Panels`, `Commands`' logic); save and open panels and Open With behind a small protocol with a fake; CONSTRAINTS.md "Swift coverage" names the gate.
+  - Verify: the `mac` workflow green; a deliberately removed test makes it fail once
+  - Dependencies: 116 · Files: `.github/workflows/mac.yml`, `scripts/swift_coverage.py`, `mac/Stickler/`, `mac/SticklerTests/`, CONSTRAINTS.md
 
 ### Checkpoint U
 - [ ] All success criteria of SPEC.md "Module `mac-shell`" met (owner); then `mac-sheet`'s spec

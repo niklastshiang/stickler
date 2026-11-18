@@ -646,3 +646,21 @@ def test_a_command_that_fails_unforeseen_gets_internal_and_the_bridge_goes_on(
     }
     assert "command start failed" in caplog.text and "KeyError" in caplog.text
     assert running.send("close")["ok"]
+
+
+def test_close_song_fits_only_while_a_song_is_in_the_window():
+    song, failed = Path("eye.flac"), "analysis"
+    with_song = (
+        session.Analysing(song, (), 1, session.Empty()),
+        session.Failed(song, failed, "Failed", "", "", session.Empty()),
+    )
+    without = (
+        session.Empty(),
+        session.Consent(("adtof",)),
+        session.SettingUp((), 1),
+        session.SetupFailed((), "weights:adtof", "", ("adtof",)),
+    )
+    for state in with_song:
+        assert bridge.can(state, remove_models=False)["can_close"], state
+    for state in without:
+        assert not bridge.can(state, remove_models=False)["can_close"], state

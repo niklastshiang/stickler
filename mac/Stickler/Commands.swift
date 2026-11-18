@@ -2,7 +2,8 @@ import AppKit
 import SticklerCore
 import SwiftUI
 
-/// The menu bar (design screen M8): File with Open, Open Recent and the Stickler folder; Help.
+/// The menu bar (design screen M8): File with Open, Open Recent, Export, Close Song and the
+/// Stickler folder; Help.
 /// The app menu, Edit, View (Full Screen) and Window are the system's.
 struct SticklerCommands: Commands {
     let model: AppModel
@@ -38,6 +39,9 @@ struct SticklerCommands: Commands {
             Divider()
             Button("Choose Stickler Folder…") { Panels.chooseFolder(model) }
         }
+        CommandGroup(replacing: .saveItem) {
+            CloseItem(model: model)
+        }
         CommandGroup(replacing: .help) {
             Button("Stickler Help") {
                 if let help = Self.help {
@@ -45,5 +49,26 @@ struct SticklerCommands: Commands {
                 }
             }
         }
+    }
+}
+
+/// ⌘W: closes the song back to the empty window (`can_close`); on the empty window, or under a
+/// setup sheet, the window itself, which quits the app.
+struct CloseItem: View {
+    let model: AppModel
+
+    private var closesSong: Bool {
+        model.phase == .running && model.state.can.close
+    }
+
+    var body: some View {
+        Button(closesSong ? LocalizedStringKey("Close Song") : "Close Window") {
+            if closesSong {
+                model.close()
+            } else {
+                NSApp.mainWindow?.performClose(nil)
+            }
+        }
+        .keyboardShortcut("w")
     }
 }

@@ -125,6 +125,25 @@ def test_opening_a_song_shows_the_steps_and_ends_on_the_result(monkeypatch, tmp_
     assert window.heading.get_subtitle() == "Survivor · ♩ = 109 · 4/4"
 
 
+def test_ctrl_w_closes_the_song_then_the_window(monkeypatch, tmp_path):
+    from stickler_gtk.ui.window import Window
+
+    _fake_analysis(monkeypatch, tmp_path)
+    window = Window()
+    closed = []
+    monkeypatch.setattr(window, "close", lambda: closed.append(True))
+    assert not window.actions["close-song"].get_enabled()
+    window.open_song(tmp_path / "eye.flac")
+    assert _wait(lambda: window.pages.get_visible_child_name() == "result")
+    assert window.actions["close-song"].get_enabled()
+    window.activate_action("win.close", None)
+    assert _wait(lambda: window.pages.get_visible_child_name() == "empty")
+    assert window.heading.get_title() == "Stickler" and not closed
+    assert not window.actions["close-song"].get_enabled()
+    window.activate_action("win.close", None)
+    assert closed
+
+
 def test_a_failed_analysis_shows_the_error_page_and_can_try_again(monkeypatch, tmp_path):
     from stickler import api
     from stickler_gtk.ui.window import Window

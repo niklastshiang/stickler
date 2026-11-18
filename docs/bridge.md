@@ -100,7 +100,7 @@ items from these alone.
 | `can_open` | Always: a new song cancels what runs. |
 | `can_cancel` | Something runs: `analysing`, `exporting`, `setting_up`. |
 | `can_retry` | A `failed` analysis can be tried again. |
-| `can_close` | The window shows anything but `empty`. |
+| `can_close` | A song is in the window: `analysing`, `result`, `exporting` or `failed` ("Close Song"). |
 | `can_export` | There is a `result`. |
 | `can_agree` | The `consent` asks. |
 | `can_not_now` | The `consent` asks, or a download failed. |
@@ -124,7 +124,7 @@ May the models be downloaded? (design screen 1). `models` lists each missing mod
 does, its licence and its size. `song` is opened once the models are there.
 
 ```json
-{"kind": "consent", "song": null, "models": [{"id": "adtof", "name": "ADTOF", "does": "detects the hits", "licence": "Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0).", "size": "1.3 GB"}, {"id": "beat_this", "name": "Beat This!", "does": "finds the beat and the bars", "licence": "MIT licence. Its model comes from the JKU Linz server.", "size": "0.9 GB"}], "total_size": "2.2 GB", "can_open": true, "can_cancel": false, "can_retry": false, "can_close": true, "can_export": false, "can_agree": true, "can_not_now": true, "can_retry_setup": false, "can_remove_models": false}
+{"kind": "consent", "song": null, "models": [{"id": "adtof", "name": "ADTOF", "does": "detects the hits", "licence": "Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0).", "size": "1.3 GB"}, {"id": "beat_this", "name": "Beat This!", "does": "finds the beat and the bars", "licence": "MIT licence. Its model comes from the JKU Linz server.", "size": "0.9 GB"}], "total_size": "2.2 GB", "can_open": true, "can_cancel": false, "can_retry": false, "can_close": false, "can_export": false, "can_agree": true, "can_not_now": true, "can_retry_setup": false, "can_remove_models": false}
 ```
 
 ### `setting_up`
@@ -133,7 +133,7 @@ The models are being downloaded (design screen 2). About twice a second, the run
 `detail` says how much it has downloaded.
 
 ```json
-{"kind": "setting_up", "song": null, "steps": [{"id": "environment:adtof", "label": "Download the programs for ADTOF", "detail": "650 MB of 1.3 GB", "state": "running"}, {"id": "weights:beat_this", "label": "Download the Beat This! model", "detail": "Once; later songs use it too", "state": "waiting"}], "can_open": true, "can_cancel": true, "can_retry": false, "can_close": true, "can_export": false, "can_agree": false, "can_not_now": false, "can_retry_setup": false, "can_remove_models": false}
+{"kind": "setting_up", "song": null, "steps": [{"id": "environment:adtof", "label": "Download the programs for ADTOF", "detail": "650 MB of 1.3 GB", "state": "running"}, {"id": "weights:beat_this", "label": "Download the Beat This! model", "detail": "Once; later songs use it too", "state": "waiting"}], "can_open": true, "can_cancel": true, "can_retry": false, "can_close": false, "can_export": false, "can_agree": false, "can_not_now": false, "can_retry_setup": false, "can_remove_models": false}
 ```
 
 ### `setup_failed`
@@ -142,7 +142,7 @@ A download did not work (design screen 3). What finished stays done. `step` is t
 failed, `server` names who did not answer, and `details` holds the error's last lines.
 
 ```json
-{"kind": "setup_failed", "song": null, "steps": [{"id": "weights:beat_this", "label": "Download the Beat This! model", "detail": "Once; later songs use it too", "state": "running"}], "step": "weights:beat_this", "server": "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)", "details": "Beat This! model not downloaded. JKU Linz: 500", "can_open": true, "can_cancel": false, "can_retry": false, "can_close": true, "can_export": false, "can_agree": false, "can_not_now": true, "can_retry_setup": true, "can_remove_models": false}
+{"kind": "setup_failed", "song": null, "steps": [{"id": "weights:beat_this", "label": "Download the Beat This! model", "detail": "Once; later songs use it too", "state": "running"}], "step": "weights:beat_this", "server": "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)", "details": "Beat This! model not downloaded. JKU Linz: 500", "can_open": true, "can_cancel": false, "can_retry": false, "can_close": false, "can_export": false, "can_agree": false, "can_not_now": true, "can_retry_setup": true, "can_remove_models": false}
 ```
 
 ### `analysing`
@@ -256,7 +256,8 @@ On a `failed` analysis: analyses the song again.
 
 ### `close`
 
-Back to `empty`; anything running is cancelled.
+"Close Song": back to `empty`; anything running is cancelled. The app sends it only when
+`can_close`.
 
 ```json
 {"id": 8, "cmd": "close"}

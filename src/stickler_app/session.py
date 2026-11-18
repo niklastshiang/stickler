@@ -121,6 +121,12 @@ class SetupFailed:
 State = Empty | Analysing | Result | Exporting | Failed | Consent | SettingUp | SetupFailed
 
 
+def shows_song(state: State) -> bool:
+    """A song is in the window (analysed, shown, exported or failed), so "Close Song" fits.
+    The setup screens have their own buttons ("Not Now", "Cancel")."""
+    return isinstance(state, Analysing | Result | Exporting | Failed)
+
+
 def open_song(song: Path, previous: State, corrections: api.Corrections = DETECTED) -> Analysing:
     if isinstance(previous, Analysing | Exporting | Failed):
         previous = previous.previous

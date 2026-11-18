@@ -165,7 +165,7 @@ final class ScreenshotTests: XCTestCase {
         + #""does": "finds the beat and the bars", "#
         + #""licence": "MIT licence. Its model comes from the JKU Linz server.", "#
         + #""size": "0.9 GB"}], "#
-        + #""total_size": "2.2 GB", "can_open": true, "can_close": true, "can_agree": true, "#
+        + #""total_size": "2.2 GB", "can_open": true, "can_close": false, "can_agree": true, "#
         + #""can_not_now": true}}"#
 
     static let settingUp = #"{"event": "state", "seq": 3, "state": {"kind": "setting_up", "#
@@ -174,7 +174,7 @@ final class ScreenshotTests: XCTestCase {
         + #"{"id": "environment:beat_this", "label": "Download the programs for Beat This!", "#
         + #""detail": "410 MB of 660 MB", "state": "running"}, {"id": "weights:beat_this", "#
         + #""label": "Download the Beat This! model", "detail": "Once; later songs use it too", "#
-        + #""state": "waiting"}], "can_open": true, "can_cancel": true, "can_close": true}}"#
+        + #""state": "waiting"}], "can_open": true, "can_cancel": true, "can_close": false}}"#
 
     static let setupFailed = #"{"event": "state", "seq": 4, "state": {"kind": "setup_failed", "#
         + #""song": null, "steps": [{"id": "environment:beat_this", "#
@@ -184,7 +184,7 @@ final class ScreenshotTests: XCTestCase {
         + #""step": "weights:beat_this", "#
         + #""server": "JKU Linz (cloud.cp.jku.at) and Stickler’s copy (github.com)", "#
         + #""details": "Beat This! model not downloaded. JKU Linz: 500", "can_open": true, "#
-        + #""can_close": true, "can_not_now": true, "can_retry_setup": true}}"#
+        + #""can_close": false, "can_not_now": true, "can_retry_setup": true}}"#
 
     /// A sheet's content alone (a sheet is a window of its own, not in the window's picture).
     func shootSheet(_ model: AppModel, _ name: String) throws {

@@ -164,7 +164,7 @@ def can(state: session.State, *, remove_models: bool) -> dict[str, bool]:
         "can_open": True,
         "can_cancel": isinstance(state, controller.BUSY),
         "can_retry": isinstance(state, session.Failed) and state.can_retry,
-        "can_close": not isinstance(state, session.Empty),
+        "can_close": session.shows_song(state),
         "can_export": isinstance(state, session.Result),
         "can_agree": isinstance(state, session.Consent),
         "can_not_now": isinstance(state, session.Consent | session.SetupFailed),

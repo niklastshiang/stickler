@@ -237,7 +237,8 @@ class Window(Adw.ApplicationWindow):
             ("export-musicxml", self.export_musicxml),
             ("open-with", self.open_with),
             ("export-drums", self.export_drums),
-            ("close", self.close),
+            ("close", self.close_song_or_window),
+            ("close-song", self.controller.close),
             ("play", self.playbar.toggle),
             (
                 "corrections",
@@ -326,6 +327,14 @@ class Window(Adw.ApplicationWindow):
 
     def cancel(self) -> None:
         self.controller.cancel()
+
+    def close_song_or_window(self) -> None:
+        """Ctrl+W: closes the song back to the empty window; on the empty window (or a
+        setup screen), the window itself."""
+        if session.shows_song(self.state):
+            self.controller.close()
+        else:
+            self.close()
 
     def _on_close(self, _window) -> bool:
         self.playbar.stop()
@@ -623,6 +632,7 @@ class Window(Adw.ApplicationWindow):
         self.export_box.set_visible(is_result)
         self.corrections_button.set_visible(is_result)
         self.actions["cancel"].set_enabled(isinstance(state, controller.BUSY))
+        self.actions["close-song"].set_enabled(session.shows_song(state))
         self.actions["remove-models"].set_enabled(
             paths.packaged() is not None
             and not isinstance(state, controller.BUSY)

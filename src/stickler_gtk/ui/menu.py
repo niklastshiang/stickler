@@ -98,6 +98,9 @@ def main_menu(zoom_label: Gtk.Label, *, removable: bool = False) -> Gtk.MenuButt
         menu.append_item(item)
     items = Gio.Menu()
     items.append(_("Open a Song…"), "win.open")
+    close = Gio.MenuItem.new(_("Close Song"), "win.close-song")
+    close.set_attribute_value("accel", GLib.Variant.new_string("<Control>w"))
+    items.append_item(close)
     items.append(_("Keyboard Shortcuts"), "app.shortcuts")
     items.append(_("About Stickler"), "app.about")
     menu.append_section(None, items)
@@ -127,7 +130,7 @@ SHORTCUTS = (
     ("<Control>0", N_("Fit the Window's Width")),
     ("F10", N_("Main Menu")),
     ("<Control>question", N_("Keyboard Shortcuts")),
-    ("<Control>w", N_("Close the Window")),
+    ("<Control>w", N_("Close the Song, Then the Window")),
     ("<Control>q", N_("Quit")),
 )
 

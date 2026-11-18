@@ -37,4 +37,6 @@ TEXTS = (
     N_("Start Again"),
     # Translators: Mac app, the bar after saving a file (design screen M7)
     N_("Show in Finder"),
+    # Translators: Mac app, File menu (⌘W) on the empty window
+    N_("Close Window"),
 )
