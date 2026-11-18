@@ -19,7 +19,7 @@
   <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: GPL-3.0-or-later" /></a>
   <img src="docs/badges/facts-python.svg" alt="python 3.12 · 3.14" />
   <img src="docs/badges/facts-coverage.svg" alt="coverage" />
-  <img src="docs/badges/facts-version.svg" alt="version" />
+  <a href="https://github.com/niklastshiang/stickler/releases/latest"><img src="docs/badges/facts-version.svg" alt="version" /></a>
   <img src="docs/badges/facts-local.svg" alt="runs 100% local" />
 </p>
 
@@ -28,6 +28,15 @@
 </p>
 
 <p align="center"><sub>Badges: <a href="scripts/badges.py">scripts/badges.py</a>, rendered with <a href="https://shieldcn.dev">shieldcn</a>.</sub></p>
+
+<p align="center">
+  <a href="#-install-the-app"><strong>Install</strong></a> ·
+  <a href="#-the-app">The app</a> ·
+  <a href="#-results">Results</a> ·
+  <a href="docs/cli.md">CLI guide</a> ·
+  <a href="docs/report.md">Benchmark report</a> ·
+  <a href="https://github.com/niklastshiang/stickler/releases">Releases</a>
+</p>
 
 ---
 
@@ -61,6 +70,70 @@ Stickler only uses open-source models from actively maintained projects.
 <p align="center"><sub><b>Play along</b>: the bar that sounds is marked &nbsp;·&nbsp; <b>Correct</b>: tempo, meter and the first beat, without analysing again &nbsp;·&nbsp; <b>Dark</b>: follows the system</sub></p>
 
 <p align="center"><sub>The song is "Fluffing a Duck" by Kevin MacLeod (<a href="https://incompetech.com">incompetech.com</a>), <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; the notes are Stickler's transcription of its drums.</sub></p>
+
+**How it goes**
+
+1. Open a song, or drop it onto the window. The first time, Stickler asks to download its models.
+2. Wait about 15 seconds while it detects the hits, finds the beat and writes the notes.
+3. Play along: the bar that sounds is marked. Wrong tempo, meter or first beat? Fix it in the
+   corrections sidebar, without analysing again.
+4. Export the sheet music as PDF or MusicXML, or the separated drum track as FLAC or WAV.
+
+---
+
+## `> INSTALL THE APP`
+
+Every [release](https://github.com/niklastshiang/stickler/releases) has the app in two forms,
+for x86_64 Linux. On first start it asks to download its two models once; after that it runs
+offline.
+
+| What | How much |
+|---|---|
+| System | Linux on x86_64 |
+| Download on first start | about 2.2 GB (ADTOF and Beat This!) |
+| First drum-track export | about 1.2 GB more (Demucs) |
+| Memory | about 1 GB while a song is analysed |
+| Also needed | nothing: no Python, `uv` or ffmpeg to install; the Flatpak takes the GNOME 51 runtime from Flathub |
+
+More on disk, memory and time: [requirements](docs/requirements.md).
+
+**Flatpak** (recommended on GNOME): download `Stickler-<version>.flatpak` and open it with GNOME
+Software, or install it in a terminal; the GNOME runtime comes from Flathub:
+
+```bash
+flatpak install --user Stickler-7.flatpak
+```
+
+**AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
+and start it.
+
+```bash
+chmod +x Stickler-7-x86_64.AppImage && ./Stickler-7-x86_64.AppImage
+```
+
+### Removing it
+
+To free the models' space but keep the app, choose **Remove Downloaded Models…** in its main
+menu (Flatpak and AppImage); a check box there removes the settings, recent songs and
+corrections too.
+
+**Flatpak:** one command removes the app with its models, results and settings:
+
+```bash
+flatpak uninstall --delete-data ng.tshia.Stickler
+```
+
+<details>
+<summary><b>AppImage</b>: delete the file and Stickler's folders</summary>
+
+Delete the file, then Stickler's three folders (the models, with the Python and
+downloads they were set up with, are in the first two):
+
+```bash
+rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler
+```
+
+</details>
 
 ---
 
@@ -117,6 +190,9 @@ Quality 0.842.
   errors, Fast is ahead. Try Quality when Fast misses things in a particular song.
 - **The references are the weak spot:** about half of the disagreements judged by ear were errors
   of the transcriptions. Fast gets about 87 % of the hits right on real music, not 77 %.
+<details>
+<summary><b>More findings</b>: newer models, snapping, fusion, GPUs</summary>
+
 - **Newer models did not beat the modes** (release 7): MuScriptor large 0.704, DrumSep with onset
   detection 0.589 on the own songs; Separate-and-Detect stayed far behind on MDB. MuScriptor
   large is the strongest single model on MDB but weaker than ADTOF at hi-hat and cymbals on real
@@ -127,6 +203,8 @@ Quality 0.842.
 
 On the laptop's Radeon 840M every model was slower on the GPU than on the CPU
 ([ADR 0003](docs/adr/0003-rocm-kanal.md)); NVIDIA GPUs speed up the slow models 10–30×.
+
+</details>
 
 ---
 
@@ -183,6 +261,9 @@ Source, version and own measurements are in the README of the respective adapter
 Benchmark data is clean, real music is not. That is why Stickler also compares against your own
 songs: sheet music as MIDI from musescore.com, and a recording from your own collection.
 
+<details>
+<summary><b>How the own songs are aligned and checked</b></summary>
+
 The problem is that notes and recording don't line up. Intros are missing, tempos drift, and
 transcribers leave passages out. `stickler align` therefore lays the notes onto the recording,
 hit by hit. It is based on the beats from Beat This! and the rhythm patterns in the Demucs stem,
@@ -207,9 +288,16 @@ song can be approved by ear after listening to its `click.wav`.
 To check by ear, `stickler align` writes a `click.wav` per song: the recording on the left, clicks
 on the note hits on the right.
 
+</details>
+
 ---
 
 ## `> KEY FIGURES`
+
+The numbers of the last release, for developers.
+
+<details>
+<summary><b>Tests, datasets, coverage</b></summary>
 
 ```console
 scripts/check.sh task
@@ -237,9 +325,20 @@ scripts/check.sh task
 | `coverage_minimum` | Below this, the pre-commit hook blocks. Limit and rules in [`CONSTRAINTS.md`](CONSTRAINTS.md) |
 | `own_songs` | Described in `references/own/`. Only songs that pass the quality criteria enter the scoring |
 
+</details>
+
 ---
 
 ## `> ROADMAP`
+
+**Next**
+
+- [ ] Quality mode in the app (today it runs Fast)
+- [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
+- [ ] Ultrareview of the finished application
+
+<details>
+<summary><b>Done</b>: releases 1–7</summary>
 
 **Done**
 
@@ -291,52 +390,9 @@ scripts/check.sh task
 - [x] The app starts the models without a network connection
 - [x] **Release 7:** new candidates
 
-**Next**
-
-- [ ] Quality mode in the app (today it runs Fast)
-- [ ] Finer classes for the sheet music (open/closed hi-hat, ride/crash)
-- [ ] Ultrareview of the finished application
+</details>
 
 ---
-
-## `> INSTALL THE APP`
-
-Every [release](https://github.com/niklastshiang/stickler/releases) has the app in two forms,
-for x86_64 Linux. On first start it asks to download its two models once (about 2.2 GB); after
-that it runs offline.
-
-**Flatpak** (recommended on GNOME): download `Stickler-<version>.flatpak` and open it with GNOME
-Software, or install it in a terminal; the GNOME runtime comes from Flathub:
-
-```bash
-flatpak install --user Stickler-7.flatpak
-```
-
-**AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
-and start it.
-
-```bash
-chmod +x Stickler-7-x86_64.AppImage && ./Stickler-7-x86_64.AppImage
-```
-
-### Removing it
-
-To free the models' space but keep the app, choose **Remove Downloaded Models…** in its main
-menu (Flatpak and AppImage); a check box there removes the settings, recent songs and
-corrections too.
-
-**Flatpak:** one command removes the app with its models, results and settings:
-
-```bash
-flatpak uninstall --delete-data ng.tshia.Stickler
-```
-
-**AppImage:** delete the file, then Stickler's three folders (the models, with the Python and
-downloads they were set up with, are in the first two):
-
-```bash
-rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler
-```
 
 ## `> BUILD IT YOURSELF`
 
@@ -381,7 +437,8 @@ uv tool install --editable .           # optional: `stickler` in every folder
 > The GPU setup is optional: `stickler setup --device cuda` (NVIDIA) or `--device rocm` (AMD).
 > Disk, memory and time per mode: [requirements](docs/requirements.md).
 
-### Benchmark
+<details>
+<summary><b>Benchmark</b>: run the models, score them, write the report</summary>
 
 ```console
 uv run stickler run      # computes the matrix from config/benchmark.yaml (overnight)
@@ -391,6 +448,8 @@ uv run stickler notate song.mp3                  # sheet music (MusicXML, PDF), 
 uv run stickler notate song.mp3 --mode quality --drums drums.flac   # more accurate, plus drum track
 uv run stickler report   # results/report.html
 ```
+
+</details>
 
 ---
 
@@ -420,7 +479,10 @@ repository enforces four rules:
   result is inconvenient: after the correction for reference errors Fast beat Quality, and
   tuning that helped on MDB was dropped because it hurt real music.
 
-**What the AI cost.** Claude Code logs the tokens of every response;
+<details>
+<summary><b>What the AI cost</b>: about 245 USD at API prices for release 7</summary>
+
+Claude Code logs the tokens of every response;
 [`scripts/ai_usage.py`](scripts/ai_usage.py) sums them and prices them with Anthropic's
 [API prices](https://platform.claude.com/docs/en/about-claude/pricing). The logs reach back to
 13 November 2026; the first two days of the project (the command line tool's start) are missing.
@@ -432,20 +494,27 @@ On a subscription the real cost differs; this is what the same work would cost o
 | 13–17 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
 | | **Total, release 7** | | | | **about 245 USD** |
 
+</details>
+
 ---
 
 ## `> REPOSITORY LAYOUT`
 
+<details>
+<summary><b>Where what is</b></summary>
+
 ```
 stickler/
 ├── src/stickler/        # Harness: api, cli, runner, align, onsets, evaluate, datasets/
-├── src/stickler_gtk/    # the GTK app: logic/ (no GTK, tested) and ui/ (widgets)
+├── src/stickler_app/    # the app logic shared by both apps (no GTK, tested)
+├── src/stickler_gtk/    # the GTK app: ui/ (widgets)
 ├── adapters/            # one folder per model, each with its own uv environment
 │   ├── _common/         # shared helpers: device selection, meta.json, drum MIDI
 │   ├── separators/      # demucs, roformer
-│   ├── transcribers/    # adtof, adt_str, muscriptor_s, muscriptor_m
+│   ├── transcribers/    # adtof, adt_str, muscriptor_s/_m/_l, drumsep_onset, sad
 │   └── beats/           # beat_this
 ├── config/              # benchmark, own and enst configs
+├── mac/                 # the macOS app (release 8, in progress): its String Catalog so far
 ├── po/                  # translations (German, Spanish), po/LINGUAS lists them
 ├── packaging/           # Flatpak manifest, AppStream MetaInfo, desktop file, icons, font
 ├── references/own/      # own songs: title, recording, manual exclusions
@@ -455,6 +524,8 @@ stickler/
 ├── tasks/               # plan and task list
 └── data/ cache/ results/   # datasets, intermediate results, evaluation (not in the repo)
 ```
+
+</details>
 
 ---
 
@@ -485,6 +556,14 @@ Nobody reads this anyway. But if you ever run into me in real life, feel free to
 burger. 🍔
 
 ---
+
+<p align="center">
+  <a href="https://github.com/niklastshiang/stickler/releases">Releases</a> ·
+  <a href="https://github.com/niklastshiang/stickler/issues">Report a bug</a> ·
+  <a href="docs/cli.md">CLI guide</a> ·
+  <a href="docs/report.md">Benchmark report</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
 <p align="center">
   <strong><code>> ONE, TWO, THREE, FOUR. THE STICKLER IS COUNTING._</code></strong>
