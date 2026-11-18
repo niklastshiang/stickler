@@ -498,32 +498,67 @@ audio {
   font-weight: 400;
 }
 
-/* a look around: four wide pictures in two rows, the narrow window beside them */
-@media (min-width: 48rem) {
-  .gallery {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 0.62fr);
-  }
-
-  .gallery .tall {
-    grid-column: 3;
-    grid-row: 1 / span 2;
-  }
+/* a look around: a carousel without script. Scroll snapping lets it be swiped, scrolled
+   sideways or moved with the arrow keys once it has the focus; the next picture peeks in. Where
+   the browser knows scroll markers (Chrome 135+), dots show the position. */
+.carousel {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1.5rem;
+  scroll-marker-group: after;
+  border-radius: 16px;
 }
 
-.gallery .tall img {
-  max-width: 20rem;
+.slides {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0 0 1rem;
+  list-style: none;
 }
 
-.gallery figure {
+.slides li {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+}
+
+.slides figure {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+  width: min-content;
   margin: 0;
 }
 
-.gallery figcaption {
+.slides img {
+  width: auto;
+  max-width: none;
+  height: clamp(13rem, 52vw, 30rem);
+}
+
+.slides figcaption {
   color: var(--muted);
   font-size: 1rem;
+}
+
+.slides li::scroll-marker {
+  content: "";
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.slides li::scroll-marker:target-current {
+  background: var(--ink);
+}
+
+.carousel::scroll-marker-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem; /* 28 px from dot to dot: WCAG 2.5.8's 24 px target spacing */
+  padding-top: 0.5rem;
 }
 
 /* privacy */

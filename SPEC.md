@@ -2455,6 +2455,7 @@ Target: **WCAG 2.2, level AA**, for both languages and both colour schemes.
 - **Motion:** the overview video has visible pause/play controls; with
   `prefers-reduced-motion: reduce` it does not play by itself (a still frame shows); no other
   animation.
+- **A look around** is a carousel without script (owner, 2026-11-18): CSS scroll snapping, the region focusable for the arrow keys, the next picture peeking in, dots through `::scroll-marker` where the browser has it.
 - **Media:** every image has `alt` text in the page's language (empty for decoration); the
   audio clip has a visible caption with title, artist and licence; the video has no sound, so
   it needs no captions, and a sentence beside it says what it shows.
