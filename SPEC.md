@@ -1803,7 +1803,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 | `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | approved, below |
 | `core-bridge` | `stickler-bridge`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | approved, below |
 | `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped; the setup assistant (consent, model download with progress, resumable, "Remove Downloaded Models…"), moved here from `mac-setup` (owner, 2026-11-18) | `core-bridge`, `mac-design` | approved, below |
-| `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | to write |
+| `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | approved, below |
 | `mac-package` | `.app` with `uv` and the core's sources, a Python fetched by `uv` at setup (as in the AppImage), ad-hoc signed `.dmg`, release workflow, install guide with pictures | all | to write |
 
 Build order: `shared-core`, `mac-design`, `mac-core` (in parallel) → `core-bridge` →
@@ -2365,6 +2365,83 @@ GPU; Intel Macs; the Mac App Store.
   com.apple.quarantine Stickler.app` in `docs/mac-development.md`.
 - Line reading on Linux differs from macOS (old `readabilityHandler` end-of-file reports): the
   client reads with `read(upToCount:)` on its own thread, tested on both.
+
+### Module `mac-sheet`
+
+> Status: **approved** by the owner on 2026-11-18. Starts when `mac-shell`'s checkpoint U is
+> met (the owner's check on the Mac, task 116). Design: screen M6 of `mac-design`
+> (`docs/design/mac/Sheet.dc.html`, `Sheet-Dark.dc.html`).
+
+**Objective.** The Mac app shows the sheet music instead of `mac-shell`'s placeholder: the
+result's pages, as wide as the window, light and dark, with the note size of the View menu. A
+drummer opens a song and reads its drums in the window, as in the GTK app; nothing about the
+sheet is decided in Swift (SPEC "Release 8": one shared core, two thin interfaces).
+
+**Assumptions** (from the code on 2026-11-18):
+1. The core engraves already (`core-bridge`): `pages` returns the result's pages as SVG at a
+   width and note size, with every written bar's rectangle; `settings`, `set_zoom`, `zoom_in`,
+   `zoom_out` and `actual_size` keep the note size for every song (0.5 to 3, ×1.25 a step).
+   `SticklerCore` decodes `Pages`, `Zoom` and `Settings` already; `AppModel` does not ask for
+   them yet.
+2. Verovio embeds a subset of the Leipzig font in each SVG (seen in `mac-shell`'s PDF, task
+   115), so WebKit draws the tempo mark without the app's font; the app's `Leipzig.ttf` stays as
+   the PDF's safeguard.
+3. One `WKWebView` holds all pages, one under the other, and scrolls them itself: WebKit draws
+   the SVG sharp at every scale, and long songs are one document instead of many views. It runs
+   no script of the core's: the SVG is placed in a fixed local page, JavaScript stays off.
+4. A width in the core is in CSS pixels, which are points on the Mac; the web view's width in
+   points is the width to ask for (Retina is WebKit's business).
+
+**Scope.**
+1. **`SticklerCore`, the sheet's model** (tested on Linux and macOS, as `AppModel`):
+   - the note size and its percent from `settings` at start, and from each zoom reply;
+   - `pages` for the shown result at the sheet's width: asked again when a result arrives
+     (a new song or a correction), when the width changes (once it has settled for 0.3 s, as
+     the GTK app waits after resizing), and after every zoom change;
+   - a reply that a newer request has overtaken is dropped (the newest width and size win);
+   - while pages are on their way the old ones stay (no flash of an empty page); a failed
+     `pages` reply leaves them and shows the core's message as a notice.
+2. **The sheet in the window** (replaces `ResultPlaceholder`): the pages on the grey desk of
+   M6, each page white with the canvas's soft shadow (`0 1px 3px`, as Preview and Pages show a
+   page; owner, 2026-11-18), one under the other, scrolling vertically only; in
+   dark mode the page is inverted (light notes on a dark page), as in the GTK app. The window's
+   title and subtitle (artist · tempo · meter) stay as `mac-shell` made them.
+3. **Note size:** View › Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0 (`mac-design` M8), enabled
+   with a result; a trackpad pinch changes it too, applied once the fingers rest (GTK's
+   behaviour). The size is the core's setting, so it holds for every song and the GTK app's
+   value is not mixed up with the Mac's (each app has its own settings folder).
+4. **Accessibility:** the web view reads as one image to VoiceOver, labelled with the song's
+   title and the page count ("Sheet music of Eye of the Tiger, 3 pages"); the menu items carry
+   their shortcuts; nothing in the sheet takes the keyboard focus from the window's controls.
+5. **Texts:** "Zoom In", "Zoom Out", "Actual Size" and the VoiceOver label through `po/` with
+   German and Spanish (`scripts/xcstrings.py`); the view menu's other items are the system's.
+
+**Not in this module:** the bar marker and a click on a bar (they belong to playback,
+`mac-playback`, a later release), corrections (`mac-corrections`), printing (the PDF covers it),
+a page view of A4 sheets in the window.
+
+**Testing.**
+- `SticklerCore` (Linux and macOS): the sheet model with a scripted core: the first pages at
+  the width and stored size; a new result and a correction ask again; a quick series of widths
+  makes one request after the pause; zoom in, out and actual size send their commands and ask
+  for pages at the new size; a late reply is dropped; a refused `pages` keeps the old pages and
+  tells the notice. Coverage ≥ 95 % as before.
+- The app (macOS runner): the sheet's HTML for a page (no script, the inversion only in dark
+  mode, the pages in order) as plain functions, gated by `scripts/xccov_gate.py` like `Exports`;
+  the View menu's items follow the result; screenshots of M6 in light and dark from a fixed
+  `pages` reply (the groove of `tests/app/fakes.py`), for the owner to compare with the canvas.
+- By hand on the owner's Mac: Eye of the Tiger reads right at 800 and 1600 points, pinch and
+  ⌘+/⌘−/⌘0, dark mode, VoiceOver's label.
+
+**Success criteria.**
+1. On the owner's Mac, an analysed song shows its sheet music in the window; it fills the
+   window's width after a resize and scrolls vertically; the tempo mark is drawn, not a box.
+2. ⌘+, ⌘−, ⌘0 and a pinch change the note size; it is kept for the next song and the next start.
+3. In dark mode the page is inverted; screenshots of M6 in both appearances match the canvas.
+4. `SticklerCore` and the app's logic stay at ≥ 95 % coverage; the `mac` workflow is green.
+
+**Decided (owner, 2026-11-18):** the pinch comes in this module, as the GTK app has it from
+`sheet-view`; the page has the canvas's soft shadow, as macOS shows document pages.
 
 ## Website
 
