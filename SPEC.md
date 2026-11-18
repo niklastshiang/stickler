@@ -2555,8 +2555,10 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
 3. **The example song** (decided, owner 2026-11-18): "Fluffing a Duck" by Kevin MacLeod,
    CC BY 4.0, as the screenshots.
 4. **An imprint (Impressum)** (decided, owner 2026-11-18): yes, `imprint.html` in both
-   languages ("Legal notice" / "Impressum", § 5 DDG and § 18 Abs. 2 MStV), linked from every
-   page's footer; it and the privacy page follow the owner's own texts for tshia.ng, adapted
+   languages ("Legal notice" / "Impressum", under § 18 Abs. 1 MStV: the site is free and has no
+   ads, so § 5 DDG likely does not apply, but it is not purely personal; checked on the web
+   2026-11-18, no legal advice), linked from every page's footer. For now with name and email
+   only, no postal address (owner, 2026-11-18), although § 18 Abs. 1 MStV asks for one; it and the privacy page follow the owner's own texts for tshia.ng, adapted
    to GitHub Pages as the host (no own server logs) and mailbox.org for mail.
 
 ## Decisions (ADRs)
