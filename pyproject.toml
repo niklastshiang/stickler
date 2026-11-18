@@ -17,6 +17,7 @@ dependencies = [
 [project.scripts]
 stickler = "stickler.cli:app"
 stickler-gtk = "stickler_gtk.main:main"
+stickler-bridge = "stickler_app.bridge:main"
 
 [dependency-groups]
 dev = [

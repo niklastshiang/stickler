@@ -2084,6 +2084,23 @@
         }
       }
     },
+    "Stickler does not know the command “%1$@”." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler kennt den Befehl „%1$@“ nicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler no conoce el comando «%1$@»."
+          }
+        }
+      }
+    },
     "Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV or OGG; a song takes about 15 seconds." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2254,6 +2271,23 @@
         }
       }
     },
+    "The request could not be read." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Anfrage ließ sich nicht lesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer la solicitud."
+          }
+        }
+      }
+    },
     "The song cannot be played: %1$@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2271,6 +2305,23 @@
         }
       }
     },
+    "The value of “%1$@” is not valid." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Wert von „%1$@“ ist ungültig."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El valor de «%1$@» no es válido."
+          }
+        }
+      }
+    },
     "This frees %1$@. Stickler asks before it downloads the models again." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2284,6 +2335,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esto libera %1$@. Stickler te preguntará antes de volver a descargar los modelos."
+          }
+        }
+      }
+    },
+    "This is not possible right now." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das geht gerade nicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora mismo no es posible."
           }
         }
       }

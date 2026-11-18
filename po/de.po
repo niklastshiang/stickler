@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-17 16:25+0100\n"
+"POT-Creation-Date: 2026-11-18 08:23+0000\n"
 "PO-Revision-Date: 2026-11-14 16:03+0100\n"
 "Last-Translator: Stickler maintainers\n"
 "Language-Team: none\n"
@@ -17,7 +17,67 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/stickler_app/corrections.py:56
+#: src/stickler_app/bridge.py:188
+msgid "This is not possible right now."
+msgstr "Das geht gerade nicht."
+
+#: src/stickler_app/bridge.py:193
+#, python-brace-format
+msgid "The value of “{argument}” is not valid."
+msgstr "Der Wert von „{argument}“ ist ungültig."
+
+#: src/stickler_app/bridge.py:306
+msgid "The request could not be read."
+msgstr "Die Anfrage ließ sich nicht lesen."
+
+#: src/stickler_app/bridge.py:310
+#, python-brace-format
+msgid "Stickler does not know the command “{name}”."
+msgstr "Stickler kennt den Befehl „{name}“ nicht."
+
+#: src/stickler_app/controller.py:184 src/stickler_gtk/ui/window.py:673
+#: src/stickler_gtk/ui/window.py:756
+#, python-brace-format
+msgid "Could not check the models: {reason}"
+msgstr "Die Modelle ließen sich nicht prüfen: {reason}"
+
+#: src/stickler_app/controller.py:227 src/stickler_gtk/ui/window.py:488
+#: src/stickler_gtk/ui/window.py:509
+#, python-brace-format
+msgid "Could not save: {reason}"
+msgstr "Speichern nicht möglich: {reason}"
+
+#: src/stickler_app/controller.py:311 src/stickler_gtk/ui/window.py:716
+msgid "The downloaded models are removed"
+msgstr "Die heruntergeladenen Modelle sind entfernt"
+
+#: src/stickler_app/controller.py:316 src/stickler_gtk/ui/window.py:721
+#, python-brace-format
+msgid "Could not remove everything: {reason}"
+msgstr "Nicht alles ließ sich entfernen: {reason}"
+
+#: src/stickler_app/controller.py:392 src/stickler_gtk/ui/window.py:445
+#, python-brace-format
+msgid "The correction did not work: {reason}"
+msgstr "Die Korrektur hat nicht geklappt: {reason}"
+
+#: src/stickler_app/controller.py:407 src/stickler_gtk/ui/window.py:460
+#, python-brace-format
+msgid "The correction could not be saved: {reason}"
+msgstr "Die Korrektur ließ sich nicht speichern: {reason}"
+
+#: src/stickler_app/controller.py:415 src/stickler_gtk/ui/window.py:580
+#, python-brace-format
+msgid "Recent songs could not be saved: {reason}"
+msgstr ""
+"Die zuletzt geöffneten Songs konnten nicht gespeichert werden: {reason}"
+
+#: src/stickler_app/controller.py:474 src/stickler_gtk/ui/window.py:558
+#, python-brace-format
+msgid "Saved “{name}”"
+msgstr "„{name}“ gespeichert"
+
+#: src/stickler_app/corrections.py:57
 #, python-brace-format
 msgid "Beat {number}"
 msgstr "Schlag {number}"
@@ -109,25 +169,25 @@ msgstr "Hi-Hat mit Fuß"
 msgid "Bar {number} of {total}"
 msgstr "Takt {number} von {total}"
 
-#: src/stickler_app/recent.py:78
+#: src/stickler_app/recent.py:77
 msgid "opened today"
 msgstr "heute geöffnet"
 
-#: src/stickler_app/recent.py:80
+#: src/stickler_app/recent.py:79
 msgid "opened yesterday"
 msgstr "gestern geöffnet"
 
-#: src/stickler_app/recent.py:82
+#: src/stickler_app/recent.py:81
 msgid "%-d %B"
 msgstr "%-d. %B"
 
 #. Translators: a date in strftime format, as in "12 November"
-#: src/stickler_app/recent.py:82
+#: src/stickler_app/recent.py:81
 #, python-brace-format
 msgid "opened {date}"
 msgstr "am {date} geöffnet"
 
-#: src/stickler_app/recent.py:95
+#: src/stickler_app/recent.py:94
 msgid "file not found"
 msgstr "Datei nicht gefunden"
 
@@ -626,21 +686,6 @@ msgstr "Keine Audiodatei"
 msgid "Save As"
 msgstr "Speichern unter"
 
-#: src/stickler_gtk/ui/window.py:445
-#, python-brace-format
-msgid "The correction did not work: {reason}"
-msgstr "Die Korrektur hat nicht geklappt: {reason}"
-
-#: src/stickler_gtk/ui/window.py:460
-#, python-brace-format
-msgid "The correction could not be saved: {reason}"
-msgstr "Die Korrektur ließ sich nicht speichern: {reason}"
-
-#: src/stickler_gtk/ui/window.py:488 src/stickler_gtk/ui/window.py:509
-#, python-brace-format
-msgid "Could not save: {reason}"
-msgstr "Speichern nicht möglich: {reason}"
-
 #: src/stickler_gtk/ui/window.py:522
 msgid "Save the Drum Track?"
 msgstr "Schlagzeugspur speichern?"
@@ -653,25 +698,9 @@ msgstr "Speicherort wählen …"
 msgid "Open"
 msgstr "Öffnen"
 
-#: src/stickler_gtk/ui/window.py:558
-#, python-brace-format
-msgid "Saved “{name}”"
-msgstr "„{name}“ gespeichert"
-
-#: src/stickler_gtk/ui/window.py:580
-#, python-brace-format
-msgid "Recent songs could not be saved: {reason}"
-msgstr ""
-"Die zuletzt geöffneten Songs konnten nicht gespeichert werden: {reason}"
-
 #: src/stickler_gtk/ui/window.py:593
 msgid "Remove from the List"
 msgstr "Aus der Liste entfernen"
-
-#: src/stickler_gtk/ui/window.py:673 src/stickler_gtk/ui/window.py:756
-#, python-brace-format
-msgid "Could not check the models: {reason}"
-msgstr "Die Modelle ließen sich nicht prüfen: {reason}"
 
 #: src/stickler_gtk/ui/window.py:680
 #, python-brace-format
@@ -691,15 +720,6 @@ msgstr "Heruntergeladene Modelle entfernen?"
 #: src/stickler_gtk/ui/window.py:689
 msgid "Remove"
 msgstr "Entfernen"
-
-#: src/stickler_gtk/ui/window.py:716
-msgid "The downloaded models are removed"
-msgstr "Die heruntergeladenen Modelle sind entfernt"
-
-#: src/stickler_gtk/ui/window.py:721
-#, python-brace-format
-msgid "Could not remove everything: {reason}"
-msgstr "Nicht alles ließ sich entfernen: {reason}"
 
 #: src/stickler_gtk/ui/window.py:866
 msgid "Downloading the Models"

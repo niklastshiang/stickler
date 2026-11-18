@@ -3,71 +3,12 @@ release 7, reported as events."""
 
 import threading
 import time
-from pathlib import Path
 
 import pytest
+from fakes import FakeApi, FakeSetup, wait
 
 from stickler import api
 from stickler_app import controller, corrections, recent, session
-
-
-def _wait(predicate, seconds=5.0) -> bool:
-    end = time.monotonic() + seconds
-    while time.monotonic() < end:
-        if predicate():
-            return True
-        time.sleep(0.01)
-    return False
-
-
-def _groove_score():
-    """Eight bars of a plain groove, engraved like the app's own results."""
-    from stickler import notation
-
-    beats = [k * 0.5 for k in range(33)]
-    notes = [(b * 2.0 + k * 0.5, 36 + (b % 2) * 2, 100) for b in range(8) for k in range(4)]
-    return notation.engrave(notes, beats, beats[:-1:4], repeats=False)
-
-
-class FakeApi:
-    """stickler.api without models: three steps, then a result in 4/4 at 109 (54 for half
-    tempo). With `hold`, each run waits until it is released or cancelled."""
-
-    def __init__(self, monkeypatch, hold=False):
-        self.runs: list[tuple[Path, api.Corrections]] = []
-        self.cancelled: list[Path] = []
-        self.hold = hold
-        self.release = threading.Event()
-        self.error: BaseException | None = None
-        monkeypatch.setattr(api, "song_info", self.song_info)
-        monkeypatch.setattr(api, "notate", self.notate)
-
-    @staticmethod
-    def song_info(song):
-        if song.suffix == ".txt":
-            raise RuntimeError("ffprobe: invalid data")
-        return api.SongInfo("Eye of the Tiger", "Survivor", 246.0)
-
-    def notate(self, song, out, *, progress, cancel, corrections=None, **kw):
-        fix = corrections or api.Corrections()
-        self.runs.append((song, fix))
-        for i, step_id in enumerate(("transcribe", "beats", "engrave"), 1):
-            progress(api.Step(step_id, i, 3, "started", False, None))
-            if i == 1 and self.hold:
-                while not (self.release.is_set() or cancel.is_set()):
-                    time.sleep(0.005)
-            if cancel.is_set():
-                self.cancelled.append(song)
-                raise api.Cancelled("cancelled")
-            if self.error is not None:
-                raise self.error
-            progress(api.Step(step_id, i, 3, "done", False, None))
-        Path(out).parent.mkdir(parents=True, exist_ok=True)
-        engraved = _groove_score()
-        Path(out).write_text(engraved.musicxml, encoding="utf-8")
-        t = api.SongTranscription(song, "fast", None, [], [], [])
-        tempo = {"half": 54, "normal": 109, "double": 218}[fix.tempo]
-        return api.Notation(Path(out), None, None, t, engraved.bars, tempo, (4, 4))
 
 
 class Host:
@@ -105,7 +46,7 @@ def _made(host) -> controller.Controller:
 
 def _result(ctl, song) -> session.Result:
     ctl.open(song)
-    assert _wait(lambda: isinstance(ctl.state, session.Result))
+    assert wait(lambda: isinstance(ctl.state, session.Result))
     return ctl.state
 
 
@@ -114,7 +55,7 @@ def test_an_analysis_reports_its_steps_and_ends_on_the_result(monkeypatch, tmp_p
     ctl = _made(host)
     song = tmp_path / "eye.flac"
     ctl.open(song)
-    assert _wait(lambda: isinstance(ctl.state, session.Result))
+    assert wait(lambda: isinstance(ctl.state, session.Result))
     states = host.states()
     assert isinstance(states[0], session.Analysing) and states[0].song == song
     assert all(s.state == "waiting" for s in states[0].steps)
@@ -136,12 +77,12 @@ def test_a_cancel_goes_back_at_once_and_stops_the_job(monkeypatch, tmp_path, hos
     assert not ctl.cancel()  # nothing runs
     song = tmp_path / "eye.flac"
     ctl.open(song)
-    assert _wait(lambda: fake.runs)
+    assert wait(lambda: fake.runs)
     start = time.monotonic()
     assert ctl.cancel()
     assert isinstance(ctl.state, session.Empty)
     assert time.monotonic() - start < 0.1
-    assert _wait(lambda: fake.cancelled == [song], seconds=1)
+    assert wait(lambda: fake.cancelled == [song], seconds=1)
     time.sleep(0.05)
     assert isinstance(host.states()[-1], session.Empty)  # the job's end changes nothing
     assert recent.load(recent.store_path()) == []
@@ -164,12 +105,12 @@ def test_a_second_song_replaces_the_running_one(monkeypatch, tmp_path, host):
     ctl = _made(host)
     first, second = tmp_path / "first.flac", tmp_path / "second.flac"
     ctl.open(first)
-    assert _wait(lambda: len(fake.runs) == 1)
+    assert wait(lambda: len(fake.runs) == 1)
     ctl.open(second)
     assert ctl.state.previous == session.Empty()  # not the cancelled analysis
-    assert _wait(lambda: fake.cancelled == [first], seconds=1)
+    assert wait(lambda: fake.cancelled == [first], seconds=1)
     fake.release.set()
-    assert _wait(lambda: isinstance(ctl.state, session.Result))
+    assert wait(lambda: isinstance(ctl.state, session.Result))
     assert ctl.state.song == second
     results = [s for s in host.states() if isinstance(s, session.Result)]
     assert [r.song for r in results] == [second]
@@ -180,7 +121,7 @@ def test_an_unreadable_file_fails_without_try_again(monkeypatch, tmp_path, host)
     FakeApi(monkeypatch)
     ctl = _made(host)
     ctl.open(tmp_path / "notes.txt")
-    assert _wait(lambda: isinstance(ctl.state, session.Failed))
+    assert wait(lambda: isinstance(ctl.state, session.Failed))
     failed = ctl.state
     assert failed.kind == "unreadable" and failed.title == "Cannot Read This File"
     assert failed.details == "ffprobe: invalid data"
@@ -194,12 +135,12 @@ def test_a_failed_analysis_can_be_tried_again(monkeypatch, tmp_path, host):
     ctl = _made(host)
     song = tmp_path / "eye.flac"
     ctl.open(song)
-    assert _wait(lambda: isinstance(ctl.state, session.Failed))
+    assert wait(lambda: isinstance(ctl.state, session.Failed))
     assert ctl.state.kind == "analysis" and ctl.state.can_retry
     assert ctl.state.details == "adtof (exit 1): out of memory"
     fake.error = None
     assert ctl.retry()
-    assert _wait(lambda: isinstance(ctl.state, session.Result))
+    assert wait(lambda: isinstance(ctl.state, session.Result))
     assert [r[0] for r in fake.runs] == [song, song]
     assert ctl.state.song == song
 
@@ -210,7 +151,7 @@ def test_missing_models_ask_for_consent_with_the_song(monkeypatch, tmp_path, hos
     ctl = _made(host)
     song = tmp_path / "eye.flac"
     ctl.open(song)
-    assert _wait(lambda: isinstance(ctl.state, session.Consent))
+    assert wait(lambda: isinstance(ctl.state, session.Consent))
     assert ctl.state == session.Consent(("adtof",), song)
 
 
@@ -219,17 +160,17 @@ def test_close_goes_back_to_the_empty_window_and_stops_the_job(monkeypatch, tmp_
     ctl = _made(host)
     song = tmp_path / "eye.flac"
     ctl.open(song)
-    assert _wait(lambda: fake.runs)
+    assert wait(lambda: fake.runs)
     ctl.close()
     assert ctl.state == session.Empty()
-    assert _wait(lambda: fake.cancelled == [song], seconds=1)
+    assert wait(lambda: fake.cancelled == [song], seconds=1)
 
 
 def test_shutdown_waits_for_the_job_to_clean_up(monkeypatch, tmp_path, host):
     fake = FakeApi(monkeypatch, hold=True)
     ctl = _made(host)
     ctl.open(tmp_path / "eye.flac")
-    assert _wait(lambda: fake.runs)
+    assert wait(lambda: fake.runs)
     start = time.monotonic()
     ctl.shutdown(2.0)
     assert fake.cancelled and time.monotonic() - start < 1
@@ -274,7 +215,7 @@ def test_quick_corrections_make_one_run_and_the_newest_is_stored(monkeypatch, tm
     assert ctl.correct(api.Corrections(tempo="half"))
     assert ctl.state.wanted == api.Corrections(tempo="half")  # shown before the sheet is ready
     assert ctl.state.notation.tempo == 109
-    assert _wait(lambda: ctl.state.pending is None)
+    assert wait(lambda: ctl.state.pending is None)
     assert fake.runs[runs:] == [(song, api.Corrections(tempo="half"))]
     assert ctl.state.notation.tempo == 54
     assert ctl.state.corrections == api.Corrections(tempo="half")
@@ -282,7 +223,7 @@ def test_quick_corrections_make_one_run_and_the_newest_is_stored(monkeypatch, tm
     assert stored == {song.absolute(): api.Corrections(tempo="half")}
 
     ctl.open(song)  # opened again: with its corrections
-    assert _wait(lambda: isinstance(ctl.state, session.Result))
+    assert wait(lambda: isinstance(ctl.state, session.Result))
     assert fake.runs[-1] == (song, api.Corrections(tempo="half"))
     assert ctl.state.notation.tempo == 54
 
@@ -293,7 +234,7 @@ def test_a_failed_correction_keeps_the_sheet_and_says_why(monkeypatch, tmp_path,
     before = _result(ctl, tmp_path / "eye.flac")
     fake.error = RuntimeError("engrave failed")
     ctl.correct(api.Corrections(tempo="half"))
-    assert _wait(lambda: ctl.state.pending is None)
+    assert wait(lambda: ctl.state.pending is None)
     assert ctl.state.notation is before.notation
     assert ctl.state.corrections == api.Corrections()
     assert host.notices() == ["The correction did not work: engrave failed"]
@@ -309,7 +250,7 @@ def test_a_correction_that_cannot_be_stored_still_shows(monkeypatch, tmp_path, h
     ctl = _made(host)
     _result(ctl, tmp_path / "eye.flac")
     ctl.correct(api.Corrections(tempo="half"))
-    assert _wait(lambda: ctl.state.pending is None)
+    assert wait(lambda: ctl.state.pending is None)
     assert ctl.state.notation.tempo == 54
     assert host.notices() == ["The correction could not be saved: Read-only file system"]
 
@@ -320,7 +261,7 @@ def test_a_correction_waiting_for_a_pause_is_dropped_by_a_new_song(monkeypatch, 
     _result(ctl, tmp_path / "first.flac")
     ctl.correct(api.Corrections(tempo="half"))
     ctl.open(tmp_path / "second.flac")
-    assert _wait(lambda: isinstance(ctl.state, session.Result))
+    assert wait(lambda: isinstance(ctl.state, session.Result))
     time.sleep(controller.CORRECT_AFTER + 0.1)
     assert [r[1] for r in fake.runs] == [api.Corrections(), api.Corrections()]
     assert ctl.state.song == tmp_path / "second.flac"
@@ -337,43 +278,6 @@ def test_shutdown_drops_a_correction_waiting_for_a_pause(monkeypatch, tmp_path, 
 
 
 # the setup assistant, exports and removal (Task 101)
-
-
-class FakeSetup:
-    """api without downloads: `missing` are not set up until setup_adapters ran for them.
-    With `hold`, each step waits until released or cancelled; `fail` raises in the step with
-    that id once."""
-
-    def __init__(self, monkeypatch, missing=("adtof", "beat_this"), hold=False, fail=None):
-        self.missing, self.hold, self.fail = list(missing), hold, fail
-        self.done: list[str] = []
-        self.attempts: list[str] = []
-        self.release = threading.Event()
-        self.cancelled = False
-        self.adapter_of_step: str | None = None  # what the steps name as their model
-        monkeypatch.setattr(api, "mode_ready", self.mode_ready)
-        monkeypatch.setattr(api, "setup_adapters", self.setup_adapters)
-
-    def mode_ready(self, *a, drums=False, **kw):
-        return [m for m in self.missing if m not in self.done]
-
-    def setup_adapters(self, adapter, device="cpu", adapters_root=None, *, progress, cancel):
-        self.attempts.append(adapter)
-        ids = [f"environment:{adapter}"] + (["weights:beat_this"] if adapter == "beat_this" else [])
-        for i, step_id in enumerate(ids, 1):
-            progress(api.Step(step_id, i, len(ids), "started", False, self.adapter_of_step))
-            if self.hold:
-                while not (self.release.is_set() or cancel.is_set()):
-                    time.sleep(0.005)
-            if cancel.is_set():
-                self.cancelled = True
-                raise api.Cancelled("cancelled")
-            if step_id == self.fail:
-                self.fail = None
-                raise RuntimeError("Beat This! model not downloaded. JKU Linz: 500")
-            progress(api.Step(step_id, i, len(ids), "done", False, self.adapter_of_step))
-        self.done.append(adapter)
-        return [adapter]
 
 
 def _agreed() -> bool:
@@ -401,7 +305,7 @@ def test_the_first_start_asks_and_not_now_goes_back_to_the_empty_window(monkeypa
     ctl = _made(host)
     assert not ctl.agree() and not ctl.not_now() and not ctl.retry_setup()
     ctl.start()
-    assert _wait(lambda: isinstance(ctl.state, session.Consent))
+    assert wait(lambda: isinstance(ctl.state, session.Consent))
     assert ctl.state == session.Consent(("adtof", "beat_this"))
     assert ctl.not_now()
     assert ctl.state == session.Empty() and not _agreed()
@@ -421,10 +325,10 @@ def test_agreeing_downloads_the_models_and_opens_the_song_it_was_for(monkeypatch
     ctl = _made(host)
     song = tmp_path / "eye.flac"
     ctl.open(song)
-    assert _wait(lambda: isinstance(ctl.state, session.Consent))
+    assert wait(lambda: isinstance(ctl.state, session.Consent))
     assert ctl.agree()
     assert _agreed()
-    assert _wait(lambda: isinstance(ctl.state, session.Result))
+    assert wait(lambda: isinstance(ctl.state, session.Result))
     assert fake.done == ["adtof"] and ctl.state.song == song
     setting_up = [s for s in host.states() if isinstance(s, session.SettingUp)]
     assert [r.id for r in setting_up[0].steps] == ["environment:adtof"]
@@ -447,11 +351,11 @@ def test_an_agreed_download_goes_on_at_the_next_start_and_is_measured(monkeypatc
     )
     ctl = _made(host)
     ctl.start()
-    assert _wait(lambda: isinstance(ctl.state, session.SettingUp) and ctl.state.grown > 0)
+    assert wait(lambda: isinstance(ctl.state, session.SettingUp) and ctl.state.grown > 0)
     assert measured == ["environment:beat_this"]
     assert ctl.state.grown == 39_000_000
     fake.release.set()
-    assert _wait(lambda: ctl.state == session.Empty())
+    assert wait(lambda: ctl.state == session.Empty())
     assert fake.done == ["beat_this"]
     count = len(host.states())
     time.sleep(0.1)
@@ -464,10 +368,10 @@ def test_a_cancelled_download_goes_back_to_the_empty_window(monkeypatch, host):
     monkeypatch.setattr(controller, "SAMPLE", 0.02)
     ctl = _made(host)
     ctl.start()
-    assert _wait(lambda: isinstance(ctl.state, session.SettingUp))
+    assert wait(lambda: isinstance(ctl.state, session.SettingUp))
     assert ctl.cancel()
     assert ctl.state == session.Empty()
-    assert _wait(lambda: fake.cancelled, seconds=1)
+    assert wait(lambda: fake.cancelled, seconds=1)
     assert fake.done == []
 
 
@@ -476,12 +380,12 @@ def test_a_failed_download_names_its_step_and_can_be_tried_again(monkeypatch, ho
     fake = FakeSetup(monkeypatch, missing=("beat_this",), fail="weights:beat_this")
     ctl = _made(host)
     ctl.start()
-    assert _wait(lambda: isinstance(ctl.state, session.SetupFailed))
+    assert wait(lambda: isinstance(ctl.state, session.SetupFailed))
     failed = ctl.state
     assert failed.step == "weights:beat_this" and failed.missing == ("beat_this",)
     assert "JKU Linz: 500" in failed.details
     assert ctl.retry_setup()
-    assert _wait(lambda: ctl.state == session.Empty())
+    assert wait(lambda: ctl.state == session.Empty())
     assert fake.attempts == ["beat_this", "beat_this"] and fake.done == ["beat_this"]
 
 
@@ -490,7 +394,7 @@ def test_later_after_a_failed_download_goes_back_to_the_empty_window(monkeypatch
     FakeSetup(monkeypatch, missing=("adtof",), fail="environment:adtof")
     ctl = _made(host)
     ctl.start()
-    assert _wait(lambda: isinstance(ctl.state, session.SetupFailed))
+    assert wait(lambda: isinstance(ctl.state, session.SetupFailed))
     assert ctl.not_now()
     assert ctl.state == session.Empty()
 
@@ -502,7 +406,7 @@ def test_a_model_check_that_fails_says_so(monkeypatch, host):
     monkeypatch.setattr(api, "mode_ready", broken)
     ctl = _made(host)
     ctl.start()
-    assert _wait(lambda: host.notices())
+    assert wait(lambda: host.notices())
     assert host.notices() == ["Could not check the models: uv not found"]
     assert ctl.state == session.Empty()
 
@@ -517,7 +421,7 @@ def test_a_packaged_app_brings_its_adapters_up_to_date_before_the_check(
     monkeypatch.setattr(setup, "sync_adapters", lambda shipped, root: synced.append(shipped))
     ctl = _made(host)
     ctl.start()
-    assert _wait(lambda: synced == [tmp_path / "shipped"])
+    assert wait(lambda: synced == [tmp_path / "shipped"])
 
 
 def test_a_song_opened_during_the_check_is_not_interrupted(monkeypatch, tmp_path, host):
@@ -598,7 +502,7 @@ def test_the_drum_track_is_saved_with_steps_and_back_to_the_result(monkeypatch, 
     assert not ctl.export_drum_track(dest)
     result = _result(ctl, tmp_path / "eye.flac")
     assert ctl.export_drum_track(dest)
-    assert _wait(lambda: ctl.state is result)
+    assert wait(lambda: ctl.state is result)
     exporting = [s for s in host.states() if isinstance(s, session.Exporting)]
     assert [r.id for r in exporting[0].steps] == ["separate"]
     assert [r.state for r in exporting[-1].steps] == ["done"]
@@ -614,7 +518,7 @@ def test_the_drum_track_downloads_demucs_first_when_missing(monkeypatch, tmp_pat
     ctl = _made(host)
     result = _result(ctl, tmp_path / "eye.flac")
     ctl.export_drum_track(tmp_path / "drums.flac")
-    assert _wait(lambda: ctl.state is result)
+    assert wait(lambda: ctl.state is result)
     exporting = [s for s in host.states() if isinstance(s, session.Exporting)]
     assert [r.id for r in exporting[0].steps] == [
         "environment:demucs",
@@ -631,7 +535,7 @@ def test_a_failed_drum_track_shows_the_error_and_can_be_cancelled(monkeypatch, t
     ctl = _made(host)
     result = _result(ctl, tmp_path / "eye.flac")
     ctl.export_drum_track(tmp_path / "drums.flac")
-    assert _wait(lambda: isinstance(ctl.state, session.Failed))
+    assert wait(lambda: isinstance(ctl.state, session.Failed))
     assert ctl.state.kind == "export" and ctl.state.previous is result
     assert not ctl.state.can_retry
 
@@ -642,10 +546,10 @@ def test_a_cancelled_drum_track_goes_back_to_the_result(monkeypatch, tmp_path, h
     ctl = _made(host)
     result = _result(ctl, tmp_path / "eye.flac")
     ctl.export_drum_track(tmp_path / "drums.flac")
-    assert _wait(lambda: fake.attempts == ["demucs"])
+    assert wait(lambda: fake.attempts == ["demucs"])
     assert ctl.cancel()
     assert ctl.state is result
-    assert _wait(lambda: fake.cancelled, seconds=1)
+    assert wait(lambda: fake.cancelled, seconds=1)
 
 
 def _installed(monkeypatch):
@@ -683,7 +587,7 @@ def test_removing_the_models_asks_again_before_the_next_download(monkeypatch, tm
     assert models == 1100 and everything > models  # the settings and recent songs too
     assert ctl.can_remove_models
     assert ctl.remove_models(False)
-    assert _wait(lambda: host.notices())
+    assert wait(lambda: host.notices())
     assert host.notices() == ["The downloaded models are removed"]
     assert not weights.exists() and not paths.cache_home().exists()
     assert not settings.load(settings.store_path()).setup_agreed
@@ -702,7 +606,7 @@ def test_removing_everything_also_forgets_the_recent_songs(monkeypatch, tmp_path
     recent.save(recent.store_path(), [recent.opened_now(tmp_path / "a.flac", "A", "")])
     ctl = _made(host)
     assert ctl.remove_models(True)
-    assert _wait(lambda: host.notices())
+    assert wait(lambda: host.notices())
     assert ctl.recent == () and host.recents() == [()]
     assert not recent.store_path().exists()
     assert synced == [paths.adapters_root()]  # the sources are back for the next setup
@@ -719,7 +623,7 @@ def test_a_removal_that_fails_says_why(monkeypatch, tmp_path, host):
     monkeypatch.setattr(removal, "remove", busy)
     ctl = _made(host)
     ctl.remove_models(False)
-    assert _wait(lambda: host.notices())
+    assert wait(lambda: host.notices())
     assert host.notices() == ["Could not remove everything: [Errno 16] Device or resource busy"]
     assert ctl.can_remove_models
 
