@@ -460,6 +460,41 @@ check (116).
 | XcodeGen's output changes with a new release | Low | Pinned version; the project is generated in CI only |
 | "Open Anyway" missing on the owner's Mac | Low | `xattr` in `docs/mac-development.md` |
 
+## Website (approved 2026-11-18, SPEC.md "Website")
+
+A static page in plain HTML and CSS, English and German, for drummers who are not technical:
+built now, deployed with release 8. The mockup on the private canvas "Stickler website" is the
+look to build (Figtree, Apricot, light and dark following the browser).
+
+Design decisions:
+- **One English slice first** (118): the skeleton with its stylesheet, the font, the tokens,
+  the skip link and the site's test exist before any content, so every later section is
+  checked as it lands. The test is pytest with `html.parser` (no new Python dependency).
+- **The pictures before the content** (119): light and dark screenshots and the overview video
+  come from one run of the app (`scripts/demo.py`), so they show the same song and moment;
+  the content task then only places them. It needs the owner's copy of "Fluffing a Duck" and
+  the Fast models on the laptop.
+- **German after English is complete** (121): translating a finished page once, then the test
+  keeps both in step (anchors, images, downloads), instead of keeping two moving pages equal.
+- **No deploy before release 8** (123): the workflow builds, checks (axe-core light and dark)
+  and uploads on every push to `site/`, but deploys only on a published release from 8 on or
+  by hand; the download cards are filled from the release, so the HTML holds no version.
+- **The Mac card waits for `mac-package`:** its size and its three "Open Anyway" pictures come
+  from that module's install guide; until then the card shows the text steps.
+- **A fresh-context review at the end** (124), against SPEC.md and WCAG 2.2 AA.
+
+Order: skeleton, font and test (118) → pictures and video, light and dark (119) → the English
+page's sections (120) → German, about, privacy, 404 (121) → meta, icons, CSP, sitemap (122) →
+workflow with release data and axe-core (123) → DNS guide, review, owner's check (124).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Recording the app on the laptop disturbs the owner's session (portals) | Medium | `scripts/gtk.sh demo` as today: only mutter in a private D-Bus session, the app on the normal bus; Stickler closed first |
+| A dark `<source media>` on `<video>` is ignored by a browser | Low | The poster and the GIF fallback are light and dark through `<picture>`; checked in Firefox, Chrome and Safari by the owner |
+| Two hand-kept languages drift | Medium | The test compares anchors, images, links and downloads of each pair |
+| axe-core in CI adds Node and a browser | Low | Pinned versions, only in `site.yml`; approved with the spec |
+| The custom domain's certificate takes long or fails | Low | The DNS guide (124) lists the steps from GitHub's docs; the site works at the github.io address meanwhile |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|

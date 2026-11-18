@@ -896,6 +896,49 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 ### Checkpoint U
 - [ ] All success criteria of SPEC.md "Module `mac-shell`" met (owner); then `mac-sheet`'s spec
 
+## Phase 22: Website (approved 2026-11-18, SPEC.md "Website")
+
+- [ ] **Task 118: The skeleton, the font and the site's test** (S)
+  - Acceptance: `site/index.html` with the navigation, an empty `main` with the skip link's target and the footer; `site/style.css` with the tokens of the mockup (light and dark through `prefers-color-scheme`, Apricot), `:focus-visible`, the skip link; Figtree 400/500/700 as WOFF2 subsets in `site/fonts/` with its OFL licence (source and version checked on the web, named in a comment); `tests/test_site.py`: local links and anchors resolve, no request leaves the site, one `h1`, headings do not skip, `lang` set, no `<script>` but the allowed one.
+  - Verify: `uv run pytest -q tests/test_site.py`; `python3 -m http.server -d site` looked at light and dark
+  - Dependencies: none · Files: `site/index.html`, `site/style.css`, `site/fonts/`, `tests/test_site.py`
+
+- [ ] **Task 119: The pictures, light and dark** (M)
+  - Acceptance: `scripts/demo.py` takes `--dark` (the app's dark style) and `--stills` (the sheet with a marked bar and the corrections sidebar as PNG, as `docs/screenshots`), and writes the overview also as MP4 (H.264, muted) with a poster frame; from one run each in light and dark: `site/images/` holds sheet, corrections and overview in both schemes, as WebP and PNG, the videos under the budget; `docs/screenshots/` keeps its files.
+  - Verify: tests for the new options where they fit (argument handling, file names); the owner looks at the pictures; recording on the laptop with "Fluffing a Duck" (path from the owner) and the Fast models
+  - Dependencies: none · Files: `scripts/demo.py`, `scripts/gtk.sh` (if an option passes through), `site/images/`, a test
+
+- [ ] **Task 120: The English page** (M)
+  - Acceptance: the sections of SPEC "Website" 2–12 as in the mockup, with real values (numbers from the README's results, sizes from `docs/bridge.md`'s setup texts); every screenshot as `<picture>` with its dark source, `width`/`height`, `loading="lazy"` below the first view; the overview as `<video muted loop playsinline controls>` with light and dark sources and posters, not autoplaying under `prefers-reduced-motion`; a 20-second clip of "Fluffing a Duck" (Opus and MP3) in `<audio controls>` with its credit; the copy button as the only script (the command stays selectable without it); "About the author" with the owner's text and photo (placeholders until the owner sends them); the Mac card with text steps until `mac-package`.
+  - Verify: `tests/test_site.py` extended (every image has `alt`, `width`, `height`; the page under the budget); keyboard-only pass by Claude in the browser
+  - Dependencies: 118, 119 · Files: `site/index.html`, `site/style.css`, `site/copy.js`, `site/media/`, `tests/test_site.py`
+
+### Checkpoint V
+- [ ] The English page in the browser, light and dark, phone width and laptop (owner)
+
+- [ ] **Task 121: German, about, privacy and 404** (M)
+  - Acceptance: `site/de/index.html` as the English page in German; `about.html` and `privacy.html` in both languages (privacy: the app sends nothing; the site sets no cookies; GitHub Pages logs IP addresses, linked to GitHub's statement); `404.html` in both; the language links with `hreflang` and `lang`; the test compares each pair (anchors, images, downloads, links).
+  - Verify: `uv run pytest -q tests/test_site.py`; the owner reads the German text
+  - Dependencies: 120 · Files: `site/de/`, `site/about.html`, `site/privacy.html`, `site/404.html`, `tests/test_site.py`
+
+- [ ] **Task 122: Meta, icons, policy, sitemap** (S)
+  - Acceptance: per page `<title>`, description, `canonical`, `hreflang`, Open Graph title, description and image (a 1200×630 picture from the sheet, light); favicon (SVG and PNG) and `apple-touch-icon` from the app icon; the CSP meta (only `'self'`, the copy script by hash) and the referrer policy; `robots.txt` and `sitemap.xml`; the test checks each.
+  - Verify: `uv run pytest -q tests/test_site.py`; the page shared in a messenger shows its card (owner)
+  - Dependencies: 121 · Files: the `site/` pages, `site/images/`, `site/robots.txt`, `site/sitemap.xml`, `tests/test_site.py`
+
+- [ ] **Task 123: The workflow** (M)
+  - Acceptance: `scripts/site_release.py` fills the download cards (file names and sizes of the newest release, read with `gh` or the API) into a copy of `site/`, tested with a fixed release; `.github/workflows/site.yml`: on a push touching `site/` it runs the test, builds the copy, runs axe-core (pinned, Playwright) on every page in light and dark, uploads the Pages artifact; deploys only on a published release ≥ 8 or by hand (`workflow_dispatch`).
+  - Verify: the workflow green on a push; axe-core with no WCAG 2.2 A/AA violation; a deliberate missing `alt` makes it fail once
+  - Dependencies: 122 · Files: `scripts/site_release.py`, its test, `.github/workflows/site.yml`
+
+- [ ] **Task 124: The DNS guide, the review and the owner's check** (S)
+  - Acceptance: `docs/website.md`: verify `tshia.ng` in the GitHub account (TXT), the CNAME `stickler` → `niklastshiang.github.io`, the custom domain in the Pages settings, Enforce HTTPS, CAA if set; how to run and change the site; a fresh-context review of 118–123 against SPEC "Website" and WCAG 2.2 AA, findings fixed or answered.
+  - Verify: the owner: keyboard only, a screen reader once (Orca or VoiceOver), phone and laptop, light and dark, both languages
+  - Dependencies: 123 · Files: `docs/website.md`
+
+### Checkpoint W
+- [ ] SPEC "Website" success criteria 1, 2, 4, 6 met (owner); 3 and 5 with release 8 (the `.dmg` and its pictures from `mac-package`)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [ ] **A website for Stickler** (owner, 2026-11-18): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
