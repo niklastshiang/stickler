@@ -847,7 +847,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `swift test` against the real bridge with the stand-in models of `tests/app/test_bridge_process.py` (`hello`, `open` until `result`, `cancel`, `quit`, a killed core reported), on Linux and macOS
   - Dependencies: 108 · Files: `mac/SticklerCore/`, a helper script for the stand-ins if needed
 
-- [ ] **Task 110: The window's model** (M)
+- [x] **Task 110: The window's model** (M): done 2026-11-18 (998522b, `mac` green on Linux and `macos-26`: 45 tests, coverage 97.66 %). `AppModel` (`@MainActor`, `@Observable`): state, recent songs, the newest notice, the language, the phase (needs a folder, running, stopped with its end). Events come through one `AsyncStream`, so the core's order holds (separate tasks per event would not); a late `seq` is dropped; a core replaced by Start Again is not listened to. Each action sends one command; a refusal shows the core's translated message as a notice. The folder is checked (`pyproject.toml`, `adapters/`) and remembered in `UserDefaults`; `uv` is looked for in `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin`, then `PATH`. 14 tests with a fake core. SwiftLint: `uv` allowed as a name.
   - Acceptance: an `@Observable` `AppModel`: the latest state, recent songs, the notices (the newest shown, each with `opens`), the stopped core (details, `startAgain()`), the core's folder (checked for `pyproject.toml` and `adapters/`, remembered, `uv` found in `~/.local/bin`, `/opt/homebrew/bin`, `PATH`); every user action forwards one command and nothing decides a flow.
   - Verify: `swift test` with a fake core on Linux and macOS; coverage ≥ 95 %
   - Dependencies: 109 · Files: `mac/SticklerCore/`
