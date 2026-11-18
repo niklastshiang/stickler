@@ -5,20 +5,86 @@ Run through `scripts/gtk.sh demo <song> [out.gif]`, which starts it on an invisi
 own with private settings, cache and recent songs (the user's real ones are never touched). The
 analysis is real (the checkout's models, Fast mode); its frames are kept at a lower rate, so it
 plays faster than it ran. Playback is shown by stepping the position, not by playing sound.
+
+For the website (SPEC.md "Website"): `--dark` records the app's dark style, `--video DIR` writes
+the overview as a muted MP4, `--stills DIR` the sheet with a marked bar and the corrections
+sidebar as PNG and WebP, `--no-gif` leaves the README's GIF alone. Dark files end in `-dark`.
 """
 
 from __future__ import annotations
 
+import argparse
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import NamedTuple
 
 SIZE = (1000, 700)  # as the screenshots in docs/screenshots
 FPS = 10
 WIDTH = 800  # of the GIF
+README_GIF = Path(__file__).resolve().parents[1] / "docs" / "screenshots" / "overview.gif"
+STILL_AT = 8.0  # seconds into the song: the bar marked on the sheet still
+
+
+class Options(NamedTuple):
+    song: Path
+    gif: Path | None
+    dark: bool
+    video: Path | None
+    stills: Path | None
+
+
+class Names(NamedTuple):
+    overview: str
+    sheet: str
+    corrections: str
+
+
+def parse(argv: list[str]) -> Options:
+    parser = argparse.ArgumentParser(prog="scripts/gtk.sh demo")
+    parser.add_argument("song", type=Path)
+    parser.add_argument("gif", type=Path, nargs="?", default=README_GIF)
+    parser.add_argument("--no-gif", action="store_true", help="leave the README's GIF alone")
+    parser.add_argument("--dark", action="store_true", help="the app's dark style")
+    parser.add_argument("--video", type=Path, help="write the overview as MP4 into this folder")
+    parser.add_argument("--stills", type=Path, help="write the sheet and corrections here")
+    args = parser.parse_args(argv)
+    return Options(
+        song=args.song.resolve(),
+        gif=None if args.no_gif else args.gif.resolve(),
+        dark=args.dark,
+        video=args.video,
+        stills=args.stills,
+    )
+
+
+def names(*, dark: bool) -> Names:
+    suffix = "-dark" if dark else ""
+    return Names(*(name + suffix for name in Names._fields))
+
+
+def video_command(frames: Path, out: Path) -> list[str]:
+    """The overview as H.264 that every browser plays: no sound, its index first (so it starts
+    before it is loaded), even sides as yuv420p needs."""
+    return (
+        ["ffmpeg", "-v", "error", "-y", "-framerate", str(FPS)]
+        + ["-i", str(frames / "frame%05d.png"), "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"]
+        + ["-c:v", "libx264", "-preset", "slow", "-crf", "28", "-pix_fmt", "yuv420p"]
+        + ["-an", "-movflags", "+faststart", str(out)]
+    )
+
+
+def webp_command(png: Path) -> list[str]:
+    return ["ffmpeg", "-v", "error", "-y", "-i", str(png)] + [
+        "-c:v",
+        "libwebp",
+        "-quality",
+        "85",
+        str(png.with_suffix(".webp")),
+    ]
 
 
 def _gtk():
@@ -60,16 +126,25 @@ class Recorder:
         texture.save_to_png(str(self.folder / f"frame{self.count:05d}.png"))
         self.count += 1
 
+    def still(self, path: Path) -> None:
+        """The window as it is now, as a PNG and a WebP next to it."""
+        self.frame()
+        (self.folder / f"frame{self.count - 1:05d}.png").replace(path)
+        self.count -= 1
+        _run(webp_command(path))
+
     def hold(self, seconds: float) -> None:
         for _ in range(round(seconds * FPS)):
             _pump(1 / FPS)
             self.frame()
 
 
-def record(song: Path, out: Path) -> None:
+def record(options: Options) -> None:
     from stickler_app import session
+    from stickler_gtk.ui import menu
     from stickler_gtk.ui.window import Window
 
+    menu.apply_appearance("dark" if options.dark else "light")
     window = Window()
     window.set_default_size(*SIZE)
     window.present()
@@ -77,7 +152,7 @@ def record(song: Path, out: Path) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         rec = Recorder(window, Path(tmp))
         rec.hold(1.5)  # the empty window: "Drop a Song Here"
-        window.open_song(song)
+        window.open_song(options.song)
         started = time.monotonic()
         while not isinstance(window.state, session.Result):
             if time.monotonic() - started > 600:
@@ -92,8 +167,27 @@ def record(song: Path, out: Path) -> None:
             _pump(1 / FPS)
             rec.frame()
         rec.hold(1.0)
-        _gif(Path(tmp), out)
-    print(f"{rec.count} frames → {out}")
+        named = names(dark=options.dark)
+        if options.gif is not None:
+            _gif(Path(tmp), options.gif)
+        if options.video is not None:
+            options.video.mkdir(parents=True, exist_ok=True)
+            _run(video_command(Path(tmp), options.video / f"{named.overview}.mp4"))
+        if options.stills is not None:
+            options.stills.mkdir(parents=True, exist_ok=True)
+            window.playbar.seek(STILL_AT)  # marks the bar under it
+            _pump(0.5)
+            rec.still(options.stills / f"{named.sheet}.png")
+            window.set_corrections_open(True)
+            _pump(1.0)
+            rec.still(options.stills / f"{named.corrections}.png")
+    print(f"{rec.count} frames recorded")
+
+
+def _run(command: list[str]) -> None:
+    if shutil.which(command[0]) is None:
+        sys.exit(f"{command[0]} is needed")
+    subprocess.run(command, check=True)
 
 
 def _gif(frames: Path, out: Path) -> None:
@@ -112,7 +206,4 @@ def _gif(frames: Path, out: Path) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (2, 3):
-        sys.exit("usage: scripts/gtk.sh demo <song> [out.gif]")
-    target = Path(sys.argv[2]) if len(sys.argv) == 3 else Path("docs/screenshots/overview.gif")
-    record(Path(sys.argv[1]).resolve(), target.resolve())
+    record(parse(sys.argv[1:]))

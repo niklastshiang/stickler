@@ -903,7 +903,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: `uv run pytest -q tests/test_site.py`; `python3 -m http.server -d site` looked at light and dark
   - Dependencies: none · Files: `site/index.html`, `site/style.css`, `site/fonts/`, `tests/test_site.py`
 
-- [ ] **Task 119: The pictures, light and dark** (M)
+- [x] **Task 119: The pictures, light and dark** (M): done 2026-11-18. `scripts/demo.py` takes `--dark`, `--video DIR`, `--stills DIR` and `--no-gif` (argparse; the old call records the README's GIF as before); `tests/test_demo.py` for the options, names and ffmpeg commands. Recorded on the laptop with `data/own/fluffing_a_duck` (Fast, about 30 s a run): `site/images/` holds sheet (bar 5 marked) and corrections in light and dark as PNG and WebP (38–48 KB each as WebP) and the overview as MP4 in both (94–101 KB, H.264, muted, faststart).
   - Acceptance: `scripts/demo.py` takes `--dark` (the app's dark style) and `--stills` (the sheet with a marked bar and the corrections sidebar as PNG, as `docs/screenshots`), and writes the overview also as MP4 (H.264, muted) with a poster frame; from one run each in light and dark: `site/images/` holds sheet, corrections and overview in both schemes, as WebP and PNG, the videos under the budget; `docs/screenshots/` keeps its files.
   - Verify: tests for the new options where they fit (argument handling, file names); the owner looks at the pictures; recording on the laptop with "Fluffing a Duck" (path from the owner) and the Fast models
   - Dependencies: none · Files: `scripts/demo.py`, `scripts/gtk.sh` (if an option passes through), `site/images/`, a test
