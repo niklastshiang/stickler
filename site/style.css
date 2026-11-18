@@ -147,6 +147,20 @@ a:hover {
   text-decoration: none;
 }
 
+.spacer {
+  flex-grow: 1;
+}
+
+/* links in menus are 44 px tall targets (SPEC "Website") */
+.nav-links a,
+.site-nav > .quiet,
+.footer-row a,
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
 .nav-links {
   display: flex;
   flex-wrap: wrap;
@@ -435,6 +449,22 @@ audio {
   gap: 0.625rem 1rem;
   margin: 0;
   font-size: 1rem;
+}
+
+/* a label, then its value; on a phone the value goes under its label */
+.pairs.labelled {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+@media (max-width: 30rem) {
+  .pairs.labelled {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.125rem;
+  }
+
+  .pairs.labelled dd {
+    margin-bottom: 0.5rem;
+  }
 }
 
 .pairs dt {

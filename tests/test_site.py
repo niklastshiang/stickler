@@ -165,12 +165,24 @@ def test_every_picture_has_a_dark_twin(path):
     assert len(darks) >= pictures, "each picture and video has a dark source"
 
 
-def test_the_first_view_stays_light():
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+def test_the_first_view_stays_light(path):
     """HTML, CSS and the font under 300 KB; with the overview video under 2 MB."""
-    text = sum((SITE / f).stat().st_size for f in ("index.html", "style.css", "site.js"))
-    font = (SITE / "fonts" / "figtree.woff2").stat().st_size
-    assert text + font < 300_000
-    assert text + font + (SITE / "images" / "overview.mp4").stat().st_size < 2_000_000
+    shared = sum((SITE / f).stat().st_size for f in ("style.css", "site.js", "fonts/figtree.woff2"))
+    assert path.stat().st_size + shared < 300_000
+    video = max((SITE / "images").glob("overview*.*"), key=lambda v: v.stat().st_size)
+    assert path.stat().st_size + shared + video.stat().st_size < 2_000_000
+
+
+def test_everything_the_site_uses_is_in_git():
+    """A file on this disk but ignored by git would pass here and break the published site."""
+    import subprocess
+
+    tracked = subprocess.run(
+        ["git", "ls-files", "site"], cwd=SITE.parent, capture_output=True, text=True, check=True
+    ).stdout.split()
+    on_disk = sorted(str(p.relative_to(SITE.parent)) for p in SITE.rglob("*") if p.is_file())
+    assert [f for f in on_disk if f not in tracked] == []
 
 
 def test_downloads_point_at_the_newest_release_until_the_workflow_fills_them():
@@ -210,6 +222,8 @@ def test_english_and_german_say_the_same(name):
         ]
     outside = [a["href"] for a in en.all("a") if not _local(a.get("href", ""))]
     assert outside == [a["href"] for a in de.all("a") if not _local(a.get("href", ""))]
+    alts = [(a.get("alt"), b.get("alt")) for a, b in zip(en.all("img"), de.all("img"), strict=True)]
+    assert all(e != d for e, d in alts if e), "German pages have German alt texts"
     to_de = [a for a in en.all("a") if a.get("hreflang") == "de"]
     to_en = [a for a in de.all("a") if a.get("hreflang") == "en"]
     assert to_de and _resolve(en_path, to_de[0]["href"])[0] == de_path.resolve()

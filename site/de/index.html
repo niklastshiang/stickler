@@ -63,7 +63,7 @@
       </div>
       <ul class="facts">
         <li><strong>Auf deinem Computer</strong><span>Kein Konto, kein Upload</span></li>
-        <li><strong>Etwa 15 Sekunden</strong><span>für einen 4-Minuten-Song</span></li>
+        <li><strong>Etwa 15 Sekunden</strong><span>für einen 4-Minuten-Song auf einem Laptop</span></li>
         <li><strong>Kostenlos, offener Code</strong><span>GPL-Lizenz</span></li>
         <li><strong>In drei Sprachen</strong><span>Deutsch, English, Español</span></li>
       </ul>
@@ -120,7 +120,7 @@
           <picture>
             <source srcset="../images/sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
             <source srcset="../images/sheet.webp" type="image/webp">
-            <img class="shot" src="../images/sheet.png" width="1000" height="700"
+            <img class="shot" src="../images/sheet.png" width="1000" height="700" loading="lazy"
               alt="Stickler zeigt die Schlagzeugnoten von Fluffing a Duck, Takt 5 ist markiert">
           </picture>
         </figure>
@@ -171,11 +171,12 @@
           </div>
           <div class="card lined">
             <h3>Dein Computer</h3>
-            <dl class="pairs">
+            <dl class="pairs labelled">
               <dt>Mac</dt><dd class="muted">Apple Silicon, macOS 26</dd>
               <dt>Linux</dt><dd class="muted">ein 64-Bit-PC (x86_64)</dd>
               <dt>Arbeitsspeicher</dt><dd class="muted">etwa 1 GB, während ein Song analysiert wird</dd>
               <dt>Zeit</dt><dd class="muted">etwa 15 s für einen 4-Minuten-Song auf einem Laptop</dd>
+              <dt>Speicherplatz</dt><dd class="muted">etwa 2,2 GB für die Modelle, 1,2 GB mehr für die Schlagzeugspur</dd>
             </dl>
           </div>
         </div>
@@ -286,8 +287,9 @@
           <h2 id="remove">Deinstallieren</h2>
           <p class="muted">Um den Platz der Modelle freizugeben und die App zu behalten, wähl
             <strong>Heruntergeladene Modelle entfernen …</strong> im Menü. Um alles zu entfernen: auf
-            dem Mac Stickler in den Papierkorb ziehen; beim Flatpak in der Software-Verwaltung
-            entfernen; beim AppImage die Datei löschen und die Ordner
+            dem Mac „Heruntergeladene Modelle entfernen …“ mit Häkchen wählen, dann Stickler in den
+            Papierkorb ziehen; beim Flatpak <code>flatpak uninstall --delete-data ng.tshia.Stickler</code>
+            ausführen; beim AppImage die Datei löschen und die Ordner
             <code>~/.local/share/stickler</code>, <code>~/.cache/stickler</code> und
             <code>~/.config/stickler</code>.</p>
         </div>

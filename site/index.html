@@ -62,7 +62,7 @@
       </div>
       <ul class="facts">
         <li><strong>On your computer</strong><span>No account, no upload</span></li>
-        <li><strong>About 15 seconds</strong><span>for a 4-minute song</span></li>
+        <li><strong>About 15 seconds</strong><span>for a 4-minute song on a laptop</span></li>
         <li><strong>Free and open source</strong><span>GPL licence</span></li>
         <li><strong>In three languages</strong><span>English, Deutsch, Español</span></li>
       </ul>
@@ -119,7 +119,7 @@
           <picture>
             <source srcset="images/sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
             <source srcset="images/sheet.webp" type="image/webp">
-            <img class="shot" src="images/sheet.png" width="1000" height="700"
+            <img class="shot" src="images/sheet.png" width="1000" height="700" loading="lazy"
               alt="Stickler showing the drum sheet music of Fluffing a Duck, bar 5 marked">
           </picture>
         </figure>
@@ -169,11 +169,12 @@
           </div>
           <div class="card lined">
             <h3>Your computer</h3>
-            <dl class="pairs">
+            <dl class="pairs labelled">
               <dt>Mac</dt><dd class="muted">Apple silicon, macOS 26</dd>
               <dt>Linux</dt><dd class="muted">a 64-bit PC (x86_64)</dd>
               <dt>Memory</dt><dd class="muted">about 1 GB while a song is analysed</dd>
               <dt>Time</dt><dd class="muted">about 15 s for a 4-minute song on a laptop</dd>
+              <dt>Disk</dt><dd class="muted">about 2.2 GB for the models, 1.2 GB more for the drum track</dd>
             </dl>
           </div>
         </div>
@@ -284,8 +285,9 @@
           <h2 id="remove">Uninstalling</h2>
           <p class="muted">To free the models’ space but keep the app, choose
             <strong>Remove Downloaded Models…</strong> in its menu. To remove everything: on a Mac,
-            drag Stickler to the Bin; with the Flatpak, remove it in your software centre; with the
-            AppImage, delete the file and the folders <code>~/.local/share/stickler</code>,
+            choose Remove Downloaded Models… with its box ticked, then drag Stickler to the Bin;
+            with the Flatpak, run <code>flatpak uninstall --delete-data ng.tshia.Stickler</code>;
+            with the AppImage, delete the file and the folders <code>~/.local/share/stickler</code>,
             <code>~/.cache/stickler</code> and <code>~/.config/stickler</code>.</p>
         </div>
         <div>

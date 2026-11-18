@@ -7,7 +7,8 @@
 #
 #   scripts/gtk.sh            start the app
 #   scripts/gtk.sh test ...   widget smoke tests (pytest -m gtk), extra arguments go to pytest
-#   scripts/gtk.sh demo <song> [out.gif]   records the README's animated overview (scripts/demo.py)
+#   scripts/gtk.sh demo <song> [out.gif]   records the README's animated overview (scripts/demo.py);
+#     --dark, --video DIR, --stills DIR and --no-gif record the website's pictures (docs/website.md)
 #
 # STICKLER_GTK_PYTHON overrides the interpreter (default: /usr/bin/python3).
 set -euo pipefail

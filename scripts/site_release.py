@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Fills the website's download cards from a release (SPEC.md "Website").
 
-The pages in site/ link every download to the newest release's page and hold no version; this
-copies site/ and points each card at its file in the given release, with the file's size and
-name. A package the release does not have keeps its link to the release page (and a warning).
+The pages in site/ link every download to the newest release's page (only the Flatpak
+command shows a file name, the newest known when the page was written); this copies site/ and
+points each card at its file in the given release, with the file's size and name. A package the
+release does not have keeps its link to the release page (and a warning).
 
 Usage: python scripts/site_release.py <release.json> <site dir> <out dir>
        release.json is `gh release view <tag> --json tagName,assets`; <out dir> must not exist.

@@ -55,6 +55,8 @@ def main(argv: list[str]) -> int:
                     print(f"{name} ({scheme}): {violation['id']}: {violation['help']}")
                     for target in targets[:5]:
                         print(f"    {target}")
+                for unsure in result["incomplete"]:  # e.g. contrast over a picture: a person looks
+                    print(f"{name} ({scheme}): to check by eye: {unsure['id']}: {unsure['help']}")
                 print(f"{name} ({scheme}): {len(result['passes'])} rules pass")
                 page.close()
             context.close()

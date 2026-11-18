@@ -2398,7 +2398,8 @@ GPU; Intel Macs; the Mac App Store.
 5. **How good it is:** the honest numbers in plain words, from the report (macro-F1 of Fast on
    the own songs), what it gets wrong (fills, ghost notes) and that corrections exist.
 6. **The models and your computer:** each model with what it does, its download size and its
-   licence (from the setup assistant's texts); the time per song on CPU and GPU; disk space.
+   licence (from the setup assistant's texts); the time per song on a laptop CPU (the apps run
+   Fast on the CPU; no GPU figure, as the Mac app has none); disk space.
 7. **A look around:** the screenshots (sheet, corrections, dark, the Mac app), each enlarging
    on click with `<a href>` to the image or `<dialog>` without script.
 8. **Privacy:** everything runs on the computer; the only network use is the model download.
