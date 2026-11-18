@@ -893,6 +893,12 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: the `mac` workflow green; a deliberately removed test makes it fail once
   - Dependencies: 116 · Files: `.github/workflows/mac.yml`, `scripts/swift_coverage.py`, `mac/Stickler/`, `mac/SticklerTests/`, CONSTRAINTS.md
 
+- [ ] **Task 125: One rule for what each state allows** (S) (owner, 2026-11-18, from the graphify graph)
+  - Why: the GTK window decides in `Window.show()` (`src/stickler_gtk/ui/window.py`, the `set_enabled` calls) which actions fit a state; `stickler_app/bridge.py` `can()` holds the same rules a second time for the Mac app ("the GTK window's action rules"). Two copies can drift, and then GTK and the Mac enable different buttons. Only Close Song shares one rule today (`session.shows_song`). SPEC "Release 8": one shared core, two thin interfaces.
+  - Acceptance: one function in the shared core (e.g. `session.abilities(state, *, remove_models)`) returns open, cancel, retry, close, export, agree, not now, retry setup and remove models for every state kind; `bridge.can()` encodes its result unchanged (`docs/bridge.md` unchanged); `Window.show()` enables its actions from it (result-only actions such as play and the bar steps follow `export`); a test checks every state kind against the table; no visible change in either app.
+  - Verify: `uv run pytest -q tests/app` (the bridge's state tests unchanged and green); `scripts/gtk.sh test` (widget tests unchanged and green); `mac` workflow green
+  - Dependencies: none · Files: `src/stickler_app/session.py`, `src/stickler_app/bridge.py`, `src/stickler_gtk/ui/window.py`, `tests/app/`
+
 ### Checkpoint U
 - [ ] All success criteria of SPEC.md "Module `mac-shell`" met (owner); then `mac-sheet`'s spec
 

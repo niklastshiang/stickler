@@ -27,3 +27,6 @@ tests/fixtures/**/weights/
 # Swift (mac/)
 .build/
 *.xcodeproj/
+
+# graphify knowledge graph (local, not shared)
+graphify-out/
