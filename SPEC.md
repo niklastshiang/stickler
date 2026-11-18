@@ -2366,6 +2366,189 @@ GPU; Intel Macs; the Mac App Store.
 - Line reading on Linux differs from macOS (old `readabilityHandler` end-of-file reports): the
   client reads with `read(upToCount:)` on its own thread, tested on both.
 
+## Website
+
+> Status: **approved** by the owner on 2026-11-18, after the interview (`docs/intent/website.md`)
+> and the mockup (private canvas "Stickler website"). Plan: `tasks/plan.md` ("Website"). Replaces
+> the older "GitHub Pages site" idea (a generator-built site from `docs/`), which is dropped.
+
+### Objective
+- **User:** a drummer who is not technical and has never seen GitHub.
+- **What:** one static page that shows what Stickler does and gets it installed: English at
+  `/`, German at `/de/`, plus an about page and a privacy page in both languages. The order
+  follows tuxtalk.app (read 2026-11-18): hero, how it works, the examples, the models and the
+  computer it needs, a look around, privacy, the downloads, uninstalling, the footer.
+- **Success:** someone who is not technical lands on the page and has Stickler installed and
+  running without help: on Linux through the Flatpak or the AppImage, on a Mac through the
+  `.dmg` including "Open Anyway", shown with pictures.
+- **When (owner, 2026-11-18):** built now; online with release 8, when the Mac `.dmg` exists.
+  Until then it is built and checked in the repository but not deployed.
+
+### Content (in this order)
+1. **Navigation:** the app icon and name, anchors to the sections, "Deutsch"/"English", a
+   Download button.
+2. **Hero:** one line ("Drop a song, get the drum sheet music." — final wording with the owner),
+   a subline, the animated overview (`docs/screenshots/overview.gif`, later a Mac recording
+   next to it), Download and "See it work" buttons, four short facts (runs on your computer,
+   free and open source, about 15 s per song on a laptop, English/German/Spanish app).
+3. **How it works:** four numbered steps: open or drop a song, wait about 15 seconds, read the
+   sheet music, export PDF or MusicXML.
+4. **An example:** a few seconds of a song (CC BY 4.0, "Fluffing a Duck", as the screenshots)
+   next to its sheet music; plain `<audio controls>` (no script).
+5. **How good it is:** the honest numbers in plain words, from the report (macro-F1 of Fast on
+   the own songs), what it gets wrong (fills, ghost notes) and that corrections exist.
+6. **The models and your computer:** each model with what it does, its download size and its
+   licence (from the setup assistant's texts); the time per song on CPU and GPU; disk space.
+7. **A look around:** the screenshots (sheet, corrections, dark, the Mac app), each enlarging
+   on click with `<a href>` to the image or `<dialog>` without script.
+8. **Privacy:** everything runs on the computer; the only network use is the model download.
+9. **Get Stickler:** one card per package (Mac `.dmg`, Flatpak, AppImage) with the system it
+   needs, its size and a download button; the Mac card shows "Open Anyway" in three pictures
+   (from `mac-package`'s install guide); the Flatpak card a copyable command.
+10. **Uninstalling:** per package, including "Remove Downloaded Models…".
+11. **About the author** (owner, 2026-11-18, instead of "How it's made"): a photo, the
+    owner's name and a few lines of their own on who they are and why Stickler exists; that it
+    is built with Claude writing the code and the owner deciding; a link to the repository.
+    The words and the photo come from the owner.
+12. **Footer:** GitHub, the release notes, privacy, about the author, licence (GPL-3.0-or-later).
+
+### Decisions (owner, 2026-11-18)
+- **Plain HTML and CSS, no generator.** Two languages are two hand-kept files per page; a test
+  keeps them in step (same sections and anchors, same images).
+- **Host:** GitHub Pages from this repository through an Actions workflow, custom domain
+  `stickler.tshia.ng`: a DNS CNAME record `stickler` → `niklastshiang.github.io`, the domain
+  verified in the GitHub account first (TXT record, against takeover), "Enforce HTTPS" once the
+  certificate is there. With a workflow, GitHub needs no `CNAME` file (GitHub Docs, "Managing a
+  custom domain", read 2026-11-18).
+- **Look of its own, matching the app:** calm like libadwaita, on a warm light grey; not
+  TuxTalk's look, not GymMane's. Chosen on the mockup (owner, 2026-11-18): **Figtree** as the
+  typeface and **Apricot** as the accent (buttons `#f4a26b` with dark text `#2b160a`; links
+  and numbers `#a14a16` on light, `#f6b083` on dark; soft fills `#fde4d2` / `#3d2a1f`).
+- **Light and dark follow the browser** (owner, 2026-11-18), with no switch and no script:
+  the colours through `prefers-color-scheme`, every screenshot through `<picture>` with a
+  dark `<source media="(prefers-color-scheme: dark)">`, the overview video through `<video>`
+  with a `<source media>` per scheme. So each screenshot and the overview exist twice, light
+  and dark, made from the app in its light and dark style.
+- **No tracking, no cookies, no third-party requests:** fonts, images and videos served from
+  the site. JavaScript only where HTML and CSS cannot do it (today: the copy button of the
+  Flatpak command; without script the command is still selectable).
+- **No Spanish, no documentation pages** (the report and the CLI guide stay on GitHub, linked).
+
+### Accessibility and good practice (owner, 2026-11-18: as accessible as the layout allows, and the usual best practices)
+Target: **WCAG 2.2, level AA**, for both languages and both colour schemes.
+- **Structure:** landmarks (`header`, `nav`, `main`, `footer`), one `h1` per page, headings
+  without skipped levels, lists as lists, a "Skip to content" link first; `lang` on every page
+  and on words in the other language ("Deutsch").
+- **Keyboard:** everything reachable and usable with the keyboard in reading order; a visible
+  focus ring (`:focus-visible`, 3:1 against its background); no keyboard traps; anchors move
+  the focus to their section.
+- **Contrast** (measured 2026-11-18): body text ≥ 6.2:1, links and numbers ≥ 4.9:1 (`#a14a16`
+  on the light fills), ≥ 7.3:1 on dark; button text 8.4:1. Colour never carries meaning alone.
+- **Text and reflow:** sizes in `rem`, readable at 200 % zoom and at 320 px width without
+  sideways scrolling; line length ≤ about 75 characters; no text in images.
+- **Targets:** buttons and links in menus at least 44 × 44 px.
+- **Motion:** the overview video has visible pause/play controls; with
+  `prefers-reduced-motion: reduce` it does not play by itself (a still frame shows); no other
+  animation.
+- **Media:** every image has `alt` text in the page's language (empty for decoration); the
+  audio clip has a visible caption with title, artist and licence; the video has no sound, so
+  it needs no captions, and a sentence beside it says what it shows.
+- **Speed:** HTML+CSS+fonts < 300 KB; images with `width`/`height` (no layout shift),
+  `loading="lazy"` below the first view, WebP; the typeface preloaded, `font-display: swap`;
+  the first view under 2 MB.
+- **Findable and shareable:** `<title>` and `<meta name="description">` per page, `canonical`,
+  `hreflang` between the languages, Open Graph title, description and image, favicon and
+  `apple-touch-icon` from the app icon, `robots.txt`, `sitemap.xml`, a 404 page in both
+  languages.
+- **Safe:** HTTPS enforced; a Content Security Policy as `<meta http-equiv>` (GitHub Pages sets
+  no headers) allowing only the site itself; `referrer` policy `strict-origin-when-cross-origin`;
+  outside links to GitHub only.
+- **Privacy page:** what the app does (nothing leaves the computer) and what the site does: no
+  cookies, no tracking, but GitHub Pages, the host, keeps visitors' IP addresses in its logs
+  (GitHub's privacy statement, linked).
+
+### Tech stack
+- HTML5, CSS (custom properties, `prefers-color-scheme`, `clamp()` for type), the typeface as
+  WOFF2 subsets (Latin incl. German), served from the site with its licence.
+- Images: the screenshots in light and dark as WebP with a PNG fallback through `<picture>`;
+  the overview as a muted looping MP4 `<video>` in light and dark, the GIF as fallback.
+  `scripts/demo.py` learns to record in the dark style and to write the screenshots, so both
+  sets come from the same run of the app ("Fluffing a Duck", Fast).
+- Typeface: Figtree (SIL Open Font License 1.1), weights 400, 500 and 700 as WOFF2 subsets
+  (Latin with German), served from `site/fonts/` with its licence; source and version checked
+  on the web when it is added.
+
+### Commands (planned)
+```
+python3 -m http.server -d site 8000        # look at it locally
+uv run pytest -q tests/test_site.py        # the site's checks (part of scripts/check.sh task)
+```
+Deploy: `.github/workflows/site.yml` on a published release (and by hand): copies `site/`,
+fills in the release's file names (`Stickler-<n>.flatpak`, …) and sizes from the release,
+uploads with `actions/upload-pages-artifact`, deploys with `actions/deploy-pages`.
+
+### Project structure (additions)
+```
+site/index.html, site/about.html, site/privacy.html     # English
+site/de/index.html, site/de/about.html, site/de/privacy.html
+site/style.css
+site/fonts/                 # the typeface (WOFF2) and its licence
+site/images/                # screenshots, the overview video, Open Anyway pictures, the icon
+tests/test_site.py
+.github/workflows/site.yml
+```
+
+### Testing strategy
+`tests/test_site.py` (pytest, standard library `html.parser`, runs in `scripts/check.sh task`):
+- every local link and image exists; every anchor points to an `id`;
+- English and German pages have the same anchors, the same images and the same downloads, and
+  link to each other (`hreflang`, `lang` set);
+- no request leaves the site (no `http(s)://` in `src`, `@import` or `url()`), no cookies, no
+  `<script>` except the allowed one;
+- every image has `alt` text (German on the German pages), `width` and `height`; headings do
+  not skip levels; one `h1`; the skip link comes first; each page has title, description,
+  canonical, `hreflang` and Open Graph tags; the CSP meta is there;
+- the page weight stays under a budget (HTML+CSS+fonts < 300 KB; all of the first view < 2 MB).
+- **axe-core** (pinned, through Playwright in a CI job of `site.yml`) finds no WCAG 2.2 A/AA
+  violation on every page, light and dark (a new CI dependency: asked with this spec).
+The owner checks both languages on a phone and a laptop, light and dark, with the keyboard
+only and with the screen reader (Orca or VoiceOver) once, before release 8.
+
+### Boundaries
+- **Always:** both languages changed together; texts plain and short, for someone who is not
+  technical; facts on the page (sizes, times, numbers) from the repository, not from memory.
+- **Ask first:** any script beyond the copy button; any third-party service (analytics, fonts,
+  comments, a CDN); deploying before release 8; changing the DNS (the owner does it).
+- **Never:** tracking or cookies; a claim the report does not back; model weights on the site.
+
+### Success criteria
+1. `stickler.tshia.ng` serves the English page over HTTPS, `/de/` the German one; both pass
+   `tests/test_site.py`.
+2. On a phone and a laptop, light and dark, every section reads well (owner).
+3. Someone who is not technical installs Stickler from the page alone on a Mac and on Linux
+   (owner, with one person who has not used it).
+4. The page makes no request to another server (checked in the browser's network panel).
+5. A release updates the download cards without editing the HTML.
+6. axe-core reports no WCAG 2.2 A/AA violation; the owner's keyboard and screen-reader pass
+   finds nothing that blocks reading or downloading.
+
+### Out of scope (deferred)
+- Spanish (the app has it; the site may follow if people ask).
+- A documentation site; the report as a web page.
+- A language switch by the browser's language (needs script or a server).
+- Windows (no Windows version yet).
+
+### Open questions
+1. **The typeface** (decided, owner 2026-11-18): Figtree, chosen on the mockup from twelve
+   open-licence sans faces (Zed Sans, IBM Plex Sans, Inter, Geist, Manrope, Figtree, Plus
+   Jakarta Sans, DM Sans, Instrument Sans, Outfit, Bricolage Grotesque, Atkinson Hyperlegible
+   Next); the accent Apricot instead of the icon's brown.
+2. **The hero's line** and the four facts, in English and German: shown in the mockup (owner).
+3. **The example song** (decided, owner 2026-11-18): "Fluffing a Duck" by Kevin MacLeod,
+   CC BY 4.0, as the screenshots.
+4. **An imprint (Impressum)?** German law may require one for a site run from Germany even
+   without money involved; this is a legal question for the owner, not decided by Claude.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
