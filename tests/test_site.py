@@ -193,7 +193,11 @@ def test_downloads_point_at_the_newest_release_until_the_workflow_fills_them():
         assert attrs["href"] == "https://github.com/niklastshiang/stickler/releases/latest"
 
 
-PAIRS = ("index.html", "about.html", "privacy.html")
+PAIRS = ("index.html", "about.html", "privacy.html", "imprint.html")
+# outside pages that exist in German too: the German page links the German one
+LOCALISED = {
+    "https://mailbox.org/en/data-protection-privacy-policy/": "https://mailbox.org/de/datenschutz/"
+}
 
 
 def _resolved(page: Page, path: Path, names=("src", "srcset", "poster")) -> list[str]:
@@ -221,7 +225,8 @@ def test_english_and_german_say_the_same(name):
             a.get(attr) for _t, a in de.tags if attr in a
         ]
     outside = [a["href"] for a in en.all("a") if not _local(a.get("href", ""))]
-    assert outside == [a["href"] for a in de.all("a") if not _local(a.get("href", ""))]
+    german = [a["href"] for a in de.all("a") if not _local(a.get("href", ""))]
+    assert [LOCALISED.get(url, url) for url in outside] == german
     alts = [(a.get("alt"), b.get("alt")) for a, b in zip(en.all("img"), de.all("img"), strict=True)]
     assert all(e != d for e, d in alts if e), "German pages have German alt texts"
     to_de = [a for a in en.all("a") if a.get("hreflang") == "de"]

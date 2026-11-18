@@ -31,4 +31,14 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/privacy.html"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/privacy.html"/>
   </url>
+  <url>
+    <loc>https://stickler.tshia.ng/imprint.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/imprint.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/imprint.html"/>
+  </url>
+  <url>
+    <loc>https://stickler.tshia.ng/de/imprint.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/imprint.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/imprint.html"/>
+  </url>
 </urlset>

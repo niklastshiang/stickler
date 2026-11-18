@@ -2375,7 +2375,8 @@ GPU; Intel Macs; the Mac App Store.
 ### Objective
 - **User:** a drummer who is not technical and has never seen GitHub.
 - **What:** one static page that shows what Stickler does and gets it installed: English at
-  `/`, German at `/de/`, plus an about page and a privacy page in both languages. The order
+  `/`, German at `/de/`, plus an about page, a privacy page and a legal notice (imprint) in
+  both languages. The order
   follows tuxtalk.app (read 2026-11-18): hero, how it works, the examples, the models and the
   computer it needs, a look around, privacy, the downloads, uninstalling, the footer.
 - **Success:** someone who is not technical lands on the page and has Stickler installed and
@@ -2550,8 +2551,10 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
 2. **The hero's line** and the four facts, in English and German: shown in the mockup (owner).
 3. **The example song** (decided, owner 2026-11-18): "Fluffing a Duck" by Kevin MacLeod,
    CC BY 4.0, as the screenshots.
-4. **An imprint (Impressum)?** German law may require one for a site run from Germany even
-   without money involved; this is a legal question for the owner, not decided by Claude.
+4. **An imprint (Impressum)** (decided, owner 2026-11-18): yes, `imprint.html` in both
+   languages ("Legal notice" / "Impressum", § 5 DDG and § 18 Abs. 2 MStV), linked from every
+   page's footer; it and the privacy page follow the owner's own texts for tshia.ng, adapted
+   to GitHub Pages as the host (no own server logs) and mailbox.org for mail.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

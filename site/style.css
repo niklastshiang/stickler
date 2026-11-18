@@ -602,7 +602,11 @@ audio {
   border-radius: 999px;
 }
 
-/* text pages: about, privacy, 404 */
+/* text pages: about, privacy, the legal notice, 404 */
+.address {
+  font-style: normal;
+}
+
 .prose {
   display: flex;
   flex-direction: column;
