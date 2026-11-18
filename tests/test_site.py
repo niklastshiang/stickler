@@ -179,3 +179,49 @@ def test_downloads_point_at_the_newest_release_until_the_workflow_fills_them():
     assert set(assets) == {"dmg", "flatpak", "appimage"}
     for attrs in assets.values():
         assert attrs["href"] == "https://github.com/niklastshiang/stickler/releases/latest"
+
+
+PAIRS = ("index.html", "about.html", "privacy.html")
+
+
+def _resolved(page: Page, path: Path, names=("src", "srcset", "poster")) -> list[str]:
+    found = []
+    for _tag, attrs in page.tags:
+        for name in names:
+            for url in re.split(r",\s*", attrs.get(name, "")):
+                url = url.split(" ")[0]
+                if url and _local(url):
+                    found.append(str(_resolve(path, url)[0].relative_to(SITE)))
+    return found
+
+
+@pytest.mark.parametrize("name", PAIRS)
+def test_english_and_german_say_the_same(name):
+    """Two hand-kept languages (SPEC "Website"): the same sections, pictures, downloads and
+    outside links, and each points to the other."""
+    en_path, de_path = SITE / name, SITE / "de" / name
+    en, de = _page(en_path), _page(de_path)
+    assert en.all("html")[0]["lang"] == "en" and de.all("html")[0]["lang"] == "de"
+    assert en.ids == de.ids
+    assert _resolved(en, en_path) == _resolved(de, de_path)
+    for attr in ("data-asset", "data-size", "data-name", "data-copy"):
+        assert [a.get(attr) for _t, a in en.tags if attr in a] == [
+            a.get(attr) for _t, a in de.tags if attr in a
+        ]
+    outside = [a["href"] for a in en.all("a") if not _local(a.get("href", ""))]
+    assert outside == [a["href"] for a in de.all("a") if not _local(a.get("href", ""))]
+    to_de = [a for a in en.all("a") if a.get("hreflang") == "de"]
+    to_en = [a for a in de.all("a") if a.get("hreflang") == "en"]
+    assert to_de and _resolve(en_path, to_de[0]["href"])[0] == de_path.resolve()
+    assert to_en and _resolve(de_path, to_en[0]["href"])[0] == en_path.resolve()
+
+
+def test_the_missing_page_speaks_both_languages_from_any_folder():
+    """GitHub Pages serves one 404.html for every missing path, so it links from the root."""
+    page = _page(SITE / "404.html")
+    assert any(a.get("lang") == "de" for _t, a in page.tags)
+    for _tag, attrs in page.tags:
+        for name in ("href", "src"):
+            url = attrs.get(name, "")
+            if url and _local(url) and not url.startswith("#"):
+                assert url.startswith("/"), url

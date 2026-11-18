@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Über Stickler</title>
+  <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" href="../images/icon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#content">Zum Inhalt springen</a>
+
+  <header class="site-header">
+    <nav class="wrap site-nav" aria-label="Hauptmenü">
+      <a class="brand" href="index.html">
+        <img src="../images/icon.svg" alt="" width="32" height="32">
+        Stickler
+      </a>
+      <ul class="nav-links"></ul>
+      <a class="quiet" href="../about.html" hreflang="en" lang="en">English</a>
+      <a class="button small" href="index.html#get">Download</a>
+    </nav>
+  </header>
+
+  <main id="content" class="band">
+    <div class="wrap prose">
+      <h1>Über Stickler</h1>
+
+      <section aria-labelledby="author">
+        <h2 id="author">Über mich</h2>
+        <div class="author">
+          <img src="../images/icon.svg" alt="" width="72" height="72">
+          <p>[Eigene Worte: wer ich bin, wie ich spiele und warum es Stickler gibt.]</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="made">
+        <h2 id="made">Wie es entsteht</h2>
+        <p>Stickler entsteht mit Claude, einer KI von Anthropic, die den Code schreibt; was es tut und
+          wie es aussieht, entscheide ich. Jede Änderung wird getestet, bevor sie zählt, und der
+          ganze Code ist offen auf <a href="https://github.com/niklastshiang/stickler">GitHub</a>,
+          unter der Lizenz GPL-3.0-or-later.</p>
+        <p>Stickler trainiert keine eigenen Modelle. Es bringt offene Modelle aus der Forschung
+          zusammen und misst, wie gut sie bei echten Songs sind; die Zahlen stehen im
+          <a href="https://github.com/niklastshiang/stickler#-results">Bericht des Projekts</a>
+          (Englisch).</p>
+      </section>
+
+      <section aria-labelledby="thanks">
+        <h2 id="thanks">Dank und Lizenzen</h2>
+        <ul>
+          <li><a href="https://github.com/xavriley/ADTOF-pytorch">ADTOF</a> hört die Schläge; sein
+            trainiertes Modell ist frei für nicht-kommerzielle Nutzung (CC BY-NC-SA 4.0).</li>
+          <li><a href="https://github.com/CPJKU/beat_this">Beat This!</a> findet Schlag und Takt
+            (MIT-Lizenz).</li>
+          <li><a href="https://github.com/adefossez/demucs">Demucs</a> trennt die Schlagzeugspur ab
+            (MIT-Lizenz).</li>
+          <li><a href="https://www.verovio.org">Verovio</a> setzt die Noten (LGPL-3.0), mit der
+            Notenschrift Leipzig (SIL Open Font License).</li>
+          <li>Diese Seite ist in <a href="https://github.com/erikdkennedy/figtree">Figtree</a>
+            gesetzt (SIL Open Font License).</li>
+          <li>Der Beispielsong ist „Fluffing a Duck“ von Kevin MacLeod
+            (<a href="https://incompetech.com">incompetech.com</a>), lizenziert unter
+            <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</li>
+        </ul>
+        <p>Stickler liefert nie ein Modell mit: Die App lädt jedes auf deinem Computer herunter,
+          nachdem sie seine Lizenz genannt hat.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <span>Stickler · GPL-3.0-or-later</span>
+      <ul>
+        <li><a class="quiet" href="https://github.com/niklastshiang/stickler">GitHub</a></li>
+        <li><a class="quiet" href="https://github.com/niklastshiang/stickler/releases">Versionshinweise</a></li>
+        <li><a class="quiet" href="privacy.html">Datenschutz</a></li>
+        <li><a class="quiet" href="about.html">Über</a></li>
+        <li><a class="quiet" href="../about.html" hreflang="en" lang="en">English</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

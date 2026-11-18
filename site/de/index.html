@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Stickler – Schlagzeugnoten aus einem Song</title>
+  <link rel="preload" href="../fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" href="../images/icon.svg" type="image/svg+xml">
+  <script src="../site.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#content">Zum Inhalt springen</a>
+
+  <header class="site-header">
+    <nav class="wrap site-nav" aria-label="Hauptmenü">
+      <a class="brand" href="#content">
+        <img src="../images/icon.svg" alt="" width="32" height="32">
+        Stickler
+      </a>
+      <ul class="nav-links">
+        <li><a class="quiet" href="#how">So geht’s</a></li>
+        <li><a class="quiet" href="#example">Beispiel</a></li>
+        <li><a class="quiet" href="#good">Wie gut</a></li>
+        <li><a class="quiet" href="#needs">Dein Computer</a></li>
+        <li><a class="quiet" href="#privacy">Datenschutz</a></li>
+      </ul>
+      <a class="quiet" href="../" hreflang="en" lang="en">English</a>
+      <a class="button small" href="#get">Download</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <section class="wrap hero" aria-labelledby="title">
+      <p class="badge">Für Schlagzeuger · Mac und Linux · Kostenlos</p>
+      <h1 id="title">Song rein, Schlagzeugnoten raus.</h1>
+      <p class="lead">Stickler hört sich einen Song an und schreibt auf, was der Schlagzeuger spielt:
+        Bass Drum, Snare, Toms, Hi-Hat und Becken. Lies es am Bildschirm, spiel mit oder druck es
+        aus.</p>
+      <div class="actions">
+        <a class="button" href="#get">Stickler herunterladen</a>
+        <a class="button secondary" href="#how">So funktioniert’s</a>
+      </div>
+      <ul class="facts">
+        <li><strong>Auf deinem Computer</strong><span>Kein Konto, kein Upload</span></li>
+        <li><strong>Etwa 15 Sekunden</strong><span>für einen 4-Minuten-Song</span></li>
+        <li><strong>Kostenlos, offener Code</strong><span>GPL-Lizenz</span></li>
+        <li><strong>In drei Sprachen</strong><span>Deutsch, English, Español</span></li>
+      </ul>
+      <figure class="showcase">
+        <video autoplay muted loop playsinline controls preload="auto" width="1000" height="700"
+          aria-describedby="showcase-caption">
+          <source src="../images/overview-dark.webm" type="video/webm; codecs=av01.0.05M.08"
+            media="(prefers-color-scheme: dark)">
+          <source src="../images/overview-dark.mp4" type="video/mp4" media="(prefers-color-scheme: dark)">
+          <source src="../images/overview.webm" type="video/webm; codecs=av01.0.05M.08">
+          <source src="../images/overview.mp4" type="video/mp4">
+          <a href="../images/overview.mp4">Video ansehen</a>
+        </video>
+        <figcaption id="showcase-caption">Stickler öffnet einen Song, hört ihn sich an und zeigt sein
+          Schlagzeug als Noten, die dem Song folgen. Ohne Ton.</figcaption>
+      </figure>
+    </section>
+
+    <section id="how" class="band alt" aria-labelledby="how-title">
+      <div class="wrap">
+        <div class="intro">
+          <h2 id="how-title">So funktioniert’s</h2>
+          <p class="muted">Vier Schritte, nichts einzurichten.</p>
+        </div>
+        <ol class="grid">
+          <li class="card"><span class="step-number">1</span><h3>Song öffnen</h3>
+            <span class="muted">Zieh eine MP3-, FLAC- oder WAV-Datei ins Fenster oder wähl eine aus.</span></li>
+          <li class="card"><span class="step-number">2</span><h3>Kurz warten</h3>
+            <span class="muted">Stickler findet die Schläge, dann den Takt. Etwa 15 Sekunden.</span></li>
+          <li class="card"><span class="step-number">3</span><h3>Lesen und mitspielen</h3>
+            <span class="muted">Die Noten folgen dem Song, Takt für Takt.</span></li>
+          <li class="card"><span class="step-number">4</span><h3>Behalten</h3>
+            <span class="muted">Als PDF zum Drucken speichern oder als MusicXML für MuseScore.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="example" class="band" aria-labelledby="example-title">
+      <div class="wrap split">
+        <div>
+          <h2 id="example-title">Hören und lesen</h2>
+          <p class="muted">Die ersten 20 Sekunden von „Fluffing a Duck“ und was Stickler für das
+            Schlagzeug aufgeschrieben hat.</p>
+          <audio controls preload="none" aria-label="Fluffing a Duck, die ersten 20 Sekunden">
+            <source src="../media/fluffing-a-duck.ogg" type="audio/ogg; codecs=opus">
+            <source src="../media/fluffing-a-duck.mp3" type="audio/mpeg">
+            <a href="../media/fluffing-a-duck.mp3">Ausschnitt anhören</a>
+          </audio>
+          <p class="note">„Fluffing a Duck“ von Kevin MacLeod (<a href="https://incompetech.com">incompetech.com</a>),
+            lizenziert unter <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>;
+            gekürzt auf die ersten 20 Sekunden.</p>
+        </div>
+        <figure>
+          <picture>
+            <source srcset="../images/sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+            <source srcset="../images/sheet.webp" type="image/webp">
+            <img class="shot" src="../images/sheet.png" width="1000" height="700"
+              alt="Stickler zeigt die Schlagzeugnoten von Fluffing a Duck, Takt 5 ist markiert">
+          </picture>
+        </figure>
+      </div>
+    </section>
+
+    <section id="good" class="band alt" aria-labelledby="good-title">
+      <div class="wrap">
+        <div class="intro">
+          <h2 id="good-title">Wie gut ist es?</h2>
+          <p class="muted">Gut genug, um einen Song damit zu lernen, aber nicht perfekt. Gemessen an
+            25 Rock-, Metal- und Pop-Songs, verglichen mit Noten, die Menschen geschrieben haben.</p>
+        </div>
+        <div class="grid">
+          <div class="card"><span class="big-number">0,87</span>
+            <span>von 1 (Macro-F1), wenn man die Fehler in den Noten der Menschen herausrechnet;
+              ohne das 0,77.</span></div>
+          <div class="card"><h3>Wo es stark ist</h3>
+            <span class="muted">Gleichmäßige Grooves: Bass Drum, Snare und Hi-Hat, das Tempo und die
+              Takte.</span></div>
+          <div class="card"><h3>Wo es danebenliegt</h3>
+            <span class="muted">Schnelle Fills und leise Ghost Notes. Ein falsches Tempo oder die
+              falsche Eins korrigierst du in der App mit einem Klick.</span></div>
+        </div>
+        <p><a href="https://github.com/niklastshiang/stickler#-results">Alle Zahlen und wie sie
+          gemessen wurden (Englisch)</a></p>
+      </div>
+    </section>
+
+    <section id="needs" class="band" aria-labelledby="needs-title">
+      <div class="wrap">
+        <div class="intro">
+          <h2 id="needs-title">Was es braucht</h2>
+          <p class="muted">Beim ersten Start fragt Stickler, ob es zwei Modelle herunterladen darf,
+            einmalig. Danach funktioniert es ohne Internet.</p>
+        </div>
+        <div class="grid">
+          <div class="card lined">
+            <h3>Die Modelle</h3>
+            <dl class="pairs">
+              <dt>ADTOF <span class="what">hört die Schläge · frei für nicht-kommerzielle Nutzung</span></dt>
+              <dd>1,3 GB</dd>
+              <dt>Beat This! <span class="what">findet Schlag und Takt · MIT-Lizenz</span></dt>
+              <dd>0,9 GB</dd>
+              <dt>Demucs <span class="what">nur zum Speichern der Schlagzeugspur · MIT-Lizenz</span></dt>
+              <dd>1,2 GB</dd>
+            </dl>
+          </div>
+          <div class="card lined">
+            <h3>Dein Computer</h3>
+            <dl class="pairs">
+              <dt>Mac</dt><dd class="muted">Apple Silicon, macOS 26</dd>
+              <dt>Linux</dt><dd class="muted">ein 64-Bit-PC (x86_64)</dd>
+              <dt>Arbeitsspeicher</dt><dd class="muted">etwa 1 GB, während ein Song analysiert wird</dd>
+              <dt>Zeit</dt><dd class="muted">etwa 15 s für einen 4-Minuten-Song auf einem Laptop</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band alt" aria-labelledby="look">
+      <div class="wrap">
+        <h2 id="look">Ein Blick hinein</h2>
+        <ul class="grid gallery">
+          <li>
+            <figure>
+              <a href="../images/sheet.webp">
+                <picture>
+                  <source srcset="../images/sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="../images/sheet.webp" type="image/webp">
+                  <img class="shot" src="../images/sheet.png" width="1000" height="700" loading="lazy"
+                    alt="Die Noten, der gerade gespielte Takt ist markiert">
+                </picture>
+              </a>
+              <figcaption>Die Noten folgen dem Song, Takt für Takt.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <a href="../images/corrections.webp">
+                <picture>
+                  <source srcset="../images/corrections-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="../images/corrections.webp" type="image/webp">
+                  <img class="shot" src="../images/corrections.png" width="1000" height="700" loading="lazy"
+                    alt="Die Seitenleiste für Korrekturen neben den Noten: Tempo, Schläge pro Takt, die Eins">
+                </picture>
+              </a>
+              <figcaption>Tempo oder die Eins korrigieren oder die Noten leichter lesbar machen.</figcaption>
+            </figure>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="privacy" class="band" aria-labelledby="privacy-title">
+      <div class="wrap centred">
+        <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+        </svg>
+        <h2 id="privacy-title">Deine Songs verlassen nie deinen Computer.</h2>
+        <p class="muted">Stickler hat kein Konto, keine Cloud und keine Statistik. Es geht nur einmal
+          online, um seine Modelle zu laden, und fragt vorher. Auch diese Seite setzt keine Cookies.
+          <a href="privacy.html">Die Datenschutzerklärung</a></p>
+      </div>
+    </section>
+
+    <section id="get" class="band alt" aria-labelledby="get-title">
+      <div class="wrap">
+        <div class="intro">
+          <h2 id="get-title">Stickler holen</h2>
+          <p class="muted">Kostenlos. Such dir deinen Computer aus.</p>
+        </div>
+        <div class="grid">
+          <div class="card lined download first">
+            <div class="download-head"><h3>Mac</h3><span data-size="dmg">.dmg</span></div>
+            <span class="muted">Apple Silicon, macOS 26</span>
+            <a class="button" data-asset="dmg"
+              href="https://github.com/niklastshiang/stickler/releases/latest">Für den Mac herunterladen</a>
+            <p class="note">Beim ersten Mal hält macOS Stickler an, weil es nicht aus dem App Store
+              kommt. Erlaube es einmal:</p>
+            <ol>
+              <li>Stickler öffnen und „Fertig“ wählen.</li>
+              <li>Systemeinstellungen › Datenschutz &amp; Sicherheit öffnen.</li>
+              <li>Neben „Stickler wurde blockiert“ auf „Dennoch öffnen“ klicken.</li>
+            </ol>
+          </div>
+          <div class="card lined download">
+            <div class="download-head"><h3>Linux · Flatpak</h3><span data-size="flatpak">33 MB</span></div>
+            <span class="muted">Am besten unter GNOME. Öffnet sich in deiner Software-Verwaltung.</span>
+            <a class="button" data-asset="flatpak"
+              href="https://github.com/niklastshiang/stickler/releases/latest">Flatpak herunterladen</a>
+            <p class="note">Oder im Terminal, im Ordner mit der heruntergeladenen Datei:</p>
+            <div class="command">
+              <code id="flatpak-command">flatpak install --user <span data-name="flatpak">Stickler-7.flatpak</span></code>
+              <button type="button" hidden data-copy="flatpak-command" data-status="flatpak-status"
+                data-done="Kopiert" data-failed="Kopieren ging nicht; markiere den Befehl stattdessen"
+                aria-label="Befehl kopieren">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="visually-hidden" id="flatpak-status" role="status"></p>
+          </div>
+          <div class="card lined download">
+            <div class="download-head"><h3>Linux · AppImage</h3><span data-size="appimage">134 MB</span></div>
+            <span class="muted">Jedes Linux. Eine Datei, nichts zu installieren.</span>
+            <a class="button" data-asset="appimage"
+              href="https://github.com/niklastshiang/stickler/releases/latest">AppImage herunterladen</a>
+            <p class="note">Rechtsklick, „Eigenschaften“, „Als Programm ausführbar“ einschalten, dann
+              öffnen.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" aria-label="Deinstallieren und über mich">
+      <div class="wrap columns">
+        <div>
+          <h2 id="remove">Deinstallieren</h2>
+          <p class="muted">Um den Platz der Modelle freizugeben und die App zu behalten, wähl
+            <strong>Heruntergeladene Modelle entfernen …</strong> im Menü. Um alles zu entfernen: auf
+            dem Mac Stickler in den Papierkorb ziehen; beim Flatpak in der Software-Verwaltung
+            entfernen; beim AppImage die Datei löschen und die Ordner
+            <code>~/.local/share/stickler</code>, <code>~/.cache/stickler</code> und
+            <code>~/.config/stickler</code>.</p>
+        </div>
+        <div>
+          <h2 id="author">Über mich</h2>
+          <div class="author">
+            <img src="../images/icon.svg" alt="" width="72" height="72">
+            <p class="muted">[Eigene Worte: wer ich bin und warum es Stickler gibt.] Stickler entsteht
+              mit Claude, einer KI von Anthropic, die den Code schreibt; jede Entscheidung treffe
+              ich. Der Code ist offen auf
+              <a href="https://github.com/niklastshiang/stickler">GitHub</a>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <span>Stickler · GPL-3.0-or-later</span>
+      <ul>
+        <li><a class="quiet" href="https://github.com/niklastshiang/stickler">GitHub</a></li>
+        <li><a class="quiet" href="https://github.com/niklastshiang/stickler/releases">Versionshinweise</a></li>
+        <li><a class="quiet" href="privacy.html">Datenschutz</a></li>
+        <li><a class="quiet" href="about.html">Über</a></li>
+        <li><a class="quiet" href="../" hreflang="en" lang="en">English</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

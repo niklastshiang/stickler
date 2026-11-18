@@ -916,7 +916,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 ### Checkpoint V
 - [ ] The English page in the browser, light and dark, phone width and laptop (owner)
 
-- [ ] **Task 121: German, about, privacy and 404** (M)
+- [x] **Task 121: German, about, privacy and 404** (M): done 2026-11-18. `site/de/` with the start page, about and privacy in German; `about.html` (the author's words as a placeholder, how it is made, thanks and licences) and `privacy.html` (the app: nothing sent, downloads from the package and model servers only after asking; the site: no cookies, nothing from other servers, GitHub Pages logs IP addresses, from GitHub's docs read 2026-11-18) in English; one `404.html` in both languages with root links, as GitHub Pages serves it for every missing path. The test compares each pair (ids, pictures, downloads, outside links, the links to each other). German texts say "ich" in the author's parts ("Über mich"), as the owner writes them. Seen with Playwright: German on a phone, about in dark.
   - Acceptance: `site/de/index.html` as the English page in German; `about.html` and `privacy.html` in both languages (privacy: the app sends nothing; the site sets no cookies; GitHub Pages logs IP addresses, linked to GitHub's statement); `404.html` in both; the language links with `hreflang` and `lang`; the test compares each pair (anchors, images, downloads, links).
   - Verify: `uv run pytest -q tests/test_site.py`; the owner reads the German text
   - Dependencies: 120 · Files: `site/de/`, `site/about.html`, `site/privacy.html`, `site/404.html`, `tests/test_site.py`
