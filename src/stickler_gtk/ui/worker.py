@@ -23,6 +23,20 @@ def on_main_loop(fn: Callable[..., Any]) -> Callable[..., None]:
     return call
 
 
+def to_main_loop(fn: Callable[..., Any]) -> Callable[..., None]:
+    """As `on_main_loop`, but on the main loop's own thread `fn` runs at once, so a click's
+    change is drawn before its handler returns (the controller's `post` for the window)."""
+    later = on_main_loop(fn)
+
+    def call(*args: Any) -> None:
+        if threading.current_thread() is threading.main_thread():
+            fn(*args)
+        else:
+            later(*args)
+
+    return call
+
+
 def run(
     job: Callable[[], Any],
     on_done: Callable[[Any], None],

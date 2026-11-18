@@ -1,27 +1,25 @@
-"""The main window (design screens 4 and 5, the result header of 6). It draws the state that
-`stickler_app.session` decides; analyses run in a worker thread."""
+"""The main window (design screens 4 and 5, the result header of 6). Its flows (analysis,
+setup, exports, corrections, recent songs, removal) live in `stickler_app.controller`, shared
+with the Mac app's bridge; the window turns clicks into the controller's commands and draws
+the state, recent songs and notices it reports (SPEC.md, module `core-bridge`, scope 7)."""
 
 from __future__ import annotations
 
 import contextlib
-import threading
-from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
-from stickler import adapters, api
+from stickler import api
 from stickler_app import (
     APP_NAME,
-    analysis,
-    corrections,
+    controller,
     engraving,
     exports,
     paths,
     playback,
     recent,
-    removal,
     session,
     settings,
     setup,
@@ -36,8 +34,6 @@ from stickler_gtk.ui.playbar import PlayBar
 from stickler_gtk.ui.sheet import Sheet
 
 DEFAULT_SIZE = (1000, 700)
-SAMPLE_MS = 500  # how often a download's progress is measured
-CORRECT_AFTER_MS = 250  # a correction waits for the changes to pause
 MINIMUM_SIZE = (360, 294)  # GNOME HIG: the smallest a window should get
 NARROW = "max-width: 550sp"  # below this the header keeps icon buttons only
 
@@ -94,7 +90,8 @@ class Window(Adw.ApplicationWindow):
         super().__init__(title=APP_NAME, **kwargs)
         self.set_default_size(*DEFAULT_SIZE)
         self.set_size_request(*MINIMUM_SIZE)
-        self.state: session.State = session.Empty()
+        self.state: session.State = session.Empty()  # the state drawn
+        self.controller = controller.Controller(post=worker.to_main_loop(self._on_event))
 
         self.note_size = settings.load(settings.store_path()).zoom
         self.playbar = PlayBar(on_position=self.show_position)
@@ -173,8 +170,6 @@ class Window(Adw.ApplicationWindow):
         self.error = Adw.StatusPage(icon_name="dialog-warning-symbolic", child=error_box)
         self.sheet = Sheet(self.note_size, on_zoom=self._zoom_changed)
         self.pages = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
-        self.recent_store = recent.store_path()
-        self.recent = recent.load(self.recent_store)
         self.recent_group = Adw.PreferencesGroup(title=_("Recent"))
         self.recent_rows: list[Gtk.Widget] = []
         self._show_recent()
@@ -230,11 +225,8 @@ class Window(Adw.ApplicationWindow):
         drop.connect("drop", self._on_drop)
         self.pages.add_controller(drop)
 
-        self.token: api.CancelToken | None = None
         self._shown: api.Notation | None = None  # the notation on the sheet
         self._shown_info: api.SongInfo | None = None  # a correction keeps it, a new analysis not
-        self._correcting = 0  # the timer of a correction waiting for a quiet moment
-        self.job_thread: threading.Thread | None = None
         self.actions: dict[str, Gio.SimpleAction] = {}
         for name, handler in (
             ("open", self.choose_song),
@@ -257,9 +249,9 @@ class Window(Adw.ApplicationWindow):
             ("zoom-in", lambda: self.sheet.set_zoom(zoom.zoom_in(self.sheet.zoom))),
             ("zoom-out", lambda: self.sheet.set_zoom(zoom.zoom_out(self.sheet.zoom))),
             ("zoom-reset", lambda: self.sheet.set_zoom(1.0)),
-            ("setup-download", self.agree_to_setup),
-            ("setup-later", lambda: self.show(session.Empty())),
-            ("setup-retry", self.retry_setup),
+            ("setup-download", self.controller.agree),
+            ("setup-later", self.controller.not_now),
+            ("setup-retry", self.controller.retry_setup),
             ("remove-models", self.ask_to_remove_models),
         ):
             action = Gio.SimpleAction.new(name, None)
@@ -267,13 +259,10 @@ class Window(Adw.ApplicationWindow):
             self.add_action(action)
             self.actions[name] = action
         self.connect("close-request", self._on_close)
-        self._sampling = 0  # the timer that measures a download
-        self._removing = False  # models being removed
         self._consent_for: tuple[str, ...] = ()
         self._step_rows: list[tuple[StepRow, Adw.ActionRow]] = []  # what the step list shows
-        self._grown: Callable[[], int] = lambda: 0  # what the running setup step has added
         self.show(self.state)
-        self._check_setup()
+        self.controller.start()  # are the models there? (in a thread)
 
     def _export_menu(self) -> Gtk.Popover:
         """Design screen 8: each export with a line on what it is for."""
@@ -330,28 +319,13 @@ class Window(Adw.ApplicationWindow):
         return True
 
     def open_song(self, song: Path) -> None:
-        self._start(session.open_song(song, self.state, self._stored(song)))
+        self.controller.open(song)
 
     def retry(self) -> None:
-        if isinstance(self.state, session.Failed) and self.state.can_retry:
-            song = self.state.song
-            self._start(session.open_song(song, self.state.previous, self._stored(song)))
-
-    @staticmethod
-    def _stored(song: Path) -> api.Corrections:
-        """The song's remembered corrections (SPEC.md, module `corrections`)."""
-        stored = corrections.load(corrections.store_path())
-        return stored.get(song.absolute(), corrections.DETECTED)
+        self.controller.retry()
 
     def cancel(self) -> None:
-        self._stop_job()
-        self.show(session.cancel(self.state))
-
-    def _stop_job(self) -> bool:
-        if self.token is not None:
-            self.token.cancel()  # the worker ends the model's processes within a second
-            self.token = None
-        return False  # let a closing window close
+        self.controller.cancel()
 
     def _on_close(self, _window) -> bool:
         self.playbar.stop()
@@ -416,48 +390,7 @@ class Window(Adw.ApplicationWindow):
     def change_corrections(self, fix: api.Corrections) -> None:
         """A change in the sidebar: the controls show it at once, the sheet follows once the
         changes pause (a few quick clicks make one run)."""
-        if not isinstance(self.state, session.Result):
-            return
-        self.state = session.correct(self.state, fix)
-        if self._correcting:
-            GLib.source_remove(self._correcting)
-        self._correcting = GLib.timeout_add(CORRECT_AFTER_MS, self._start_correction)
-
-    def _start_correction(self) -> bool:
-        self._correcting = 0
-        result = self.state
-        if not isinstance(result, session.Result) or result.pending is None:
-            return GLib.SOURCE_REMOVE
-        job, fix, song = result.pending.job, result.pending.corrections, result.song
-        self._stop_job()
-        self.token = token = api.CancelToken()
-
-        def done(finished: tuple[api.SongInfo, api.Notation]) -> None:
-            state = session.corrected(self.state, job, finished[1])
-            if state is not self.state:
-                self.show(state)
-                self._remember(song, fix)
-
-        def failed(exc: BaseException) -> None:
-            state = session.correction_failed(self.state, job)
-            if state is not self.state:
-                self.show(state)
-                self.toast(_("The correction did not work: {reason}").format(reason=exc))
-
-        self.job_thread = worker.run(
-            lambda: analysis.analyse(
-                song, paths.score_path(song), lambda _step: None, token, corrections=fix
-            ),
-            done,
-            failed,
-        )
-        return GLib.SOURCE_REMOVE
-
-    def _remember(self, song: Path, fix: api.Corrections) -> None:
-        try:
-            corrections.remember(corrections.store_path(), song.absolute(), fix)
-        except OSError as exc:  # the correction still shows for this session
-            self.toast(_("The correction could not be saved: {reason}").format(reason=exc.strerror))
+        self.controller.correct(fix)
 
     def step_bars(self, by: int) -> None:
         """Left and Right: one song bar back or on."""
@@ -487,7 +420,7 @@ class Window(Adw.ApplicationWindow):
             except OSError as exc:
                 self.toast(_("Could not save: {reason}").format(reason=exc.strerror))
                 return
-            self._saved(dest)
+            self._saved(_("Saved “{name}”").format(name=dest.name), dest)
 
         self._save_dialog(exports.pdf_name(result.song), save)
 
@@ -499,26 +432,15 @@ class Window(Adw.ApplicationWindow):
 
     def export_musicxml(self) -> None:
         result = self.state
-        if not isinstance(result, session.Result):
-            return
-
-        def save(dest: Path) -> None:
-            try:
-                exports.save_musicxml(result.notation.musicxml, dest)
-            except OSError as exc:
-                self.toast(_("Could not save: {reason}").format(reason=exc.strerror))
-                return
-            self._saved(dest)
-
-        self._save_dialog(exports.musicxml_name(result.song), save)
+        if isinstance(result, session.Result):
+            name = exports.musicxml_name(result.song)
+            self._save_dialog(name, self.controller.export_musicxml)
 
     def export_drums(self) -> None:
         result = self.state
-        if not isinstance(result, session.Result):
+        cost = self.controller.drum_track_cost()
+        if not isinstance(result, session.Result) or cost is None:
             return
-        missing = api.mode_ready(drums=True, adapters_root=paths.adapters_root())
-        setup = api.DRUM_TRACK_SEPARATOR in missing
-        cost = exports.drum_track_cost(result.info.seconds, download=setup)
         alert = Adw.AlertDialog(heading=_("Save the Drum Track?"), body=cost.text)
         alert.add_response("cancel", _("Cancel"))
         alert.add_response("save", _("Choose Where to Save…"))
@@ -528,35 +450,19 @@ class Window(Adw.ApplicationWindow):
         def answered(_alert, response: str) -> None:
             if response == "save":
                 name = exports.drum_track_name(result.song)
-                self._save_dialog(name, lambda dest: self._start_drums(result, dest, setup))
+                self._save_dialog(name, lambda dest: self._start_drums(result, dest))
 
         alert.connect("response", answered)
         alert.present(self)
 
-    def _start_drums(self, result: session.Result, dest: Path, setup: bool) -> None:
-        self._stop_job()
-        self.token = token = api.CancelToken()
-        state = session.export_drums(result, dest, setup=setup)
-        job = state.job
-        self.show(state)
-        report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, job, step)))
+    def _start_drums(self, _result: session.Result, dest: Path, *, setup: bool = False) -> None:
+        """The dialog's answer for the result it was asked about. The controller checks again
+        whether a result is shown and whether Demucs is missing (`setup`, the cost the dialog
+        named, is only what it saw then)."""
+        self.controller.export_drum_track(dest)
 
-        def done(saved: Path) -> None:
-            state = session.exported(self.state, job)
-            if state is not self.state:
-                self.show(state)
-                self._saved(saved)
-
-        self.job_thread = worker.run(
-            lambda: exports.drum_track(result.song, dest, report, token, setup=setup),
-            done,
-            lambda exc: self.show(session.failed(self.state, job, exc)),
-        )
-
-    def _saved(self, dest: Path) -> None:
-        toast = Adw.Toast(
-            title=_("Saved “{name}”").format(name=dest.name), button_label=_("Open"), timeout=8
-        )
+    def _saved(self, text: str, dest: Path) -> None:
+        toast = Adw.Toast(title=text, button_label=_("Open"), timeout=8)
         toast.connect(
             "button-clicked",
             lambda _t: Gtk.FileLauncher.new(Gio.File.new_for_path(str(dest))).launch(
@@ -565,26 +471,31 @@ class Window(Adw.ApplicationWindow):
         )
         self.toasts.add_toast(toast)
 
-    def _finished(self, job: int, info: api.SongInfo, notation: api.Notation) -> None:
-        state = session.finished(self.state, job, info, notation)
-        if isinstance(state, session.Result):
-            entry = recent.opened_now(state.song, info.title, info.artist)
-            self._set_recent(recent.add(self.recent, entry))
-        self.show(state)
+    @property
+    def recent(self) -> list[recent.Recent]:
+        return list(self.controller.recent)
 
-    def _set_recent(self, songs: list[recent.Recent]) -> None:
-        self.recent = songs
-        try:
-            recent.save(self.recent_store, songs)
-        except OSError as exc:  # the list still works for this session
-            self.toast(_("Recent songs could not be saved: {reason}").format(reason=exc.strerror))
-        self._show_recent()
+    @property
+    def _removing(self) -> bool:
+        return self.controller.removing
+
+    def _on_event(self, event: controller.Event) -> None:
+        """What the controller reports, on the main loop. A late event (queued from a thread
+        while a click changed things here) draws the newest state and list, not its own."""
+        if isinstance(event, controller.Changed):
+            self.show(self.controller.state)
+        elif isinstance(event, controller.RecentChanged):
+            self._show_recent()
+        elif event.opens is not None:
+            self._saved(event.text, event.opens)
+        else:
+            self.toast(event.text)
 
     def _show_recent(self) -> None:
         for row in self.recent_rows:
             self.recent_group.remove(row)
         self.recent_rows = []
-        for entry in recent.rows(self.recent):
+        for entry in recent.rows(self.controller.recent):
             row = Adw.ActionRow(title=entry.title, subtitle=entry.detail)
             if entry.missing:
                 row.add_css_class("dim-label")
@@ -596,7 +507,7 @@ class Window(Adw.ApplicationWindow):
                 )
                 button.connect(
                     "clicked",
-                    lambda _b, path=entry.path: self._set_recent(recent.remove(self.recent, path)),
+                    lambda _b, path=entry.path: self.controller.forget_recent(path),
                 )
                 row.add_suffix(button)
             else:
@@ -610,28 +521,7 @@ class Window(Adw.ApplicationWindow):
     def wait_for_job(self, seconds: float) -> None:
         """Cancels the running job and waits until it has cleaned up (its half-written cache
         folder removed), so that quitting leaves nothing behind."""
-        self._stop_job()
-        if self.job_thread is not None:
-            self.job_thread.join(seconds)
-
-    def _start(self, state: session.Analysing) -> None:
-        self._stop_job()
-        self.token = token = api.CancelToken()
-        job, song = state.job, state.song
-        self.show(state)
-        report = worker.on_main_loop(lambda step: self.show(session.on_step(self.state, job, step)))
-        self.job_thread = worker.run(
-            lambda: analysis.analyse(
-                song,
-                paths.score_path(song),
-                report,
-                token,
-                paths.hits_path(song),
-                state.corrections,
-            ),
-            lambda done: self._finished(job, *done),
-            lambda exc: self.show(session.failed(self.state, job, exc)),
-        )
+        self.controller.shutdown(seconds)
 
     # what the window shows
 
@@ -665,10 +555,7 @@ class Window(Adw.ApplicationWindow):
     def ask_to_remove_models(self) -> None:
         """Measures what would go (in the worker), then asks."""
         worker.run(
-            lambda: (
-                removal.size(removal.targets(everything=False)),
-                removal.size(removal.targets(everything=True)),
-            ),
+            self.controller.removal_sizes,
             lambda sizes: self._ask_to_remove(*sizes),
             lambda exc: self.toast(_("Could not check the models: {reason}").format(reason=exc)),
         )
@@ -697,118 +584,10 @@ class Window(Adw.ApplicationWindow):
         alert.present(self)
 
     def remove_models_now(self, everything: bool) -> None:
-        self._stop_job()
         self.playbar.stop()
-        self._removing = True
-        self.show(session.Empty())
-        chosen = removal.targets(everything=everything)
-
-        def done(_result) -> None:
-            self._removing = False
-            if everything:
-                self.recent = []
-                self._show_recent()
-            else:
-                with contextlib.suppress(OSError):  # asks again before the next download
-                    settings.update(settings.store_path(), setup_agreed=False)
-            self._shown = self._shown_info = None
-            self.show(session.Empty())
-            self.toast(_("The downloaded models are removed"))
-
-        def failed(exc: BaseException) -> None:
-            self._removing = False
-            self.show(session.Empty())
-            self.toast(_("Could not remove everything: {reason}").format(reason=exc))
-
-        def remove() -> None:
-            removal.remove(chosen)
-            shipped = paths.adapter_sources()
-            if shipped is not None:  # the models' sources went too; without them no song runs
-                setup.sync_adapters(shipped, paths.adapters_root())
-
-        self.job_thread = worker.run(remove, done, failed)
+        self.controller.remove_models(everything)
 
     # the setup assistant (SPEC.md, module `setup-assistant`)
-
-    def _check_setup(self) -> None:
-        """At start, in the worker: are the models there? (a few uv checks, under 0.1 s)"""
-        root = paths.adapters_root()
-
-        def checked(missing: list[str]) -> None:
-            if not isinstance(self.state, session.Empty):
-                return  # the reader has started something meanwhile
-            agreed = settings.load(settings.store_path()).setup_agreed
-            page = setup.start_page(missing, agreed=agreed)
-            if page == "consent":
-                self.show(session.consent(tuple(missing)))
-            elif page == "download":
-                self._start_setup(tuple(missing), None)
-
-        def check() -> list[str]:
-            shipped = paths.adapter_sources()
-            if shipped is not None:  # a packaged app: its models folder gets new sources first
-                setup.sync_adapters(shipped, root)
-            return api.mode_ready(adapters_root=root)
-
-        worker.run(
-            check,
-            checked,
-            lambda exc: self.toast(_("Could not check the models: {reason}").format(reason=exc)),
-        )
-
-    def agree_to_setup(self) -> None:
-        if not isinstance(self.state, session.Consent):
-            return
-        with contextlib.suppress(OSError):  # unsaved, the download still runs now
-            settings.update(settings.store_path(), setup_agreed=True)
-        self._start_setup(self.state.missing, self.state.song)
-
-    def retry_setup(self) -> None:
-        """Goes on from where it failed: steps already done are quick (api.setup_adapters)."""
-        if isinstance(self.state, session.SetupFailed):
-            self._start_setup(self.state.missing, self.state.song)
-
-    def _start_setup(self, missing: tuple[str, ...], song: Path | None) -> None:
-        root = paths.adapters_root()
-        registry = adapters.discover(root)
-        ids = setup.step_ids(list(missing), lambda a: adapters.needs_weights(registry[a]))
-        self._stop_job()
-        self.token = token = api.CancelToken()
-        state = session.start_setup(ids, song, missing)
-        job = state.job
-        self.show(state)
-
-        def step(reported: api.Step) -> None:
-            if reported.state == "started" and reported.adapter in registry:
-                folder = registry[reported.adapter].path
-                self._grown = setup.meter(reported.id, root, folder)
-            self.show(session.on_setup_step(self.state, job, reported))
-
-        def sample() -> bool:
-            if not (isinstance(self.state, session.SettingUp) and self.state.job == job):
-                self._sampling = 0
-                return GLib.SOURCE_REMOVE
-            self.show(session.setup_grew(self.state, job, self._grown()))
-            return GLib.SOURCE_CONTINUE
-
-        def done(_ids) -> None:
-            state = session.setup_done(self.state, job)
-            if state is not self.state:
-                self.show(state)
-                if song is not None:
-                    self.open_song(song)
-
-        def run_setup() -> list[str]:
-            report = worker.on_main_loop(step)
-            for adapter in missing:
-                api.setup_adapters(adapter, "cpu", root, progress=report, cancel=token)
-            return list(missing)
-
-        if not self._sampling:
-            self._sampling = GLib.timeout_add(SAMPLE_MS, sample)
-        self.job_thread = worker.run(
-            run_setup, done, lambda exc: self.show(session.failed(self.state, job, exc))
-        )
 
     def _setup_rows(self, state: session.SettingUp):
         """The running step shows how much it has downloaded."""
@@ -839,10 +618,11 @@ class Window(Adw.ApplicationWindow):
             self.playbar.stop()
         self.export_box.set_visible(is_result)
         self.corrections_button.set_visible(is_result)
-        busy = session.Analysing | session.Exporting | session.SettingUp
-        self.actions["cancel"].set_enabled(isinstance(state, busy))
+        self.actions["cancel"].set_enabled(isinstance(state, controller.BUSY))
         self.actions["remove-models"].set_enabled(
-            paths.packaged() is not None and not isinstance(state, busy) and not self._removing
+            paths.packaged() is not None
+            and not isinstance(state, controller.BUSY)
+            and not self._removing
         )
         self.analysing.set_description("")
         if isinstance(state, session.Consent):

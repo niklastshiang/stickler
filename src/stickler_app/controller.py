@@ -2,15 +2,17 @@
 current `session.State`, runs long work in a thread and reports every change to its host.
 
 The host passes `post`, which the controller calls with each `Event` in the order the changes
-happen, from whichever thread made them; `post` must not block (GTK: `GLib.idle_add`, the
-bridge: a queue its writer drains). The flows are the GTK window's of release 7, copied, not
-redesigned: one job at a time, a new song cancels the running job, a correction waits for the
-changes to pause, the setup's download is measured twice a second."""
+happen, from whichever thread made them; `post` must not block (GTK: at once on the main
+thread, else `GLib.idle_add`; the bridge: a queue its writer drains). The flows are the GTK
+window's of release 7, copied, not redesigned: one job at a time, a new song cancels the
+running job, a correction waits for the changes to pause, the setup's download is measured
+twice a second."""
 
 from __future__ import annotations
 
 import contextlib
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -78,7 +80,8 @@ class Controller:
         self._recent_store = recent.store_path()
         self._recent = recent.load(self._recent_store)
         self._token: api.CancelToken | None = None
-        self._thread: threading.Thread | None = None
+        self._threads: set[threading.Thread] = set()  # jobs still running, replaced ones too
+        self._closed = False  # after `shutdown` no job starts
         self._timer: threading.Timer | None = None  # a correction waiting for a pause
         self._sampling: threading.Event | None = None  # set to stop measuring a download
         self._grown: Callable[[], int] = lambda: 0  # what the running setup step has added
@@ -93,6 +96,12 @@ class Controller:
     def recent(self) -> tuple[recent.Recent, ...]:
         with self._lock:
             return tuple(self._recent)
+
+    @property
+    def removing(self) -> bool:
+        """The downloaded models are being removed."""
+        with self._lock:
+            return self._removing
 
     @property
     def can_remove_models(self) -> bool:
@@ -319,16 +328,19 @@ class Controller:
             return True
 
     def shutdown(self, seconds: float = 2.0) -> None:
-        """Cancels the running job and waits until it has cleaned up (its half-written cache
-        folder removed), at most `seconds`, so that quitting leaves nothing behind."""
+        """Cancels the running job and waits until every job, a replaced one too, has cleaned
+        up (its half-written cache folder removed), at most `seconds` in all, so that quitting
+        leaves nothing behind. No job starts after it (a setup ending meanwhile opens no song)."""
         with self._lock:
+            self._closed = True
             if self._timer is not None:
                 self._timer.cancel()
             self._stop_sampling()
             self._stop_job()
-            thread = self._thread
-        if thread is not None:
-            thread.join(seconds)
+            threads = list(self._threads)
+        deadline = time.monotonic() + seconds
+        for thread in threads:
+            thread.join(max(0.0, deadline - time.monotonic()))
 
     # the flows
 
@@ -339,6 +351,8 @@ class Controller:
         return stored.get(song.absolute(), corrections.DETECTED)
 
     def _start(self, state: session.Analysing) -> None:
+        if self._closed:
+            return
         self._stop_job()
         self._token = token = api.CancelToken()
         job, song = state.job, state.song
@@ -371,6 +385,8 @@ class Controller:
 
     def _start_correction(self) -> None:
         with self._lock:
+            if self._timer is not threading.current_thread():
+                return  # replaced by a newer change while it waited for the lock
             self._timer = None
             result = self._state
             if not isinstance(result, session.Result) or result.pending is None:
@@ -416,6 +432,8 @@ class Controller:
         self._post(RecentChanged(tuple(songs)))
 
     def _start_setup(self, missing: tuple[str, ...], song: Path | None) -> None:
+        if self._closed:
+            return
         root = paths.adapters_root()
         registry = adapters.discover(root)
         ids = setup.step_ids(list(missing), lambda a: adapters.needs_weights(registry[a]))
@@ -499,17 +517,24 @@ class Controller:
         """Runs `work` in a daemon thread; its value or exception is handled under the lock.
         `job`: the one job `shutdown` waits for (the start's model check is none)."""
 
+        if self._closed:
+            return
+
         def run() -> None:
             try:
-                value = work()
-            except Exception as exc:  # becomes a state or a notice, as in the window
+                try:
+                    value = work()
+                except Exception as exc:  # becomes a state or a notice, as in the window
+                    with self._lock:
+                        failed(exc)
+                    return
                 with self._lock:
-                    failed(exc)
-                return
-            with self._lock:
-                done(value)
+                    done(value)
+            finally:
+                with self._lock:
+                    self._threads.discard(thread)
 
         thread = threading.Thread(target=run, name="stickler-job", daemon=True)
         if job:
-            self._thread = thread
+            self._threads.add(thread)
         thread.start()

@@ -277,6 +277,76 @@ def test_shutdown_drops_a_correction_waiting_for_a_pause(monkeypatch, tmp_path, 
     assert len(fake.runs) == 1
 
 
+def test_shutdown_waits_for_a_replaced_job_too(monkeypatch, tmp_path, host):
+    """A job cancelled by a newer one may still be removing its half-written cache folder."""
+    cleaned = []
+
+    def notate(song, out, *, progress, cancel, **kw):
+        cancel.wait(5)
+        time.sleep(0.6 if song.name == "first.flac" else 0.05)  # cleaning up
+        cleaned.append(song.name)
+        raise api.Cancelled("cancelled")
+
+    FakeApi(monkeypatch)
+    monkeypatch.setattr(api, "notate", notate)
+    ctl = _made(host)
+    ctl.open(tmp_path / "first.flac")
+    ctl.open(tmp_path / "second.flac")  # cancels the first
+    ctl.shutdown(2.0)
+    assert sorted(cleaned) == ["first.flac", "second.flac"]
+
+
+def test_a_correction_timer_that_fired_late_makes_no_second_run(monkeypatch, tmp_path, host):
+    """The first timer fires while a second change holds the lock: only one run follows."""
+    fake = FakeApi(monkeypatch)
+    ctl = _made(host)
+    _result(ctl, tmp_path / "eye.flac")
+    fake.hold = True  # each run takes until released
+    ctl.correct(api.Corrections(tempo="half"))
+    with ctl._lock:  # the reader's next change is being made right now
+        time.sleep(controller.CORRECT_AFTER + 0.1)  # the first timer fires and waits
+        ctl.correct(api.Corrections(tempo="double"))
+    time.sleep(controller.CORRECT_AFTER + 0.15)  # the second timer's time has come
+    fake.release.set()
+    assert wait(lambda: ctl.state.pending is None and len(fake.runs) > 1)
+    time.sleep(controller.CORRECT_AFTER + 0.1)
+    assert [r[1] for r in fake.runs[1:]] == [api.Corrections(tempo="double")]
+
+
+def test_a_setup_ending_during_shutdown_opens_no_song(monkeypatch, tmp_path, host):
+    """The download's last step completes just as the app quits: no analysis starts after."""
+    go_on = threading.Event()
+    set_up = []
+
+    def setup_adapters(adapter, device="cpu", adapters_root=None, *, progress, cancel):
+        go_on.wait(5)  # finishes although cancelled: its last step was already done
+        set_up.append(adapter)
+        return [adapter]
+
+    fake = FakeSetup(monkeypatch, missing=("adtof",))
+    monkeypatch.setattr(api, "setup_adapters", setup_adapters)
+    analysed = FakeApi(monkeypatch)
+    real = api.notate
+
+    def notate(song, out, **kw):
+        if not set_up:
+            raise api.SetupMissing(["adtof"])
+        return real(song, out, **kw)
+
+    monkeypatch.setattr(api, "notate", notate)
+    ctl = _made(host)
+    ctl.open(tmp_path / "eye.flac")
+    assert wait(lambda: isinstance(ctl.state, session.Consent))
+    assert ctl.agree()
+    ctl.shutdown(0.05)
+    fake.done.append("adtof")
+    go_on.set()
+    assert wait(lambda: set_up)
+    time.sleep(0.2)
+    assert analysed.runs == []  # the first try stopped before the models; none after
+    assert not any(isinstance(s, session.Analysing) for s in host.states()[-2:])
+
+
 # the setup assistant, exports and removal (Task 101)
 
 
@@ -617,15 +687,21 @@ def test_a_removal_that_fails_says_why(monkeypatch, tmp_path, host):
 
     _installed(monkeypatch)
 
+    go_on = threading.Event()
+
     def busy(folders):
+        go_on.wait(5)
         raise OSError(16, "Device or resource busy")
 
     monkeypatch.setattr(removal, "remove", busy)
     ctl = _made(host)
+    assert not ctl.removing
     ctl.remove_models(False)
+    assert ctl.removing and not ctl.can_remove_models  # the window greys the menu item
+    go_on.set()
     assert wait(lambda: host.notices())
     assert host.notices() == ["Could not remove everything: [Errno 16] Device or resource busy"]
-    assert ctl.can_remove_models
+    assert ctl.can_remove_models and not ctl.removing
 
 
 def test_models_are_not_removed_while_something_runs(monkeypatch, tmp_path, host):

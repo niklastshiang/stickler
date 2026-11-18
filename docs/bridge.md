@@ -18,8 +18,12 @@ flows). Specification: SPEC.md, module `core-bridge`.
 - The first line is `hello`. After it come a `state` event (the empty window) and a `recent`
   event.
 - Each command is `{"id": <int>, "cmd": "<name>", ...arguments}`. It gets exactly one reply,
-  and the reply comes at once. Long work, such as an analysis or a download, is reported
-  through `state` events.
+  The bridge handles commands one at a time. Most reply at once; `pages`, `a4_pages` and
+  `removal_sizes` take a moment (engraving, walking folders), and the commands after them,
+  `cancel` too, wait for it. Long work, such as an analysis or a download, is reported through
+  `state` events.
+- Paths in commands should be absolute; a relative one is read from the bridge's working
+  directory.
 - Events and replies can interleave. The events a command causes are sent before its reply.
 - `quit`, or stdin closing, cancels the running job. The bridge then waits at most 2 s for the
   job's clean-up and exits with status 0.
