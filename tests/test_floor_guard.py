@@ -144,3 +144,50 @@ def test_net_loss_of_assertions_is_flagged():
         "tests/test_a.py", ["    assert f() == 1"], ["    assert f() == 1", "    assert g() == 2"]
     )
     assert "assertion-removed" in rules(diff)
+
+
+# Swift (SPEC.md, module `mac-shell`, scope 5)
+
+
+@pytest.mark.parametrize(
+    ("line", "rule"),
+    [
+        ("// swiftlint:disable force_cast", "silenced-checker"),
+        ("let x = y as! Int // swiftlint:disable:this force_cast", "silenced-checker"),
+        ("    // swiftlint:enable all", "silenced-checker"),
+        ('    fatalError("TODO")', "unfinished-work"),
+        ('    fatalError("not implemented")', "unfinished-work"),
+        ("    fatalError()", "unfinished-work"),
+        ('    preconditionFailure("unimplemented")', "unfinished-work"),
+        ('        throw XCTSkip("flaky on CI")', "test-made-easier"),
+        ("        try XCTSkipIf(isLinux)", "test-made-easier"),
+        ('    @Test(.disabled("later")) func decodes() {}', "test-made-easier"),
+    ],
+)
+def test_added_swift_violations_are_flagged(line, rule):
+    assert rule in rules(diff_for("mac/SticklerCore/Sources/SticklerCore/Client.swift", [line]))
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        '    preconditionFailure("a reply without a command: \\(id)")',
+        '    fatalError("The core sent a line that is not UTF-8")',
+        "    XCTAssertEqual(state.kind, .empty)",
+        "    #expect(reply.ok)",
+    ],
+)
+def test_real_swift_failures_and_assertions_pass(line):
+    assert rules(diff_for("mac/SticklerCore/Sources/SticklerCore/Client.swift", [line])) == set()
+
+
+def test_a_removed_swift_assertion_is_flagged():
+    path = "mac/SticklerCore/Tests/SticklerCoreTests/DecodingTests.swift"
+    for assertion in ("    XCTAssertEqual(a, b)", "    #expect(a == b)", "    try #require(x)"):
+        assert "assertion-removed" in rules(diff_for(path, [], [assertion]))
+
+
+def test_a_deleted_swift_test_file_is_flagged():
+    path = "mac/SticklerTests/AppModelTests.swift"
+    diff = "\n".join([f"diff --git a/{path} b/{path}", f"--- a/{path}", "+++ /dev/null"])
+    assert "test-deleted" in rules(diff)

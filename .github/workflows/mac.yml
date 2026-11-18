@@ -1,0 +1,54 @@
+# The Mac app's Swift (SPEC.md, module `mac-shell`; CONSTRAINTS.md "Swift lint", "Swift tests",
+# "Swift coverage"). No one here has Xcode: these jobs are the only compiler for the app, and
+# SticklerCore is checked on Linux too, where it is also developed.
+name: mac
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  SWIFTLINT: "0.65.1" # newest release on 2026-11-18; the SHA-256 below are GitHub's digests
+
+jobs:
+  core-linux:
+    runs-on: ubuntu-26.04 # Swift 6.4.2 preinstalled (runner image of 2026-11-11)
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: SwiftLint
+        run: |
+          curl -fsSLO "https://github.com/realm/SwiftLint/releases/download/$SWIFTLINT/swiftlint_linux_amd64.zip"
+          echo "caeed6f4a679c35539ffaf124f6c4ab4a8416917f7d8796279dc52b74026059d  swiftlint_linux_amd64.zip" | sha256sum -c
+          unzip -q swiftlint_linux_amd64.zip swiftlint-static -d "$RUNNER_TEMP/swiftlint"
+          "$RUNNER_TEMP/swiftlint/swiftlint-static" lint --strict
+      - name: Tests with coverage
+        working-directory: mac/SticklerCore
+        run: |
+          swift --version
+          swift test --enable-code-coverage
+          python3 ../../scripts/swift_coverage.py "$(swift test --show-codecov-path)" .
+
+  core-macos:
+    runs-on: macos-26 # the app's deployment target; arm64, free for a public repository
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Xcode 26.6 # the image's default on 2026-11-18, pinned so an image update is seen
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+      - name: SwiftLint
+        run: |
+          curl -fsSLO "https://github.com/realm/SwiftLint/releases/download/$SWIFTLINT/portable_swiftlint.zip"
+          echo "c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0  portable_swiftlint.zip" | shasum -a 256 -c
+          unzip -q portable_swiftlint.zip swiftlint -d "$RUNNER_TEMP/swiftlint"
+          "$RUNNER_TEMP/swiftlint/swiftlint" lint --strict
+      - name: Tests with coverage
+        working-directory: mac/SticklerCore
+        run: |
+          swift --version
+          swift test --enable-code-coverage
+          python3 ../../scripts/swift_coverage.py "$(swift test --show-codecov-path)" .

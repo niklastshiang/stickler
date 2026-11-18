@@ -1,0 +1,19 @@
+# SwiftLint for the Mac app (CONSTRAINTS.md "Swift lint"): `swiftlint --strict` must find nothing.
+# Disabling a rule for a line or file is a floor violation; change a rule here, for every file,
+# and say why.
+included:
+  - mac
+excluded:
+  - mac/SticklerCore/.build
+  - mac/build
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - sorted_first_last
+  - unused_parameter
+line_length:
+  warning: 100 # as ruff's for Python
+  error: 100

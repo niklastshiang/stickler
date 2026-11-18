@@ -40,11 +40,18 @@ class Line:
 SUPPRESSIONS = re.compile(
     r"#\s*noqa|#\s*type:\s*ignore|#\s*pragma:\s*no\s*cover|#\s*ruff:\s*noqa|#\s*pyright:\s*ignore"
     r"|#\s*mypy:\s*ignore|gitleaks:allow"
+    r"|//\s*swiftlint:"  # Swift: swiftlint:disable, :enable, :disable:next, :this
 )
 STUBS = re.compile(
     r"raise\s+NotImplementedError|except\b[^:]*:\s*pass\b|\bTODO\b|\bFIXME\b|\bpass\s*#\s*stub"
+    # Swift placeholders; a failure that names a real impossible case stays allowed
+    r"|\b(fatalError|preconditionFailure)\(\s*\)"
+    r"|\b(fatalError|preconditionFailure)\(\s*\"\s*(not\s+implemented|unimplemented)"
 )
-SKIPS = re.compile(r"@pytest\.mark\.(skip|xfail)\b|\bpytest\.skip\(|\bunittest\.skip\b")
+SKIPS = re.compile(
+    r"@pytest\.mark\.(skip|xfail)\b|\bpytest\.skip\(|\bunittest\.skip\b"
+    r"|\bXCTSkip(If|Unless)?\b|@Test\([^)]*\.disabled\b"  # Swift: XCTest, Swift Testing
+)
 # Patterns only; the value is never printed.
 SECRETS = re.compile(
     r"\bhf_[A-Za-z0-9]{30,}\b|\bgh[pousr]_[A-Za-z0-9]{30,}\b|BEGIN [A-Z ]*PRIVATE KEY"
@@ -64,7 +71,10 @@ MAX_AFTER = re.compile(r"^\s*\S*\s*(?:\|\s*)?(or less|or lower|must not grow|mus
 
 
 def is_test(path: str) -> bool:
-    return bool(re.search(r"(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$", path))
+    return bool(
+        re.search(r"(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$", path)
+        or re.search(r"Tests?\.swift$|(^|/)\w*Tests/.*\.swift$", path)
+    )
 
 
 def is_constraints(path: str) -> bool:
@@ -166,7 +176,9 @@ def check(diff: str) -> list[tuple[str, str, str]]:
             flag("test-deleted", f, "file deleted")
     # A changed assertion (removed + new in the same file) is not a weakening;
     # it is reported when a test file loses assertions on balance.
-    assertion = re.compile(r"\bassert\b|pytest\.raises|approx\(")
+    assertion = re.compile(
+        r"\bassert\b|pytest\.raises|approx\(|\bXCTAssert\w*\(|\bXCTFail\(|#expect\b|#require\b"
+    )
     lost: dict[str, list[str]] = {}
     for ln in removed:
         if is_test(ln.file) and ln.file not in deleted and assertion.search(ln.text):

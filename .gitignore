@@ -22,3 +22,7 @@ tests/fixtures/**/weights/
 # AppImage build (scripts/appimage.sh)
 /AppDir/
 /dist/
+
+# Swift (mac/)
+.build/
+*.xcodeproj/
