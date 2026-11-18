@@ -30,7 +30,7 @@ let resultLine = #"{"event": "state", "seq": 2, "state": {"kind": "result", "son
         ])
         #expect(await settled { model.state.screen.kind == "result" })
         #expect(model.title == "Eye of the Tiger" && model.subtitle == "Survivor · ♩ = 109 · 4/4")
-        #expect(await settled { core.sent == [.start] })
+        #expect(await settled { core.sent.filter { $0 != .settings } == [.start] })
         await core.quit(seconds: 3)
     }
 
@@ -65,7 +65,7 @@ let resultLine = #"{"event": "state", "seq": 2, "state": {"kind": "result", "son
         let (model, core) = try model([#"{"event": "recent", "seq": 1, "rows": \#(rows)}"#])
         #expect(await settled { model.recent.count == 2 })
         model.clearRecent()
-        #expect(await settled { core.sent.count == 3 })
+        #expect(await settled { core.sent.count == 4 })  // with `start` and `settings`
         #expect(core.sent.contains(.forgetRecent(path: "/m/a.flac")))
         #expect(core.sent.contains(.forgetRecent(path: "/m/b.flac")))
     }

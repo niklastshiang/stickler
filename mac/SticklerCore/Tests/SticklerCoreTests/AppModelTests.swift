@@ -8,11 +8,14 @@ final class FakeCore: Core, @unchecked Sendable {
     private let lock = NSLock()
     private var commands: [Command] = []
     private var answers: [String: String] = [:]  // command name → reply line without id
+    private var queued: [String: [(String, Duration)]] = [:]  // one-off replies, in order
     private var event: (@Sendable (Incoming) -> Void)?
     private var end: (@Sendable (CoreEnd) -> Void)?
     private(set) var quitWith: Double?
 
     var sent: [Command] { lock.withLock { commands } }
+    /// The commands without the sheet's `settings` at start, which runs beside them.
+    var actions: [Command] { sent.filter { $0 != .settings } }
 
     /// The reply's fields after `"id": …, ` for `command`, e.g. `"ok": true, "minutes": 3`.
     func answer(_ command: String, with fields: String) {
@@ -29,10 +32,23 @@ final class FakeCore: Core, @unchecked Sendable {
         }
     }
 
+    /// The next `command` gets `fields` after `delay`; later ones get `answer`'s again.
+    func queue(_ command: String, with fields: String, after delay: Duration = .zero) {
+        lock.withLock { queued[command, default: []].append((fields, delay)) }
+    }
+
     func send(_ command: Command) async throws -> Reply {
-        let fields = lock.withLock {
+        let (fields, delay) = lock.withLock {
             commands.append(command)
-            return answers[command.name] ?? #""ok": true"#
+            if var waiting = queued[command.name], !waiting.isEmpty {
+                let next = waiting.removeFirst()
+                queued[command.name] = waiting
+                return next
+            }
+            return (answers[command.name] ?? #""ok": true"#, Duration.zero)
+        }
+        if delay > .zero {
+            try await Task.sleep(for: delay)
         }
         if fields == "not running" {
             throw CoreClientError.notRunning
@@ -78,6 +94,12 @@ final class Harness {
         let lock = NSLock()
         var cores: [FakeCore] = []
         var calls: [Call] = []
+        var preset: [String: String] = [:]
+    }
+
+    /// Every core made from now on answers `command` with `fields` (see `FakeCore.answer`).
+    func preset(_ command: String, with fields: String) {
+        made.lock.withLock { made.preset[command] = fields }
     }
 
     var cores: [FakeCore] { made.lock.withLock { made.cores } }
@@ -101,15 +123,19 @@ final class Harness {
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: uv.path)
     }
 
-    func model(uvPlaces: [URL]? = nil) -> AppModel {
+    func model(uvPlaces: [URL]? = nil, settle: Duration = .milliseconds(300)) -> AppModel {
         let made = made
         return AppModel(
             defaults: defaults,
             uvPlaces: uvPlaces ?? [URL(fileURLWithPath: "/nonexistent/uv"), uv],
-            languages: ["de-DE", "en"]
+            languages: ["de-DE", "en"],
+            settle: settle
         ) { folder, tool, languages in
             let core = FakeCore()
             made.lock.withLock {
+                for (command, fields) in made.preset {
+                    core.answer(command, with: fields)
+                }
                 made.cores.append(core)
                 made.calls.append(Call(folder: folder, tool: tool, languages: languages))
             }
@@ -166,7 +192,7 @@ let analysing = #"{"kind": "analysing", "song": "/m/a.flac", "name": "a", "steps
         let call = try #require(harness.calls.first)
         #expect(call.folder == harness.folder && call.tool == harness.uv)
         #expect(call.languages == ["de-DE", "en"])
-        #expect(await settled { harness.core.sent == [.start] })
+        #expect(await settled { harness.core.actions == [.start] })
 
         let again = harness.model()  // the next launch
         again.launch()
@@ -224,7 +250,7 @@ let analysing = #"{"kind": "analysing", "song": "/m/a.flac", "name": "a", "steps
         first.stop(end)
         #expect(await settled { model.phase == .stopped(end) })
         model.open("/m/b.flac")  // nobody to send it to
-        #expect(first.sent == [.start])
+        #expect(first.actions == [.start])
 
         model.startAgain()
         #expect(model.phase == .running && harness.cores.count == 2)
@@ -233,7 +259,7 @@ let analysing = #"{"kind": "analysing", "song": "/m/a.flac", "name": "a", "steps
         try harness.core.emit(#"{"event": "notice", "seq": 1, "text": "new", "opens": null}"#)
         #expect(await settled { model.notice != nil })
         #expect(model.notice?.text == "new")
-        #expect(await settled { harness.core.sent == [.start] })
+        #expect(await settled { harness.core.actions == [.start] })
     }
 
     @Test func anotherFolderEndsTheRunningCoreFirst() async throws {
@@ -315,8 +341,8 @@ func refusal(_ message: String) -> String {
             .exportMusicXML(dest: "/d/a.musicxml"),
             .exportDrumTrack(dest: "/d/a.flac"), .removeModels(everything: true)
         ]
-        #expect(await settled { harness.core.sent.count == expected.count })
-        #expect(harness.core.sent == expected)  // in the order the reader gave them
+        #expect(await settled { harness.core.actions.count == expected.count })
+        #expect(harness.core.actions == expected)  // in the order the reader gave them
     }
 
     @Test func aRefusedCommandSaysWhyAndAStoppedCoreSaysNothing() async throws {

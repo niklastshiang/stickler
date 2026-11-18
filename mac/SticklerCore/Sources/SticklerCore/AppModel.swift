@@ -45,6 +45,8 @@ public final class AppModel {
     /// The core's language (`hello`).
     public private(set) var language: String?
     public private(set) var folder: URL?
+    /// The sheet music of the shown result (module `mac-sheet`).
+    public let sheet: SheetModel
 
     public static let folderKey = "SticklerFolder"
 
@@ -78,11 +80,13 @@ public final class AppModel {
     private var lastSeq = 0
 
     /// `uvPlaces`: where `uv` may be, first found wins (a Mac app started from the Finder
-    /// has almost no PATH). `makeCore` builds the core for a folder, `uv` and languages.
+    /// has almost no PATH). `settle`: how long the sheet's width must hold before its pages are
+    /// asked for. `makeCore` builds the core for a folder, `uv` and languages.
     public init(
         defaults: UserDefaults = .standard,
         uvPlaces: [URL] = AppModel.defaultUVPlaces(),
         languages: [String] = Locale.preferredLanguages,
+        settle: Duration = .milliseconds(300),
         makeCore: @escaping @Sendable (URL, URL, [String]) -> any Core = { folder, uv, languages in
             CoreClient.bridge(in: folder, uv: uv, languages: languages)
         }
@@ -91,6 +95,15 @@ public final class AppModel {
         self.uvPlaces = uvPlaces
         self.languages = languages
         self.makeCore = makeCore
+        // the sheet's refusals show as the window's notice
+        let tell = Refusals()
+        sheet = SheetModel(settle: settle) { tell.model?.refused($0) }
+        tell.model = self
+    }
+
+    /// Lets the sheet reach the model it belongs to, once that exists.
+    @MainActor private final class Refusals {
+        weak var model: AppModel?
     }
 
     /// `~/.local/bin` (uv's installer), Homebrew's two prefixes, then PATH.
@@ -144,6 +157,7 @@ public final class AppModel {
         listener = nil
         outbox?.finish()
         outbox = nil
+        sheet.attach(nil)
         defer { core = nil }
         return core
     }
@@ -194,6 +208,7 @@ public final class AppModel {
         lastSeq = 0
         notice = nil
         phase = .running
+        sheet.attach(next)
         // one stream keeps the core's order; separate tasks per event would not
         let (signals, feed) = AsyncStream<Signal>.makeStream()
         listener = Task { [weak self] in
@@ -231,7 +246,9 @@ public final class AppModel {
             guard seq > lastSeq else { return }  // a late event
             lastSeq = seq
             switch event {
-            case .state(let next): state = next
+            case .state(let next):
+                state = next
+                sheet.show(next.screen)
             case .recent(let rows): recent = rows
             case .notice(let next): notice = next
             case .unknown: break
