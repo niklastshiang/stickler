@@ -500,7 +500,7 @@ stickler/
 │   ├── transcribers/    # adtof, adt_str, muscriptor_s/_m/_l, drumsep_onset, sad
 │   └── beats/           # beat_this
 ├── config/              # benchmark, own and enst configs
-├── mac/                 # the macOS app (release 8, in progress): its String Catalog so far
+├── mac/                 # the macOS app (release 8, in progress): SticklerCore, the SwiftUI app
 ├── po/                  # translations (German, Spanish), po/LINGUAS lists them
 ├── packaging/           # Flatpak manifest, AppStream MetaInfo, desktop file, icons, font
 ├── references/own/      # own songs: title, recording, manual exclusions
