@@ -993,6 +993,35 @@ def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
         window.close()
 
 
+def test_removing_the_models_while_a_song_runs_says_why_nothing_happens(monkeypatch, tmp_path):
+    """The menu item greys out while something runs, but the alert may already be open when a
+    download starts (owner, 2026-11-18: a notice instead of nothing)."""
+    from stickler import api
+    from stickler_app import paths
+    from stickler_gtk.ui.window import Window
+
+    def slow(song, out, *, cancel, **kw):
+        cancel.wait(10)
+        raise api.Cancelled("cancelled")
+
+    monkeypatch.setenv("APPIMAGE", "/x/Stickler.AppImage")
+    monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
+    weights = paths.adapters_root() / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    monkeypatch.setattr(api, "song_info", lambda p: api.SongInfo("x", "", 1.0))
+    monkeypatch.setattr(api, "notate", slow)
+    window = Window()
+    shown = []
+    monkeypatch.setattr(window, "toast", shown.append)
+    try:
+        window.open_song(tmp_path / "x.flac")
+        window.remove_models_now(everything=False)
+        assert shown == ["The models can be removed once the current work is done"]
+        assert weights.exists() and window.pages.get_visible_child_name() == "analysing"
+    finally:
+        window.close()
+
+
 def test_after_removing_the_models_a_song_asks_for_them_instead_of_failing(monkeypatch, tmp_path):
     """The shipped model sources went with the models, so the next song failed with "unknown
     transcriber 'adtof'" until a restart (owner, 2026-11-15)."""

@@ -2288,6 +2288,23 @@
         }
       }
     },
+    "The models can be removed once the current work is done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Modelle lassen sich entfernen, sobald die laufende Arbeit fertig ist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los modelos se pueden quitar cuando termine el trabajo en curso"
+          }
+        }
+      }
+    },
     "The request could not be read." : {
       "extractionState" : "manual",
       "localizations" : {

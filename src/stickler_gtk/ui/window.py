@@ -584,8 +584,12 @@ class Window(Adw.ApplicationWindow):
         alert.present(self)
 
     def remove_models_now(self, everything: bool) -> None:
+        """The alert's answer. Something may have started while it was open (a download
+        that goes on by itself): then nothing is removed, and the reader is told why."""
+        if not self.controller.remove_models(everything):
+            self.toast(_("The models can be removed once the current work is done"))
+            return
         self.playbar.stop()
-        self.controller.remove_models(everything)
 
     # the setup assistant (SPEC.md, module `setup-assistant`)
 
