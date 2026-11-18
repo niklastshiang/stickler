@@ -33,6 +33,6 @@ step 1:
   requirements, SPEC statuses).
 
 After step 3 the workflow builds both files and attaches them to the release (a draft if none
-exists yet): check that both are there before publishing it, with release notes that say how to
-install each.
+exists yet): check that both are there before publishing it. The release notes link to the
+README's install section instead of repeating it (owner, 2026-11-18).
 
