@@ -789,6 +789,46 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 ### Checkpoint S
 - [x] All success criteria of SPEC.md "Module `mac-core`" met (owner, 2026-11-18, from the CI results; evidence 2026-11-17: (1) the `macos` job green, 745 tests, coverage ≥ 95 %; (2) the three models' smoke tests green with plausible RAM; (3) Linux unchanged: lock comparison 0 differences, `stickler eval` byte-identical, CI green on 3.12 and 3.14; (4) no test skipped. On macos-15 for now, see Task 98); then `core-bridge`'s spec (and `mac-design` with the owner)
 
+## Phase 20: Release 8 (macOS app), module `core-bridge` (approved 2026-11-18, SPEC.md "Module `core-bridge`")
+
+- [ ] **Task 100: The controller, analysis flows** (M)
+  - Acceptance: `stickler_app.controller.Controller(post=...)` owns the `session.State`; `open`, `cancel`, `retry`, `close`; one job at a time (a new `open` cancels the running one); recent songs updated after a result (`recent.add`, saved) and `forget_recent`; corrections read from the store as the window does. No GTK, no GLib.
+  - Verify: `uv run pytest -q tests/app/test_controller.py` with the fake adapters: an analysis to `Result`, a cancel during it back to the previous state, an unreadable file, `SetupMissing` to `Consent`, a second `open` while one runs
+  - Dependencies: none · Files: `src/stickler_app/controller.py`, `tests/app/test_controller.py`
+
+- [ ] **Task 101: The controller, setup and exports** (M)
+  - Acceptance: `start` (sync of shipped adapters when packaged, `api.mode_ready`, the stored consent → `Empty`, `Consent` or `SettingUp`), `agree`, `not_now`, `retry_setup`, the download meter sampled twice a second by a thread with a stop event, the song opened after the setup; `drum_track_cost` and `export_drum_track`; `export_musicxml`; `removal_sizes` and `remove_models` (consent reset, with everything also the recent list).
+  - Verify: `uv run pytest -q tests/app/test_controller.py`: consent and download, a failed step and Try Again, cancel during the setup, the drum track with and without the download, the removal; coverage ≥ 95 %
+  - Dependencies: 100 · Files: `src/stickler_app/controller.py`, its tests
+
+- [ ] **Task 102: The Mac kind in `paths`** (S)
+  - Acceptance: `packaged()` returns `"macos"` with `STICKLER_PACKAGED=macos`; models, results and settings under `~/Library/Application Support/Stickler`, scores and clicks under `~/Library/Caches/Stickler`, XDG variables still win; Linux results unchanged.
+  - Verify: `uv run pytest -q tests/app/test_paths.py` (Linux cases untouched, new Mac cases)
+  - Dependencies: none · Files: `src/stickler_app/paths.py` (and `settings.py`, `recent.py`, `corrections.py` if their store paths need it), tests
+
+- [ ] **Task 103: The bridge's loop and state** (M)
+  - Acceptance: `stickler_app.bridge` with entry point `stickler-bridge`: `hello`; commands with exactly one reply; `state` events with `seq` from one writer thread; `encode` per state kind with translated texts and the possible commands; `bad_request`, `unknown_command`, `bad_argument`, `not_now`; `quit` and stdin EOF cancel the job, wait at most 2 s, exit 0; logs only on stderr. Commands here: `start`, `agree`, `not_now`, `retry_setup`, `open`, `cancel`, `retry`, `close`, `quit`.
+  - Verify: `uv run pytest -q tests/app/test_bridge.py` in process with in-memory streams: each command, each error, `seq` order, cancel, EOF during a job
+  - Dependencies: 100, 101 · Files: `src/stickler_app/bridge.py`, `pyproject.toml` (entry point), tests
+
+- [ ] **Task 104: The remaining commands and `docs/bridge.md`** (M)
+  - Acceptance: `pages {width, zoom}` and `a4_pages` (SVG, size, bar rectangles), `export_musicxml`, `drum_track_cost`, `export_drum_track`, `forget_recent` with `recent` events, `settings`, `set_zoom`, `zoom_in`, `zoom_out`, `actual_size`, `removal_sizes`, `remove_models`; `docs/bridge.md` with every command, reply, event and state field and an example line each; a test compares the document's commands and state kinds with the code and decodes its examples.
+  - Verify: `uv run pytest -q tests/app/test_bridge.py`; coverage ≥ 95 %
+  - Dependencies: 103 · Files: `src/stickler_app/bridge.py`, `docs/bridge.md`, tests
+
+- [ ] **Task 105: The bridge as a process, with the real models** (S)
+  - Acceptance: a subprocess test (`hello`, `open` on a fixture song with fake adapters until `result`, `pages`, `quit`; stdin closed during an analysis ends the bridge and the model process within 3 s, no cache entry left); `scripts/bridge_demo.py` drives the bridge on the laptop with the real Fast models and writes the MusicXML, identical to the GTK app's for the same song; the size of Eye of the Tiger's `pages` line noted. Green on the `macos` job.
+  - Verify: `uv run pytest -q tests/app/test_bridge_process.py`; `uv run python scripts/bridge_demo.py <song>`; the CI run
+  - Dependencies: 102, 104 · Files: the test, `scripts/bridge_demo.py`
+
+- [ ] **Task 106: The GTK window onto the controller** (M)
+  - Acceptance: `stickler_gtk/ui/window.py` keeps only widgets and dialogs; every flow goes through `stickler_app.controller` with `GLib.idle_add` as `post`; the widget tests unchanged and green; a fresh-context review of 100–106 against SPEC.md, its findings fixed or answered.
+  - Verify: `scripts/gtk.sh test`; `scripts/check.sh task`; by hand by the owner (as Task 95: open, analysis, sheet music, playback, corrections, exports, setup, removal)
+  - Dependencies: 101, 105 · Files: `src/stickler_gtk/ui/window.py`, `src/stickler_gtk/ui/worker.py`
+
+### Checkpoint T
+- [ ] All success criteria of SPEC.md "Module `core-bridge`" met (owner); then `mac-shell`'s spec
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **Later release: click volume follows the song** (done in module `polish`) (owner, 2026-11-15): songs differ in loudness; the clicks suit Eye of the Tiger but are too loud on Amaranthe's "Fearless". Measure the song's loudness where the hits are and set the clicks relative to it.

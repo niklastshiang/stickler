@@ -1799,7 +1799,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 | `shared-core` | `stickler_gtk/logic` and `i18n` move to `stickler_app` (no visible change on Linux, the existing tests guard it); `scripts/xcstrings.py` writes the String Catalog from `po/` | – | done, below |
 | `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | done, below |
 | `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | approved, below |
-| `core-bridge` | `stickler-bridge`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | draft, below |
+| `core-bridge` | `stickler-bridge`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | approved, below |
 | `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped | `core-bridge`, `mac-design` | to write |
 | `mac-setup` | Setup assistant: consent, model download with progress, resumable, "Remove Downloaded Models…" | `mac-shell` | to write |
 | `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | to write |
@@ -2090,9 +2090,10 @@ stays as it is); the macOS app icon is part of this module.
 
 ### Module `core-bridge`
 
-> Status: **draft** (2026-11-18), waiting for the owner's approval. Decided before the draft
-> (owner, 2026-11-18): Fast only; one long-running process per app start; the state lives in
-> Python and is sent whole on every change.
+> Status: **approved** by the owner on 2026-11-18 (GTK moves onto the controller in this
+> module). Decided before the draft (owner, 2026-11-18): Fast only; one long-running process per
+> app start; the state lives in Python and is sent whole on every change. Plan:
+> `tasks/plan.md` ("`core-bridge`"), tasks 100–106.
 
 **Objective.** The Mac app reaches the shared core through one subprocess that speaks JSON
 lines over stdin and stdout. Python keeps everything that is not drawing: what the window
@@ -2175,8 +2176,8 @@ exists.
 6. **The contract on paper:** `docs/bridge.md` lists every command, reply, event and state
    field with an example line. A test checks that the commands in it and in the code are the
    same set, and that every state kind is documented.
-7. **GTK onto the controller:** the GTK window uses `stickler_app.controller` too, so each flow
-   exists once (see open question 1). The widget tests stay as they are and must pass
+7. **GTK onto the controller** (owner, 2026-11-18): the GTK window uses
+   `stickler_app.controller` too, so each flow exists once. The widget tests stay as they are and must pass
    unchanged; the owner checks the app on the laptop as at Checkpoint R.
 
 **Testing.**
@@ -2208,11 +2209,8 @@ with `mac-playback` and `mac-corrections`, the state already carries what they w
 the `.app` finds `uv`, Python and ffmpeg (`mac-package`); a socket or several clients; more
 than one window.
 
-**Open questions.**
-1. GTK onto the controller in this module (scope 7), or later? Proposed: here, as the last
-   task, so the flows are not written twice even for a while; it is the one part that touches
-   the Linux app, which the widget tests and the owner's check guard. The alternative keeps
-   Linux untouched now, with two copies of the flows until a later module.
+**Decided (owner, 2026-11-18):** GTK moves onto the controller in this module, as its last
+task (scope 7), so no flow exists twice even for a while.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

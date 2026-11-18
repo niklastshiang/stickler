@@ -388,6 +388,43 @@ Order: peak RAM (96) → wider platforms (97) → macOS job (98) → smoke tests
 | Tests assume Linux (paths, /proc, GTK) | Medium | Seen in the first macOS run; each one fixed or skipped with its reason in the commit |
 | macOS runner minutes or a flaky model download | Low | Smoke tests only on relevant pushes and weekly; weights cached between runs |
 
+## Release 8 (macOS app): `core-bridge` (approved 2026-11-18, SPEC.md "Module `core-bridge`")
+
+The core as one subprocess speaking JSON lines; the state lives in Python. The GTK window's
+flows move into a GUI-neutral controller that both apps use.
+
+Design decisions:
+- **Controller first, bridge second, GTK last** (100–101, then 103–105, then 106): the bridge is
+  built on a controller that is already tested; GTK switches only once the controller has
+  carried the bridge through every flow, so its switch finds no new behaviour.
+- **The controller copies the window's flows, it does not redesign them.** Each flow's test
+  states the GTK behaviour of today (one job at a time, cancel back to the previous state, the
+  setup meter twice a second, the song opened after the setup). A difference found on the way
+  is noted and asked, not fixed silently.
+- **Threads without GLib:** the controller takes a `post` callable from its host and calls it
+  for every new state (GTK: `GLib.idle_add`, the bridge: a queue its writer drains). The
+  sampling of the setup meter is a thread with a stop event instead of `GLib.timeout_add`.
+- **One writer:** only the bridge's writer thread touches stdout, so replies and events never
+  interleave inside a line; `seq` is assigned there.
+- **The state's JSON comes from one function per state kind** (`bridge.encode`), tested
+  against `docs/bridge.md`'s examples, so the document cannot drift.
+- **`paths` before the bridge** (102): the Mac kind is a few lines with Linux's tests as the
+  guard, and the bridge's tests on the macOS runner need it.
+- **A fresh-context review after 106** (CLAUDE.md): the controller and the GTK switch touch the
+  Linux app; a reviewer without this conversation reads the diff against SPEC.md.
+
+Order: controller, analysis (100) → controller, setup and exports (101) → Mac paths (102) →
+bridge loop and state (103) → the remaining commands and `docs/bridge.md` (104) → subprocess
+test and demo with real models (105) → GTK onto the controller (106).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The GTK window changes behaviour in 106 | High | Widget tests unchanged and green; the owner's check on the laptop; the review |
+| A race between a cancel and a finished job (an old job's state shown) | Medium | `session` already drops reports of an old `job`; tests cancel in every state |
+| stdout blocked when Swift does not read | Medium | Events go through a queue; a full queue keeps only the newest state (the state is whole each time) |
+| The bridge outlives a crashed app | Medium | stdin EOF ends it; a test closes stdin during an analysis and looks for processes |
+| Large SVG lines for long songs | Low | Pages only on request, never in the state; measured in 105 (Eye of the Tiger) |
+
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
