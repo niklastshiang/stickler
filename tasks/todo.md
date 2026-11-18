@@ -862,7 +862,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: the app's model tests with a fake core; screenshots
   - Dependencies: 111 · Files: `mac/Stickler/`, tests, `po/*`
 
-- [ ] **Task 113: The setup assistant and the removal** (M)
+- [x] **Task 113: The setup assistant and the removal** (M): done 2026-11-18 (7707315; `mac` green: 12 app tests, 50 SticklerCore tests on Linux and macOS; the first `core-linux` run hung 10 minutes in `apt-get install ffmpeg`, cancelled and run again). Sheets over the empty window from the core's state (closed only by its next state): consent (M1), download (M2) on the step list, a server not answering (M3); Stickler › Remove Downloaded Models… asks the core for the sizes, then an alert whose body follows the checkbox. Every text is the GTK app's from `po/`; placeholders and the consent's plural filled from the catalog (`localized`). The consent shows the app's generic icon: the macOS icon of `mac-design` is not in the app yet.
   - Acceptance: M1–M3 as sheets over the empty window (consent with models, licences and sizes; download with Cancel and the amount; a failed download with server, details, "Try Again", "Later"); "Remove Downloaded Models…" with sizes, the checkbox and a destructive button; screenshots light and dark.
   - Verify: tests with a fake core; screenshots against the canvas
   - Dependencies: 112 · Files: `mac/Stickler/`, tests, `po/*`
