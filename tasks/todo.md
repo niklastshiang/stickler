@@ -832,7 +832,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 
 ## Phase 21: Release 8 (macOS app), module `mac-shell` (approved 2026-11-18, SPEC.md "Module `mac-shell`")
 
-- [ ] **Task 107: CI and the Swift quality bar** (M)
+- [x] **Task 107: CI and the Swift quality bar** (M): done 2026-11-18 (9737358, `mac` green on both jobs: `macos-26` assigned at once, Xcode 26.6, Swift 6.4.2; SwiftLint 0 violations; coverage 3/3 lines). In WSL: Swift 6.4.2 through swiftly 1.2.0 (signatures checked, no shell profile changed; the owner installed the toolchain's apt packages), SwiftLint's static Linux build in `~/.local/bin` (on Linux it skips `statement_position`, which needs SourceKit; the macOS job runs it). The skeleton had no executable line, so the coverage script found nothing to measure; instead of loosening it, `BridgeProtocol.speaks(_:)`, which the client of 109 needs, came early.
   - Acceptance: CONSTRAINTS.md covers Swift (SPEC "mac-shell" scope 5); `scripts/floor_guard.py` flags `swiftlint:disable`, `// swiftlint:`, `fatalError("TODO")`, placeholder `preconditionFailure`, `XCTSkip` and disabled tests in a diff (tests for each); `mac/SticklerCore/` a package with one passing test; `.github/workflows/mac.yml`: `ubuntu-26.04` runs `swift test` and SwiftLint 0.65.1 (pinned binary, SHA-256 checked); `macos-26` with Xcode 26.6 selected runs the same plus `swiftlint --strict`.
   - Verify: `uv run pytest -q tests/test_floor_guard.py`; `swift test` in `mac/SticklerCore` (WSL, Swift 6.4 via swiftly); both jobs green
   - Dependencies: none · Files: `CONSTRAINTS.md`, `scripts/floor_guard.py`, its tests, `mac/SticklerCore/`, `.github/workflows/mac.yml`, `.swiftlint.yml`
