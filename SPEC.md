@@ -2400,6 +2400,11 @@ GPU; Intel Macs; the Mac App Store.
    was written down (`scripts/site_clip.py`).
 5. **How good it is:** the honest numbers in plain words, from the report (macro-F1 of Fast on
    the own songs), what it gets wrong (fills, ghost notes) and that corrections exist.
+   It links to a page of its own, `accuracy.html` in both languages (owner, 2026-11-18): how
+   Stickler works, drawn as an inline SVG that follows light and dark and is translated (the
+   apps' path: song → ADTOF and Beat This! → notes → PDF and MusicXML, Demucs for the drum
+   track), how it was measured (test sets, ±50 ms, macro-F1, reference errors judged by ear),
+   all the numbers of the report's summary in plain words, and a link to the full report.
 6. **The models and your computer:** each model with what it does, its download size and its
    licence (from the setup assistant's texts); the time per song on a laptop CPU (the apps run
    Fast on the CPU; no GPU figure, as the Mac app has none); disk space.
@@ -2437,7 +2442,8 @@ GPU; Intel Macs; the Mac App Store.
   the site. JavaScript only where HTML and CSS cannot do it: `site.js` copies the Flatpak
   command and holds the overview video still under `prefers-reduced-motion` (task 120);
   without it the command is still selectable and the video keeps its pause button.
-- **No Spanish, no documentation pages** (the report and the CLI guide stay on GitHub, linked).
+- **No Spanish, no documentation pages** (the report and the CLI guide stay on GitHub, linked;
+  the accuracy page carries only the report's summary).
 
 ### Accessibility and good practice (owner, 2026-11-18: as accessible as the layout allows, and the usual best practices)
 Target: **WCAG 2.2, level AA**, for both languages and both colour schemes.

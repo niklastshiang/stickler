@@ -41,4 +41,14 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/imprint.html"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/imprint.html"/>
   </url>
+  <url>
+    <loc>https://stickler.tshia.ng/accuracy.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/accuracy.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/accuracy.html"/>
+  </url>
+  <url>
+    <loc>https://stickler.tshia.ng/de/accuracy.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/accuracy.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/accuracy.html"/>
+  </url>
 </urlset>

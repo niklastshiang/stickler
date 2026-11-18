@@ -193,7 +193,7 @@ def test_downloads_point_at_the_newest_release_until_the_workflow_fills_them():
         assert attrs["href"] == "https://github.com/niklastshiang/stickler/releases/latest"
 
 
-PAIRS = ("index.html", "about.html", "privacy.html", "imprint.html")
+PAIRS = ("index.html", "accuracy.html", "about.html", "privacy.html", "imprint.html")
 # outside pages that exist in German too: the German page links the German one
 LOCALISED = {
     "https://mailbox.org/en/data-protection-privacy-policy/": "https://mailbox.org/de/datenschutz/"

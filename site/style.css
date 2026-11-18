@@ -772,3 +772,138 @@ audio {
     width: 100%;
   }
 }
+
+/* the accuracy page: the diagram follows the colour scheme through the site's tokens */
+.diagram {
+  display: block;
+  width: 100%;
+  max-width: 26rem;
+  height: auto;
+  margin: 0 auto;
+}
+
+.diagram rect {
+  fill: var(--card);
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+
+.diagram .accent rect {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+
+.diagram text {
+  fill: var(--fg);
+  font-family: inherit;
+  text-anchor: middle;
+}
+
+.diagram .main {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.diagram .sub {
+  fill: var(--muted);
+  font-size: 10.5px;
+}
+
+.diagram .note {
+  fill: var(--muted);
+  font-size: 12px;
+  text-anchor: start;
+}
+
+.diagram .flow,
+.diagram .divider {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+
+.diagram .divider {
+  stroke: var(--line);
+  stroke-dasharray: 4 4;
+}
+
+.diagram .head {
+  fill: var(--muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.numbers {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+.numbers th,
+.numbers td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.numbers td.n,
+.numbers th.n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.numbers caption {
+  caption-side: bottom;
+  padding-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  text-align: left;
+}
+
+/* on a phone each mode is a small card: the column's name before every value, no sideways
+   scrolling (the label comes from data-label, CSS only) */
+@media (max-width: 39.99rem) {
+  .numbers thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .numbers,
+  .numbers tbody,
+  .numbers tr,
+  .numbers th,
+  .numbers td,
+  .numbers caption {
+    display: block;
+  }
+
+  .numbers tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .numbers th,
+  .numbers td {
+    border: 0;
+    padding: 0.25rem 0;
+  }
+
+  .numbers td.n {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: right;
+  }
+
+  .numbers td.n::before {
+    content: attr(data-label);
+    color: var(--muted);
+    text-align: left;
+  }
+}
