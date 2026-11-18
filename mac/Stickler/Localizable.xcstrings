@@ -2038,6 +2038,24 @@
         }
       }
     },
+    "Show in Finder" : {
+      "comment" : "Translators: Mac app, the bar after saving a file (design screen M7)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Finder anzeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar en el Finder"
+          }
+        }
+      }
+    },
     "Side Stick" : {
       "extractionState" : "manual",
       "localizations" : {

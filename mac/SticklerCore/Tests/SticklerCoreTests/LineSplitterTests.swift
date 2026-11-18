@@ -41,3 +41,10 @@ import Testing
     let end = CoreEnd(reason: .exited(1), details: ["Traceback", "MemoryError"])
     #expect(end.technicalDetails == "The core exited with status 1.\nTraceback\nMemoryError")
 }
+
+@Test func theSavePanelsProposeTheGTKAppsNames() {
+    #expect(ExportName.musicXML("/m/Eye of the Tiger.flac") == "Eye of the Tiger.musicxml")
+    #expect(ExportName.pdf("/m/Eye of the Tiger.flac") == "Eye of the Tiger.pdf")
+    #expect(ExportName.base(of: "/m/ two words .mp3") == "two words")
+    #expect(ExportName.base(of: "/m/ .flac") == "Stickler")
+}

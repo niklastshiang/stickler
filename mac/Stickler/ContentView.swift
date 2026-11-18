@@ -10,6 +10,11 @@ struct ContentView: View {
     var body: some View {
         page
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if let notice = model.notice {
+                    NoticeBar(model: model, notice: notice)
+                }
+            }
             .navigationTitle(model.title)
             .navigationSubtitle(model.subtitle)
             .toolbar {
@@ -21,6 +26,15 @@ struct ContentView: View {
                     }
                     .help(Text("Open a Song"))
                     .disabled(!canOpen)
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        ExportMenu(model: model)
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                    .help(Text("Export"))
+                    .disabled(Exports.result(model) == nil)
                 }
             }
             .sheet(item: setupSheet) { _ in

@@ -1,3 +1,5 @@
+import Foundation
+
 /// The fields of the replies that carry more than `ok` (`Reply.payload(_:)`).
 
 /// A written bar's rectangle on a page, in page pixels (a click on it jumps there).
@@ -65,4 +67,18 @@ public struct RemovalSizes: Codable, Equatable, Sendable {
         self.modelsText = modelsText
         self.everythingText = everythingText
     }
+}
+
+/// The names the save panels propose, as the GTK app's (`stickler_app.exports`).
+public enum ExportName {
+    /// The song's file name without its suffix, or "Stickler" when that is blank.
+    public static func base(of song: String) -> String {
+        let stem = URL(fileURLWithPath: song).deletingPathExtension().lastPathComponent
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return stem.isEmpty ? "Stickler" : stem
+    }
+
+    public static func musicXML(_ song: String) -> String { base(of: song) + ".musicxml" }
+
+    public static func pdf(_ song: String) -> String { base(of: song) + ".pdf" }
 }

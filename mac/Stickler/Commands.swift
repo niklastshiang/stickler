@@ -30,6 +30,10 @@ struct SticklerCommands: Commands {
                     .disabled(model.recent.isEmpty)
             }
             .disabled(model.phase != .running)
+            Menu("Export") {
+                ExportMenu(model: model)
+            }
+            .disabled(Exports.result(model) == nil)
             Divider()
             Button("Choose Stickler Folder…") { Panels.chooseFolder(model) }
         }

@@ -35,4 +35,6 @@ TEXTS = (
         "to be opened again; finished ones are kept."
     ),
     N_("Start Again"),
+    # Translators: Mac app, the bar after saving a file (design screen M7)
+    N_("Show in Finder"),
 )

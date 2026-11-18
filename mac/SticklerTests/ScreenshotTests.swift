@@ -189,7 +189,10 @@ final class ScreenshotTests: XCTestCase {
     /// A sheet's content alone (a sheet is a window of its own, not in the window's picture).
     func shootSheet(_ model: AppModel, _ name: String) throws {
         for (appearance, look) in [(NSAppearance.Name.aqua, "light"), (.darkAqua, "dark")] {
-            let host = NSHostingView(rootView: SetupSheetView(model: model))
+            // a sheet draws on its window's background; alone it would be transparent
+            let host = NSHostingView(
+                rootView: SetupSheetView(model: model)
+                    .background(Color(nsColor: .windowBackgroundColor)))
             host.appearance = NSAppearance(named: appearance)
             host.frame.size = host.fittingSize
             let window = NSWindow(
@@ -249,6 +252,22 @@ final class ScreenshotTests: XCTestCase {
             "To hear the drums, Stickler needs %1$lld trained models. They are downloaded once; "
                 + "after that, everything runs on this computer, offline.", 1)
             .hasPrefix("To hear the drums, Stickler needs a trained model."))
+    }
+
+    func testASavedFileCanBeShownInTheFinder() async throws {
+        let saved = #"{"event": "notice", "seq": 9, "text": "Saved “Eye of the Tiger.pdf”", "#
+            + #""opens": "/Users/me/Desktop/Eye of the Tiger.pdf"}"#
+        let model = try await model([Self.empty, Self.recent, Self.result, saved])
+        XCTAssertEqual(model.notice?.opens, "/Users/me/Desktop/Eye of the Tiger.pdf")
+        XCTAssertNotNil(Exports.result(model))
+        try shoot(model, "M7-saved")
+    }
+
+    func testTheDrumTrackIsNamedInTheReadersLanguage() async throws {
+        XCTAssertEqual(
+            Exports.drumTrackName("/m/Eye of the Tiger.flac"), "Eye of the Tiger (drums).flac")
+        let model = try await model([Self.empty, Self.analysing])
+        XCTAssertNil(Exports.result(model))  // nothing to export while it analyses
     }
 
     func testOnlySoundFilesAreTakenWhenDropped() {
