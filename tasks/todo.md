@@ -792,8 +792,8 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 ## Phase 20: Release 8 (macOS app), module `core-bridge` (approved 2026-11-18, SPEC.md "Module `core-bridge`")
 
 - [ ] **Task 100: The controller, analysis flows** (M)
-  - Acceptance: `stickler_app.controller.Controller(post=...)` owns the `session.State`; `open`, `cancel`, `retry`, `close`; one job at a time (a new `open` cancels the running one); recent songs updated after a result (`recent.add`, saved) and `forget_recent`; corrections read from the store as the window does. No GTK, no GLib.
-  - Verify: `uv run pytest -q tests/app/test_controller.py` with the fake adapters: an analysis to `Result`, a cancel during it back to the previous state, an unreadable file, `SetupMissing` to `Consent`, a second `open` while one runs
+  - Acceptance: `stickler_app.controller.Controller(post=...)` owns the `session.State`; `open`, `cancel`, `retry`, `close`; one job at a time (a new `open` cancels the running one); recent songs updated after a result (`recent.add`, saved) and `forget_recent`; corrections read from the store as the window does, and `correct` (a changed beat notated again, the newest change wins, stored per song) for the GTK app; the Mac app gets that command with `mac-corrections`. No GTK, no GLib.
+  - Verify: `uv run pytest -q tests/app/test_controller.py` with the fake adapters: an analysis to `Result`, a cancel during it back to the previous state, an unreadable file, `SetupMissing` to `Consent`, a second `open` while one runs, two quick corrections (only the second one shown)
   - Dependencies: none · Files: `src/stickler_app/controller.py`, `tests/app/test_controller.py`
 
 - [ ] **Task 101: The controller, setup and exports** (M)
