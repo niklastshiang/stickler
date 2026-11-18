@@ -246,79 +246,6 @@ Source, version and own measurements are in the README of the respective adapter
 
 ---
 
-## `> OWN SONGS`
-
-Benchmark data is clean, real music is not. That is why Stickler also compares against your own
-songs: sheet music as MIDI from musescore.com, and a recording from your own collection.
-
-<details>
-<summary><b>How the own songs are aligned and checked</b></summary>
-
-The problem is that notes and recording don't line up. Intros are missing, tempos drift, and
-transcribers leave passages out. `stickler align` therefore lays the notes onto the recording,
-hit by hit. It is based on the beats from Beat This! and the rhythm patterns in the Demucs stem,
-linked via DTW. Passages without a counterpart are excluded.
-
-**Only good references make it into the scoring.** Checking is done without a transcription
-model, so the models are not their own examiners. The thresholds are calibrated on MDB, whose
-references are demonstrably correct:
-
-| Criterion | Threshold |
-|---|---|
-| Paired note beats that sit cleanly on the recording (±70 ms) | ≥ 95% |
-| Note hits with an audible attack in the drum stem (±50 ms) | ≥ 85% |
-| Clear attacks in the stem that appear in the notes | ≥ 90% |
-| Evaluated music (excluded passages do not count) | ≥ 2 min |
-
-Passages that only exist in the sheet music, such as extra repeats, are dropped from the
-reference. They are reported, but they are no reason to reject a song.
-If the automatic checks are fooled, for example by a bass bleeding into the drum stem, a
-song can be approved by ear after listening to its `click.wav`.
-
-To check by ear, `stickler align` writes a `click.wav` per song: the recording on the left, clicks
-on the note hits on the right.
-
-</details>
-
----
-
-## `> KEY FIGURES`
-
-The numbers of the last release, for developers.
-
-<details>
-<summary><b>Tests, datasets, coverage</b></summary>
-
-```console
-scripts/check.sh task
-```
-
-```json
-{
-  "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
-  "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 746,
-  "app_widget_tests": 49,
-  "smoke_tests_with_models": 12,
-  "coverage_percent": 98,
-  "coverage_minimum": 95,
-  "adrs": 8,
-  "version": 7,
-  "status": "release 7: new candidates"
-}
-```
-
-| Key | Meaning |
-|---|---|
-| `app_widget_tests` | The GTK app's windows, on an invisible screen: `scripts/gtk.sh test` |
-| `smoke_tests_with_models` | Runs real models, therefore not part of the default run: `uv run pytest -m adapters` |
-| `coverage_minimum` | Below this, the pre-commit hook blocks. Limit and rules in [`CONSTRAINTS.md`](CONSTRAINTS.md) |
-| `own_songs` | Described in `references/own/`. Only songs that pass the quality criteria enter the scoring |
-
-</details>
-
----
-
 ## `> ROADMAP`
 
 **Next**
@@ -494,10 +421,73 @@ On a subscription the real cost differs; this is what the same work would cost o
 
 ---
 
-## `> REPOSITORY LAYOUT`
+## `> MORE DETAILS`
 
 <details>
-<summary><b>Where what is</b></summary>
+<summary><b>Own songs</b>: why real recordings count, and how they are aligned and checked</summary>
+
+Benchmark data is clean, real music is not. That is why Stickler also compares against your own
+songs: sheet music as MIDI from musescore.com, and a recording from your own collection.
+
+The problem is that notes and recording don't line up. Intros are missing, tempos drift, and
+transcribers leave passages out. `stickler align` therefore lays the notes onto the recording,
+hit by hit. It is based on the beats from Beat This! and the rhythm patterns in the Demucs stem,
+linked via DTW. Passages without a counterpart are excluded.
+
+**Only good references make it into the scoring.** Checking is done without a transcription
+model, so the models are not their own examiners. The thresholds are calibrated on MDB, whose
+references are demonstrably correct:
+
+| Criterion | Threshold |
+|---|---|
+| Paired note beats that sit cleanly on the recording (±70 ms) | ≥ 95% |
+| Note hits with an audible attack in the drum stem (±50 ms) | ≥ 85% |
+| Clear attacks in the stem that appear in the notes | ≥ 90% |
+| Evaluated music (excluded passages do not count) | ≥ 2 min |
+
+Passages that only exist in the sheet music, such as extra repeats, are dropped from the
+reference. They are reported, but they are no reason to reject a song.
+If the automatic checks are fooled, for example by a bass bleeding into the drum stem, a
+song can be approved by ear after listening to its `click.wav`.
+
+To check by ear, `stickler align` writes a `click.wav` per song: the recording on the left, clicks
+on the note hits on the right.
+
+</details>
+
+<details>
+<summary><b>Key figures</b>: tests, datasets and coverage of the last release, for developers</summary>
+
+```console
+scripts/check.sh task
+```
+
+```json
+{
+  "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
+  "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
+  "tests": 746,
+  "app_widget_tests": 49,
+  "smoke_tests_with_models": 12,
+  "coverage_percent": 98,
+  "coverage_minimum": 95,
+  "adrs": 8,
+  "version": 7,
+  "status": "release 7: new candidates"
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `app_widget_tests` | The GTK app's windows, on an invisible screen: `scripts/gtk.sh test` |
+| `smoke_tests_with_models` | Runs real models, therefore not part of the default run: `uv run pytest -m adapters` |
+| `coverage_minimum` | Below this, the pre-commit hook blocks. Limit and rules in [`CONSTRAINTS.md`](CONSTRAINTS.md) |
+| `own_songs` | Described in `references/own/`. Only songs that pass the quality criteria enter the scoring |
+
+</details>
+
+<details>
+<summary><b>Repository layout</b>: where what is</summary>
 
 ```
 stickler/
