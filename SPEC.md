@@ -1752,8 +1752,10 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 - **User:** a drummer with a Mac (Apple Silicon, macOS 26 or newer) who is not technical.
 - **First version (minimum, owner 2026-11-17):** open or drop a song, set up the models with
   consent, analyse it with progress and cancel, read the sheet music, export MusicXML, PDF and the
-  drum track, recent songs, English, German and Spanish. Fast mode; Quality too if release 7's
-  decision on the modes is done by the time `core-bridge` is specified (owner, 2026-11-17).
+  drum track, recent songs, English, German and Spanish. Fast mode only (owner, 2026-11-18):
+  Quality needs MuScriptor, whose weights are gated on Hugging Face (an account, the licence
+  accepted, a token), too much for a drummer who is not technical; the GTK app has no Quality
+  either. Quality comes later for both apps, in a module of its own.
 - **Later releases:** playback (`mac-playback`), corrections (`mac-corrections`), the GPU through
   Metal (`mac-gpu`, measured against the CPU first).
 - **Success:** a drummer installs the `.dmg` from a GitHub release on a Mac they own and gets
@@ -1765,7 +1767,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
   Windows and macOS to start with") for macOS. The GTK app stays the Linux app.
 - **One shared core, two thin interfaces.** Everything that is not a widget lives in Python and is
   used by both apps: the app logic of `stickler_gtk/logic` moves to a neutral package
-  `stickler_app` (GTK imports it in process; the Mac app reaches it through `stickler serve`).
+  `stickler_app` (GTK imports it in process; the Mac app reaches it through `stickler-bridge`).
   New features are built once, in Python, and tested once; Swift only draws and forwards.
 - **One source for translations:** `po/*.po` stays the only place to translate. A script turns it
   into the Mac app's String Catalog (`.xcstrings`) at build time, mapping placeholders (`{name}`
@@ -1797,7 +1799,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 | `shared-core` | `stickler_gtk/logic` and `i18n` move to `stickler_app` (no visible change on Linux, the existing tests guard it); `scripts/xcstrings.py` writes the String Catalog from `po/` | – | done, below |
 | `mac-design` | Mockups of every screen of the minimum, following Apple's Human Interface Guidelines, made with the owner on the design canvas; no code | – | done, below |
 | `mac-core` | The Python core and the app's models on macOS arm64: Demucs' and MuScriptor's `environments` widened (a `digests.yaml` pair for Linux, behaviour unchanged there), the POSIX spots checked, the test suite on a macOS runner | – | approved, below |
-| `core-bridge` | `stickler serve`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | to write |
+| `core-bridge` | `stickler-bridge`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | draft, below |
 | `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped | `core-bridge`, `mac-design` | to write |
 | `mac-setup` | Setup assistant: consent, model download with progress, resumable, "Remove Downloaded Models…" | `mac-shell` | to write |
 | `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | to write |
@@ -1822,7 +1824,7 @@ changes `mac-setup` and `core-bridge`.
 
 ### Commands (planned)
 ```
-uv run stickler serve                      # the core for the Mac app (JSON lines)
+uv run stickler-bridge                     # the core for the Mac app (JSON lines)
 uv run python scripts/xcstrings.py         # po/*.po → mac/Stickler/Localizable.xcstrings
 xcodebuild -scheme Stickler -destination 'platform=macOS' test   # on a macOS runner
 swiftlint --strict mac/
@@ -1871,13 +1873,12 @@ docs/install-macos.md     # install guide with the "Open Anyway" pictures
 5. CONSTRAINTS.md covers Swift; coverage ≥ 95 % outside pure views.
 
 ### Open questions
-Decided (owner, 2026-11-17): Quality in the first Mac version if release 7's decision on the
-modes is done by then, else Fast only; the oldest macOS is 26 (the owner tests on it; the torch
-wheels need 14, so 26 is the app's own floor).
+Decided (owner, 2026-11-17): the oldest macOS is 26 (the owner tests on it; the torch wheels
+need 14, so 26 is the app's own floor). Decided (owner, 2026-11-18): Fast only in the first Mac
+version (see Objective); the bridge is one long-running process per app start that holds the
+app's state in Python and sends all of it on every change (module `core-bridge`).
 
-1. The bridge's process model: one long-running `stickler serve` per window, or one per request?
-   Decided in `core-bridge`.
-2. Does `uv` run the models from inside an ad-hoc signed `.app` after "Open Anyway" (quarantine
+1. Does `uv` run the models from inside an ad-hoc signed `.app` after "Open Anyway" (quarantine
    of the downloaded `uv`, Python and wheels)? Answered by the packaging spike.
 
 ### Module `shared-core`
@@ -2086,6 +2087,132 @@ stays as it is); the macOS app icon is part of this module.
   `#1c1c1e`.
 - **New texts for `po/`** (added by `mac-shell`): "Show in Finder", "Takes about 15 seconds",
   "Open Recent", "Clear Menu" (the last two may come from the system).
+
+### Module `core-bridge`
+
+> Status: **draft** (2026-11-18), waiting for the owner's approval. Decided before the draft
+> (owner, 2026-11-18): Fast only; one long-running process per app start; the state lives in
+> Python and is sent whole on every change.
+
+**Objective.** The Mac app reaches the shared core through one subprocess that speaks JSON
+lines over stdin and stdout. Python keeps everything that is not drawing: what the window
+shows (`stickler_app.session`), the analysis, the setup, exports, recent songs, settings and
+every text the user reads, already translated. Swift sends commands and draws the state it is
+sent; it never rebuilds a flow. The contract is written and tested here, before any Swift
+exists.
+
+**Assumptions** (from the code on 2026-11-18):
+1. The states and their changes are in `stickler_app.session` (8 states, pure functions), but
+   the flows that drive them live in the GTK window (`stickler_gtk/ui/window.py`, 918 lines):
+   the analysis thread and its cancel token, the setup with its download meter sampled twice a
+   second, the model check at start (`setup.sync_adapters`, `api.mode_ready`, the stored
+   consent), recent songs, "Remove Downloaded Models…" and the drum track export with its cost.
+   A bridge that only exposed `session` would leave these to Swift.
+2. `stickler` may import nothing but itself (boundary test; the CLI imports only
+   `stickler.api`), so the bridge cannot be `stickler serve` as planned: it is an entry point
+   of `stickler_app`.
+3. The PDF is written by the GTK interface (`ui/pdf.py`: cairo and librsvg from `gi`); the core
+   only engraves the A4 pages as SVG (`engraving.a4_pages`).
+4. `stickler_app.paths` knows "flatpak" and "appimage" and the XDG folders; a Mac app has
+   neither and keeps its files under `~/Library`.
+5. Every text the window shows is built in Python with gettext (`steps`, `session.failed`,
+   `exports.drum_track_cost`, `recent.rows`, `setup`); the language comes from `LANGUAGE`.
+
+**Scope.**
+1. **A GUI-neutral controller, `stickler_app.controller`:** the flows of assumption 1, moved
+   out of the GTK window's logic into one class that owns the current `session.State`, runs
+   long work in a thread (one job at a time; a new analysis cancels the running one, as now),
+   samples the setup meter, and hands every new state to a callback. The host decides on which
+   thread the callback runs (GTK: the main loop; the bridge: its writer). Behaviour is the GTK
+   window's today, nothing new; the tests drive it with the fake adapters of the widget tests.
+2. **The bridge, `stickler_app.bridge`** (entry point `stickler-bridge`, also `python -m
+   stickler_app.bridge`): one process per app start, standard library only.
+   - **Lines:** one JSON object per line, UTF-8, on stdout; logs and tracebacks on stderr only.
+     The bridge's first line is `{"event": "hello", "protocol": 1, "version": "<release>",
+     "language": "<code>"}`.
+   - **Commands** from Swift: `{"id": <int>, "cmd": "<name>", ...arguments}`. Every command gets
+     exactly one reply, `{"id": <int>, "ok": true, ...}` or `{"id": <int>, "ok": false,
+     "error": {"code": "<stable id>", "message": "<translated>"}}`. A reply comes at once; long
+     work is reported through state events, not through the reply.
+   - **Events:** `{"event": "state", "seq": <int>, "state": {...}}` after every change, the
+     whole state each time (a few kB; the SVG pages are not part of it), and `{"event":
+     "recent", "rows": [...]}` when the recent songs change. `seq` grows by one per event, so
+     Swift can drop a late one.
+   - **The state** as JSON: `kind` (`empty`, `consent`, `setting_up`, `setup_failed`,
+     `analysing`, `result`, `exporting`, `failed`) and the fields Swift draws, already
+     translated: step rows (`id`, `label`, `detail`, `state`), the consent's models with their
+     texts, sizes and licence (from `setup.model_text`, `setup.total_size`), the result's
+     `title`, `subtitle`, `tempo`, `meter`, the failure's `title`, `description`, `details`,
+     `can_retry`; and which commands are possible now (`can_export`, `can_cancel`, …), so Swift
+     enables menu items from the state alone.
+   - **Commands** (the minimum of release 8): `start` (the model check; leads to `empty`,
+     `consent` or `setting_up`), `agree`, `not_now`, `retry_setup`, `open {path}`, `cancel`,
+     `retry`, `close` (back to `empty`), `pages {width, zoom}` (reply: the pages of the current
+     result as SVG with width, height and the written bars' rectangles, from
+     `engraving.engrave`), `a4_pages` (the A4 pages for the PDF), `export_musicxml {dest}`,
+     `drum_track_cost` (reply: minutes, text, whether Demucs is downloaded first),
+     `export_drum_track {dest}`, `forget_recent {path}`, `settings` and `set_zoom {zoom}`,
+     `zoom_in`, `zoom_out`, `actual_size` (reply: the new zoom), `removal_sizes` and
+     `remove_models {everything}`, `quit`.
+   - **Errors:** a line that is not JSON, an unknown command or a wrong argument gets an error
+     reply (`bad_request`, `unknown_command`, `bad_argument`) and the bridge keeps running; a
+     command that does not fit the state (`export_musicxml` without a result) gets `not_now`.
+     A failure inside a flow becomes a `failed` or `setup_failed` state, as in GTK.
+   - **Ending:** `quit`, or stdin closing (the app quit or crashed), cancels the running job,
+     waits for its clean-up (at most 2 s, as the GTK window does) and exits 0. The models run
+     in their own process groups and are killed by the cancel, so nothing outlives the app.
+3. **The PDF stays drawing:** the bridge gives the A4 pages as SVG; writing them into a PDF is
+   the interface's job, as `ui/pdf.py` is GTK's (`mac-shell` draws them with WebKit or Core
+   Graphics). This needs no new Python dependency (cairo without `gi` would be one: ask first).
+4. **A Mac kind in `paths`:** `packaged()` also returns `"macos"` when the app's launcher sets
+   `STICKLER_PACKAGED=macos`; then models, results and settings go under `~/Library/Application
+   Support/Stickler` and the scores and clicks under `~/Library/Caches/Stickler` (Apple's
+   folders), unless XDG variables are set. Linux paths do not change (their tests stay as
+   they are).
+5. **Translations:** the bridge loads the catalogue of `LANGUAGE`, which Swift sets from the
+   user's preferred languages when it starts the process; `hello` names the language found.
+   How the `.mo` files reach the `.app` is `mac-package`'s.
+6. **The contract on paper:** `docs/bridge.md` lists every command, reply, event and state
+   field with an example line. A test checks that the commands in it and in the code are the
+   same set, and that every state kind is documented.
+7. **GTK onto the controller:** the GTK window uses `stickler_app.controller` too, so each flow
+   exists once (see open question 1). The widget tests stay as they are and must pass
+   unchanged; the owner checks the app on the laptop as at Checkpoint R.
+
+**Testing.**
+- The controller: pytest with the fake adapters (an analysis, a cancel in every state, a failed
+  setup and Try Again, the consent, the drum track with and without the download, the removal),
+  the 95 % rule.
+- The bridge in process (its loop reading and writing in-memory streams): every command, every
+  error reply, `seq` order, a cancelled analysis, stdin closing during a job.
+- The bridge as a real subprocess once: `hello`, `open` on a short fixture song with fake
+  adapters until `result`, `pages`, `quit`; and that closing stdin ends it and its model
+  process within 3 s.
+- On the macOS runner the same tests run (the `macos` job), with `STICKLER_PACKAGED=macos` for
+  the paths.
+
+**Success criteria.**
+1. `stickler-bridge` passes every test above on Linux and on the macOS runner; coverage stays
+   ≥ 95 %.
+2. A song becomes a `result` and its pages through the bridge alone, driven by a small script
+   (`scripts/bridge_demo.py`) on the laptop with the real Fast models: the same MusicXML as the
+   GTK app's for that song.
+3. Closing the bridge's stdin in the middle of an analysis leaves no process behind and no
+   half-written cache entry.
+4. The GTK app behaves as before (widget tests unchanged and green; the owner's quick check),
+   and the adapter cache keys are unchanged (no adapter file touched).
+5. `docs/bridge.md` matches the code (its test).
+
+**Out of scope.** Swift (`mac-shell`); Quality, playback and corrections (their commands come
+with `mac-playback` and `mac-corrections`, the state already carries what they will need); how
+the `.app` finds `uv`, Python and ffmpeg (`mac-package`); a socket or several clients; more
+than one window.
+
+**Open questions.**
+1. GTK onto the controller in this module (scope 7), or later? Proposed: here, as the last
+   task, so the flows are not written twice even for a while; it is the one part that touches
+   the Linux app, which the widget tests and the owner's check guard. The alternative keeps
+   Linux untouched now, with two copies of the flows until a later module.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
