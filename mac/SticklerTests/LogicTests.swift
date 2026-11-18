@@ -52,7 +52,9 @@ final class LogicTests: XCTestCase {
 
     /// Waits up to two seconds for `condition` (commands go out on tasks of their own).
     func until(_ condition: () -> Bool) async throws {
-        for _ in 0..<200 where !condition() {
+        var waited = 0
+        while !condition(), waited < 200 {
+            waited += 1
             try await Task.sleep(for: .milliseconds(10))
         }
         XCTAssertTrue(condition(), "timed out")
