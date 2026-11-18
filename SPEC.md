@@ -2137,8 +2137,10 @@ exists.
      work is reported through state events, not through the reply.
    - **Events:** `{"event": "state", "seq": <int>, "state": {...}}` after every change, the
      whole state each time (a few kB; the SVG pages are not part of it), and `{"event":
-     "recent", "rows": [...]}` when the recent songs change. `seq` grows by one per event, so
-     Swift can drop a late one.
+     "recent", "rows": [...]}` when the recent songs change, and `{"event": "notice", "text":
+     "<translated>"}` for a short message the GTK window shows as a toast (a correction or the
+     recent songs not saved; the state stays). `seq` grows by one per event, so Swift can drop
+     a late one.
    - **The state** as JSON: `kind` (`empty`, `consent`, `setting_up`, `setup_failed`,
      `analysing`, `result`, `exporting`, `failed`) and the fields Swift draws, already
      translated: step rows (`id`, `label`, `detail`, `state`), the consent's models with their
@@ -2211,6 +2213,8 @@ than one window.
 
 **Decided (owner, 2026-11-18):** GTK moves onto the controller in this module, as its last
 task (scope 7), so no flow exists twice even for a while.
+**Decided (owner, 2026-11-18, after Task 100):** the controller reports what the window showed
+as a toast as a `Notice`, and the bridge sends it as a `notice` event.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
