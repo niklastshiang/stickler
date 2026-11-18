@@ -45,6 +45,10 @@
 **Stickler** turns a song into drum sheet music: give it an MP3, FLAC, Opus, M4A or any other audio
 file, get the notes as MusicXML or PDF, and only correct them in MuseScore. Everything runs locally, with open-source models.
 
+On real rock, metal and pop recordings about three in four hits match third-party
+transcriptions, and judged by ear about 87 % are right (see [`> RESULTS`](#-results)): the notes
+are a good first draft to finish in MuseScore, not a finished score.
+
 It started as a test bench, because one question cannot be settled by reading papers: which
 combination of drum separation and transcription model produces the best notes? Every model
 lives in its own adapter with its own Python environment and competes against the same
@@ -85,7 +89,8 @@ Stickler only uses open-source models from actively maintained projects.
 
 Every [release](https://github.com/niklastshiang/stickler/releases) has the app in two forms,
 for x86_64 Linux. On first start it asks to download its two models once; after that it runs
-offline.
+offline. Stickler ships no model itself, and each comes with its own licence, which the app names
+before the download; some are for non-commercial use only (see [`> LICENSE`](#-license)).
 
 | What | How much |
 |---|---|
@@ -153,22 +158,6 @@ A dream come true.
 
 ---
 
-## `> WARNINGS`
-
-> **⚠ NOT PERFECT.** On real rock, metal and pop recordings, about three in four hits match
-> third-party transcriptions; judged by ear, about 87 % are right (see [`> RESULTS`](#-results)).
-> The notes are a starting point to correct in MuseScore, not a finished score.
-
-> **⚠ MODEL LICENSES.** Stickler never ships model weights; the app's first start (or
-> `stickler setup`) downloads them, and
-> each comes with its own license. Some are non-commercial (ADTOF, MuScriptor, presumably
-> BS-RoFormer), see [ADR 0002](docs/adr/0002-nc-lizenzen.md).
-
-> **⚠ TRAINING OVERLAP.** Some models may have seen MDB Drums or ENST-Drums during training. The
-> honest test is your own songs.
-
----
-
 ## `> RESULTS`
 
 Macro-F1 over 5 classes (kick, snare, toms, hi-hat, cymbals). Time: a 4-minute song on a laptop
@@ -182,7 +171,8 @@ CPU (AMD Ryzen AI 5 340).
 ¹ 25 commercial rock, metal and pop recordings, references from musescore.com transcriptions.
 Corrected for errors in these references (release 3, 100 spots judged blind by ear): Fast 0.867,
 Quality 0.842.
-² Drummer 3, the part no model was trained on.
+² Drummer 3, the part no model was trained on. Some models may have seen MDB Drums or the other
+ENST-Drums parts during training, so the own songs are the fairest test.
 
 - **ADTOF is the strongest single model**, and on real recordings it works best on the original
   mix. **Quality** is only slightly better against the references (better on 16, worse on 2 of
