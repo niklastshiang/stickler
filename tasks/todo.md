@@ -872,7 +872,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: tests up to the save panel's answer with a fake core; screenshots
   - Dependencies: 112 · Files: `mac/Stickler/`, tests, `po/*`
 
-- [ ] **Task 115: The PDF** (M)
+- [x] **Task 115: The PDF** (M): done 2026-11-18 (be56403, 26a7978; `mac` green: 16 app tests). Sheet Music (PDF)… writes the core's A4 pages: each SVG drawn by WebKit onto an A4 page (CSS-scaled, as the SVG has no viewBox), joined by PDFKit with the title. The PDF from CI holds `AAAAAD+Leipzig` and the tempo mark's text; Verovio already embeds a Leipzig subset in the SVG, the app's whole font (with its OFL licence) stays as a safeguard. The first run's failure was the test's: the groove fixture has no title.
   - Acceptance: `a4_pages` → each SVG rendered by WebKit, `createPDF`, joined with PDFKit, the title set; a test writes the PDF from a fixed reply: page count, A4 size, the tempo mark's text drawn (the Leipzig font: embedded or registered).
   - Verify: the test on `macos-26`; one PDF as artifact, compared with the GTK app's for the same song
   - Dependencies: 114 · Files: `mac/Stickler/`, tests
