@@ -44,6 +44,26 @@ public final class AppModel {
 
     public static let folderKey = "SticklerFolder"
 
+    /// The window's title, as the GTK window's header: the song once it has one, else the app.
+    public var title: String {
+        switch state.screen {
+        case .result(let result): result.title
+        case .exporting(let exporting): exporting.title
+        case .analysing(let analysing): analysing.name
+        case .failed(let failure): failure.name
+        default: "Stickler"
+        }
+    }
+
+    /// The line under the title: artist, tempo and time signature of a result.
+    public var subtitle: String {
+        switch state.screen {
+        case .result(let result): result.subtitle
+        case .exporting(let exporting): exporting.subtitle
+        default: ""
+        }
+    }
+
     private let defaults: UserDefaults
     private let uvPlaces: [URL]
     private let languages: [String]
@@ -208,6 +228,13 @@ public final class AppModel {
     public func exportMusicXML(to path: String) { send(.exportMusicXML(dest: path)) }
     public func exportDrumTrack(to path: String) { send(.exportDrumTrack(dest: path)) }
     public func removeModels(everything: Bool) { send(.removeModels(everything: everything)) }
+
+    /// File › Open Recent › Clear Menu: every recent song forgotten.
+    public func clearRecent() {
+        for row in recent {
+            forget(row.path)
+        }
+    }
 
     public func dismissNotice() {
         notice = nil

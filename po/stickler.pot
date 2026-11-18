@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-18 10:25+0100\n"
+"POT-Creation-Date: 2026-11-18 11:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -165,6 +165,53 @@ msgstr ""
 
 #: src/stickler_app/legend.py:28
 msgid "Pedal Hi-Hat"
+msgstr ""
+
+#. Translators: Mac app, File menu and the first start: where the Stickler folder is
+#: src/stickler_app/mac_texts.py:10
+msgid "Choose Stickler Folder…"
+msgstr ""
+
+#. Translators: Mac app, the first start's title when no Stickler folder is chosen yet
+#: src/stickler_app/mac_texts.py:12
+msgid "Where Is Stickler?"
+msgstr ""
+
+#: src/stickler_app/mac_texts.py:14
+msgid ""
+"Until Stickler comes as an app, it runs from the folder you downloaded with "
+"git. Choose that folder."
+msgstr ""
+
+#: src/stickler_app/mac_texts.py:17
+msgid ""
+"This folder is not Stickler. Choose the folder with pyproject.toml and "
+"adapters in it."
+msgstr ""
+
+#: src/stickler_app/mac_texts.py:18
+msgid ""
+"uv was not found. Install it as the guide says, then choose the folder again."
+msgstr ""
+
+#. Translators: Mac app, the window after an analysis until the sheet view comes
+#: src/stickler_app/mac_texts.py:20
+msgid "Sheet music ready. Export it as PDF to read it."
+msgstr ""
+
+#. Translators: Mac app, File menu
+#: src/stickler_app/mac_texts.py:22
+msgid "Open Recent"
+msgstr ""
+
+#. Translators: Mac app, File › Open Recent: forget every recent song
+#: src/stickler_app/mac_texts.py:24
+msgid "Clear Menu"
+msgstr ""
+
+#. Translators: Mac app, Help menu
+#: src/stickler_app/mac_texts.py:26
+msgid "Stickler Help"
 msgstr ""
 
 #: src/stickler_app/playback.py:57

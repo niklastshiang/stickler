@@ -62,3 +62,47 @@ jobs:
           swift --version
           swift test --enable-code-coverage
           python3 ../../scripts/swift_coverage.py "$(swift test --show-codecov-path)" .
+
+  # The app itself (SPEC.md, module `mac-shell`, scope 4): generated, built and tested here, its
+  # screens kept as pictures and the app as a download for the owner's Mac.
+  app:
+    runs-on: macos-26
+    env:
+      XCODEGEN: "2.46.0" # 2026-07-16; its SHA-256 is GitHub's digest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Xcode 26.6
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+      - name: The project, from mac/project.yml
+        run: |
+          curl -fsSLO "https://github.com/yonaskolb/XcodeGen/releases/download/$XCODEGEN/xcodegen.zip"
+          echo "4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806  xcodegen.zip" | shasum -a 256 -c
+          unzip -q xcodegen.zip -d "$RUNNER_TEMP"
+          "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate --spec mac/project.yml
+      - name: Build and test
+        env:
+          TEST_RUNNER_STICKLER_SCREENSHOTS: ${{ runner.temp }}/screenshots
+        run: |
+          xcodebuild test -project mac/Stickler.xcodeproj -scheme Stickler \
+            -destination 'platform=macOS' -derivedDataPath "$RUNNER_TEMP/test" -quiet
+      - name: The app, ad-hoc signed
+        run: |
+          xcodebuild build -project mac/Stickler.xcodeproj -scheme Stickler \
+            -configuration Release -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/release" -quiet
+          app="$RUNNER_TEMP/release/Build/Products/Release/Stickler.app"
+          codesign --verify --verbose "$app"
+          # ditto keeps the executable bit and the signature; upload-artifact's own zip would not
+          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/Stickler.zip"
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: screenshots
+          path: ${{ runner.temp }}/screenshots
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          path: ${{ runner.temp }}/Stickler.zip
+          archive: false

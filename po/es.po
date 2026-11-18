@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-18 10:25+0100\n"
+"POT-Creation-Date: 2026-11-18 11:49+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -171,6 +171,59 @@ msgstr "Bombo"
 #: src/stickler_app/legend.py:28
 msgid "Pedal Hi-Hat"
 msgstr "Hi-hat con pedal"
+
+#. Translators: Mac app, File menu and the first start: where the Stickler folder is
+#: src/stickler_app/mac_texts.py:10
+msgid "Choose Stickler Folder…"
+msgstr "Elegir la carpeta de Stickler…"
+
+#. Translators: Mac app, the first start's title when no Stickler folder is chosen yet
+#: src/stickler_app/mac_texts.py:12
+msgid "Where Is Stickler?"
+msgstr "¿Dónde está Stickler?"
+
+#: src/stickler_app/mac_texts.py:14
+msgid ""
+"Until Stickler comes as an app, it runs from the folder you downloaded with "
+"git. Choose that folder."
+msgstr ""
+"Hasta que Stickler llegue como app, funciona desde la carpeta que "
+"descargaste con git. Elige esa carpeta."
+
+#: src/stickler_app/mac_texts.py:17
+msgid ""
+"This folder is not Stickler. Choose the folder with pyproject.toml and "
+"adapters in it."
+msgstr ""
+"Esta carpeta no es Stickler. Elige la carpeta que contiene pyproject.toml y "
+"adapters."
+
+#: src/stickler_app/mac_texts.py:18
+msgid ""
+"uv was not found. Install it as the guide says, then choose the folder again."
+msgstr ""
+"No se encontró uv. Instálalo como indica la guía y vuelve a elegir la "
+"carpeta."
+
+#. Translators: Mac app, the window after an analysis until the sheet view comes
+#: src/stickler_app/mac_texts.py:20
+msgid "Sheet music ready. Export it as PDF to read it."
+msgstr "La partitura está lista. Expórtala como PDF para leerla."
+
+#. Translators: Mac app, File menu
+#: src/stickler_app/mac_texts.py:22
+msgid "Open Recent"
+msgstr "Abrir recientes"
+
+#. Translators: Mac app, File › Open Recent: forget every recent song
+#: src/stickler_app/mac_texts.py:24
+msgid "Clear Menu"
+msgstr "Borrar menú"
+
+#. Translators: Mac app, Help menu
+#: src/stickler_app/mac_texts.py:26
+msgid "Stickler Help"
+msgstr "Ayuda de Stickler"
 
 #: src/stickler_app/playback.py:57
 #, python-brace-format

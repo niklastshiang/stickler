@@ -444,6 +444,24 @@
         }
       }
     },
+    "Choose Stickler Folder…" : {
+      "comment" : "Translators: Mac app, File menu and the first start: where the Stickler folder is",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler-Ordner wählen …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir la carpeta de Stickler…"
+          }
+        }
+      }
+    },
     "Choose Where to Save…" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -457,6 +475,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elegir dónde guardar…"
+          }
+        }
+      }
+    },
+    "Clear Menu" : {
+      "comment" : "Translators: Mac app, File › Open Recent: forget every recent song",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste leeren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar menú"
           }
         }
       }
@@ -1396,6 +1432,24 @@
         }
       }
     },
+    "Open Recent" : {
+      "comment" : "Translators: Mac app, File menu",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt geöffnet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir recientes"
+          }
+        }
+      }
+    },
     "Open With…" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1948,6 +2002,24 @@
         }
       }
     },
+    "Sheet music ready. Export it as PDF to read it." : {
+      "comment" : "Translators: Mac app, the window after an analysis until the sheet view comes",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Noten sind fertig. Exportiere sie als PDF, um sie zu lesen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La partitura está lista. Expórtala como PDF para leerla."
+          }
+        }
+      }
+    },
     "Side Stick" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2080,6 +2152,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Splash"
+          }
+        }
+      }
+    },
+    "Stickler Help" : {
+      "comment" : "Translators: Mac app, Help menu",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler-Hilfe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayuda de Stickler"
           }
         }
       }
@@ -2356,6 +2446,23 @@
         }
       }
     },
+    "This folder is not Stickler. Choose the folder with pyproject.toml and adapters in it." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Ordner ist nicht Stickler. Wähle den Ordner, in dem pyproject.toml und adapters liegen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta carpeta no es Stickler. Elige la carpeta que contiene pyproject.toml y adapters."
+          }
+        }
+      }
+    },
     "This frees %1$@. Stickler asks before it downloads the models again." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2517,6 +2624,23 @@
         }
       }
     },
+    "Until Stickler comes as an app, it runs from the folder you downloaded with git. Choose that folder." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis Stickler als App kommt, läuft es aus dem Ordner, den du mit git geladen hast. Wähle diesen Ordner."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasta que Stickler llegue como app, funciona desde la carpeta que descargaste con git. Elige esa carpeta."
+          }
+        }
+      }
+    },
     "Volume" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2581,6 +2705,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Qué escuchar"
+          }
+        }
+      }
+    },
+    "Where Is Stickler?" : {
+      "comment" : "Translators: Mac app, the first start's title when no Stickler folder is chosen yet",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wo ist Stickler?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Dónde está Stickler?"
           }
         }
       }
@@ -2820,6 +2962,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "el servidor del modelo"
+          }
+        }
+      }
+    },
+    "uv was not found. Install it as the guide says, then choose the folder again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "uv wurde nicht gefunden. Installiere es, wie die Anleitung sagt, und wähle den Ordner dann noch einmal."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontró uv. Instálalo como indica la guía y vuelve a elegir la carpeta."
           }
         }
       }
