@@ -516,8 +516,8 @@ audio {
 
 .command code {
   flex-grow: 1;
-  overflow-x: auto;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere; /* wraps on a phone: a scrolling box is out of a keyboard's reach */
   font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
 }
 
