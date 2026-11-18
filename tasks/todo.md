@@ -867,7 +867,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: tests with a fake core; screenshots against the canvas
   - Dependencies: 112 · Files: `mac/Stickler/`, tests, `po/*`
 
-- [ ] **Task 114: Exports and the saved bar** (M)
+- [x] **Task 114: Exports and the saved bar** (M): done 2026-11-18 (602014e; `mac` green: 14 app tests, SticklerCore 97.3 %). The Export menu (M7) in the toolbar and under File, with the GTK menu's second lines; MusicXML… and Drum Track… through `NSSavePanel` with the GTK app's names (`ExportName`, tested on Linux), the drum track's cost asked first; Open With… lets the reader pick a program for the MusicXML; the newest notice in a bar at the bottom with Show in Finder for a saved file, gone after 8 s. Differs from the canvas, for the owner: the MusicXML line keeps "To edit in MuseScore or another notation program" (the canvas said "or Dorico").
   - Acceptance: the Export menu with second lines (M7); MusicXML and the drum track through `NSSavePanel` with the core's names; the drum track's cost alert first; Open With… for the MusicXML; the bar with "Show in Finder" after saving, other notices in it.
   - Verify: tests up to the save panel's answer with a fake core; screenshots
   - Dependencies: 112 · Files: `mac/Stickler/`, tests, `po/*`
