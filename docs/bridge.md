@@ -17,7 +17,7 @@ flows). Specification: SPEC.md, module `core-bridge`.
   languages. Packaged as the Mac app, its launcher also sets `STICKLER_PACKAGED=macos`.
 - The first line is `hello`. After it come a `state` event (the empty window) and a `recent`
   event.
-- Each command is `{"id": <int>, "cmd": "<name>", ...arguments}`. It gets exactly one reply,
+- Each command is `{"id": <int>, "cmd": "<name>", ...arguments}`. It gets exactly one reply.
   The bridge handles commands one at a time. Most reply at once; `pages`, `a4_pages` and
   `removal_sizes` take a moment (engraving, walking folders), and the commands after them,
   `cancel` too, wait for it. Long work, such as an analysis or a download, is reported through
