@@ -286,18 +286,46 @@
         <div>
           <h2 id="remove">Deinstallieren</h2>
           <p class="muted">Um den Platz der Modelle freizugeben und die App zu behalten, wähl
-            <strong>Heruntergeladene Modelle entfernen …</strong> im Menü. Um alles zu entfernen: auf
-            dem Mac „Heruntergeladene Modelle entfernen …“ mit Häkchen wählen, dann Stickler in den
-            Papierkorb ziehen; beim Flatpak <code>flatpak uninstall --delete-data ng.tshia.Stickler</code>
-            ausführen; beim AppImage die Datei löschen und die Ordner
-            <code>~/.local/share/stickler</code>, <code>~/.cache/stickler</code> und
-            <code>~/.config/stickler</code>.</p>
+            <strong>Heruntergeladene Modelle entfernen …</strong> im Menü. Um alles zu entfernen:</p>
+          <dl class="removal">
+            <dt>Mac</dt>
+            <dd><strong>Heruntergeladene Modelle entfernen …</strong> mit Häkchen wählen, dann
+              Stickler in den Papierkorb ziehen.</dd>
+            <dt>Flatpak</dt>
+            <dd>Im Terminal:
+            <div class="command">
+              <code id="uninstall-flatpak">flatpak uninstall --delete-data ng.tshia.Stickler</code>
+              <button type="button" hidden data-copy="uninstall-flatpak" data-status="uninstall-flatpak-status"
+                data-done="Kopiert" data-failed="Kopieren ging nicht; markiere den Befehl stattdessen"
+                aria-label="Befehl kopieren">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="visually-hidden" id="uninstall-flatpak-status" role="status"></p></dd>
+            <dt>AppImage</dt>
+            <dd>Die Datei löschen, dann im Terminal:
+            <div class="command">
+              <code id="uninstall-appimage">rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler</code>
+              <button type="button" hidden data-copy="uninstall-appimage" data-status="uninstall-appimage-status"
+                data-done="Kopiert" data-failed="Kopieren ging nicht; markiere den Befehl stattdessen"
+                aria-label="Befehl kopieren">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="visually-hidden" id="uninstall-appimage-status" role="status"></p></dd>
+          </dl>
         </div>
         <div>
           <h2 id="author">Über mich</h2>
           <div class="author">
             <img src="../images/icon.svg" alt="" width="72" height="72">
-            <p class="muted">Niklas Tshiang Tshiananga: trommelt, nerdet, schreibt. Weißt du, wie schwer es ist, Noten für auch nur ein bisschen abseitige Musik zu finden? Ich schon, denn ich habe gesucht. Außerdem hasse ich Abodienste. Tada: Mit etwas Zeit und vielen Tokens ist dieses kleine Programm entstanden. Der Code ist offen auf
+            <p class="muted">Niklas Tshiang Tshiananga: trommelt, nerdet, schreibt. Weißt du, wie schwer es ist, Noten für auch nur ein bisschen nischige Musik zu finden? Ich schon, denn ich habe gesucht. Außerdem hasse ich Abodienste. Tada: Mit etwas Zeit und vielen Tokens ist dieses kleine Programm entstanden. Der Code ist offen auf
               <a href="https://github.com/niklastshiang/stickler">GitHub</a>.</p>
           </div>
         </div>

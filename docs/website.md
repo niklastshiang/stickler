@@ -30,6 +30,13 @@ own page instead of `404.html`. GitHub Pages does both.
   scripts/gtk.sh demo "data/own/fluffing_a_duck/Fluffing a Duck.mp3" --dark --no-gif --video site/images --stills site/images
   ```
 
+  The example clip (the first 20 seconds with a click on every detected hit, as the app's
+  "Both"):
+
+  ```bash
+  uv run python scripts/site_clip.py "data/own/fluffing_a_duck/Fluffing a Duck.mp3" site/media
+  ```
+
   Close Stickler first. The recording runs the app on an invisible screen with private
   settings; only that screen's compositor gets a D-Bus session of its own.
 - **Check before a commit:** `scripts/check.sh task` runs the site's tests. The accessibility

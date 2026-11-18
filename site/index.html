@@ -284,11 +284,40 @@
         <div>
           <h2 id="remove">Uninstalling</h2>
           <p class="muted">To free the models’ space but keep the app, choose
-            <strong>Remove Downloaded Models…</strong> in its menu. To remove everything: on a Mac,
-            choose Remove Downloaded Models… with its box ticked, then drag Stickler to the Bin;
-            with the Flatpak, run <code>flatpak uninstall --delete-data ng.tshia.Stickler</code>;
-            with the AppImage, delete the file and the folders <code>~/.local/share/stickler</code>,
-            <code>~/.cache/stickler</code> and <code>~/.config/stickler</code>.</p>
+            <strong>Remove Downloaded Models…</strong> in its menu. To remove everything:</p>
+          <dl class="removal">
+            <dt>Mac</dt>
+            <dd>Choose <strong>Remove Downloaded Models…</strong> with its box ticked, then drag
+              Stickler to the Bin.</dd>
+            <dt>Flatpak</dt>
+            <dd>In a terminal:
+            <div class="command">
+              <code id="uninstall-flatpak">flatpak uninstall --delete-data ng.tshia.Stickler</code>
+              <button type="button" hidden data-copy="uninstall-flatpak" data-status="uninstall-flatpak-status"
+                data-done="Copied" data-failed="Could not copy; select the command instead"
+                aria-label="Copy the command">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="visually-hidden" id="uninstall-flatpak-status" role="status"></p></dd>
+            <dt>AppImage</dt>
+            <dd>Delete the file, then in a terminal:
+            <div class="command">
+              <code id="uninstall-appimage">rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler</code>
+              <button type="button" hidden data-copy="uninstall-appimage" data-status="uninstall-appimage-status"
+                data-done="Copied" data-failed="Could not copy; select the command instead"
+                aria-label="Copy the command">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="visually-hidden" id="uninstall-appimage-status" role="status"></p></dd>
+          </dl>
         </div>
         <div>
           <h2 id="author">About the author</h2>

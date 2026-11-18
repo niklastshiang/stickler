@@ -2395,7 +2395,9 @@ GPU; Intel Macs; the Mac App Store.
 3. **How it works:** four numbered steps: open or drop a song, wait about 15 seconds, read the
    sheet music, export PDF or MusicXML.
 4. **An example:** a few seconds of a song (CC BY 4.0, "Fluffing a Duck", as the screenshots)
-   next to its sheet music; plain `<audio controls>` (no script).
+   next to its sheet music; plain `<audio controls>` (no script), the song with a click on
+   every detected hit as the app's "Both" plays it (owner, 2026-11-18), so a visitor hears what
+   was written down (`scripts/site_clip.py`).
 5. **How good it is:** the honest numbers in plain words, from the report (macro-F1 of Fast on
    the own songs), what it gets wrong (fills, ghost notes) and that corrections exist.
 6. **The models and your computer:** each model with what it does, its download size and its

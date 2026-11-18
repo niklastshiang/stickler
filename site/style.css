@@ -547,7 +547,8 @@ audio {
 .command code {
   flex-grow: 1;
   min-width: 0;
-  overflow-wrap: anywhere; /* wraps on a phone: a scrolling box is out of a keyboard's reach */
+  overflow-wrap: break-word; /* wraps on a phone, at spaces first: a scrolling box is out of a
+                               keyboard's reach */
   font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
 }
 
@@ -578,6 +579,28 @@ audio {
 }
 
 /* uninstalling and the author */
+.removal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.removal dt {
+  margin-top: 0.75rem;
+  font-weight: 700;
+}
+
+.removal dd {
+  margin: 0;
+  color: var(--muted);
+}
+
+.removal .command {
+  margin-top: 0.5rem;
+}
+
 .columns {
   display: flex;
   flex-wrap: wrap;
