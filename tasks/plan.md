@@ -460,6 +460,35 @@ check (116).
 | XcodeGen's output changes with a new release | Low | Pinned version; the project is generated in CI only |
 | "Open Anyway" missing on the owner's Mac | Low | `xattr` in `docs/mac-development.md` |
 
+## Release 8 (macOS app): `mac-sheet` (approved 2026-11-18, SPEC.md "Module `mac-sheet`")
+
+The sheet music in the Mac app, from the core's SVG pages, as wide as the window, with the note
+size of the View menu and a pinch. Starts after `mac-shell`'s checkpoint U (the owner's check on
+the Mac).
+
+Design decisions:
+- **The model before the view** (126): what is asked for and when (a new result, a settled
+  width, a zoom), and which reply wins, lives in `SticklerCore` and is tested on Linux against a
+  scripted core, as `AppModel` was. The view then only draws pages it is handed.
+- **The page as a pure function** (127): the HTML the web view loads is built by a function of
+  the pages and the appearance, so the tests check it without WebKit (no script, the shadow, the
+  inversion in dark mode only) and the coverage gate counts it like `Exports`.
+- **One web view, JavaScript off** (`WKWebpagePreferences.allowsContentJavaScript = false`):
+  the core's SVG is data placed into a fixed page, never code that runs.
+- **Zoom last** (128): the menu and the pinch only send the core's zoom commands; the model of
+  126 already asks for pages after them.
+- **A fresh-context review at the end** (129), then the owner's check on the Mac.
+
+Order: the sheet's model (126) → the sheet in the window (127) → View menu and pinch (128) →
+review and the owner's check (129).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| A resize floods the core with `pages` requests (a whole song engraved each time) | Medium | The model waits 0.3 s for the width to settle; a test sends a quick series of widths and expects one request |
+| WebKit draws the tempo mark as a box (font) | Low | Verovio embeds the Leipzig subset (seen in task 115); a screenshot shows the tempo mark |
+| Long songs are slow to load as one document | Low | Measured with Eye of the Tiger on the owner's Mac; pages could be split later |
+| The macOS runners are scarce (cancelled jobs) | Medium | Logic on Linux first; rerun cancelled jobs; only view work needs the runner |
+
 ## Website (approved 2026-11-18, SPEC.md "Website")
 
 A static page in plain HTML and CSS, English and German, for drummers who are not technical:

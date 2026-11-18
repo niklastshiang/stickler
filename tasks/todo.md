@@ -945,6 +945,33 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
 ### Checkpoint W
 - [ ] SPEC "Website" success criteria 1, 2, 4, 6 met (owner); 3 and 5 with release 8 (the `.dmg` and its pictures from `mac-package`)
 
+## Phase 23: Release 8 (macOS app), module `mac-sheet` (approved 2026-11-18, SPEC.md "Module `mac-sheet`")
+
+Starts after checkpoint U (the owner's check of `mac-shell` on the Mac).
+
+- [ ] **Task 126: The sheet's model in SticklerCore** (M)
+  - Acceptance: the model reads the note size and percent from `settings` at start; asks for `pages` of the shown result at the sheet's width when a result arrives (a song or a correction), when the width has settled for 0.3 s, and after every zoom reply; `zoomIn`, `zoomOut`, `actualSize` and `setZoom` send their commands and keep the reply's size; a reply overtaken by a newer request is dropped; while pages are on their way the old ones stay; a refused `pages` keeps them and shows the core's message as a notice.
+  - Verify: `swift test` in `mac/SticklerCore` on Linux (WSL) and in the `mac` workflow, coverage ≥ 95 %; a test sends five widths within 0.3 s and sees one `pages` request
+  - Dependencies: checkpoint U · Files: `mac/SticklerCore/Sources/SticklerCore/` (the model, `Command`), its tests
+
+- [ ] **Task 127: The sheet in the window** (M)
+  - Acceptance: `SheetHTML` builds the page for the web view from the pages and the appearance (the pages one under the other on M6's grey desk, each white with the canvas's soft shadow `0 1px 3px`, inverted in dark mode, no script); a `WKWebView` (`NSViewRepresentable`, JavaScript off) shows it, scrolling vertically only, and reports its width in points to the model; it replaces `ResultPlaceholder`; VoiceOver reads it as one image labelled with the title and the page count.
+  - Verify: `LogicTests` for `SheetHTML` (no `<script>`, inversion only in dark, pages in order) under `scripts/xccov_gate.py` with `SheetHTML` added; screenshots of M6 light and dark from a fixed `pages` reply (the groove of `tests/app/fakes.py`) compared with the canvas
+  - Dependencies: 126 · Files: `mac/Stickler/` (the sheet view, `SheetHTML`, `ContentView.swift`, `Pages.swift`), `mac/SticklerTests/`, `scripts/xccov_gate.py`
+
+- [ ] **Task 128: Note size from the View menu and a pinch** (S)
+  - Acceptance: View › Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0, enabled only with a result; a trackpad pinch on the sheet sends one `set_zoom` once the fingers rest; "Zoom In", "Zoom Out", "Actual Size" and the VoiceOver label in `po/` with German and Spanish, and in the String Catalog.
+  - Verify: tests for the menu's state and the commands with a scripted core; `uv run pytest -q tests/test_xcstrings.py tests/app/test_mac_texts.py`; by hand on the Mac: the size is kept for the next song and start
+  - Dependencies: 127 · Files: `mac/Stickler/Commands.swift`, the sheet view, `src/stickler_app/mac_texts.py`, `po/*`, `mac/Stickler/Localizable.xcstrings`
+
+- [ ] **Task 129: Review and the owner's check** (S)
+  - Acceptance: a fresh-context review of 126–128 against SPEC "mac-sheet", findings fixed or answered; `docs/mac-development.md` says what to check for the sheet.
+  - Verify: the owner on the Mac: Eye of the Tiger at 800 and 1600 points wide, ⌘+/⌘−/⌘0 and a pinch, dark mode, VoiceOver's label (SPEC "mac-sheet" success criteria 1–3)
+  - Dependencies: 128 · Files: `docs/mac-development.md`
+
+### Checkpoint X
+- [ ] All success criteria of SPEC.md "Module `mac-sheet`" met (owner); then `mac-package`'s spec
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [ ] **A website for Stickler** (owner, 2026-11-18): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
