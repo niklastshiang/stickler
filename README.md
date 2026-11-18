@@ -457,8 +457,12 @@ The code of this project comes from an AI: Claude (Anthropic) programmed, tested
 it in Claude Code.
 
 The project owner provides the goals, the selection of candidates and the songs, makes the
-decisions and checks the results by ear. To keep the code from quietly getting worse, the
-repository enforces four rules:
+decisions and checks the results by ear.
+
+<details>
+<summary><b>How the code is kept honest</b>: four rules the repository enforces</summary>
+
+To keep the code from quietly getting worse, the repository enforces four rules:
 
 - **Specification first, then code.** What gets built is set out in [`SPEC.md`](SPEC.md), the plan
   in [`tasks/`](tasks/). Decisions made are recorded in [`docs/adr/`](docs/adr/).
@@ -468,6 +472,8 @@ repository enforces four rules:
 - **Measure, don't assert.** Every model choice is justified by measurements, even when the
   result is inconvenient: after the correction for reference errors Fast beat Quality, and
   tuning that helped on MDB was dropped because it hurt real music.
+
+</details>
 
 <details>
 <summary><b>What the AI cost</b>: about 245 USD at API prices for release 7</summary>
