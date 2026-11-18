@@ -280,8 +280,12 @@ def test_the_drum_track_export_runs_with_steps_and_returns_to_the_result(monkeyp
         progress(api.Step("separate", 1, 1, "done", False, "demucs"))
         return api.SongTranscription(song, "fast", stem, [], [], [])
 
+    def export(stem, dest):  # returns the path, as the real one does
+        dest.write_bytes(stem.read_bytes())
+        return dest
+
     monkeypatch.setattr(api, "transcribe_song", transcribe)
-    monkeypatch.setattr(api, "export_drum_track", lambda s, d: d.write_bytes(s.read_bytes()) or d)
+    monkeypatch.setattr(api, "export_drum_track", export)
     window = Window()
     assert not window.export_box.get_visible()
     window.open_song(tmp_path / "eye.flac")
