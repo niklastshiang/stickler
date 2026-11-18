@@ -18,5 +18,6 @@ line_length:
   warning: 100 # as ruff's for Python
   error: 100
 identifier_name:
-  # the protocol's own names (docs/bridge.md): a bar's x and y, a reply's ok, an id
-  excluded: [x, y, ok, id]
+  # the protocol's own names (docs/bridge.md): a bar's x and y, a reply's ok, an id; and uv,
+  # the tool that runs the core
+  excluded: [x, y, ok, id, uv]
