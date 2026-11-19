@@ -45,18 +45,22 @@ def test_only_the_logic_types_count(tmp_path):
                 "static Exports.pdf(_:)": (9, 10),
                 "closure #1 in static Exports.pdf(_:)": (1, 2),
                 "PageLoad.webView(_:didFinish:)": (2, 2),
+                "static SheetHTML.document(_:dark:)": (20, 20),
                 "ExportMenu.body.getter": (0, 30),  # a view
+                "SheetView.body.getter": (0, 12),  # a view
+                "SheetWebView.setFrameSize(_:)": (0, 6),  # AppKit only
                 "SystemAsking.saveLocation(named:)": (0, 6),  # AppKit only
                 "RemovalQuestion.init(sizes:)": (0, 12),
             },
         ).read_text()
     )
     covered, total, rows = xccov_gate.coverage(report, xccov_gate.LOGIC)
-    assert (covered, total) == (12, 14)
+    assert (covered, total) == (32, 34)
     assert [name for name, _c, _n in rows] == [
         "PageLoad.webView(_:didFinish:)",
         "closure #1 in static Exports.pdf(_:)",
         "static Exports.pdf(_:)",
+        "static SheetHTML.document(_:dark:)",
     ]
 
 

@@ -1,6 +1,7 @@
 import AppKit
 import SticklerCore
 import SwiftUI
+import WebKit
 import XCTest
 
 @testable import Stickler
@@ -57,7 +58,7 @@ final class ScreenshotTests: XCTestCase {
     }
 
     /// The window with `model`, drawn and saved as `<name>-light.png` and `<name>-dark.png`.
-    func shoot(_ model: AppModel, _ name: String) throws {
+    func shoot(_ model: AppModel, _ name: String) async throws {
         for (appearance, look) in [(NSAppearance.Name.aqua, "light"), (.darkAqua, "dark")] {
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 900, height: 620),
@@ -67,10 +68,11 @@ final class ScreenshotTests: XCTestCase {
             window.contentViewController = NSHostingController(rootView: ContentView(model: model))
             window.setContentSize(NSSize(width: 900, height: 620))
             window.orderFront(nil)
-            RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+            try await Task.sleep(for: .milliseconds(500))
             let frame = try XCTUnwrap(window.contentView?.superview, "the window's frame view")
             let bitmap = try XCTUnwrap(frame.bitmapImageRepForCachingDisplay(in: frame.bounds))
             frame.cacheDisplay(in: frame.bounds, to: bitmap)
+            try await drawSheet(of: model, in: frame, to: bitmap)
             window.orderOut(nil)
             XCTAssertGreaterThan(colours(in: bitmap), 2, "\(name) \(look) is blank")
             let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
@@ -96,21 +98,28 @@ final class ScreenshotTests: XCTestCase {
     func testTheFirstStartAsksForTheFolder() async throws {
         let model = try await model(nil)
         XCTAssertEqual(model.phase, .needsFolder(nil))
-        try shoot(model, "M0-folder")
+        try await shoot(model, "M0-folder")
     }
 
     func testTheEmptyWindowShowsTheRecentSongs() async throws {
         let model = try await model([Self.empty, Self.recent])
         XCTAssertEqual(model.recent.count, 3)
         XCTAssertEqual(model.title, "Stickler")
-        try shoot(model, "M4-empty")
+        try await shoot(model, "M4-empty")
     }
 
-    func testAResultWaitsForTheSheetViewAndIsExported() async throws {
-        let model = try await model([Self.empty, Self.recent, Self.result])
+    func testAResultShowsItsSheetMusicAsWideAsTheWindow() async throws {
+        let lines = [Self.empty, Self.recent, Self.result]
+        let core = ScriptedCore(
+            lines: lines, replies: ["pages": try Self.pagesReply(), "settings": Self.settings])
+        let model = try await model(lines, core: core)
         XCTAssertEqual(model.title, "Eye of the Tiger")
         XCTAssertEqual(model.subtitle, "Survivor · ♩ = 109 · 4/4")
-        try shoot(model, "M6-placeholder")
+        try await shoot(model, "M6-sheet")
+        // the window is 900 points wide, the desk takes 12 on each side
+        XCTAssertEqual(core.sent.last { $0.name == "pages" }, .pages(width: 876, zoom: nil))
+        XCTAssertEqual(model.sheet.pages.count, 1)
+        XCTAssertEqual(model.sheet.pages.first?.bars.count, 8)
     }
 
     static let analysing = #"{"event": "state", "seq": 4, "state": {"kind": "analysing", "#
@@ -133,13 +142,13 @@ final class ScreenshotTests: XCTestCase {
         let model = try await model([Self.empty, Self.recent, Self.analysing])
         XCTAssertEqual(model.title, "Eye of the Tiger")
         XCTAssertTrue(model.state.can.cancel)
-        try shoot(model, "M5-analysing")
+        try await shoot(model, "M5-analysing")
     }
 
     func testAFailedSongSaysWhatHappenedAndCanBeTriedAgain() async throws {
         let model = try await model([Self.empty, Self.recent, Self.failed])
         XCTAssertTrue(model.state.can.retry)
-        try shoot(model, "M5-failed")
+        try await shoot(model, "M5-failed")
     }
 
     func testAStoppedCoreSaysSoAndCanBeStartedAgain() async throws {
@@ -153,7 +162,7 @@ final class ScreenshotTests: XCTestCase {
             model.phase, .stopped(CoreEnd(reason: .signalled(9), details: [
                 "Traceback (most recent call last):"
             ])))
-        try shoot(model, "stopped")
+        try await shoot(model, "stopped")
     }
 
     static let consent = #"{"event": "state", "seq": 2, "state": {"kind": "consent", "#
@@ -215,7 +224,7 @@ final class ScreenshotTests: XCTestCase {
     func testTheFirstStartAsksBeforeItDownloads() async throws {
         let model = try await model([Self.empty, Self.consent])
         XCTAssertEqual(SetupSheet(model.state.screen), .consent)
-        try shoot(model, "M1-window")  // the empty window under the sheet
+        try await shoot(model, "M1-window")  // the empty window under the sheet
         try shootSheet(model, "M1-consent")
     }
 
@@ -260,7 +269,7 @@ final class ScreenshotTests: XCTestCase {
         let model = try await model([Self.empty, Self.recent, Self.result, saved])
         XCTAssertEqual(model.notice?.opens, "/Users/me/Desktop/Eye of the Tiger.pdf")
         XCTAssertNotNil(Exports.result(model))
-        try shoot(model, "M7-saved")
+        try await shoot(model, "M7-saved")
     }
 
     func testTheDrumTrackIsNamedInTheReadersLanguage() async throws {

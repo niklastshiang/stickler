@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-18 14:32+0100\n"
+"POT-Creation-Date: 2026-11-19 08:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,68 +18,68 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/stickler_app/bridge.py:198
+#: src/stickler_app/bridge.py:191
 msgid "This is not possible right now."
 msgstr ""
 
-#: src/stickler_app/bridge.py:203
+#: src/stickler_app/bridge.py:196
 #, python-brace-format
 msgid "The value of “{argument}” is not valid."
 msgstr ""
 
-#: src/stickler_app/bridge.py:370
+#: src/stickler_app/bridge.py:363
 msgid "The request could not be read."
 msgstr ""
 
-#: src/stickler_app/bridge.py:374
+#: src/stickler_app/bridge.py:367
 #, python-brace-format
 msgid "Stickler does not know the command “{name}”."
 msgstr ""
 
-#: src/stickler_app/bridge.py:384
+#: src/stickler_app/bridge.py:377
 msgid "Something went wrong inside Stickler."
 msgstr ""
 
-#: src/stickler_app/bridge.py:470 src/stickler_gtk/ui/window.py:576
+#: src/stickler_app/bridge.py:463 src/stickler_gtk/ui/window.py:576
 #, python-brace-format
 msgid "This frees {size}. Stickler asks before it downloads the models again."
 msgstr ""
 
-#: src/stickler_app/controller.py:193 src/stickler_gtk/ui/window.py:569
+#: src/stickler_app/controller.py:191 src/stickler_gtk/ui/window.py:569
 #, python-brace-format
 msgid "Could not check the models: {reason}"
 msgstr ""
 
-#: src/stickler_app/controller.py:236 src/stickler_gtk/ui/window.py:430
+#: src/stickler_app/controller.py:234 src/stickler_gtk/ui/window.py:430
 #, python-brace-format
 msgid "Could not save: {reason}"
 msgstr ""
 
-#: src/stickler_app/controller.py:320
+#: src/stickler_app/controller.py:318
 msgid "The downloaded models are removed"
 msgstr ""
 
-#: src/stickler_app/controller.py:325
+#: src/stickler_app/controller.py:323
 #, python-brace-format
 msgid "Could not remove everything: {reason}"
 msgstr ""
 
-#: src/stickler_app/controller.py:408
+#: src/stickler_app/controller.py:406
 #, python-brace-format
 msgid "The correction did not work: {reason}"
 msgstr ""
 
-#: src/stickler_app/controller.py:423
+#: src/stickler_app/controller.py:421
 #, python-brace-format
 msgid "The correction could not be saved: {reason}"
 msgstr ""
 
-#: src/stickler_app/controller.py:431
+#: src/stickler_app/controller.py:429
 #, python-brace-format
 msgid "Recent songs could not be saved: {reason}"
 msgstr ""
 
-#: src/stickler_app/controller.py:492 src/stickler_gtk/ui/window.py:432
+#: src/stickler_app/controller.py:490 src/stickler_gtk/ui/window.py:432
 #, python-brace-format
 msgid "Saved “{name}”"
 msgstr ""
@@ -194,60 +194,70 @@ msgid ""
 "uv was not found. Install it as the guide says, then choose the folder again."
 msgstr ""
 
-#. Translators: Mac app, the window after an analysis until the sheet view comes
-#: src/stickler_app/mac_texts.py:20
-msgid "Sheet music ready. Export it as PDF to read it."
+#. Translators: Mac app, what VoiceOver reads for the sheet music, which is one picture
+#. to it; the page count follows ("Sheet music of Eye of the Tiger, 3 pages")
+#: src/stickler_app/mac_texts.py:21
+#, python-brace-format
+msgid "Sheet music of {title}"
 msgstr ""
 
 #. Translators: Mac app, File menu
-#: src/stickler_app/mac_texts.py:22
+#: src/stickler_app/mac_texts.py:23
 msgid "Open Recent"
 msgstr ""
 
 #. Translators: Mac app, File › Open Recent: forget every recent song
-#: src/stickler_app/mac_texts.py:24
+#: src/stickler_app/mac_texts.py:25
 msgid "Clear Menu"
 msgstr ""
 
 #. Translators: Mac app, Help menu
-#: src/stickler_app/mac_texts.py:26
+#: src/stickler_app/mac_texts.py:27
 msgid "Stickler Help"
 msgstr ""
 
 #. Translators: Mac app, under "Writing the Drum Part" (design screen M5)
-#: src/stickler_app/mac_texts.py:28
+#: src/stickler_app/mac_texts.py:29
 msgid "Takes about 15 seconds"
 msgstr ""
 
 #. Translators: Mac app, a step that is running now (next to "Done" and "Waiting")
-#: src/stickler_app/mac_texts.py:30
+#: src/stickler_app/mac_texts.py:31
 msgid "Running"
 msgstr ""
 
 #. Translators: Mac app, the page shown when the app's Python core has ended
-#: src/stickler_app/mac_texts.py:32
+#: src/stickler_app/mac_texts.py:33
 msgid "Stickler Stopped Unexpectedly"
 msgstr ""
 
-#: src/stickler_app/mac_texts.py:34
+#: src/stickler_app/mac_texts.py:35
 msgid ""
 "The part of Stickler that listens to the songs has ended. A song it was "
 "writing has to be opened again; finished ones are kept."
 msgstr ""
 
-#: src/stickler_app/mac_texts.py:37
+#: src/stickler_app/mac_texts.py:38
 msgid "Start Again"
 msgstr ""
 
 #. Translators: Mac app, the bar after saving a file (design screen M7)
-#: src/stickler_app/mac_texts.py:39
+#: src/stickler_app/mac_texts.py:40
 msgid "Show in Finder"
 msgstr ""
 
 #. Translators: Mac app, File menu (⌘W) on the empty window
-#: src/stickler_app/mac_texts.py:41
+#: src/stickler_app/mac_texts.py:42
 msgid "Close Window"
 msgstr ""
+
+#. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
+#: src/stickler_app/mac_texts.py:49
+#, python-brace-format
+msgid "{count} page"
+msgid_plural "{count} pages"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/stickler_app/playback.py:57
 #, python-brace-format
@@ -276,30 +286,30 @@ msgstr ""
 msgid "file not found"
 msgstr ""
 
-#: src/stickler_app/session.py:234
+#: src/stickler_app/session.py:269
 #, python-brace-format
 msgid "“{name}” cannot be read. Is it a complete sound file?"
 msgstr ""
 
-#: src/stickler_app/session.py:238
+#: src/stickler_app/session.py:273
 msgid "Cannot Read This File"
 msgstr ""
 
-#: src/stickler_app/session.py:244
+#: src/stickler_app/session.py:279
 #, python-brace-format
 msgid "Saving the drum track of “{name}” did not work."
 msgstr ""
 
-#: src/stickler_app/session.py:246
+#: src/stickler_app/session.py:281
 msgid "The Export Failed"
 msgstr ""
 
-#: src/stickler_app/session.py:248
+#: src/stickler_app/session.py:283
 #, python-brace-format
 msgid "Something went wrong while listening to “{name}”."
 msgstr ""
 
-#: src/stickler_app/session.py:250
+#: src/stickler_app/session.py:285
 msgid "The Analysis Failed"
 msgstr ""
 

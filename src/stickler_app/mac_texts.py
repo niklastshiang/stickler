@@ -3,7 +3,7 @@
 puts them into the Mac app's String Catalog: `po/` stays the one place to translate. Python
 never shows them; everything the core says arrives translated already."""
 
-from stickler_app.i18n import N_
+from stickler_app.i18n import N_, ngettext
 
 TEXTS = (
     # Translators: Mac app, File menu and the first start: where the Stickler folder is
@@ -16,8 +16,9 @@ TEXTS = (
     ),
     N_("This folder is not Stickler. Choose the folder with pyproject.toml and adapters in it."),
     N_("uv was not found. Install it as the guide says, then choose the folder again."),
-    # Translators: Mac app, the window after an analysis until the sheet view comes
-    N_("Sheet music ready. Export it as PDF to read it."),
+    # Translators: Mac app, what VoiceOver reads for the sheet music, which is one picture
+    # to it; the page count follows ("Sheet music of Eye of the Tiger, 3 pages")
+    N_("Sheet music of {title}"),
     # Translators: Mac app, File menu
     N_("Open Recent"),
     # Translators: Mac app, File › Open Recent: forget every recent song
@@ -39,4 +40,11 @@ TEXTS = (
     N_("Show in Finder"),
     # Translators: Mac app, File menu (⌘W) on the empty window
     N_("Close Window"),
+)
+
+# Texts with a count: the String Catalog holds both forms under the plural one, and Swift
+# picks by the count. `ngettext` only marks them for `scripts/i18n.sh`.
+PLURALS = (
+    # Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
+    ngettext("{count} page", "{count} pages", 2),
 )

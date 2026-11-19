@@ -119,13 +119,3 @@ struct RecentRowView: View {
         }
     }
 }
-
-/// Until `mac-sheet`: a result is exported to be read (never in a release).
-struct ResultPlaceholder: View {
-    var body: some View {
-        Text("Sheet music ready. Export it as PDF to read it.")
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(nsColor: .underPageBackgroundColor))
-    }
-}

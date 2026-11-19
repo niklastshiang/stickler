@@ -82,5 +82,5 @@ repository only provides the code.
 7. **Remove Downloaded Models…** in the Stickler menu: the sizes, the checkbox for
    everything, then the next start asks again.
 
-Until `mac-sheet`, a result shows "Sheet music ready. Export it as PDF to read it." instead of
-the notes: that is expected.
+A result shows its sheet music in the window (module `mac-sheet`); what to check there is
+added with that module's checkpoint.

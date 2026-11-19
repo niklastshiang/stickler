@@ -78,7 +78,7 @@ struct ContentView: View {
             case .failed(let failure):
                 FailurePage(model: model, failure: failure)
             case .result:
-                ResultPlaceholder()
+                SheetView(model: model)
             default:
                 EmptyWindowView(model: model)
             }

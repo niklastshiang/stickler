@@ -104,6 +104,66 @@
         }
       }
     },
+    "%1$lld pages" : {
+      "comment" : "Translators: Mac app, VoiceOver, after \"Sheet music of …\": how many pages it has",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld Seite"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld Seiten"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld pages"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld página"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$lld páginas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "A Download Server Is Not Answering" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2055,20 +2115,20 @@
         }
       }
     },
-    "Sheet music ready. Export it as PDF to read it." : {
-      "comment" : "Translators: Mac app, the window after an analysis until the sheet view comes",
+    "Sheet music of %1$@" : {
+      "comment" : "Translators: Mac app, what VoiceOver reads for the sheet music, which is one picture to it; the page count follows (\"Sheet music of Eye of the Tiger, 3 pages\")",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Noten sind fertig. Exportiere sie als PDF, um sie zu lesen."
+            "value" : "Noten von %1$@"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La partitura está lista. Expórtala como PDF para leerla."
+            "value" : "Partitura de %1$@"
           }
         }
       }
