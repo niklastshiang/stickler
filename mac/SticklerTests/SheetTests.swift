@@ -88,6 +88,31 @@ final class SheetTests: XCTestCase {
         XCTAssertEqual(widths, [900, 700])
     }
 
+    func testAPinchTellsItsScaleOnceWhenTheFingersLift() {
+        let view = SheetWebView.make()
+        var scales: [Double] = []
+        view.pinched = { scales.append($0) }
+        view.pinch(.began, by: 0)
+        view.pinch(.changed, by: 0.25)
+        view.pinch(.changed, by: 0.6)
+        XCTAssertEqual(scales, [], "nothing while the fingers move")
+        view.pinch(.ended, by: 0)
+        XCTAssertEqual(scales, [2.0])  // 1.25 × 1.6
+    }
+
+    func testACancelledPinchAndOneThatChangedNothingTellNothing() {
+        let view = SheetWebView.make()
+        var scales: [Double] = []
+        view.pinched = { scales.append($0) }
+        view.pinch(.began, by: 0)
+        view.pinch(.changed, by: 0.5)
+        view.pinch(.cancelled, by: 0)
+        view.pinch(.ended, by: 0)
+        view.pinch(.began, by: 0)
+        view.pinch(.ended, by: 0)
+        XCTAssertEqual(scales, [])
+    }
+
     func testTheWebViewOffersNoMenu() {
         let menu = NSMenu()
         menu.addItem(withTitle: "Reload", action: nil, keyEquivalent: "")

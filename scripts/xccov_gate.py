@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 APP = "Stickler.app"
-LOGIC = ("Exports", "Removal", "Panels", "SheetPDF", "PageLoad", "SheetHTML")
+LOGIC = ("Exports", "Removal", "Panels", "SheetPDF", "PageLoad", "SheetHTML", "ZoomMenu")
 
 
 def coverage(report: dict, types: tuple[str, ...]) -> tuple[int, int, list[tuple[str, int, int]]]:

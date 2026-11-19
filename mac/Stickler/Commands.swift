@@ -3,8 +3,8 @@ import SticklerCore
 import SwiftUI
 
 /// The menu bar (design screen M8): File with Open, Open Recent, Export, Close Song and the
-/// Stickler folder; Help.
-/// The app menu, Edit, View (Full Screen) and Window are the system's.
+/// Stickler folder; View with the note size; Help.
+/// The app menu, Edit, the rest of View (Full Screen) and Window are the system's.
 struct SticklerCommands: Commands {
     let model: AppModel
 
@@ -42,6 +42,10 @@ struct SticklerCommands: Commands {
         CommandGroup(replacing: .saveItem) {
             CloseItem(model: model)
         }
+        CommandGroup(before: .toolbar) {
+            ZoomItems(model: model)
+            Divider()
+        }
         CommandGroup(replacing: .help) {
             Button("Stickler Help") {
                 if let help = Self.help {
@@ -70,5 +74,44 @@ struct CloseItem: View {
             }
         }
         .keyboardShortcut("w")
+    }
+}
+
+/// View › Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0 (SPEC.md, module `mac-sheet`, scope 3): the
+/// note size is the core's setting, so each item only sends its command.
+@MainActor
+enum ZoomMenu {
+    struct Item: Identifiable {
+        /// The item's text, a key of the String Catalog.
+        let title: String
+        /// Pressed with ⌘.
+        let key: Character
+        let act: @MainActor (SheetModel) -> Void
+
+        var id: String { title }
+    }
+
+    static let items = [
+        Item(title: "Zoom In", key: "+") { $0.zoomIn() },
+        Item(title: "Zoom Out", key: "-") { $0.zoomOut() },
+        Item(title: "Actual Size", key: "0") { $0.actualSize() }
+    ]
+
+    /// Only a shown result has a note size to change.
+    static func enabled(_ model: AppModel) -> Bool {
+        model.phase == .running && model.sheet.canZoom
+    }
+}
+
+/// The View menu's zoom items, drawn from `ZoomMenu`.
+struct ZoomItems: View {
+    let model: AppModel
+
+    var body: some View {
+        ForEach(ZoomMenu.items) { item in
+            Button(LocalizedStringKey(item.title)) { item.act(model.sheet) }
+                .keyboardShortcut(KeyEquivalent(item.key))
+                .disabled(!ZoomMenu.enabled(model))
+        }
     }
 }

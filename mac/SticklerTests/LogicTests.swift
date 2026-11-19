@@ -65,6 +65,28 @@ final class LogicTests: XCTestCase {
             .appendingPathComponent("logic-\(UUID().uuidString)-\(name)")
     }
 
+    // MARK: The View menu
+
+    func testTheZoomItemsSendTheCoresCommandsWhileAResultIsShown() async throws {
+        let size = #""ok": true, "zoom": 1.25, "percent": "125%""#
+        let (model, core) = try await model(
+            replies: ["zoom_in": size, "zoom_out": size, "actual_size": size])
+        try await until { ZoomMenu.enabled(model) }
+        XCTAssertEqual(ZoomMenu.items.map(\.title), ["Zoom In", "Zoom Out", "Actual Size"])
+        XCTAssertEqual(ZoomMenu.items.map(\.key), ["+", "-", "0"])
+        XCTAssertEqual(ZoomMenu.items.map(\.id), ZoomMenu.items.map(\.title))
+        for (item, command) in zip(ZoomMenu.items, [Command.zoomIn, .zoomOut, .actualSize]) {
+            item.act(model.sheet)
+            try await until { core.sent.contains(command) }
+        }
+        try await until { model.sheet.percent == "125%" }
+    }
+
+    func testTheZoomItemsAreOffWithoutAResult() async throws {
+        let (model, _) = try await model([ScreenshotTests.empty])
+        XCTAssertFalse(ZoomMenu.enabled(model))
+    }
+
     // MARK: Exports
 
     func testMusicXMLIsSavedWhereTheReaderSaysUnderTheCoresName() async throws {

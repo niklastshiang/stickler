@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-19 08:03+0100\n"
+"POT-Creation-Date: 2026-11-19 08:56+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -264,8 +264,14 @@ msgstr "Mostrar en el Finder"
 msgid "Close Window"
 msgstr "Cerrar la ventana"
 
+#. Translators: Mac app, View menu (⌘0): the note size back to 100 %, next to "Zoom In"
+#. and "Zoom Out"; macOS calls it "Originalgröße" in German, "Tamaño real" in Spanish
+#: src/stickler_app/mac_texts.py:45
+msgid "Actual Size"
+msgstr "Tamaño real"
+
 #. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
-#: src/stickler_app/mac_texts.py:49
+#: src/stickler_app/mac_texts.py:52
 #, python-brace-format
 msgid "{count} page"
 msgid_plural "{count} pages"

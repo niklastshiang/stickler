@@ -40,6 +40,9 @@ TEXTS = (
     N_("Show in Finder"),
     # Translators: Mac app, File menu (⌘W) on the empty window
     N_("Close Window"),
+    # Translators: Mac app, View menu (⌘0): the note size back to 100 %, next to "Zoom In"
+    # and "Zoom Out"; macOS calls it "Originalgröße" in German, "Tamaño real" in Spanish
+    N_("Actual Size"),
 )
 
 # Texts with a count: the String Catalog holds both forms under the plural one, and Swift

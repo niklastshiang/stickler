@@ -198,6 +198,24 @@
         }
       }
     },
+    "Actual Size" : {
+      "comment" : "Translators: Mac app, View menu (⌘0): the note size back to 100 %, next to \"Zoom In\" and \"Zoom Out\"; macOS calls it \"Originalgröße\" in German, \"Tamaño real\" in Spanish",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Originalgröße"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño real"
+          }
+        }
+      }
+    },
     "Also remove settings, recent songs and corrections" : {
       "extractionState" : "manual",
       "localizations" : {

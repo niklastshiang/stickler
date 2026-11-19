@@ -11,11 +11,14 @@ struct SheetView: View {
 
     var body: some View {
         let dark = scheme == .dark
-        SheetWeb(html: SheetHTML.document(model.sheet.pages, dark: dark), dark: dark) { width in
-            if let pages = SheetHTML.pagesWidth(in: width) {
-                model.sheet.resize(to: pages)
-            }
-        }
+        SheetWeb(
+            html: SheetHTML.document(model.sheet.pages, dark: dark), dark: dark,
+            resized: { width in
+                if let pages = SheetHTML.pagesWidth(in: width) {
+                    model.sheet.resize(to: pages)
+                }
+            },
+            pinched: { scale in model.sheet.pinched(by: scale) })
         // one picture to VoiceOver, not the notes' hundreds of shapes
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isImage)
@@ -29,6 +32,7 @@ struct SheetWeb: NSViewRepresentable {
     let html: String
     let dark: Bool
     let resized: @MainActor (Double) -> Void
+    let pinched: @MainActor (Double) -> Void
 
     func makeCoordinator() -> SheetLoad {
         SheetLoad()
@@ -42,6 +46,7 @@ struct SheetWeb: NSViewRepresentable {
 
     func updateNSView(_ view: SheetWebView, context: Context) {
         view.resized = resized
+        view.pinched = pinched
         let desk = SheetHTML.desk(dark: dark)
         view.underPageBackgroundColor = NSColor(
             srgbRed: CGFloat(desk.red) / 255, green: CGFloat(desk.green) / 255,
@@ -69,13 +74,16 @@ final class SheetLoad: NSObject, WKNavigationDelegate {
     }
 }
 
-/// The sheet's web view: it runs no script, tells its width in points, leaves the keyboard to
-/// the window's controls and offers no menu (its "Reload" would empty a page without an
-/// address).
+/// The sheet's web view: it runs no script, tells its width in points and a pinch's scale,
+/// leaves the keyboard to the window's controls and offers no menu (its "Reload" would empty
+/// a page without an address).
 final class SheetWebView: WKWebView {
     /// Told every new width, once.
     var resized: (@MainActor (Double) -> Void)?
+    /// Told a pinch's whole scale, once the fingers lift.
+    var pinched: (@MainActor (Double) -> Void)?
     private var told = 0.0
+    private var gesture = Pinch()
 
     static func make() -> SheetWebView {
         let configuration = WKWebViewConfiguration()
@@ -94,6 +102,24 @@ final class SheetWebView: WKWebView {
         guard width > 0, width != told else { return }
         told = width
         resized?(width)
+    }
+
+    override func magnify(with event: NSEvent) {
+        pinch(event.phase, by: Double(event.magnification))
+    }
+
+    /// A step of a trackpad pinch: the note size changes once, when the fingers lift (the
+    /// core engraves anew for it), not while they move.
+    func pinch(_ phase: NSEvent.Phase, by magnification: Double) {
+        if phase.contains(.began) {
+            gesture.begin()
+        }
+        gesture.change(by: magnification)
+        if phase.contains(.cancelled) {
+            gesture.cancel()
+        } else if phase.contains(.ended), let scale = gesture.end() {
+            pinched?(scale)
+        }
     }
 
     override func willOpenMenu(_ menu: NSMenu, with _: NSEvent) {

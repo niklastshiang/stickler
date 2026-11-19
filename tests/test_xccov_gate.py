@@ -46,6 +46,8 @@ def test_only_the_logic_types_count(tmp_path):
                 "closure #1 in static Exports.pdf(_:)": (1, 2),
                 "PageLoad.webView(_:didFinish:)": (2, 2),
                 "static SheetHTML.document(_:dark:)": (20, 20),
+                "static ZoomMenu.enabled(_:)": (3, 3),
+                "ZoomItems.body.getter": (0, 8),  # a view
                 "ExportMenu.body.getter": (0, 30),  # a view
                 "SheetView.body.getter": (0, 12),  # a view
                 "SheetWebView.setFrameSize(_:)": (0, 6),  # AppKit only
@@ -55,12 +57,13 @@ def test_only_the_logic_types_count(tmp_path):
         ).read_text()
     )
     covered, total, rows = xccov_gate.coverage(report, xccov_gate.LOGIC)
-    assert (covered, total) == (32, 34)
+    assert (covered, total) == (35, 37)
     assert [name for name, _c, _n in rows] == [
         "PageLoad.webView(_:didFinish:)",
         "closure #1 in static Exports.pdf(_:)",
         "static Exports.pdf(_:)",
         "static SheetHTML.document(_:dark:)",
+        "static ZoomMenu.enabled(_:)",
     ]
 
 
