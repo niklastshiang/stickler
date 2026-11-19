@@ -1968,8 +1968,9 @@ push by a macOS runner, before any Swift exists. Linux behaves exactly as before
 4. **Found while writing this spec:** `stickler_adapter._peak_rss_mb` divides `ru_maxrss` by
    1024 because Linux reports KiB; macOS reports bytes, so every Mac `meta.json` would show a
    peak RAM 1024 times too high.
-5. ffmpeg and ffprobe come from the `PATH` (Homebrew on the runner); how the app finds them is
-   `mac-package`'s question.
+5. ffmpeg and ffprobe come from the `PATH` (Homebrew on the runner); how the packaged app
+   finds them is `mac-package`'s question. Until then the app puts Homebrew's prefixes in the
+   core's `PATH` (module `mac-shell`, "Where the core is").
 
 **Scope.**
 1. **Wider platforms:** Demucs and MuScriptor medium get `environments = ["sys_platform ==
@@ -2301,8 +2302,12 @@ with `mac-package`.
    - **Where the core is** (until `mac-package`): on the first start the app asks for the
      Stickler folder (an open panel, the checkout), remembers it, and checks it holds
      `pyproject.toml` and `adapters/`; File › "Choose Stickler Folder…" changes it. `uv` is
-     looked for in `~/.local/bin`, `/opt/homebrew/bin` and `PATH`. Gone in `mac-package`, whose
-     `.app` brings the core along.
+     looked for in `~/.local/bin`, `/opt/homebrew/bin` and `PATH`. The core gets the folder of
+     the `uv` that was found and Homebrew's two prefixes (`/opt/homebrew/bin`,
+     `/usr/local/bin`) in front of its own `PATH` (owner, 2026-11-19, found at the check on the
+     Mac: an app started from the Finder has only the system's folders, so the core found
+     neither `uv` for the models nor ffmpeg and ffprobe). Gone in `mac-package`, whose `.app`
+     brings the core along.
    - **Quitting** sends `quit` and waits at most 3 s for the core to exit, then ends it.
    - **Texts:** every text comes from `po/` through the String Catalog (`scripts/xcstrings.py`);
      the new ones of `mac-design` ("Show in Finder", "Takes about 15 seconds") and of this module

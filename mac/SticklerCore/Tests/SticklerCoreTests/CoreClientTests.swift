@@ -270,15 +270,46 @@ func bridgeProcess(under uvPID: Int32) async throws -> Int32 {
 @Test func theMacAppsCoreRunsAsAnInstalledAppFromTheChosenFolder() {
     let folder = URL(fileURLWithPath: "/Users/me/stickler")
     let client = CoreClient.bridge(
-        in: folder, uv: URL(fileURLWithPath: "/opt/homebrew/bin/uv"), languages: ["de-DE", "en"])
+        in: folder, uv: URL(fileURLWithPath: "/opt/homebrew/bin/uv"), languages: ["de-DE", "en"],
+        path: "/usr/bin:/bin")
     #expect(client.executable.path == "/opt/homebrew/bin/uv")
     #expect(client.arguments == ["run", "--project", "/Users/me/stickler", "stickler-bridge"])
     #expect(client.directory == folder)
     #expect(client.environment == [
         "STICKLER_PACKAGED": "macos",
         "STICKLER_ADAPTER_SOURCES": "/Users/me/stickler/adapters",
-        "LANGUAGE": "de-DE:en"
+        "LANGUAGE": "de-DE:en",
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
     ])
+}
+
+@Test func theCoreFindsUVAndHomebrewsToolsWhenTheAppWasStartedFromTheFinder() {
+    // the Finder's PATH on the owner's Mac (2026-11-19): neither ~/.local/bin nor Homebrew
+    let finder = "/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    let path = CoreClient.toolPath(
+        uv: URL(fileURLWithPath: "/Users/me/.local/bin/uv"), inherited: finder)
+    #expect(path.split(separator: ":").map(String.init) == [
+        "/Users/me/.local/bin", "/opt/homebrew/bin", "/usr/local/bin",
+        "/System/Cryptexes/App/usr/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"
+    ])
+    #expect(CoreClient.toolPath(uv: URL(fileURLWithPath: "/a/uv"), inherited: "")
+        == "/a:/opt/homebrew/bin:/usr/local/bin")
+}
+
+@Test func aPathForTheCoreReplacesTheAppsOwn() async {
+    let wanted = "/somewhere/bin:" + (ProcessInfo.processInfo.environment["PATH"] ?? "")
+    let code = """
+        import json, os
+        line = {"event": "notice", "seq": 1, "text": os.environ["PATH"], "opens": None}
+        print(json.dumps(line), flush=True)
+        """
+    let client = CoreClient(
+        executable: URL(fileURLWithPath: "/usr/bin/env"), arguments: ["python3", "-c", code],
+        environment: ["PATH": wanted])
+    let seen = Recorder()
+    seen.start(client)
+    #expect(await eventually(10) { !seen.events.isEmpty })
+    #expect(seen.events.first == .event(seq: 1, .notice(Notice(text: wanted, opens: nil))))
 }
 
 @Test(.timeLimit(.minutes(1))) func quittingACoreThatNeitherAnswersNorStopsIsBounded() async {
