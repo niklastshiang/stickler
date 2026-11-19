@@ -123,6 +123,7 @@ final class LogicTests: XCTestCase {
         await Exports.drumTrack(model)
         XCTAssertEqual(asking.costs, ["Takes about 8 minutes."])
         XCTAssertEqual(asking.offered, ["Eye of the Tiger (drums).flac"])
+        XCTAssertEqual(asking.endings, [["flac", "wav"]], "what the app's ffmpeg writes")
         try await until { core.sent.contains(.exportDrumTrack(dest: dest.path)) }
     }
 
@@ -164,6 +165,7 @@ final class LogicTests: XCTestCase {
         asking.save = dest
         await Exports.pdf(model)
         XCTAssertEqual(asking.offered, ["Eye of the Tiger.pdf"])
+        XCTAssertEqual(asking.endings, [[]], "any name, as before")
         XCTAssertTrue(FileManager.default.fileExists(atPath: dest.path))
         XCTAssertEqual(model.notice?.opens, dest.path)
     }
@@ -281,8 +283,11 @@ final class FakeAsking: Asking {
     private(set) var sizes: [RemovalSizes] = []
     private(set) var opened: [(URL, URL)] = []
 
-    func saveLocation(named name: String) -> URL? {
+    private(set) var endings: [[String]] = []
+
+    func saveLocation(named name: String, endings: [String]) -> URL? {
         offered.append(name)
+        self.endings.append(endings)
         return save
     }
 
