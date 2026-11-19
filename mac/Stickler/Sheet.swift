@@ -183,6 +183,8 @@ final class SheetWebView: WKWebView {
     static func make() -> SheetWebView {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = false
+        // nothing of the sheet is kept: no ~/Library/WebKit folder to leave behind
+        configuration.websiteDataStore = .nonPersistent()
         let view = SheetWebView(frame: .zero, configuration: configuration)
         view.allowsMagnification = false  // the note size is the core's (View menu, pinch)
         view.allowsBackForwardNavigationGestures = false

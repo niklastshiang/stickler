@@ -83,6 +83,7 @@ final class SheetTests: XCTestCase {
         XCTAssertFalse(view.acceptsFirstResponder)
         XCTAssertFalse(view.allowsMagnification)
         XCTAssertFalse(view.allowsBackForwardNavigationGestures)
+        XCTAssertFalse(view.configuration.websiteDataStore.isPersistent, "nothing left on disk")
     }
 
     func testTheWebViewTellsEachNewWidthOnce() {
