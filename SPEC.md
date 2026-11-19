@@ -2495,7 +2495,8 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    set `com.apple.quarantine` (Apple DTS, developer forums thread 706442; uv issue 16003).
    **Known risk:** on some Macs a Python installed by `uv` is killed at start (uv issue 16726,
    open; reported on macOS 15.6 and 26.6, the maintainers suspect company security software);
-   `codesign --force -s -` on it helps. The spike shows whether the owner's Mac is affected.
+   `codesign --force -s -` on it helps. The spike shows whether the owner's Mac is affected
+   (it is not: the Python `uv` fetched there ran, 2026-11-19).
 4. A quarantined app started from Downloads or from the mounted image may run from a random
    read-only path (app translocation, forums thread 724969). So the app finds everything it
    ships through `Bundle.main` and writes nothing into itself.
@@ -2520,6 +2521,14 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    start from inside the bundle (also translocated, straight from Downloads); do `uv`'s Python
    and the wheels' compiled parts run (assumption 3); does the executable bit survive the
    image. A failure changes this spec before any task is planned.
+   **Answered on the owner's Mac (2026-11-19, macOS 27.0.1, the image of run 44507367954),
+   yes to all three, so nothing here changes:** the app copied to Applications and the one
+   started straight from the mounted image both start their core, without asking for a
+   folder; the core runs with the bundle's Python and a `PATH` of the bundle's `bin` and the
+   system's folders only, fetched a Python 3.14.10 through the bundled `uv`, made the
+   environments of ADTOF and Beat This! and turned a song into its sheet music; `uv`, ffmpeg
+   and ffprobe kept their executable bits and the copied app passes `codesign --verify
+   --strict`. Not tried: macOS 26, the deployment target (the owner's Mac runs 27).
 2. **What the app holds** (`Stickler.app/Contents/Resources/core/`):
    - `bin/uv`, `bin/ffmpeg`, `bin/ffprobe`, each pinned by version and SHA-256 at build time
      and signed ad-hoc one by one before the app is (Apple DTS: inside out, no `--deep`);
