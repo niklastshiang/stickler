@@ -606,8 +606,10 @@ def engrave(
         not (m == 0 and implicit_first) and not any((v, i) in by_voice for v in (1, 2) for i in bar)
         for m, bar in enumerate(bars)
     ]
+    # Bar 1 stays a rest of its own: the tempo mark stands over it, and a multi-measure rest's
+    # count over the same bar ran into the mark ("= 9722", owner 2026-11-19)
     multi_rest: dict[int, int] = {}
-    m = 0
+    m = 1 if empty and empty[0] else 0
     while m < len(bars):
         run = 0
         while m + run < len(bars) and empty[m + run]:
@@ -631,7 +633,7 @@ def engrave(
             attributes += (
                 f"<measure-style><multiple-rest>{multi_rest[m]}</multiple-rest></measure-style>"
             )
-        if m == 0:  # before the attributes: Verovio drops a tempo mark that follows the
+        if m == 0:  # before the attributes: Verovio dropped a tempo mark that followed the
             # attributes of a bar starting a multi-measure rest (MusicXML allows either order)
             body.append(
                 '<direction placement="above"><direction-type><metronome>'

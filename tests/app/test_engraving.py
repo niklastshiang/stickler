@@ -95,9 +95,9 @@ def test_a_pickup_is_bar_zero():
 
 
 def test_a_multi_measure_rest_is_one_rectangle_at_its_first_bar():
-    notes = [n for n in groove() if n[0] >= 4.0]  # bars 1 and 2 empty
+    notes = [n for n in groove() if not 2.0 <= n[0] < 6.0]  # bars 2 and 3 empty
     bars = engraving.engrave(_xml(notes), width=800)[0].bars
-    assert 1 in bars and 2 not in bars and 3 in bars
+    assert 2 in bars and 3 not in bars and 4 in bars
 
 
 def test_repeated_bars_are_engraved_once():

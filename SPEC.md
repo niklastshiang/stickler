@@ -561,6 +561,12 @@ marker.show(bar.written)
    `<measure>` elements, of which the first four are one multi-measure rest, so 43 bars
    (Verovio's MEI has the same 43; checked 2026-11-14, Task 37). Collapsing the rest's four
    entries into one gives Verovio's expanded timemap in the same order (107 entries).
+   Changed 2026-11-19 (owner): a song's first bar is never part of a multi-measure rest. The
+   tempo mark stands over bar 1 and the rest's count over its middle, and Verovio drew them
+   into each other ("= 9722" for 22 empty bars at ♩ = 97). An empty bar 1 is a whole-bar rest
+   of its own and the multi-measure rest starts at bar 2 (two empty bars at the start are two
+   whole-bar rests). Eye of the Tiger then has 44 written bars: bar 1, a three-bar rest at
+   bar 2, and the 42 after it.
 5. Each correction changes the notation of a cached song in under 1 s on the development
    laptop, without starting an adapter (verified by a test that fails if one is started).
 6. `render_hits` for a cached own song yields a WAV whose clicks, played with the song, sit on
@@ -968,7 +974,8 @@ tests/gtk/test_engraving.py, test_marker.py
    together), as wide as the window, at 360 px and at 1000 px.
 2. Zoom works with the keyboard and Ctrl+scroll; Ctrl+0 returns to the window's width.
 3. Every one of the 43 written bars of Eye of the Tiger can be marked by a click; marking song
-   bar 3 (inside the first multi-measure rest) marks written bar 1.
+   bar 3 (inside the first multi-measure rest) marks written bar 1 (bar 2 since 2026-11-19,
+   when bar 1 left the rest: module `engine-api`, success criterion 4).
 4. The position call marks the right bar for every song bar of Eye of the Tiger (110, checked
    against the bar map) and scrolls it into view.
 5. In dark style the page is inverted and the marker blue.

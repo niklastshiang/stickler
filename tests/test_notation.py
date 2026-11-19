@@ -161,15 +161,37 @@ def _measures(xml: str) -> list[str]:
 
 
 def test_empty_bars_become_one_multi_measure_rest():
-    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2 empty
+    notes = [n for n in groove(4) if not 2.0 <= n[0] < 6.0]  # bars 2 and 3 empty
     xml = notation.to_musicxml(notes, BEATS, DOWNBEATS)
-    first, second = _measures(xml)[:2]
-    for m in (first, second):
+    second, third = _measures(xml)[1:3]
+    for m in (second, third):
         assert m.count("<note>") == 1 and '<rest measure="yes"/>' in m
-    assert "<multiple-rest>2</multiple-rest>" in first and "multiple-rest" not in second
+    assert "<multiple-rest>2</multiple-rest>" in second and "multiple-rest" not in third
     for m in parse(xml).parts[0].getElementsByClass("Measure"):
         for voice in m.voices or [m]:
             assert voice.duration.quarterLength == pytest.approx(4.0)
+
+
+def test_a_song_that_starts_with_empty_bars_keeps_its_first_bar_out_of_the_rest():
+    """The tempo mark stands over bar 1 and a multi-measure rest's count over its middle: in one
+    bar they ran into each other ("= 9722" for Majesty's 22 bars, owner 2026-11-19)."""
+    beats = [k * 0.5 for k in range(21)]  # five bars
+    notes = [n for n in groove(5) if n[0] >= 6.0]  # bars 1 to 3 empty
+    e = notation.engrave(notes, beats, beats[:-1:4])
+    first, second, third = _measures(e.musicxml)[:3]
+    assert "<metronome>" in first and "multiple-rest" not in first
+    assert '<rest measure="yes"/>' in first
+    assert "<multiple-rest>2</multiple-rest>" in second and "multiple-rest" not in third
+    assert [b.written for b in e.bars] == [1, 2, 2, 4, 5]
+    assert _rises_without_gaps(e.bars)
+
+
+def test_two_empty_bars_at_the_start_are_two_whole_bar_rests():
+    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2 empty
+    xml = notation.to_musicxml(notes, BEATS, DOWNBEATS)
+    assert "multiple-rest" not in xml
+    for m in _measures(xml)[:2]:
+        assert m.count("<note>") == 1 and '<rest measure="yes"/>' in m
 
 
 def test_a_single_empty_bar_is_a_whole_bar_rest_without_multi_rest():
@@ -402,9 +424,10 @@ def test_bar_map_gives_the_pickup_bar_number_zero():
 
 
 def test_bar_map_sends_a_multi_bar_rest_to_its_first_bar():
-    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2: one multi-measure rest
-    e = notation.engrave(notes, BEATS, DOWNBEATS, repeats=True)
-    assert [b.written for b in e.bars] == [1, 1, 3, 3]  # bars 3 and 4 repeat bar 3
+    beats = [k * 0.5 for k in range(25)]  # six bars
+    notes = [n for n in groove(6) if not 2.0 <= n[0] < 6.0]  # bars 2 and 3: one rest
+    e = notation.engrave(notes, beats, beats[:-1:4])
+    assert [b.written for b in e.bars] == [1, 2, 2, 4, 5, 6]
     assert _rises_without_gaps(e.bars)
 
 
@@ -501,11 +524,11 @@ def test_engraving_reports_tempo_and_meter_of_the_grid_it_used():
 
 
 def test_the_tempo_mark_comes_before_the_attributes_of_the_first_bar():
-    """Verovio drops a tempo mark that follows the attributes of a bar that starts a
-    multi-measure rest (Eye of the Tiger); before them every reader keeps it."""
-    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2: a multi-measure rest
+    """Verovio dropped a tempo mark that followed the attributes of a bar starting a
+    multi-measure rest (Eye of the Tiger, when bar 1 could start one); before them every
+    reader keeps it."""
+    notes = [n for n in groove(4) if n[0] >= 4.0]  # bars 1 and 2 empty
     first = _measures(notation.to_musicxml(notes, BEATS, DOWNBEATS))[0]
-    assert "<multiple-rest>" in first
     assert first.index("<metronome>") < first.index("<attributes>")
 
 

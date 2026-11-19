@@ -1049,7 +1049,7 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Wish (2026-11-12): design a beautiful interface together with the owner, following current design principles, including the GNOME Human Interface Guidelines.
   - Approach: collect the user flows (drop a song → separation and transcription with progress → sheet music preview → export of notes and drum track), then mockups (e.g. as an artifact or Penpot/SVG) to discuss and iterate before implementing in GTK 4 + libadwaita.
 
-- [ ] **The tempo mark runs into a multi-bar rest's count** (owner, 2026-11-19, at the check on the Mac)
+- [x] **The tempo mark runs into a multi-bar rest's count** (owner, 2026-11-19, at the check on the Mac): fixed 2026-11-19. Reproduced with 22 empty bars at ♩ = 97: Verovio centres the count over the rest, which is narrow, right behind the mark. Of two ways shown to the owner (a wider rest through Verovio's `measureMinWidth`, or bar 1 as a rest of its own), the owner chose the second: `notation.engrave` never starts a multi-measure rest at bar 1, so Majesty reads ♩ = 97 over a whole-bar rest, then a rest of 21 (two empty bars at the start are two whole-bar rests). Seen in the window's layout and on A4. A song already analysed shows it when it is opened again. SPEC `engine-api`, success criterion 4, says so.
   - Seen: the PDF of Apashe's "Majesty" starts with 22 bars of rest; the tempo mark (♩ = 97) and the rest's count stand side by side above the staff and read "= 9722".
   - It comes from the core's engraving, so the GTK app and the sheet in both windows have it too.
 

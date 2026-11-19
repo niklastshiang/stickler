@@ -41,9 +41,12 @@ def test_inside_repeat_signs_every_pass_marks_the_same_written_bar():
 
 
 def test_a_bar_inside_a_multi_measure_rest_marks_the_rest():
-    bar_map, pages = _song(_kick_in(range(2, 8)))  # bars 1 and 2 empty
-    assert marker.written_at(bar_map, 2.5) == 1
-    assert marker.locate(pages, 2) == marker.locate(pages, 1)  # 2 has no rectangle of its own
+    bar_map, pages = _song(_kick_in([0, 1, 4, 5, 6, 7]))  # bars 3 and 4 empty
+    rest = marker.written_at(bar_map, 4.5)
+    assert rest is not None and marker.written_at(bar_map, 6.5) == rest
+    # the rest's second bar has no rectangle of its own
+    assert marker.locate(pages, rest + 1) == marker.locate(pages, rest)
+    assert rest in pages[0].bars and rest + 1 not in pages[0].bars
 
 
 def test_a_bar_number_the_engraving_does_not_know_marks_nothing():
