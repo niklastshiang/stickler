@@ -71,8 +71,8 @@ jobs:
           deploy=false
           if [ "$EVENT" = workflow_dispatch ] && [ "$WANTED" = true ]; then deploy=true; fi
           if [ "$EVENT" = release ] && [ "${TAG#v}" -ge 8 ] 2>/dev/null; then deploy=true; fi
-          # a page still holding a placeholder (the author's words) is never published
-          if [ "$deploy" = true ] && grep -rnE '\[(The owner|Eigene Worte)' _site; then
+          # a page still holding a placeholder (the author's words, a picture to come) is never published
+          if [ "$deploy" = true ] && grep -rnE '\[(The owner|Eigene Worte|Bild folgt)' _site; then
             echo "placeholders left in the site" >&2; exit 1
           fi
           echo "deploy=$deploy" >> "$GITHUB_OUTPUT"

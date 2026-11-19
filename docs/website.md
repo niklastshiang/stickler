@@ -81,7 +81,8 @@ verifying the domain first keeps anyone else from taking it over.
    Deployment branches and tags › add the tag rule `v*`. GitHub creates the environment for the
    default branch only, and a release runs on its tag.
 7. **Publish:** Actions › site › Run workflow › deploy ✓ (or wait for release 8). A page that
-   still holds a placeholder (the author's words) stops the deploy.
+   still holds a placeholder (the author's words, or a picture still to come on
+   `install-mac.html`: `[The owner…`, `[Bild folgt…`) stops the deploy.
 
 Until the domain works, the site is at `https://niklastshiang.github.io/stickler/` after the
 first deploy; its absolute links (canonical, sitemap, Open Graph, the 404 page) point to

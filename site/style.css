@@ -729,6 +729,47 @@ audio {
   padding-left: 1.25rem;
 }
 
+/* a guide in steps (install-mac): each step a heading, its text and its picture */
+.prose ol.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.steps li {
+  padding-left: 0.25rem;
+}
+
+.steps li::marker {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.steps h3 {
+  margin: 0 0 0.375rem;
+}
+
+.steps p {
+  margin: 0 0 0.75rem;
+}
+
+.prose code {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: 0.9375em;
+}
+
+/* a picture that is still to be taken; the workflow publishes no page with one */
+.placeholder {
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
 /* below laptop width the section links would wrap over several lines: the header keeps the
    name, the language and Download in one row; the page reads straight through without them.
    Last in the file, so it wins over the header's own rules. */

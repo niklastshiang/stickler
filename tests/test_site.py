@@ -193,7 +193,14 @@ def test_downloads_point_at_the_newest_release_until_the_workflow_fills_them():
         assert attrs["href"] == "https://github.com/niklastshiang/stickler/releases/latest"
 
 
-PAIRS = ("index.html", "accuracy.html", "about.html", "privacy.html", "imprint.html")
+PAIRS = (
+    "index.html",
+    "accuracy.html",
+    "about.html",
+    "privacy.html",
+    "imprint.html",
+    "install-mac.html",
+)
 # outside pages that exist in German too: the German page links the German one
 LOCALISED = {
     "https://mailbox.org/en/data-protection-privacy-policy/": "https://mailbox.org/de/datenschutz/"
@@ -307,3 +314,29 @@ def test_search_engines_find_every_page_in_both_languages():
     for path in pages:
         assert f"<loc>{_url(path)}</loc>" in sitemap, path
     assert sitemap.count("<url>") == len(pages)
+
+
+@pytest.mark.parametrize("folder", ["", "de/"])
+def test_the_mac_card_leads_to_the_guide_with_pictures(folder):
+    """SPEC "Website", content 9 (owner, 2026-11-19): the card keeps one sentence and the
+    link; the steps with their pictures have a page of their own."""
+    start = SITE / folder / "index.html"
+    html = start.read_text(encoding="utf-8")
+    card = html[html.index('data-size="dmg"') : html.index('data-size="flatpak"')]
+    assert 'href="install-mac.html"' in card and "<ol>" not in card
+    guide = _page(SITE / folder / "install-mac.html")
+    assert "xattr-command" in guide.ids, "the Terminal line for a Mac without Open Anyway"
+    assert [a for _t, a in guide.tags if a.get("data-copy") == "xattr-command"]
+
+
+def test_a_picture_still_to_come_stops_the_deploy():
+    """Until the owner's screenshots exist, the guide names each one in a placeholder; the
+    workflow publishes no page that holds one."""
+    workflow = (SITE.parent / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8")
+    stops = re.compile(re.search(r"grep -rnE '([^']+)' _site", workflow).group(1))
+    found = 0
+    for path in PAGES:
+        for text in re.findall(r'class="placeholder">\s*([^<]+)', path.read_text(encoding="utf-8")):
+            found += 1
+            assert stops.search(text), (path.name, text)
+    assert found >= 8  # four pictures in two languages, until they are taken
