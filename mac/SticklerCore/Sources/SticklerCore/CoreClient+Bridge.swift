@@ -39,7 +39,8 @@ extension CoreClient {
     /// changed bundle breaks its signature). Its `PATH` is the bundle's `bin` (`uv`, ffmpeg,
     /// ffprobe) and the system's folders, nothing of Homebrew's or the reader's. Where its
     /// adapters are and where `uv` keeps its Python, the core works out itself
-    /// (`paths.packaged_env`). It is not started while one of its parts is missing.
+    /// (`paths.packaged_env`), so it gets none of the app's own variables that would say
+    /// otherwise (`leadingAway`). It is not started while one of its parts is missing.
     public static func bundled(core: URL, languages: [String]) -> CoreClient {
         let python = core.appendingPathComponent("python/bin/python3")
         let parts = ["bin/uv", "bin/ffmpeg", "bin/ffprobe", "python/share/stickler/adapters"]
@@ -52,7 +53,8 @@ extension CoreClient {
                 "LANGUAGE": gettextLanguages(languages),
                 "PATH": core.appendingPathComponent("bin").path + ":/usr/bin:/bin:/usr/sbin:/sbin"
             ],
-            needs: [python] + parts.map { core.appendingPathComponent($0) })
+            needs: [python] + parts.map { core.appendingPathComponent($0) },
+            drops: leadingAway)
     }
 
     /// A development build's core: `uv run stickler-bridge` in the checkout `folder`, as an

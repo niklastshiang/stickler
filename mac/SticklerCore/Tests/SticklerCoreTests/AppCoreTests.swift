@@ -45,6 +45,35 @@ func madeUpBundle(
         #expect(client.environment["LANGUAGE"] == "es_ES:en")
     }
 
+    @Test func thePackagedCoreGetsNothingThatLeadsAwayFromSticklersFolders() {
+        let resources = URL(fileURLWithPath: "/Applications/Stickler.app/Contents/Resources")
+        let client = CoreClient.app(
+            languages: ["en"], environment: [:], resources: resources, development: false)
+        let own = [
+            "HOME": "/Users/me", "PATH": "/opt/homebrew/bin:/usr/bin", "HTTPS_PROXY": "http://p",
+            "UV_CACHE_DIR": "/elsewhere", "UV_PYTHON_INSTALL_DIR": "/elsewhere",
+            "XDG_DATA_HOME": "/elsewhere", "STICKLER_ADAPTER_SOURCES": "/elsewhere",
+            "STICKLER_PACKAGED": "appimage", "PYTHONPATH": "/elsewhere", "VIRTUAL_ENV": "/venv"
+        ]
+        let given = CoreClient.environment(
+            own: own, dropping: client.drops, adding: client.environment)
+        #expect(given["HOME"] == "/Users/me")
+        #expect(given["HTTPS_PROXY"] == "http://p")  // a proxy is the reader's to set
+        #expect(given["PATH"] == resources.path + "/core/bin:/usr/bin:/bin:/usr/sbin:/sbin")
+        #expect(given["STICKLER_PACKAGED"] == "macos")
+        #expect(Set(given.keys) == ["HOME", "HTTPS_PROXY", "PATH", "STICKLER_PACKAGED", "LANGUAGE"])
+    }
+
+    @Test func aDevelopmentBuildsCoreKeepsTheEnvironmentItWasStartedWith() {
+        let resources = URL(fileURLWithPath: "/Applications/Stickler.app/Contents/Resources")
+        let client = CoreClient.app(
+            languages: ["en"], environment: checkout, resources: resources, development: true)
+        #expect(client.drops.isEmpty)
+        let given = CoreClient.environment(
+            own: ["UV_CACHE_DIR": "/mine"], dropping: client.drops, adding: client.environment)
+        #expect(given["UV_CACHE_DIR"] == "/mine")
+    }
+
     @Test func aDevelopmentBuildTakesTheCheckoutFromItsEnvironment() {
         #expect(CoreClient.checkoutVariable == "STICKLER_CHECKOUT")
         let resources = URL(fileURLWithPath: "/Stickler.app/Contents/Resources")

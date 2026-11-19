@@ -80,6 +80,8 @@ public final class CoreClient: @unchecked Sendable {
     public let environment: [String: String]
     /// The programs and folders the core cannot do without, looked for before each start.
     public let needs: [URL]
+    /// Beginnings of the app's own variables the core does not get (`leadingAway`).
+    public let drops: [String]
 
     // Everything below is guarded by `lock`.
     private let lock = NSLock()
@@ -101,7 +103,7 @@ public final class CoreClient: @unchecked Sendable {
     /// is not started: `start` ends at once and names them (`CoreClient.missing`).
     public init(
         executable: URL, arguments: [String], directory: URL? = nil,
-        environment: [String: String] = [:], needs: [URL] = []
+        environment: [String: String] = [:], needs: [URL] = [], drops: [String] = []
     ) {
         _ = Self.ignoreBrokenPipes
         self.executable = executable
@@ -109,6 +111,21 @@ public final class CoreClient: @unchecked Sendable {
         self.directory = directory
         self.environment = environment
         self.needs = needs
+        self.drops = drops
+    }
+
+    /// Variables that would lead a packaged core, `uv` or Python away from Stickler's own
+    /// folders and Python: set in a Terminal the app was started from, or with `launchctl
+    /// setenv`. Named by their beginnings.
+    public static let leadingAway = ["UV_", "XDG_", "STICKLER_", "PYTHON", "VIRTUAL_ENV"]
+
+    /// What the core is started with: this process's `own` environment without the variables
+    /// that begin with one of `drops`, then `added`.
+    public static func environment(
+        own: [String: String], dropping drops: [String], adding added: [String: String]
+    ) -> [String: String] {
+        own.filter { name, _ in !drops.contains { name.hasPrefix($0) } }
+            .merging(added) { $1 }
     }
 
     /// Starts the core. `onEvent` gets `hello` and every event; `onEnd` comes once, also when
@@ -127,7 +144,8 @@ public final class CoreClient: @unchecked Sendable {
         process.executableURL = executable
         process.arguments = arguments
         process.currentDirectoryURL = directory
-        process.environment = ProcessInfo.processInfo.environment.merging(environment) { $1 }
+        process.environment = Self.environment(
+            own: ProcessInfo.processInfo.environment, dropping: drops, adding: environment)
         let stdin = Pipe(), stdout = Pipe(), stderr = Pipe()
         process.standardInput = stdin
         process.standardOutput = stdout
