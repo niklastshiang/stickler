@@ -92,7 +92,8 @@ Module `mac-sheet` (SPEC.md, its success criteria 1–3). Update first (`git pul
    800 points wide, then about 1600: shortly after you let go, the notes are laid out anew
    over the whole width, and it scrolls up and down only.
 2. **Note size:** View › Zoom In (⌘+), Zoom Out (⌘−), Actual Size (⌘0), and a pinch with two
-   fingers on the trackpad over the sheet (the notes change once, when the fingers lift). The
+   fingers on the trackpad over the sheet (the notes grow and shrink under the fingers; when
+   they lift, the lines are laid out anew at that size, without a flash of an empty page). The
    three items are grey while no song is shown. Open another song, then quit and open the
    app again: the size is still the one you chose.
 3. **Staying in place:** scroll to the middle of a long song, then zoom or resize: the same

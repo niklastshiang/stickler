@@ -314,6 +314,25 @@ struct ZoomStep {
         #expect(pinch.end() == 0.5)
     }
 
+    @Test func aPinchTellsItsScaleSoFarWhileTheFingersMove() {
+        var pinch = Pinch()
+        #expect(pinch.soFar == nil)  // no fingers on the trackpad
+        pinch.begin()
+        #expect(pinch.soFar == 1)
+        pinch.change(by: 0.25)
+        #expect(pinch.soFar == 1.25)
+        pinch.change(by: 0.6)
+        #expect(pinch.soFar == 2.0)
+        pinch.change(by: -1.5)  // nothing can be shown at a negative size
+        #expect(pinch.soFar == nil)
+        pinch.cancel()
+        #expect(pinch.soFar == nil)
+        pinch.begin()
+        pinch.change(by: 0.5)
+        _ = pinch.end()
+        #expect(pinch.soFar == nil)  // the fingers lifted
+    }
+
     @Test func aPinchSetsTheNoteSizeItBeganAtTimesItsScale() async throws {
         let (harness, model) = try running()
         harness.core.answer("zoom_in", with: zoomReply(1.25, "125%"))

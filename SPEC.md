@@ -2426,9 +2426,14 @@ sheet is decided in Swift (SPEC "Release 8": one shared core, two thin interface
    dark mode the page is inverted (light notes on a dark page), as in the GTK app. The window's
    title and subtitle (artist · tempo · meter) stay as `mac-shell` made them.
 3. **Note size:** View › Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0 (`mac-design` M8), enabled
-   with a result; a trackpad pinch changes it too, applied once the fingers rest (GTK's
-   behaviour). The size is the core's setting, so it holds for every song and the GTK app's
-   value is not mixed up with the Mac's (each app has its own settings folder).
+   with a result; a trackpad pinch changes it too: while the fingers move, the shown pages
+   grow and shrink with them as a picture, around the pointer; once the fingers lift, the core
+   engraves at that size and the pages laid out anew take the picture's place (owner,
+   2026-11-19, at the check of task 129: a pinch that shows nothing until the fingers lift does
+   not read as a zoom on a Mac; the GTK app applies it once the fingers rest). New pages replace
+   the old ones in the loaded page, which is not loaded again for them. The size is the core's
+   setting, so it holds for every song and the GTK app's value is not mixed up with the Mac's
+   (each app has its own settings folder).
 4. **Accessibility:** the web view reads as one image to VoiceOver, labelled with the song's
    title and the page count ("Sheet music of Eye of the Tiger, 3 pages"); the menu items carry
    their shortcuts; nothing in the sheet takes the keyboard focus from the window's controls.
@@ -2461,6 +2466,9 @@ a page view of A4 sheets in the window.
 
 **Decided (owner, 2026-11-18):** the pinch comes in this module, as the GTK app has it from
 `sheet-view`; the page has the canvas's soft shadow, as macOS shows document pages.
+
+**Changed (owner, 2026-11-19, at the check on the Mac):** the pinch's picture follows the
+fingers (scope 3); before, the note size changed once, when the fingers lifted.
 
 ### Module `mac-package`
 

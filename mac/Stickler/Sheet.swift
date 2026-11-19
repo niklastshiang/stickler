@@ -12,7 +12,7 @@ struct SheetView: View {
     var body: some View {
         let dark = scheme == .dark
         SheetWeb(
-            html: SheetHTML.document(model.sheet.pages, dark: dark), dark: dark,
+            content: SheetHTML.content(model.sheet.pages, dark: dark), dark: dark,
             resized: { width in
                 if let pages = SheetHTML.pagesWidth(in: width) {
                     model.sheet.resize(to: pages)
@@ -27,9 +27,9 @@ struct SheetView: View {
     }
 }
 
-/// The web view in SwiftUI: it shows `html` and loads it again only when it changes.
+/// The web view in SwiftUI: it shows `content`, loaded once; later pages replace the first.
 struct SheetWeb: NSViewRepresentable {
-    let html: String
+    let content: SheetHTML.Content
     let dark: Bool
     let resized: @MainActor (Double) -> Void
     let pinched: @MainActor (Double) -> Void
@@ -51,46 +51,75 @@ struct SheetWeb: NSViewRepresentable {
         view.underPageBackgroundColor = NSColor(
             srgbRed: CGFloat(desk.red) / 255, green: CGFloat(desk.green) / 255,
             blue: CGFloat(desk.blue) / 255, alpha: 1)
-        context.coordinator.show(html, in: view)
+        if !context.coordinator.show(content, in: view) {
+            view.settle()  // no new pages: a lifted pinch's picture has nothing to wait for
+        }
     }
 }
 
-/// What the web view shows now. A page is loaded once; when WebKit's drawing process dies,
-/// the same page is loaded again instead of leaving the sheet blank. Pages laid out again (a
-/// resize, another note size, the other appearance) are shown where the reader was: as far
-/// down the new page as they had scrolled down the old one.
+/// What the web view shows now. The document is loaded once; pages laid out again (a resize,
+/// another note size, the other appearance) replace the old ones in it, at the place the
+/// reader was: as far down the new pages as they had scrolled down the old ones. So the sheet
+/// is never blank in between, and a pinch's picture ends in the same frame as its pages come.
+/// When WebKit's drawing process dies, the document is loaded again instead of leaving the
+/// sheet blank.
 @MainActor
 final class SheetLoad: NSObject, WKNavigationDelegate {
-    private(set) var shown: String?
+    private(set) var shown: SheetHTML.Content?
+    /// What the document being loaded, or the loaded one, was built from.
+    private var document: SheetHTML.Content?
+    private var loaded = false  // the document is there and takes new pages
     /// How far down the reader was: 0 the top, 1 the page's whole height.
     private var place = 0.0
-    private var turn = 0  // the newest page's number; an older one still reading is dropped
 
-    /// The app's own script, which runs although the page's are off.
-    static let readPlace =
-        "return window.scrollY / Math.max(1, document.documentElement.scrollHeight)"
+    /// The app's own scripts, which run although the page's are off.
     static let goToPlace =
         "window.scrollTo(0, place * document.documentElement.scrollHeight); return true"
+    /// New styles and sheets in the loaded document; a pinch's picture ends with them. It
+    /// gives the place the reader was at.
+    static let replace = """
+        const root = document.documentElement;
+        document.body.style.transform = "";
+        const place = window.scrollY / Math.max(1, root.scrollHeight);
+        document.querySelector("style").textContent = style;
+        document.body.innerHTML = sheets;
+        window.scrollTo(0, place * root.scrollHeight);
+        return place
+        """
 
-    func show(_ html: String, in view: WKWebView) {
-        guard html != shown else { return }
-        let replaces = shown != nil
-        shown = html
-        turn += 1
-        guard replaces else {
-            view.loadHTMLString(html, baseURL: nil)
-            return
+    /// Shows `content`; false when it is shown already.
+    @discardableResult
+    func show(_ content: SheetHTML.Content, in view: WKWebView) -> Bool {
+        guard content != shown else { return false }
+        let first = shown == nil
+        shown = content
+        if first {
+            load(content, in: view)
+        } else if loaded {
+            replace(with: content, in: view)
         }
-        let mine = turn
-        Task {
-            // a page still loading has not been scrolled to its place yet: the last one holds
-            if !view.isLoading {
-                let read = try? await view.callAsyncJavaScript(
-                    Self.readPlace, contentWorld: .page)
-                place = read as? Double ?? place
+        // a document still loading takes the newest pages once it is there
+        return true
+    }
+
+    private func load(_ content: SheetHTML.Content, in view: WKWebView) {
+        loaded = false
+        document = content
+        view.loadHTMLString(content.document, baseURL: nil)
+    }
+
+    private func replace(with content: SheetHTML.Content, in view: WKWebView) {
+        view.callAsyncJavaScript(
+            Self.replace, arguments: ["style": content.style, "sheets": content.sheets],
+            in: nil, in: .page
+        ) { [weak self] result in
+            guard let self else { return }
+            if case .success(let read) = result, let read = read as? Double {
+                self.place = read
+            } else if content == self.shown, self.loaded {
+                // the document could not take them: loaded afresh, at the place last read
+                self.load(content, in: view)
             }
-            guard mine == turn else { return }
-            view.loadHTMLString(html, baseURL: nil)
         }
     }
 
@@ -106,31 +135,50 @@ final class SheetLoad: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ view: WKWebView, didFinish _: WKNavigation?) {
-        guard place > 0 else { return }
-        let place = place
-        Task {
-            _ = try? await view.callAsyncJavaScript(
-                Self.goToPlace, arguments: ["place": place], contentWorld: .page)
+        loaded = true
+        if place > 0 {
+            view.callAsyncJavaScript(
+                Self.goToPlace, arguments: ["place": place], in: nil, in: .page)
+        }
+        if let shown, shown != document {
+            replace(with: shown, in: view)  // pages that came while it loaded
         }
     }
 
     func webViewWebContentProcessDidTerminate(_ view: WKWebView) {
-        guard let html = shown else { return }
-        turn += 1
-        view.loadHTMLString(html, baseURL: nil)
+        guard let shown else { return }
+        load(shown, in: view)
     }
 }
 
-/// The sheet's web view: it runs no script, tells its width in points and a pinch's scale,
-/// leaves the keyboard to the window's controls and offers no menu (its "Reload" would empty
-/// a page without an address).
+/// The sheet's web view: it runs no script of a page's, tells its width in points and a
+/// pinch's scale, shows a pinch's picture while the fingers move, leaves the keyboard to the
+/// window's controls and offers no menu (its "Reload" would empty a page without an address).
 final class SheetWebView: WKWebView {
     /// Told every new width, once.
     var resized: (@MainActor (Double) -> Void)?
     /// Told a pinch's whole scale, once the fingers lift.
     var pinched: (@MainActor (Double) -> Void)?
+    /// How long a lifted pinch's picture waits for the pages laid out at its size.
+    var patience: Duration = .milliseconds(1500)
     private var told = 0.0
     private var gesture = Pinch()
+    private var pictured = false  // a pinch's picture is on the page
+    private var waiting: Task<Void, Never>?
+
+    /// A pinch's picture (SPEC.md, module `mac-sheet`, scope 3): the shown pages drawn larger
+    /// or smaller around the point the pinch began at, until the core's pages replace them.
+    static let picture = """
+        const body = document.body;
+        if (!body.style.transform) {
+            body.style.transformOrigin = x + "px " + (y + window.scrollY) + "px";
+        }
+        body.style.transform = "scale(" + scale + ")";
+        return true
+        """
+    static let noPicture = "document.body.style.transform = \"\"; return true"
+    /// The picture's limits; the note size's own are the core's.
+    static let pictures = 0.2...5.0
 
     static func make() -> SheetWebView {
         let configuration = WKWebViewConfiguration()
@@ -156,21 +204,54 @@ final class SheetWebView: WKWebView {
     }
 
     override func magnify(with event: NSEvent) {
-        pinch(event.phase, by: Double(event.magnification))
+        var point = convert(event.locationInWindow, from: nil)
+        if !isFlipped {
+            point.y = bounds.height - point.y
+        }
+        pinch(event.phase, by: Double(event.magnification), at: point)
     }
 
-    /// A step of a trackpad pinch: the note size changes once, when the fingers lift (the
-    /// core engraves anew for it), not while they move.
-    func pinch(_ phase: NSEvent.Phase, by magnification: Double) {
+    /// A step of a trackpad pinch at `point` (from the view's top left): the pages' picture
+    /// follows the fingers; the note size changes once, when they lift (the core engraves
+    /// anew for it), and the picture stays until those pages come.
+    func pinch(_ phase: NSEvent.Phase, by magnification: Double, at point: CGPoint = .zero) {
         if phase.contains(.began) {
+            waiting?.cancel()
             gesture.begin()
         }
         gesture.change(by: magnification)
         if phase.contains(.cancelled) {
             gesture.cancel()
-        } else if phase.contains(.ended), let scale = gesture.end() {
+            settle()
+        } else if phase.contains(.ended) {
+            guard let scale = gesture.end() else {
+                settle()
+                return
+            }
             pinched?(scale)
+            waiting = Task { [weak self, patience] in
+                try? await Task.sleep(for: patience)
+                guard !Task.isCancelled else { return }
+                self?.settle()  // the core refused: no pages will come
+            }
+        } else if let scale = gesture.soFar {
+            pictured = true
+            callAsyncJavaScript(
+                Self.picture,
+                arguments: [
+                    "scale": min(max(scale, Self.pictures.lowerBound), Self.pictures.upperBound),
+                    "x": Double(point.x), "y": Double(point.y)
+                ], in: nil, in: .page)
         }
+    }
+
+    /// Takes a pinch's picture back when no pages will replace it: the pinch was cancelled or
+    /// changed nothing, the core answered with the pages already shown, or refused.
+    func settle() {
+        guard pictured, gesture.soFar == nil else { return }
+        waiting?.cancel()
+        pictured = false
+        callAsyncJavaScript(Self.noPicture, arguments: [:], in: nil, in: .page)
     }
 
     override func willOpenMenu(_ menu: NSMenu, with _: NSEvent) {
