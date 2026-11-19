@@ -87,15 +87,15 @@ Stickler only uses open-source models from actively maintained projects.
 
 ## `> INSTALL THE APP`
 
-Every [release](https://github.com/niklastshiang/stickler/releases) has the app in two forms,
-for x86_64 Linux. On first start it asks to download its two models once; after that it runs
-offline. Stickler ships no model itself, and each comes with its own licence, which the app names
+Every [release](https://github.com/niklastshiang/stickler/releases) has the app for Linux on
+x86_64, in two forms, and from release 8 for a Mac with Apple silicon. On first start it asks to
+download its two models once; after that it runs offline. Stickler ships no model itself, and each comes with its own licence, which the app names
 before the download; some are for non-commercial use only (see [`> LICENSE`](#-license)).
 
 | What | How much |
 |---|---|
-| System | Linux on x86_64 |
-| Download on first start | about 2.2 GB (ADTOF and Beat This!) |
+| System | Linux on x86_64, or a Mac with Apple silicon and macOS 26 |
+| Download on first start | about 2.2 GB on Linux (ADTOF and Beat This!); the app names the size before it downloads |
 | First drum-track export | about 1.2 GB more (Demucs) |
 | Memory | about 1 GB while a song is analysed |
 | Also needed | nothing: no Python, `uv` or ffmpeg to install; the Flatpak takes the GNOME 51 runtime from Flathub |
@@ -116,11 +116,19 @@ and start it.
 chmod +x Stickler-7-x86_64.AppImage && ./Stickler-7-x86_64.AppImage
 ```
 
+**Mac** (from release 8): download `Stickler-<version>.dmg`, open it and drag Stickler to
+Applications. macOS blocks the first start of an app that is not from the App Store: allow it
+once under **System Settings › Privacy & Security › Open Anyway**. The steps one by one, and
+what to do when that button is missing: [Installing Stickler on a Mac](docs/install-macos.md).
+
 ### Removing it
 
 To free the models' space but keep the app, choose **Remove Downloaded Models…** in its main
 menu (Flatpak and AppImage); a check box there removes the settings, recent songs and
 corrections too.
+
+**Mac:** choose **Remove Downloaded Models…** in the Stickler menu with its box ticked, then
+drag Stickler from Applications to the Bin.
 
 **Flatpak:** one command removes the app with its models, results and settings:
 
