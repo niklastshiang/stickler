@@ -542,7 +542,7 @@ workflow with release data and axe-core (123) → DNS guide, review, owner's che
 ## Open Questions
 - none. The ROCm channel is decided in task 6.
 
-## Release 8 (macOS app): `mac-package` (draft, SPEC.md "Module `mac-package`"; not approved yet)
+## Release 8 (macOS app): `mac-package` (approved 2026-11-19, SPEC.md "Module `mac-package`")
 
 The `.dmg` a drummer installs without a Terminal: the app with `uv`, a Python, the core, ffmpeg
 and the adapters' sources inside. Tasks 131–137.

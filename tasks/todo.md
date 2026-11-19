@@ -984,12 +984,12 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint X
 - [ ] All success criteria of SPEC.md "Module `mac-sheet`" met (owner); then `mac-package`'s spec
 
-## Phase 24: Release 8 (macOS app), module `mac-package` (draft 2026-11-19, SPEC.md "Module `mac-package`"; waits for the owner's approval)
+## Phase 24: Release 8 (macOS app), module `mac-package` (approved 2026-11-19, SPEC.md "Module `mac-package`")
 
 - [ ] **Task 131: The spike** (M)
   - Acceptance: a workflow run by hand (`mac-spike.yml`, removed again in 136) builds an ad-hoc signed `Stickler.app` with `bin/uv`, a pinned relocatable Python with the core's wheels, the core, the adapters' sources and ffmpeg/ffprobe built from the pinned source, each helper signed, in a plain `.dmg`; the job's summary gives the image's size, each part's size and the ffmpeg build's minutes; the job mounts the image, copies the app out and has its core answer `hello`. The app in it starts the bundled core (a switch only the spike sets; the folder question stays for everyone else).
   - Verify: the owner on the Mac: download, drag, Open Anyway, the consent, the download, a song to its sheet music; once started straight from Downloads; the technical details show the core's `PATH`
-  - Dependencies: checkpoint X is not needed (owner to confirm with the approval) · Files: `.github/workflows/mac-spike.yml`, `scripts/mac_bundle.sh`, `mac/SticklerCore/Sources/SticklerCore/CoreClient+Bridge.swift`
+  - Dependencies: none; it runs before checkpoint X (owner, 2026-11-19) · Files: `.github/workflows/mac-spike.yml`, `scripts/mac_bundle.sh`, `mac/SticklerCore/Sources/SticklerCore/CoreClient+Bridge.swift`
 
 ### Checkpoint Y
 - [ ] The spike's three answers are in SPEC.md; the spec is changed where they ask for it; the owner approves going on (owner)

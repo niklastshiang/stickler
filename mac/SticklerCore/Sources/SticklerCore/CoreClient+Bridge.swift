@@ -23,6 +23,32 @@ extension CoreClient {
             ])
     }
 
+    /// The core an app brings along (SPEC.md, module `mac-package`, scope 3): the Python inside
+    /// `core` runs the bridge, isolated from the Mac's own Python settings (`-I`) and writing
+    /// no bytecode into the app (`-B`: a changed bundle breaks its signature). Its `PATH` is
+    /// the bundle's `bin` (`uv`, ffmpeg, ffprobe) and the system's folders, nothing of
+    /// Homebrew's or the reader's. Where its adapters are and where `uv` keeps its Python,
+    /// the core works out itself (`paths.packaged_env`).
+    public static func bundled(core: URL, languages: [String]) -> CoreClient {
+        CoreClient(
+            executable: core.appendingPathComponent("python/bin/python3"),
+            arguments: ["-I", "-B", "-m", "stickler_app.bridge"],
+            directory: core,
+            environment: [
+                "STICKLER_PACKAGED": "macos",
+                "LANGUAGE": gettextLanguages(languages),
+                "PATH": core.appendingPathComponent("bin").path + ":/usr/bin:/bin:/usr/sbin:/sbin"
+            ])
+    }
+
+    /// The core inside the app's resources, when the app brings one (its Python is there and
+    /// can run).
+    public static func bundledCore(resources: URL? = Bundle.main.resourceURL) -> URL? {
+        guard let core = resources?.appendingPathComponent("core") else { return nil }
+        let python = core.appendingPathComponent("python/bin/python3").path
+        return FileManager.default.isExecutableFile(atPath: python) ? core : nil
+    }
+
     /// `LANGUAGE` as gettext reads it, from the user's languages (BCP 47, best first):
     /// `de-DE` becomes `de_DE`, and the list ends with `en` at the first English entry.
     /// English is the source's language and has no catalogue, so gettext would go on to a

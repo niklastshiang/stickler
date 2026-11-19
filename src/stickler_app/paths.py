@@ -108,17 +108,21 @@ def results_cache(env: Mapping[str, str] = os.environ) -> Path:
 
 
 def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
-    """What an AppImage sets for itself (the Flatpak's manifest sets the same): where its
-    adapters' sources are; that uv uses a Python of its own, never the AppImage's, whose path
+    """What an AppImage sets for itself (the Flatpak's manifest sets the same), and the Mac
+    app that brings its own core (module `mac-package`): where its adapters' sources are; that uv uses a Python of its own, never the AppImage's, whose path
     changes with every mount; and that uv keeps its downloads and that Python in Stickler's
     folders. The Python settings always apply (otherwise uv may take the AppImage's own);
     other values already set stay."""
-    if packaged(env) != "appimage":
+    kind = packaged(env)
+    if kind not in ("appimage", "macos"):
         return {}
     import stickler_app
 
+    shipped = stickler_app.prefix(env=env) / "share/stickler/adapters"
+    if kind == "macos" and not shipped.is_dir():
+        return {}  # the Mac app over a checkout (`uv run`): the folder's own uv and Pythons
     wanted = {
-        "STICKLER_ADAPTER_SOURCES": str(stickler_app.prefix(env=env) / "share/stickler/adapters"),
+        "STICKLER_ADAPTER_SOURCES": str(shipped),
         "UV_PYTHON_PREFERENCE": "only-managed",
         "UV_PYTHON_DOWNLOADS": "automatic",
         # uv's downloads and Python in Stickler's own folders: removing the app's three folders

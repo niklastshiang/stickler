@@ -1811,7 +1811,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 | `core-bridge` | `stickler-bridge`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | approved, below |
 | `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped; the setup assistant (consent, model download with progress, resumable, "Remove Downloaded Models…"), moved here from `mac-setup` (owner, 2026-11-18) | `core-bridge`, `mac-design` | approved, below |
 | `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | approved, below |
-| `mac-package` | `.app` with `uv` and the core's sources, a Python fetched by `uv` at setup (as in the AppImage), ad-hoc signed `.dmg`, release workflow, install guide with pictures | all | draft, below |
+| `mac-package` | `.app` with `uv` and the core's sources, a Python fetched by `uv` at setup (as in the AppImage), ad-hoc signed `.dmg`, release workflow, install guide with pictures | all | approved, below |
 
 Build order: `shared-core`, `mac-design`, `mac-core` (in parallel) → `core-bridge` →
 `mac-shell` (with the setup, owner 2026-11-18) → `mac-sheet` → `mac-package`.
@@ -2464,9 +2464,10 @@ a page view of A4 sheets in the window.
 
 ### Module `mac-package`
 
-> Status: **draft**, written 2026-11-19; its five questions are decided (owner, 2026-11-19, at
-> the end), the approval of the whole is asked for with the plan (`tasks/plan.md`, tasks
-> 131–137). The spike (scope 1) comes first, as "Release 8" asks. The website's page `install-mac.html` (task 130) takes its pictures from
+> Status: **approved** by the owner on 2026-11-19 (the five questions decided, at the end;
+> then the build started with `/build auto`, and the spike before `mac-sheet`'s checkpoint X:
+> "Spike: your recommendation"). Plan: `tasks/plan.md`, tasks 131–137. The spike (scope 1)
+> comes first, as "Release 8" asks; what follows it waits for checkpoint Y. The website's page `install-mac.html` (task 130) takes its pictures from
 > this module.
 
 **Objective.** A drummer downloads `Stickler-8.dmg` from the release, drags Stickler to

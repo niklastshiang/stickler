@@ -74,6 +74,8 @@ public final class AppModel {
     private let uvPlaces: [URL]
     private let languages: [String]
     private let makeCore: @Sendable (URL, URL, [String]) -> any Core
+    private let bundled: URL?  // the core the app brings along, if it does
+    private let makeBundled: @Sendable (URL, [String]) -> any Core
     private var core: (any Core)?
     private var listener: Task<Void, Never>?
     private var outbox: AsyncStream<Command>.Continuation?  // commands, in the reader's order
@@ -81,7 +83,8 @@ public final class AppModel {
 
     /// `uvPlaces`: where `uv` may be, first found wins (a Mac app started from the Finder
     /// has almost no PATH). `settle`: how long the sheet's width must hold before its pages are
-    /// asked for. `makeCore` builds the core for a folder, `uv` and languages.
+    /// asked for. `makeCore` builds the core for a folder, `uv` and languages. `bundled`: the
+    /// core inside the app (module `mac-package`); with one, no folder is asked for.
     public init(
         defaults: UserDefaults = .standard,
         uvPlaces: [URL] = AppModel.defaultUVPlaces(),
@@ -89,12 +92,18 @@ public final class AppModel {
         settle: Duration = .milliseconds(300),
         makeCore: @escaping @Sendable (URL, URL, [String]) -> any Core = { folder, uv, languages in
             CoreClient.bridge(in: folder, uv: uv, languages: languages)
+        },
+        bundled: URL? = CoreClient.bundledCore(),
+        makeBundled: @escaping @Sendable (URL, [String]) -> any Core = { core, languages in
+            CoreClient.bundled(core: core, languages: languages)
         }
     ) {
         self.defaults = defaults
         self.uvPlaces = uvPlaces
         self.languages = languages
         self.makeCore = makeCore
+        self.bundled = bundled
+        self.makeBundled = makeBundled
         // the sheet's refusals show as the window's notice
         let tell = Refusals()
         sheet = SheetModel(settle: settle) { tell.model?.refused($0) }
@@ -106,25 +115,14 @@ public final class AppModel {
         weak var model: AppModel?
     }
 
-    /// `~/.local/bin` (uv's installer), Homebrew's two prefixes, then PATH.
-    public nonisolated static func defaultUVPlaces(
-        environment: [String: String] = ProcessInfo.processInfo.environment
-    ) -> [URL] {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let fixed = [
-            home.appendingPathComponent(".local/bin/uv"),
-            URL(fileURLWithPath: "/opt/homebrew/bin/uv"),
-            URL(fileURLWithPath: "/usr/local/bin/uv")
-        ]
-        let path = (environment["PATH"] ?? "").split(separator: ":")
-            .map { URL(fileURLWithPath: String($0)).appendingPathComponent("uv") }
-        return fixed + path
-    }
-
     // the core
 
     /// At launch: the remembered folder's core, or the question for the folder.
     public func launch() {
+        if let bundled {
+            startCore(makeBundled(bundled, languages))
+            return
+        }
         guard let stored = defaults.string(forKey: Self.folderKey) else {
             phase = .needsFolder(nil)
             return
@@ -139,6 +137,10 @@ public final class AppModel {
 
     /// "Start Again" on the stopped page.
     public func startAgain() {
+        if folder == nil, let bundled {
+            startCore(makeBundled(bundled, languages))
+            return
+        }
         guard let folder else {
             phase = .needsFolder(nil)
             return
@@ -184,16 +186,6 @@ public final class AppModel {
         }
         folder = url
         startCore(makeCore(url, uv, languages))
-    }
-
-    /// Whether `url` holds the core: a Stickler checkout has `pyproject.toml` and `adapters/`.
-    public nonisolated static func problem(with url: URL) -> FolderProblem? {
-        let files = FileManager.default
-        var isFolder: ObjCBool = false
-        let adapters = url.appendingPathComponent("adapters").path
-        let ok = files.fileExists(atPath: url.appendingPathComponent("pyproject.toml").path)
-            && files.fileExists(atPath: adapters, isDirectory: &isFolder) && isFolder.boolValue
-        return ok ? nil : .notStickler(url.path)
     }
 
     private enum Signal: Sendable {
@@ -325,5 +317,33 @@ public final class AppModel {
         if case CoreClientError.refused(let reason) = error {
             notice = Notice(text: reason.message, opens: nil)
         }
+    }
+}
+
+// Where a checkout's core and its `uv` are (until `mac-package`).
+extension AppModel {
+    /// `~/.local/bin` (uv's installer), Homebrew's two prefixes, then PATH.
+    public nonisolated static func defaultUVPlaces(
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> [URL] {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let fixed = [
+            home.appendingPathComponent(".local/bin/uv"),
+            URL(fileURLWithPath: "/opt/homebrew/bin/uv"),
+            URL(fileURLWithPath: "/usr/local/bin/uv")
+        ]
+        let path = (environment["PATH"] ?? "").split(separator: ":")
+            .map { URL(fileURLWithPath: String($0)).appendingPathComponent("uv") }
+        return fixed + path
+    }
+
+    /// Whether `url` holds the core: a Stickler checkout has `pyproject.toml` and `adapters/`.
+    public nonisolated static func problem(with url: URL) -> FolderProblem? {
+        let files = FileManager.default
+        var isFolder: ObjCBool = false
+        let adapters = url.appendingPathComponent("adapters").path
+        let ok = files.fileExists(atPath: url.appendingPathComponent("pyproject.toml").path)
+            && files.fileExists(atPath: adapters, isDirectory: &isFolder) && isFolder.boolValue
+        return ok ? nil : .notStickler(url.path)
     }
 }

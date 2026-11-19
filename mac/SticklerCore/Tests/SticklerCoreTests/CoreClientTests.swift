@@ -351,3 +351,32 @@ func bridgeProcess(under uvPID: Int32) async throws -> Int32 {
     client.terminate()
     #expect(await eventually(10) { seen.ended != nil })
 }
+
+@Test func theAppsOwnCoreRunsFromItsBundleWithNothingOfTheMacsOnItsPath() {
+    let core = URL(fileURLWithPath: "/Applications/Stickler.app/Contents/Resources/core")
+    let client = CoreClient.bundled(core: core, languages: ["de-DE", "en"])
+    #expect(client.executable.path == core.path + "/python/bin/python3")
+    // isolated from the Mac's own Python settings, and writing no bytecode into the app
+    #expect(client.arguments == ["-I", "-B", "-m", "stickler_app.bridge"])
+    #expect(client.directory == core)
+    #expect(client.environment == [
+        "STICKLER_PACKAGED": "macos",
+        "LANGUAGE": "de_DE:en",
+        "PATH": core.path + "/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    ])
+}
+
+@Test func aCoreInTheAppIsFoundByItsPython() throws {
+    let resources = FileManager.default.temporaryDirectory
+        .appendingPathComponent("stickler-bundle-\(UUID().uuidString)")
+    #expect(CoreClient.bundledCore(resources: resources) == nil)
+    #expect(CoreClient.bundledCore(resources: nil) == nil)
+    let bin = resources.appendingPathComponent("core/python/bin")
+    try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
+    let python = bin.appendingPathComponent("python3")
+    try Data("#!/bin/sh\n".utf8).write(to: python)
+    #expect(CoreClient.bundledCore(resources: resources) == nil)  // not a program yet
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: python.path)
+    #expect(CoreClient.bundledCore(resources: resources)?.path
+        == resources.appendingPathComponent("core").path)
+}

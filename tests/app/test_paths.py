@@ -134,3 +134,30 @@ def test_removing_the_mac_apps_models_takes_its_analyses_too():
         SUPPORT / "results",
     ]
     assert removal.targets(MAC, everything=True) == [SUPPORT, CACHES]
+
+
+def test_the_mac_app_with_its_own_core_gives_uv_folders_of_its_own(tmp_path, monkeypatch):
+    """SPEC.md, module `mac-package`, scope 3: as the AppImage, the bundled core finds its
+    adapters next to itself and keeps uv's Python and downloads in Stickler's folders."""
+    import stickler_app
+
+    shipped = tmp_path / "share" / "stickler" / "adapters"
+    shipped.mkdir(parents=True)
+    monkeypatch.setattr(stickler_app, "prefix", lambda env=None: tmp_path)
+    env = {**MAC, "UV_PYTHON_PREFERENCE": "system", "UV_CACHE_DIR": "/elsewhere"}
+    assert paths.packaged_env(env) == {
+        "STICKLER_ADAPTER_SOURCES": str(shipped),
+        "UV_PYTHON_PREFERENCE": "only-managed",  # forced: never a Python found on the Mac
+        "UV_PYTHON_DOWNLOADS": "automatic",
+        "UV_PYTHON_INSTALL_DIR": str(SUPPORT / "python"),
+    }  # a UV_CACHE_DIR already set stays
+    assert paths.packaged_env(MAC)["UV_CACHE_DIR"] == str(CACHES / "uv")
+
+
+def test_the_mac_app_run_from_a_checkout_keeps_uv_as_it_is(tmp_path, monkeypatch):
+    """Until `mac-package` the Mac app runs `uv run stickler-bridge` in a checkout: nothing
+    ships next to the core there, and its models' environments stay as they were set up."""
+    import stickler_app
+
+    monkeypatch.setattr(stickler_app, "prefix", lambda env=None: tmp_path)
+    assert paths.packaged_env(MAC) == {}
