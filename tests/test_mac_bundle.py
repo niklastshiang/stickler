@@ -96,7 +96,7 @@ def _core(root: Path) -> Path:
     for adapter in tools.APP_ADAPTERS:
         _file(share / "stickler" / "adapters" / adapter / "pyproject.toml")
         _file(share / "stickler" / "adapters" / adapter / "uv.lock")
-    _file(share / "stickler" / "adapters" / "_common" / "stickler_adapter.py")
+    _file(share / "stickler" / "adapters" / "_common" / "pyproject.toml")
     for language in ("de", "es"):
         _file(share / "locale" / language / "LC_MESSAGES" / "stickler.mo")
     return core
@@ -164,7 +164,7 @@ def test_environments_weights_caches_and_pip_are_found(tmp_path, extra):
         "bin/ffprobe",
         "python/share/locale/es/LC_MESSAGES/stickler.mo",
         "python/share/stickler/adapters/separators/demucs/pyproject.toml",
-        "python/share/stickler/adapters/_common/stickler_adapter.py",
+        "python/share/stickler/adapters/_common/pyproject.toml",
         "licenses/ffmpeg/ffmpeg-LICENSE",
         "python/lib/python3.14/site-packages/stickler_app/__init__.py",
     ],
@@ -233,3 +233,11 @@ def test_uv_is_one_version_in_every_package_and_every_download_is_pinned():
         # nothing is fetched without a checksum: every curl goes through fetch or a check
         assert script.count("curl ") == script.count("shasum -a 256 -c")
     assert "brew" not in mac  # the runner's Homebrew is not a pinned source
+
+
+def test_the_check_names_files_the_repository_really_has():
+    """The check once asked for a file that never existed and failed every build."""
+    for adapter in tools.APP_ADAPTERS:
+        assert (ROOT / "adapters" / adapter / "pyproject.toml").is_file()
+        assert (ROOT / "adapters" / adapter / "uv.lock").is_file()
+    assert (ROOT / "adapters" / "_common" / "pyproject.toml").is_file()

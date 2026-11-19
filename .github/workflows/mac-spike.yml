@@ -12,6 +12,9 @@ permissions:
 jobs:
   image:
     runs-on: macos-26
+    defaults:
+      run:
+        shell: bash # with pipefail: a failing script before `| tee` fails its step
     env:
       XCODEGEN: "2.46.0" # as in mac.yml
     steps:

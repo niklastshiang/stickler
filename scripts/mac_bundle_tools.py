@@ -156,7 +156,7 @@ def problems(core: Path, languages: list[str]) -> list[str]:
     wanted = [f"python/share/locale/{lang}/LC_MESSAGES/stickler.mo" for lang in languages]
     wanted += [f"python/share/stickler/adapters/{a}/pyproject.toml" for a in APP_ADAPTERS]
     wanted += [f"python/share/stickler/adapters/{a}/uv.lock" for a in APP_ADAPTERS]
-    wanted.append("python/share/stickler/adapters/_common/stickler_adapter.py")
+    wanted.append("python/share/stickler/adapters/_common/pyproject.toml")
     found += [f"missing: {rel}" for rel in wanted if not (core / rel).is_file()]
     if site is None:
         return [*found, "missing: python/lib/python3.*/site-packages"]
