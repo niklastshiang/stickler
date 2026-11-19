@@ -36,3 +36,9 @@ After step 3 the workflow builds both files and attaches them to the release (a 
 exists yet): check that both are there before publishing it. The release notes link to the
 README's install section instead of repeating it (owner, 2026-11-18).
 
+## Update 2026-11-19: the Mac app's version
+
+From release 8 on the Mac app carries the same number: step 1 also raises `MARKETING_VERSION` and
+`CURRENT_PROJECT_VERSION` in `mac/project.yml` (About shows it). A test fails when they differ from
+`pyproject.toml` (`tests/test_mac_icon.py`).
+
