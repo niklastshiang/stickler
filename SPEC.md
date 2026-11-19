@@ -2601,7 +2601,9 @@ the Mac App Store, Quality, the GPU.
    `uv` on the `PATH` (checked with both moved away or on a fresh account).
 2. The app is in German and Spanish as the system is set, the core's texts too.
 3. Removing everything and trashing the app leaves nothing of Stickler behind (checked with
-   `find ~/Library -iname '*stickler*'`).
+   `find ~/Library -iname '*stickler*'`). That includes what macOS keeps for the app by its
+   identifier (preferences, caches, saved windows): "Remove Downloaded Models…" with
+   everything removes them, and once more when the app quits (owner, 2026-11-19).
 4. The release workflow attaches the image; `mac.yml` and `check.yml` stay green; the Linux
    packages are unchanged but for `uv`'s version.
 5. The website's Mac card has the image's size, and `install-mac.html` leads to Apple's guide

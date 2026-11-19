@@ -34,6 +34,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         Task {
             await model.quit()
+            if Removal.everything {
+                Leftovers.remove()  // the reader removed everything: nothing is kept at quit
+            }
             sender.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater

@@ -194,6 +194,18 @@ final class LogicTests: XCTestCase {
         }
     }
 
+    func testOnlyRemovingEverythingClearsWhatMacOSKeepsForTheApp() async throws {
+        for (answer, cleared) in [(false, false), (true, true)] {
+            Removal.everything = false
+            let (model, core) = try await model(replies: ["removal_sizes": Self.sizes])
+            asking.remove = answer
+            await Removal.ask(model)
+            try await until { core.sent.contains(.removeModels(everything: answer)) }
+            XCTAssertEqual(Removal.everything, cleared)
+        }
+        Removal.everything = false
+    }
+
     func testAKeptRemovalSendsNothing() async throws {
         let (model, core) = try await model(replies: ["removal_sizes": Self.sizes])
         asking.remove = nil
@@ -307,5 +319,44 @@ final class FakeAsking: Asking {
 
     func open(_ file: URL, with application: URL) {
         opened.append((file, application))
+    }
+}
+
+/// What "Remove Downloaded Models…" with everything removes besides Stickler's own folders.
+@MainActor
+final class LeftoversTests: XCTestCase {
+    func testWhatMacOSKeepsForTheAppIsRemovedAndNothingElse() throws {
+        let library = FileManager.default.temporaryDirectory
+            .appendingPathComponent("stickler-leftovers-\(UUID().uuidString)")
+        let places = Leftovers.places(identifier: "ng.tshia.Test", library: library)
+        XCTAssertEqual(
+            places.map { $0.path.dropFirst(library.path.count + 1) },
+            [
+                "Caches/ng.tshia.Test", "WebKit/ng.tshia.Test", "HTTPStorages/ng.tshia.Test",
+                "Saved Application State/ng.tshia.Test.savedState",
+                "Preferences/ng.tshia.Test.plist"
+            ])
+        let other = library.appendingPathComponent("Caches/com.example.Other/kept")
+        for file in places.dropLast().map({ $0.appendingPathComponent("file") }) + [other] {
+            try FileManager.default.createDirectory(
+                at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data("x".utf8).write(to: file)
+        }
+        let suite = "stickler-leftovers-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.set("here", forKey: "NSWindow Frame main")
+        Leftovers.remove(identifier: suite, library: library, defaults: defaults)
+        XCTAssertNil(defaults.string(forKey: "NSWindow Frame main"))
+        Leftovers.remove(identifier: "ng.tshia.Test", library: library, defaults: defaults)
+        for place in places {
+            XCTAssertFalse(FileManager.default.fileExists(atPath: place.path), place.path)
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: other.path), "another app's stay")
+        Leftovers.remove(identifier: nil, library: library, defaults: defaults)  // nothing to do
+        try FileManager.default.removeItem(at: library)
+        // the test's own preferences leave no file in the real Library either
+        let real = try XCTUnwrap(
+            FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first)
+        Leftovers.remove(identifier: suite, library: real, defaults: defaults)
     }
 }
