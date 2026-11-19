@@ -34,6 +34,9 @@ struct ContentView: View {
                         Label("Export", systemImage: "square.and.arrow.up")
                     }
                     .help(Text("Export"))
+                    // said again for VoiceOver: built with the macOS 26 SDK and run on
+                    // macOS 27, the menu button's name was its arrow's, "chevron.pulldown"
+                    .accessibilityLabel(Text("Export"))
                     .disabled(Exports.result(model) == nil)
                 }
             }
