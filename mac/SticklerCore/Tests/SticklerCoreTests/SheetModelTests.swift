@@ -246,3 +246,49 @@ struct ZoomStep {
         #expect(model.sheet.pages.isEmpty && model.sheet.percent == "100%")
     }
 }
+
+@MainActor @Suite struct ThePinch {
+    @Test func aPinchGivesOneScaleWhenTheFingersLift() {
+        var pinch = Pinch()
+        pinch.begin()
+        pinch.change(by: 0.25)
+        pinch.change(by: 0.6)
+        #expect(pinch.end() == 2.0)  // 1.25 × 1.6
+        #expect(pinch.end() == nil)  // told once
+    }
+
+    @Test func aPinchThatChangesNothingOrWasNeverBegunGivesNoScale() {
+        var pinch = Pinch()
+        pinch.change(by: 0.5)  // a change without a beginning
+        #expect(pinch.end() == nil)
+        pinch.begin()
+        #expect(pinch.end() == nil)  // the fingers did not move
+        pinch.begin()
+        pinch.change(by: -1.5)  // nothing can be shown at a negative size
+        #expect(pinch.end() == nil)
+    }
+
+    @Test func aCancelledPinchGivesNoScaleAndTheNextOneStartsAfresh() {
+        var pinch = Pinch()
+        pinch.begin()
+        pinch.change(by: 0.5)
+        pinch.cancel()
+        #expect(pinch.end() == nil)
+        pinch.begin()
+        pinch.change(by: -0.5)
+        #expect(pinch.end() == 0.5)
+    }
+
+    @Test func aPinchSetsTheNoteSizeItBeganAtTimesItsScale() async throws {
+        let (harness, model) = try running()
+        harness.core.answer("zoom_in", with: zoomReply(1.25, "125%"))
+        harness.core.answer("set_zoom", with: zoomReply(2.5, "250%"))
+        try harness.core.emit(resultEvent(seq: 1))
+        #expect(await settled { model.sheet.canZoom })
+        model.sheet.zoomIn()
+        #expect(await settled { model.sheet.zoom == 1.25 })
+        model.sheet.pinched(by: 2.0)
+        #expect(await settled { model.sheet.percent == "250%" })
+        #expect(harness.core.sent.filter { $0.name == "set_zoom" } == [.setZoom(2.5)])
+    }
+}

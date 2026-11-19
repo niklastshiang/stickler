@@ -101,8 +101,10 @@ public final class SheetModel {
     public func zoomOut() { change(.zoomOut) }
     /// View › Actual Size.
     public func actualSize() { change(.actualSize) }
-    /// A pinch, once the fingers rest.
+    /// A note size of the reader's choice; the core keeps it within its limits.
     public func setZoom(_ size: Double) { change(.setZoom(size)) }
+    /// A pinch, once the fingers rest: the shown note size times the gesture's scale.
+    public func pinched(by scale: Double) { setZoom(zoom * scale) }
 
     private func change(_ command: Command) {
         guard let core else { return }
