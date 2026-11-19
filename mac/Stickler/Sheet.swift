@@ -56,21 +56,57 @@ struct SheetWeb: NSViewRepresentable {
 }
 
 /// What the web view shows now. A page is loaded once; when WebKit's drawing process dies,
-/// the same page is loaded again instead of leaving the sheet blank.
+/// the same page is loaded again instead of leaving the sheet blank. Pages laid out again (a
+/// resize, another note size, the other appearance) are shown where the reader was: as far
+/// down the new page as they had scrolled down the old one.
 @MainActor
 final class SheetLoad: NSObject, WKNavigationDelegate {
     private(set) var shown: String?
+    /// How far down the reader was: 0 the top, 1 the page's whole height.
+    private var place = 0.0
+    private var turn = 0  // the newest page's number; an older one still reading is dropped
+
+    /// The app's own script, which runs although the page's are off.
+    static let readPlace =
+        "return window.scrollY / Math.max(1, document.documentElement.scrollHeight)"
+    static let goToPlace =
+        "window.scrollTo(0, place * document.documentElement.scrollHeight); return true"
 
     func show(_ html: String, in view: WKWebView) {
         guard html != shown else { return }
+        let replaces = shown != nil
         shown = html
-        view.loadHTMLString(html, baseURL: nil)
+        turn += 1
+        guard replaces else {
+            view.loadHTMLString(html, baseURL: nil)
+            return
+        }
+        let mine = turn
+        Task {
+            // a page still loading has not been scrolled to its place yet: the last one holds
+            if !view.isLoading {
+                let read = try? await view.callAsyncJavaScript(
+                    Self.readPlace, contentWorld: .page)
+                guard mine == turn else { return }
+                place = read as? Double ?? place
+            }
+            view.loadHTMLString(html, baseURL: nil)
+        }
+    }
+
+    func webView(_ view: WKWebView, didFinish _: WKNavigation?) {
+        guard place > 0 else { return }
+        let place = place
+        Task {
+            _ = try? await view.callAsyncJavaScript(
+                Self.goToPlace, arguments: ["place": place], contentWorld: .page)
+        }
     }
 
     func webViewWebContentProcessDidTerminate(_ view: WKWebView) {
         guard let html = shown else { return }
-        shown = nil
-        show(html, in: view)
+        turn += 1
+        view.loadHTMLString(html, baseURL: nil)
     }
 }
 

@@ -120,17 +120,84 @@ final class SheetTests: XCTestCase {
         XCTAssertEqual(menu.items.count, 0)
     }
 
-    func testAPageIsLoadedOnceAndAgainWhenWebKitsProcessDied() {
+    func testAPageIsLoadedOnceAndAgainWhenWebKitsProcessDied() async throws {
         let view = CountingWebView()
         let load = SheetLoad()
         load.show("a", in: view)
         load.show("a", in: view)
         XCTAssertEqual(view.loaded, ["a"])
-        load.show("b", in: view)
+        load.show("b", in: view)  // loaded once the place in "a" is read
+        XCTAssertEqual(load.shown, "b")
+        var tries = 0
+        while view.loaded.count < 2, tries < 250 {
+            tries += 1
+            try await Task.sleep(for: .milliseconds(20))
+        }
         XCTAssertEqual(view.loaded, ["a", "b"])
         load.webViewWebContentProcessDidTerminate(view)
         XCTAssertEqual(view.loaded, ["a", "b", "b"])
         XCTAssertEqual(load.shown, "b")
+    }
+
+    func testOfTwoPagesAskedForAtOnceOnlyTheNewerIsLoaded() async throws {
+        let view = CountingWebView()
+        let load = SheetLoad()
+        load.show("a", in: view)
+        load.show("b", in: view)
+        load.show("c", in: view)
+        var tries = 0
+        while view.loaded.count < 2, tries < 250 {
+            tries += 1
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(view.loaded, ["a", "c"])
+    }
+
+    /// A real web view in a window: pages laid out again at twice the height show the same
+    /// music, so the reader is twice as far down in points.
+    func testTheReaderStaysWhereTheyWereWhenThePagesAreLaidOutAgain() async throws {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.borderless],
+            backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        let view = SheetWebView.make()
+        window.contentView = view
+        let load = SheetLoad()
+        view.navigationDelegate = load
+        func tall(_ height: Int) -> String {
+            "<!doctype html><html><body style=\"margin: 0\">"
+                + "<div style=\"height: \(height)px\"></div></body></html>"
+        }
+        func number(_ script: String) async -> Double {
+            let value = try? await view.callAsyncJavaScript(script, contentWorld: .page)
+            return value as? Double ?? -1
+        }
+        func settles(_ script: String, at wanted: Double) async throws -> Double {
+            var tries = 0
+            var value = await number(script)
+            while value != wanted, tries < 250 {
+                tries += 1
+                try await Task.sleep(for: .milliseconds(20))
+                value = await number(script)
+            }
+            return value
+        }
+        let height = "return document.documentElement.scrollHeight"
+        load.show(tall(3000), in: view)
+        let first = try await settles(height, at: 3000)
+        XCTAssertEqual(first, 3000)
+        let moved = await number("window.scrollTo(0, 1500); return window.scrollY")
+        XCTAssertEqual(moved, 1500)
+        load.show(tall(6000), in: view)
+        let kept = try await settles("return window.scrollY", at: 3000)
+        XCTAssertEqual(kept, 3000)
+        load.show(tall(12000), in: view)
+        let grown = try await settles(height, at: 12000)
+        XCTAssertEqual(grown, 12000)
+        let still = try await settles("return window.scrollY", at: 6000)
+        XCTAssertEqual(still, 6000)
+        window.close()
     }
 
     func testNothingIsLoadedAgainBeforeAPageWasShown() {
