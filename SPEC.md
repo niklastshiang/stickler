@@ -2380,7 +2380,8 @@ GPU; Intel Macs; the Mac App Store.
 
 > Status: **approved** by the owner on 2026-11-18. The sheet's model (scope 1) starts at once
 > (owner, 2026-11-18: it is tested on Linux and touches no view); the rest starts when
-> `mac-shell`'s checkpoint U is met (the owner's check on the Mac, task 116). Design: screen M6 of `mac-design`
+> `mac-shell`'s checkpoint U is met (the owner's check on the Mac, task 116; met on 2026-11-19).
+> Design: screen M6 of `mac-design`
 > (`docs/design/mac/Sheet.dc.html`, `Sheet-Dark.dc.html`).
 
 **Objective.** The Mac app shows the sheet music instead of `mac-shell`'s placeholder: the
