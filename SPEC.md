@@ -1811,7 +1811,7 @@ the analysis, read the sheet music, export it. Apple Silicon only. The Python co
 | `core-bridge` | `stickler-bridge`: the core as a subprocess speaking JSON lines (analyse with progress and cancel, pages as SVG with bar positions, export, setup, settings, recent songs); the contract lives here, tested in Python | `shared-core`, `mac-core` | approved, below |
 | `mac-shell` | SwiftUI app: window, menu bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped; the setup assistant (consent, model download with progress, resumable, "Remove Downloaded Models…"), moved here from `mac-setup` (owner, 2026-11-18) | `core-bridge`, `mac-design` | approved, below |
 | `mac-sheet` | Sheet music in a `WKWebView` from the core's SVG pages, zoom, title, artist and tempo in the window | `mac-shell` | approved, below |
-| `mac-package` | `.app` with `uv` and the core's sources, a Python fetched by `uv` at setup (as in the AppImage), ad-hoc signed `.dmg`, release workflow, install guide with pictures | all | to write |
+| `mac-package` | `.app` with `uv` and the core's sources, a Python fetched by `uv` at setup (as in the AppImage), ad-hoc signed `.dmg`, release workflow, install guide with pictures | all | draft, below |
 
 Build order: `shared-core`, `mac-design`, `mac-core` (in parallel) → `core-bridge` →
 `mac-shell` (with the setup, owner 2026-11-18) → `mac-sheet` → `mac-package`.
@@ -2461,6 +2461,133 @@ a page view of A4 sheets in the window.
 
 **Decided (owner, 2026-11-18):** the pinch comes in this module, as the GTK app has it from
 `sheet-view`; the page has the canvas's soft shadow, as macOS shows document pages.
+
+### Module `mac-package`
+
+> Status: **draft**, written 2026-11-19, not approved. Open questions 1–5 at the end are the
+> owner's; nothing is built before they are answered. The spike (scope 1) comes first, as
+> "Release 8" asks. The website's page `install-mac.html` (task 130) takes its pictures from
+> this module.
+
+**Objective.** A drummer downloads `Stickler-8.dmg` from the release, drags Stickler to
+Applications, allows it once in System Settings, and gets sheet music for a song: no Terminal,
+no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder question is gone.
+
+**Assumptions** (from the code and the web on 2026-11-19; sources with the date read):
+1. The core already knows the packaged Mac (`paths.packaged() == "macos"` through
+   `STICKLER_PACKAGED=macos`): models, settings and recent songs in `~/Library/Application
+   Support/Stickler`, scores in `~/Library/Caches/Stickler`; the shipped adapters are copied
+   from `STICKLER_ADAPTER_SOURCES` and refreshed by a new version, as in the AppImage.
+2. `uv` 0.13.9 (2026-11-17) is the newest release; its `uv-aarch64-apple-darwin.tar.gz` has a
+   published SHA-256 (`5aeca67f…382ca`, fetched and compared 2026-11-19) and is signed by Astral
+   since 0.12.12 (astral-sh/uv issue 14870). Signing the app again replaces that signature with
+   the app's ad-hoc one. The AppImage pins 0.13.8; both packages move to one version together.
+3. Files `uv` downloads later (Python, wheels) are not quarantined: only browsers and the like
+   set `com.apple.quarantine` (Apple DTS, developer forums thread 706442; uv issue 16003).
+   **Known risk:** on some Macs a Python installed by `uv` is killed at start (uv issue 16726,
+   open; reported on macOS 15.6 and 26.6, the maintainers suspect company security software);
+   `codesign --force -s -` on it helps. The spike shows whether the owner's Mac is affected.
+4. A quarantined app started from Downloads or from the mounted image may run from a random
+   read-only path (app translocation, forums thread 724969). So the app finds everything it
+   ships through `Bundle.main` and writes nothing into itself.
+5. ffmpeg and ffprobe: no maintained source ships a small static arm64 build under a licence
+   that fits. Martin Riedl's builds (9.0.2, GPLv3, SHA-256 per file, versioned URLs; checked
+   2026-11-19) are complete video builds, 28 MB zipped each. evermeet.cx has no arm64, BtbN no
+   macOS, Homebrew's bottle is bound to `/opt/homebrew`. See open question 2.
+6. The image needs no Finder: `hdiutil create -srcfolder` on a folder with `Stickler.app` and a
+   link to `/Applications` (the runner has no display session for Finder's layout scripts).
+   Checked on the runner in the spike, including that helper programs keep their executable
+   bit.
+7. Opening an app that is not notarised, on macOS 15 and 26 (Apple, Mac User Guide "Open a Mac
+   app from an unknown developer", read 2026-11-19): try to open it, then System Settings ›
+   Privacy & Security › Security › **Open Anyway** (shown for about an hour), the login
+   password, then **Open**. The guide and the website show exactly these steps.
+
+**Scope.**
+1. **The spike, before anything else** (a throwaway branch of the workflow, nothing merged
+   from it but its findings): an ad-hoc signed `.app` from the runner that holds `uv`, the
+   core and the adapters' sources as planned below, in a `.dmg`; on the owner's Mac after
+   Open Anyway it sets up ADTOF and Beat This! and analyses a song. It answers: does the core
+   start from inside the bundle (also translocated, straight from Downloads); do `uv`'s Python
+   and the wheels' compiled parts run (assumption 3); does the executable bit survive the
+   image. A failure changes this spec before any task is planned.
+2. **What the app holds** (`Stickler.app/Contents/Resources/core/`):
+   - `bin/uv`, `bin/ffmpeg`, `bin/ffprobe`, each pinned by version and SHA-256 at build time
+     and signed ad-hoc one by one before the app is (Apple DTS: inside out, no `--deep`);
+   - the core: see open question 1 (a Python and the core's packages inside the app, or
+     fetched by `uv` at the first start);
+   - `share/stickler/adapters` (sources only, never environments or weights), the `.mo` files
+     built from `po/` at build time, the Leipzig font as today;
+   - the licences of what is shipped (uv, ffmpeg, Python, the wheels) in one folder, linked
+     from Help.
+3. **Starting the core:** `CoreClient` starts the bundled core with `STICKLER_PACKAGED=macos`,
+   `STICKLER_ADAPTER_SOURCES`, `uv`'s folders inside Stickler's own (`UV_CACHE_DIR`,
+   `UV_PYTHON_INSTALL_DIR`, managed Pythons only, as `paths.py` does for the AppImage) and a
+   `PATH` that starts with the bundle's `bin`. "Where Is Stickler?", "Choose Stickler
+   Folder…" and the search for `uv` and Homebrew leave the app and its texts leave `po/`; a
+   debug build keeps the folder through an environment variable for development
+   (`docs/mac-development.md` is rewritten for it).
+4. **The app icon** of `mac-design` goes into the app (the consent sheet shows it), with the
+   version from `pyproject.toml` in About (a test keeps `project.yml` and `pyproject.toml`
+   equal).
+5. **Removing:** "Remove Downloaded Models…" with "everything" already empties Stickler's
+   folders; the guide says that dragging the app to the Trash afterwards removes the rest.
+6. **The release:** `release.yml` gets a `mac` job on `macos-26`: build, sign, image, a start
+   test (the app's bundled core answers `hello` and engraves the test groove, without models),
+   then `Stickler-<version>.dmg` attached to the release next to the Flatpak and the AppImage
+   (`gh release upload`); a manual run gives the image as an artifact. `mac.yml` keeps testing
+   every push and stops uploading the bare `.app`.
+7. **The guide** `docs/install-macos.md` and the README's install section: download, drag,
+   Open Anyway step by step, the first start, removing. Its pictures are taken on the owner's
+   Mac (light and dark) and are the website's too (task 130).
+
+**Not in this module:** notarisation and a Developer ID (reconsidered if the Mac app finds
+users), updates from inside the app (a new release is a new download), Intel Macs, Homebrew,
+the Mac App Store, Quality, the GPU.
+
+**Testing.**
+- Python: where a packaged Mac keeps things and which environment `uv` gets (extends
+  `tests/app/test_paths.py`); the version check.
+- Swift: the bundled core's command line and environment from a bundle folder (on Linux, with
+  a made-up bundle); the folder question's removal leaves no state behind for readers who
+  used a development build.
+- CI: the start test of the built image (mounted, the app copied out, the core asked for
+  `hello` and one page); `codesign --verify --strict` on the app and each helper.
+- By hand (owner): the success criteria on the owner's Mac, and once on a second Mac or a
+  fresh user account if one is at hand (no Homebrew, no checkout).
+
+**Success criteria.**
+1. On the owner's Mac, `Stickler-8.dmg` from a draft release installs by dragging, opens
+   after Open Anyway, sets up the models after the consent, and turns a song into sheet
+   music; PDF, MusicXML and the drum track are saved. No Terminal, no Homebrew's ffmpeg or
+   `uv` on the `PATH` (checked with both moved away or on a fresh account).
+2. The app is in German and Spanish as the system is set, the core's texts too.
+3. Removing everything and trashing the app leaves nothing of Stickler behind (checked with
+   `find ~/Library -iname '*stickler*'`).
+4. The release workflow attaches the image; `mac.yml` and `check.yml` stay green; the Linux
+   packages are unchanged but for `uv`'s version.
+5. The website's Mac card and `install-mac.html` have the image's size and the pictures.
+
+**Open questions (owner).**
+1. **The core's Python.** (a) Inside the app: a relocatable Python (python-build-standalone,
+   the one `uv` installs) and the core's wheels from `uv.lock`, so the app starts offline and
+   the consent comes before any download; the image grows by an estimated 60–80 MB (to be
+   measured in the spike). (b) Fetched by `uv` at the first start: a small image, but a
+   download before the consent sheet, which the core itself shows. Recommended: (a).
+2. **ffmpeg.** (a) Built on the runner from ffmpeg's own source (pinned tarball and checksum),
+   audio only (MP3, FLAC, WAV, Ogg Vorbis, Opus, AAC in; FLAC and WAV out): a few MB, a few
+   minutes of build time (not measured yet), its licence then LGPL or GPL as configured.
+   (b) Martin Riedl's GPLv3 builds: nothing to build, about 56 MB zipped for the two, one
+   more party to trust. Recommended: (a), measured in the spike; (b) if the build is a
+   burden.
+3. **M4A/AAC on the Mac.** The GTK app does not promise them (Beat This! reads through
+   soundfile). Mac users have many `.m4a` files: keep the same limit in release 8 (the empty
+   window says which files work), or make it a later module for both apps?
+4. **A second Mac.** Is a Mac or a user account without Homebrew at hand for criterion 1, or
+   does moving Homebrew's folders away on the owner's Mac count?
+5. **The image's look.** Plain (the app and the Applications link, as Finder lays them out),
+   or a background picture with an arrow (needs a layout tool, `dmgbuild`, MIT, 2.0.0 of
+   2026-11-16, which writes the layout without Finder)? Recommended: plain for release 8.
 
 ## Website
 
