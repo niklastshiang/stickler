@@ -3,13 +3,14 @@
 You need a Mac with Apple silicon and macOS 26, and about 4 GB free for the models. Nothing
 else is installed: Stickler brings what it needs along.
 
-The same steps with pictures: <https://stickler.tshia.ng/install-mac.html> (online with
+The same steps on the website: <https://stickler.tshia.ng/install-mac.html> (online with
 release 8).
 
 macOS asks for one extra step at the first start, because Stickler does not come from the App
 Store and is not registered with Apple, which costs developers a yearly fee. Stickler is free
-and does without. The steps below are Apple's own way for such an app ("Open a Mac app from
-an unknown developer" in the Mac User Guide).
+and does without. The steps below are Apple's own way for such an app; Apple shows the
+windows in its guide
+[Open a Mac app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616/mac).
 
 ## Step by step
 

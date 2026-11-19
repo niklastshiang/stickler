@@ -2574,8 +2574,10 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    of it. The spike's workflow is gone; the image to check a build comes from a manual run of
    `release.yml` (its artifact `mac`).
 7. **The guide** `docs/install-macos.md` and the README's install section: download, drag,
-   Open Anyway step by step, the first start, removing. Its pictures are taken on the owner's
-   Mac (light and dark) and are the website's too (task 130).
+   Open Anyway step by step, the first start, removing. It has no pictures of its own: for
+   the windows macOS shows it points to Apple's guide ("Open a Mac app from an unknown
+   developer", Mac User Guide), as the website's page does (owner, 2026-11-19; before, four
+   pictures taken on the owner's Mac in light and dark).
 
 **Not in this module:** notarisation and a Developer ID (reconsidered if the Mac app finds
 users), updates from inside the app (a new release is a new download), Intel Macs, Homebrew,
@@ -2602,7 +2604,8 @@ the Mac App Store, Quality, the GPU.
    `find ~/Library -iname '*stickler*'`).
 4. The release workflow attaches the image; `mac.yml` and `check.yml` stay green; the Linux
    packages are unchanged but for `uv`'s version.
-5. The website's Mac card and `install-mac.html` have the image's size and the pictures.
+5. The website's Mac card has the image's size, and `install-mac.html` leads to Apple's guide
+   for the windows macOS shows (owner, 2026-11-19: instead of pictures of our own).
 
 **Decided (owner, 2026-11-19).**
 1. **The core's Python is inside the app:** a relocatable Python (python-build-standalone, the
@@ -2643,7 +2646,7 @@ the Mac App Store, Quality, the GPU.
   computer it needs, a look around, privacy, the downloads, uninstalling, the footer.
 - **Success:** someone who is not technical lands on the page and has Stickler installed and
   running without help: on Linux through the Flatpak or the AppImage, on a Mac through the
-  `.dmg` including "Open Anyway", shown with pictures.
+  `.dmg` including "Open Anyway", step by step, with a link to Apple's own guide.
 - **When (owner, 2026-11-18):** built now; online with release 8, when the Mac `.dmg` exists.
   Until then it is built and checked in the repository but not deployed.
 
@@ -2682,6 +2685,11 @@ the Mac App Store, Quality, the GPU.
    Security › Open Anyway, confirm), and the Terminal line for a Mac without that button.
    The card itself keeps one sentence and the link. The pictures are taken on the owner's
    Mac with the `.dmg` of `mac-package`, in light and dark like every screenshot.
+   Changed again (owner, 2026-11-19): the page keeps its steps in words and has no pictures;
+   at "Open Anyway" it links Apple's own guide, the German page its German edition
+   (`https://support.apple.com/guide/mac-help/mh40616/mac`, `…/de-de/guide/…`, both answered
+   on 2026-11-19). Apple shows its own windows there and keeps them current; pictures of
+   ours would show one macOS version in one language.
 10. **Uninstalling:** per package, including "Remove Downloaded Models…".
 11. **About the author** (owner, 2026-11-18, instead of "How it's made"): a photo, the
     owner's name and a few lines of their own on who they are and why Stickler exists; that it

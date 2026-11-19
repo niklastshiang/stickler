@@ -162,6 +162,5 @@ of release 8, downloaded with a browser so that macOS treats it as a reader's do
    ```
 
 6. **The release and the website:** the draft release holds the image beside the Flatpak and
-   the AppImage; the website's Mac card shows the image's size, and `install-mac.html` its
-   pictures (task 130: the image's window, the first message, Privacy & Security, the last
-   question, each in light and dark, taken during step 2).
+   the AppImage; the website's Mac card shows the image's size (`install-mac.html` has no
+   pictures of its own: it links Apple's guide).
