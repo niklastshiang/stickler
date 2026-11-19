@@ -925,7 +925,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Dependencies: 118, 119 · Files: `site/index.html`, `site/style.css`, `site/site.js`, `site/media/`, `tests/test_site.py`
 
 ### Checkpoint V
-- [ ] The English page in the browser, light and dark, phone width and laptop (owner)
+- [x] The English page in the browser, light and dark, phone width and laptop (owner, 2026-11-19, from the local server: nothing to object to)
 
 - [x] **Task 121: German, about, privacy and 404** (M): done 2026-11-18. `site/de/` with the start page, about and privacy in German; `about.html` (the author's words as a placeholder, how it is made, thanks and licences) and `privacy.html` (the app: nothing sent, downloads from the package and model servers only after asking; the site: no cookies, nothing from other servers, GitHub Pages logs IP addresses, from GitHub's docs read 2026-11-18) in English; one `404.html` in both languages with root links, as GitHub Pages serves it for every missing path. The test compares each pair (ids, pictures, downloads, outside links, the links to each other). German texts say "ich" in the author's parts ("Über mich"), as the owner writes them. Seen with Playwright: German on a phone, about in dark.
   - Acceptance: `site/de/index.html` as the English page in German; `about.html` and `privacy.html` in both languages (privacy: the app sends nothing; the site sets no cookies; GitHub Pages logs IP addresses, linked to GitHub's statement); `404.html` in both; the language links with `hreflang` and `lang`; the test compares each pair (anchors, images, downloads, links).
@@ -1010,7 +1010,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `swift test` (the command line and environment from a made-up bundle, on Linux and macOS); the app's tests; screenshots without M0
   - Dependencies: 132 · Files: `mac/SticklerCore/`, `mac/Stickler/`, `src/stickler_app/mac_texts.py`, `po/*`, `docs/mac-development.md`
 
-- [ ] **Task 135: The icon and the version** (S)
+- [ ] **Task 135: The icon and the version** (S): built 2026-11-19; left: the `mac` workflow (the asset catalog compiles, the consent sheet's screenshot shows the icon). `scripts/mac_icon.py` puts the GTK icon's four layers on the design board's shape (a rounded square of 824 in 1024, #2f5d8c) as `packaging/icons/ng.tshia.Stickler-macos.svg` and draws the icon set's seven pictures with librsvg (the GTK environment; kept in git, as neither CI nor the Mac build can draw SVG); a test fails when the GTK icon changes without it. The app's version is the project's (7 until release 8 raises both; a test keeps them equal), where `project.yml` said 8 already. Not done: the dark variant of `mac-design` (#1c1c1e). An icon set has no dark slot for a Mac app that the sources found on 2026-11-19 confirm; macOS 26's own format (Icon Composer's `.icon`) holds one but is made with Apple's tool on a Mac. To see on the Mac: whether macOS 26 shows the icon as drawn or inside its own frame.
   - Acceptance: the macOS icon of `mac-design` in the app (the consent sheet and the Dock show it); About shows the release number; a test keeps `mac/project.yml` and `pyproject.toml` at the same version.
   - Verify: the test; the screenshot of the consent sheet
   - Dependencies: none · Files: `mac/Stickler/Assets.xcassets`, `mac/project.yml`, `tests/`
