@@ -2179,7 +2179,12 @@ exists.
    they are).
 5. **Translations:** the bridge loads the catalogue of `LANGUAGE`, which Swift sets from the
    user's preferred languages when it starts the process; `hello` names the language found.
-   How the `.mo` files reach the `.app` is `mac-package`'s.
+   `LANGUAGE` is written as gettext reads it (owner, 2026-11-19, found at the check on the
+   Mac: `de-DE` was not read as German): `de_DE` for the Mac's `de-DE`, and the list ends
+   with `en` at the first English entry, because English is the source's language and has no
+   catalogue, so gettext would go on to a later language.
+   How the `.mo` files reach the `.app` is `mac-package`'s; until then `scripts/mo.sh` builds
+   them into the checkout's environment (`docs/mac-development.md`).
 6. **The contract on paper:** `docs/bridge.md` lists every command, reply, event and state
    field with an example line. A test checks that the commands in it and in the code are the
    same set, and that every state kind is documented.

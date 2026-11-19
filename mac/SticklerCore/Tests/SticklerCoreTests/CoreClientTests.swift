@@ -278,9 +278,19 @@ func bridgeProcess(under uvPID: Int32) async throws -> Int32 {
     #expect(client.environment == [
         "STICKLER_PACKAGED": "macos",
         "STICKLER_ADAPTER_SOURCES": "/Users/me/stickler/adapters",
-        "LANGUAGE": "de-DE:en",
+        "LANGUAGE": "de_DE:en",
         "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
     ])
+}
+
+@Test func theCoresLanguagesAreWrittenAsGettextReadsThem() {
+    // the owner's Mac (2026-11-19): `de-DE` alone, which gettext did not read as German
+    #expect(CoreClient.gettextLanguages(["de-DE"]) == "de_DE:en")
+    #expect(CoreClient.gettextLanguages(["es-419", "de-CH", "fr"]) == "es_419:de_CH:fr:en")
+    // English has no catalogue: a later language must not win over it
+    #expect(CoreClient.gettextLanguages(["en-GB", "de-DE"]) == "en")
+    #expect(CoreClient.gettextLanguages(["de-DE", "en", "es-ES"]) == "de_DE:en")
+    #expect(CoreClient.gettextLanguages([]) == "en")
 }
 
 @Test func theCoreFindsUVAndHomebrewsToolsWhenTheAppWasStartedFromTheFinder() {

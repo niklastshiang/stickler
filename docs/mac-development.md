@@ -12,23 +12,27 @@ You need a Mac with Apple Silicon and macOS 26, and about 4 GB free for the mode
 2. Install Homebrew if it is not there yet (the command on [brew.sh](https://brew.sh)), then:
 
    ```console
-   brew install git ffmpeg
+   brew install git ffmpeg gettext
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
    `uv` lands in `~/.local/bin`, where the app looks for it (also `/opt/homebrew/bin`).
+   `gettext` builds the German and Spanish texts of Stickler's core (step 3).
 3. Get the repository and its Python environment:
 
    ```console
    git clone https://github.com/niklastshiang/stickler.git ~/stickler
    cd ~/stickler
    uv sync
+   scripts/mo.sh
    ```
 
-   The models are not downloaded here: the app's first start does that, as the packaged app
-   will.
+   `scripts/mo.sh` builds the core's translations; without them the app's own texts follow
+   the Mac's language while everything the core says (the steps, the models' names and
+   sizes, errors) stays English. The models are not downloaded here: the app's first start
+   does that, as the packaged app will.
 
-To update later: `cd ~/stickler && git pull && uv sync`.
+To update later: `cd ~/stickler && git pull && uv sync && scripts/mo.sh`.
 
 ## Each time: the app from GitHub
 

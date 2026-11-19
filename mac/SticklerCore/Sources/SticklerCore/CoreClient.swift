@@ -361,35 +361,3 @@ func withTimeout<T: Sendable>(
         return first
     }
 }
-
-extension CoreClient {
-    /// The core of the Mac app: `uv run stickler-bridge` in the Stickler folder, as an
-    /// installed app (`STICKLER_PACKAGED=macos`: its files under ~/Library, its models set up
-    /// from the folder's adapters). `languages` are the user's, best first; `path` is this
-    /// process's `PATH`, which the core's starts from (`toolPath`).
-    public static func bridge(
-        in folder: URL, uv tool: URL, languages: [String],
-        path: String = ProcessInfo.processInfo.environment["PATH"] ?? ""
-    ) -> CoreClient {
-        CoreClient(
-            executable: tool, arguments: ["run", "--project", folder.path, "stickler-bridge"],
-            directory: folder,
-            environment: [
-                "STICKLER_PACKAGED": "macos",
-                "STICKLER_ADAPTER_SOURCES": folder.appendingPathComponent("adapters").path,
-                "LANGUAGE": languages.joined(separator: ":"),
-                "PATH": toolPath(uv: tool, inherited: path)
-            ])
-    }
-
-    /// The core's `PATH`: the folder of the `uv` that was found (the core calls `uv` itself
-    /// for the models), Homebrew's two prefixes (ffmpeg and ffprobe), then `inherited`, each
-    /// folder once. An app started from the Finder inherits only the system's folders.
-    public static func toolPath(uv tool: URL, inherited: String) -> String {
-        let folders =
-            [tool.deletingLastPathComponent().path, "/opt/homebrew/bin", "/usr/local/bin"]
-            + inherited.split(separator: ":").map(String.init)
-        var seen = Set<String>()
-        return folders.filter { seen.insert($0).inserted }.joined(separator: ":")
-    }
-}
