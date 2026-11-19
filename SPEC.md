@@ -1847,7 +1847,8 @@ mac/                      # the Swift package / Xcode project of the Mac app
 mac/Stickler/             # SwiftUI views and the bridge client
 mac/SticklerTests/        # XCTest
 scripts/xcstrings.py      # String Catalog from po/
-.github/workflows/mac.yml # build, lint, test, screenshots; the .dmg on release
+.github/workflows/mac.yml # build, lint, test, screenshots
+.github/workflows/release.yml # the .dmg on release (job `mac`, module `mac-package`)
 docs/install-macos.md     # install guide with the "Open Anyway" pictures
 ```
 
@@ -2564,6 +2565,14 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    then `Stickler-<version>.dmg` attached to the release next to the Flatpak and the AppImage
    (`gh release upload`); a manual run gives the image as an artifact. `mac.yml` keeps testing
    every push and stops uploading the bare `.app`.
+   **Built (task 136):** the job builds ffmpeg and ffprobe anew from the pinned source rather
+   than taking `mac.yml`'s cached build, so nothing a release ships comes from a cache
+   (zizmor's `cache-poisoning`; about three minutes more). It signs every Mach-O file of the
+   core on its own (`uv`, ffmpeg, ffprobe, Python and the wheels' compiled parts; `uv`'s own
+   signature by Astral is replaced), then the app. The start test runs the core twice: straight
+   from the read-only mounted image, as a translocated app runs, and from the app copied out
+   of it. The spike's workflow is gone; the image to check a build comes from a manual run of
+   `release.yml` (its artifact `mac`).
 7. **The guide** `docs/install-macos.md` and the README's install section: download, drag,
    Open Anyway step by step, the first start, removing. Its pictures are taken on the owner's
    Mac (light and dark) and are the website's too (task 130).

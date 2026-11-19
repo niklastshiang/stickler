@@ -6,8 +6,9 @@ the models' sources, put there by `scripts/mac_bundle.sh`. The app starts that c
 nothing else; it asks for no folder and looks for no `uv` on the Mac.
 
 What Xcode or `xcodebuild` builds has no core in it yet. Opened from the Finder, such an app
-(the **Stickler.zip** of the workflow **mac** too) shows *Stickler Stopped Unexpectedly* and
-lists the missing parts under Technical Details. There are two ways to run the app:
+shows *Stickler Stopped Unexpectedly* and lists the missing parts under Technical Details
+(that is why the workflow **mac** keeps no app to download). There are two ways to run the
+app:
 
 - **the image**, the app as a reader gets it (below), to check a build on a Mac;
 - **a development build** over a copy of this repository, for work on the app with Xcode.
@@ -16,11 +17,12 @@ You need a Mac with Apple Silicon and macOS 26, and about 4 GB free for the mode
 
 ## The image: the app with its core
 
-1. Open the repository's **Actions** tab. Until the release workflow builds the image (task
-   136) it comes from the workflow **mac-spike**: **Run workflow**, choose the branch, wait
-   for the run, download the artifact **Stickler-spike** (a zip with `Stickler-spike.dmg`).
-   The workflow **mac** runs on every push; its artifact **screenshots** holds every screen
-   in light and dark and a sample PDF.
+1. A released image is on the repository's **Releases** page, next to the Flatpak and the
+   AppImage. To check a build that is not released, open the **Actions** tab, choose the
+   workflow **release**, **Run workflow**, choose the branch (for example `claude/mac-shell`)
+   and wait for the run (about ten minutes; the Linux packages are built too). Its artifact
+   **mac** is a zip with `Stickler-<version>.dmg`. The workflow **mac** runs on every push;
+   its artifact **screenshots** holds every screen in light and dark and a sample PDF.
 2. Open the image and drag Stickler to Applications.
 3. Open it. macOS blocks the first start of an app that is not from the App Store or a known
    developer: open **System Settings › Privacy & Security**, scroll to the note about

@@ -18,8 +18,10 @@ jobs:
   core-linux:
     runs-on: ubuntu-26.04 # Swift 6.4.2 preinstalled (runner image of 2026-11-11)
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: The core, for the client's tests against the real bridge
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
@@ -40,8 +42,10 @@ jobs:
   core-macos:
     runs-on: macos-26 # the app's deployment target; arm64, free for a public repository
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: The core, for the client's tests against the real bridge
         run: |
           brew install ffmpeg
@@ -65,12 +69,14 @@ jobs:
 
   # ffmpeg and ffprobe for the packaged app (SPEC.md, module `mac-package`, decision 2): built
   # from the pinned source and tried on a clip of every format, once per version of the build
-  # script; the cache then holds a build that passed.
+  # script; the cache then holds a build that passed. release.yml builds its own, from no cache.
   ffmpeg:
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/cache@v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: built
         with:
           path: ${{ runner.temp }}/ffmpeg
@@ -88,13 +94,16 @@ jobs:
         run: du -h "$RUNNER_TEMP/ffmpeg"/* | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The app itself (SPEC.md, module `mac-shell`, scope 4): generated, built and tested here, its
-  # screens kept as pictures and the app as a download for the owner's Mac.
+  # screens kept as pictures. The app to try on a Mac is the image of release.yml (run by hand):
+  # a bare build here has no core and does not start (module `mac-package`).
   app:
     runs-on: macos-26
     env:
       XCODEGEN: "2.46.0" # 2026-07-16; its SHA-256 is GitHub's digest
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Xcode 26.6
         run: |
           sudo xcode-select -s /Applications/Xcode_26.6.app
@@ -118,22 +127,15 @@ jobs:
         run: |
           xcrun xccov view --report --json "$RUNNER_TEMP/test.xcresult" > "$RUNNER_TEMP/coverage.json"
           python3 scripts/xccov_gate.py "$RUNNER_TEMP/coverage.json"
-      - name: The app, ad-hoc signed
+      - name: The Release build compiles, ad-hoc signed
         run: |
           xcodebuild build -project mac/Stickler.xcodeproj -scheme Stickler \
             -configuration Release -destination 'platform=macOS,arch=arm64' \
             -derivedDataPath "$RUNNER_TEMP/release" -quiet
-          app="$RUNNER_TEMP/release/Build/Products/Release/Stickler.app"
-          codesign --verify --verbose "$app"
-          # ditto keeps the executable bit and the signature; upload-artifact's own zip would not
-          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/Stickler.zip"
-      - uses: actions/upload-artifact@v7.0.2
+          codesign --verify --verbose "$RUNNER_TEMP/release/Build/Products/Release/Stickler.app"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: screenshots
           path: ${{ runner.temp }}/screenshots
           if-no-files-found: error
-      - uses: actions/upload-artifact@v7.0.2
-        with:
-          path: ${{ runner.temp }}/Stickler.zip
-          archive: false
