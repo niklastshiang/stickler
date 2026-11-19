@@ -1117,5 +1117,5 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 
 - [ ] **Ultrareview once the application is finished**
   - The user starts it themselves with `/code-review ultra`. I cannot trigger it.
-- [ ] **M4A: the README and the spec disagree** (seen 2026-11-19 while writing `mac-package`): the README's first line and `paths.AUDIO_SUFFIXES` name M4A, SPEC module `packaging` (assumption 9) says M4A/AAC are not promised because Beat This! reads through soundfile. Owner, 2026-11-19: M4A is not promised. To check: whether an `.m4a` works today, and then make the README, the empty window and the file dialogs say the same.
+- [x] **M4A: the README and the spec disagree** (seen 2026-11-19 while writing `mac-package`): checked 2026-11-19, the README is right. Since 331c9c4 (2026-11-13) ffmpeg converts what the models cannot read to FLAC first; `stickler notate` on a 30 s AAC clip of Eye of the Tiger gave 59 hits and a MusicXML. SPEC `packaging`, assumption 9 ("M4A/AAC are not promised"), is older than that; `mac-package`'s decision 3 says so. Nothing in the README, the empty window or the dialogs was changed. Left open: whether the GTK app plays an `.m4a` (GStreamer's AAC decoder in the Flatpak and the AppImage).
 

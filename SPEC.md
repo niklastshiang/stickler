@@ -2578,9 +2578,13 @@ the Mac App Store, Quality, the GPU.
    and checksum), audio only: the decoders and demuxers for what `paths.AUDIO_SUFFIXES`
    accepts, FLAC and WAV out. The build time and the two programs' size are measured in the
    spike; the licence follows the configuration and is shipped with the others.
-3. **M4A/AAC stay unpromised** on the Mac too. Seen while asking: the README's first line and
-   `AUDIO_SUFFIXES` name M4A, module `packaging` says it is not promised; which is true today
-   is not checked here and is noted in `tasks/todo.md` ("Later").
+3. **Nothing extra is done for M4A/AAC** on the Mac (owner: not promised). Checked afterwards
+   (2026-11-19): the question's premise was out of date. Since 2026-11-13 (331c9c4) every
+   format the models cannot read is converted to FLAC by ffmpeg first, so an `.m4a` already
+   works (`stickler notate` on an AAC clip of Eye of the Tiger: 59 hits, a MusicXML), as the
+   README and `docs/cli.md` say; module `packaging`'s assumption 9 was written before that
+   was noticed. The Mac's own ffmpeg has the AAC decoder and read the spike's `.m4a` clip.
+   Not checked: playing an `.m4a` in the GTK app (GStreamer's decoder in each package).
 4. **No second Mac and no spare account:** success criterion 1 is checked on the owner's Mac,
    with Homebrew's folders and `~/.local/bin` kept out of the app's reach (the app's own
    `PATH` for the core holds the bundle's `bin` and the system's folders only; a test fixes
