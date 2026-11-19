@@ -947,6 +947,11 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Verify: the owner: keyboard only, a screen reader once (Orca or VoiceOver), phone and laptop, light and dark, both languages
   - Dependencies: 123 · Files: `docs/website.md`
 
+- [ ] **Task 130: The page "Installing on a Mac"** (S) (owner, 2026-11-19): a page of its own with pictures on how to allow the installation, linked from the Mac card (SPEC "Website", content 9).
+  - Acceptance: `site/install-mac.html` and `site/de/install-mac.html`: the steps from the `.dmg` to the first start, each with its picture in light and dark (`<picture>`, alt texts in both languages), "Open Anyway" in System Settings and the `xattr` line as the fallback; linked from the Mac card and the sitemap; the pair test, the page-weight test and axe cover it.
+  - Verify: `uv run pytest -q tests/test_site.py`; `scripts/site_axe.py`; the owner follows it on a Mac
+  - Dependencies: `mac-package` (the `.dmg` the pictures show); the page and its texts can be built before, with placeholders that stop a deploy · Files: `site/`, `site/images/`, `tests/test_site.py`, `docs/website.md`
+
 ### Checkpoint W
 - [ ] SPEC "Website" success criteria 1, 2, 4, 6 met (owner); 3 and 5 with release 8 (the `.dmg` and its pictures from `mac-package`)
 

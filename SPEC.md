@@ -2503,6 +2503,12 @@ a page view of A4 sheets in the window.
 9. **Get Stickler:** one card per package (Mac `.dmg`, Flatpak, AppImage) with the system it
    needs, its size and a download button; the Mac card shows "Open Anyway" in three pictures
    (from `mac-package`'s install guide); the Flatpak card a copyable command.
+   Changed (owner, 2026-11-19): the pictures get a page of their own, `install-mac.html` in
+   both languages, linked from the Mac card: a short guide in steps, each with its picture
+   (open the `.dmg` and drag the app, the first start's warning, System Settings › Privacy &
+   Security › Open Anyway, confirm), and the Terminal line for a Mac without that button.
+   The card itself keeps one sentence and the link. The pictures are taken on the owner's
+   Mac with the `.dmg` of `mac-package`, in light and dark like every screenshot.
 10. **Uninstalling:** per package, including "Remove Downloaded Models…".
 11. **About the author** (owner, 2026-11-18, instead of "How it's made"): a photo, the
     owner's name and a few lines of their own on who they are and why Stickler exists; that it
