@@ -2535,7 +2535,7 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
      and signed ad-hoc one by one before the app is (Apple DTS: inside out, no `--deep`);
    - `python/`, a relocatable Python with the core's packages (decision 1), and the core's
      own sources (`stickler`, `stickler_app`);
-   - `share/stickler/adapters` (sources only, never environments or weights), the `.mo` files
+   - `python/share/stickler/adapters` (sources only, never environments or weights), the `.mo` files
      built from `po/` at build time, the Leipzig font as today;
    - the licences of what is shipped (uv, ffmpeg, Python, the wheels) in one folder, linked
      from Help (Help › "Licences" opens the folder; greyed out in a build without its core).

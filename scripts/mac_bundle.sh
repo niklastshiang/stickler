@@ -98,8 +98,9 @@ echo "== nothing missing, nothing too much"
 tool check "$core"
 
 echo "== signature"
-# the helpers keep their own signatures (uv: Astral's; Python, the wheels and ffmpeg: ad hoc
-# from their builds); the app's is made again over the new resources
+# run alone, the helpers keep the signatures they came with (uv: Astral's; Python, the wheels
+# and ffmpeg: ad hoc from their builds) and only the app's is made again over the new
+# resources; the release workflow signs every Mach-O file of the core first (SPEC scope 2)
 codesign --force --sign - --timestamp=none "$app"
 codesign --verify --strict --verbose=2 "$app"
 

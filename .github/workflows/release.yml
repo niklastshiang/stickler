@@ -126,6 +126,7 @@ jobs:
           while IFS= read -r -d '' file; do
             if file -b "$file" | grep -q '^Mach-O'; then
               codesign --force --sign - --timestamp=none "$file"
+              codesign --verify --strict "$file" # each of them, not only the four helpers
               signed=$((signed + 1))
             fi
           done < <(find "$core" -type f \( -perm -100 -o -name '*.so' -o -name '*.dylib' \) -print0)
