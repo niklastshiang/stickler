@@ -82,5 +82,23 @@ repository only provides the code.
 7. **Remove Downloaded Models…** in the Stickler menu: the sizes, the checkbox for
    everything, then the next start asks again.
 
-A result shows its sheet music in the window (module `mac-sheet`); what to check there is
-added with that module's checkpoint.
+## What to check for the sheet music (Checkpoint X)
+
+Module `mac-sheet` (SPEC.md, its success criteria 1–3). Update first (`git pull`, `uv sync`,
+`scripts/mo.sh`) and take the newest **Stickler.zip**.
+
+1. **The sheet:** open Eye of the Tiger. Its sheet music is in the window, one page under the
+   other on the grey desk; the tempo mark (♩ = 109) is drawn, not a box. Make the window about
+   800 points wide, then about 1600: shortly after you let go, the notes are laid out anew
+   over the whole width, and it scrolls up and down only.
+2. **Note size:** View › Zoom In (⌘+), Zoom Out (⌘−), Actual Size (⌘0), and a pinch with two
+   fingers on the trackpad over the sheet (the notes change once, when the fingers lift). The
+   three items are grey while no song is shown. Open another song, then quit and open the
+   app again: the size is still the one you chose.
+3. **Staying in place:** scroll to the middle of a long song, then zoom or resize: the same
+   bars are still in view, not the top of the song.
+4. **Dark mode:** System Settings › Appearance: light notes on a dark page. Compare both
+   appearances with the canvas (M6) and the workflow's screenshots.
+5. **VoiceOver** (⌘F5): on the sheet it reads one picture, "Sheet music of Eye of the Tiger,
+   3 pages" (with the song's own page count), in the Mac's language; Tab does not stop in
+   the sheet.

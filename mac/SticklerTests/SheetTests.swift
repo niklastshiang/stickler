@@ -36,6 +36,14 @@ final class SheetTests: XCTestCase {
         }
     }
 
+    func testThePageFetchesNothing() throws {
+        let document = SheetHTML.document([try page("one")], dark: false)
+        XCTAssertTrue(
+            document.contains(
+                "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; "))
+        XCTAssertTrue(SheetHTML.policy.contains("font-src data:"), "Verovio's embedded font")
+    }
+
     func testThePagesComeInOrderEachAsWideAsItWasEngraved() throws {
         let pages = [try page("first"), try page("second", width: 640), try page("third")]
         let document = SheetHTML.document(pages, dark: false)
@@ -86,6 +94,18 @@ final class SheetTests: XCTestCase {
         view.setFrameSize(NSSize(width: 700, height: 480))
         view.setFrameSize(.zero)  // not shown: nothing to engrave for
         XCTAssertEqual(widths, [900, 700])
+    }
+
+    func testADroppedSongIsLeftToTheWindow() {
+        XCTAssertEqual(SheetWebView.make().registeredDraggedTypes, [])
+    }
+
+    func testOnlyTheAppsOwnPageIsShown() {
+        XCTAssertTrue(SheetLoad.allows(.other, to: URL(string: "about:blank")))
+        XCTAssertFalse(SheetLoad.allows(.linkActivated, to: URL(string: "about:blank")))
+        XCTAssertFalse(SheetLoad.allows(.other, to: URL(string: "https://example.org/")))
+        XCTAssertFalse(SheetLoad.allows(.other, to: URL(fileURLWithPath: "/m/song.flac")))
+        XCTAssertFalse(SheetLoad.allows(.other, to: nil))
     }
 
     func testAPinchTellsItsScaleOnceWhenTheFingersLift() {
@@ -197,6 +217,11 @@ final class SheetTests: XCTestCase {
         XCTAssertEqual(grown, 12000)
         let still = try await settles("return window.scrollY", at: 6000)
         XCTAssertEqual(still, 6000)
+        // a page from elsewhere is not shown
+        view.loadHTMLString(tall(50), baseURL: URL(string: "https://example.org/"))
+        try await Task.sleep(for: .milliseconds(500))
+        let same = await number(height)
+        XCTAssertEqual(same, 12000)
         window.close()
     }
 

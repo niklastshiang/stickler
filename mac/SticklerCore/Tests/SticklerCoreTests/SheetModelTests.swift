@@ -247,6 +247,41 @@ struct ZoomStep {
     }
 }
 
+@MainActor @Suite struct TheSheetBesideOtherScreens {
+    @Test func theStoredNoteSizeArrivesAlthoughTheCoreShowsItsFirstScreenMeanwhile() async throws {
+        let (harness, model) = try running()
+        harness.core.queue(
+            "settings",
+            with: #""ok": true, "appearance": "system", "zoom": 1.25, "song_volume": 0.7, "#
+                + #""hits_volume": 1.0, "setup_agreed": true, "percent": "125%""#,
+            after: .milliseconds(50))
+        // the core's first event, as after every `hello`
+        try harness.core.emit(#"{"event": "state", "seq": 1, "state": \#(emptyState)}"#)
+        #expect(await settled { model.sheet.percent == "125%" })
+        #expect(model.sheet.zoom == 1.25)
+    }
+
+    @Test func whileADrumTrackIsSavedNothingIsAskedAndTheNewWidthComesAfterIt() async throws {
+        let (harness, model) = try running(settle: .milliseconds(20))
+        harness.core.answer("pages", with: pagesReply("p"))
+        model.sheet.resize(to: 800)
+        try harness.core.emit(resultEvent(seq: 1))
+        #expect(await settled { pagesAsked(harness.core).count == 1 })
+
+        try harness.core.emit(exportingEvent(seq: 2))
+        #expect(await settled { !model.sheet.canZoom })  // the steps are shown, not the sheet
+        model.sheet.resize(to: 900)
+        try await Task.sleep(for: .milliseconds(120))
+        #expect(pagesAsked(harness.core).count == 1)  // the core would refuse it now
+        #expect(model.sheet.pages.count == 1)
+
+        try harness.core.emit(resultEvent(seq: 3))  // saved: the same music at the new width
+        #expect(await settled { pagesAsked(harness.core).count == 2 })
+        #expect(pagesAsked(harness.core).last == .pages(width: 900, zoom: nil))
+        #expect(model.sheet.canZoom)
+    }
+}
+
 @MainActor @Suite struct ThePinch {
     @Test func aPinchGivesOneScaleWhenTheFingersLift() {
         var pinch = Pinch()

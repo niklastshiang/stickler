@@ -87,11 +87,22 @@ final class SheetLoad: NSObject, WKNavigationDelegate {
             if !view.isLoading {
                 let read = try? await view.callAsyncJavaScript(
                     Self.readPlace, contentWorld: .page)
-                guard mine == turn else { return }
                 place = read as? Double ?? place
             }
+            guard mine == turn else { return }
             view.loadHTMLString(html, baseURL: nil)
         }
+    }
+
+    /// Only the app's own page is shown: a link in the core's SVG leads nowhere.
+    static func allows(_ type: WKNavigationType, to url: URL?) -> Bool {
+        type == .other && url?.scheme == "about"
+    }
+
+    func webView(
+        _: WKWebView, decidePolicyFor action: WKNavigationAction
+    ) async -> WKNavigationActionPolicy {
+        Self.allows(action.navigationType, to: action.request.url) ? .allow : .cancel
     }
 
     func webView(_ view: WKWebView, didFinish _: WKNavigation?) {
@@ -127,8 +138,12 @@ final class SheetWebView: WKWebView {
         let view = SheetWebView(frame: .zero, configuration: configuration)
         view.allowsMagnification = false  // the note size is the core's (View menu, pinch)
         view.allowsBackForwardNavigationGestures = false
+        view.unregisterDraggedTypes()
         return view
     }
+
+    /// A song dropped on the sheet is the window's to open, not a page for the web view.
+    override func registerForDraggedTypes(_: [NSPasteboard.PasteboardType]) {}
 
     override var acceptsFirstResponder: Bool { false }
 

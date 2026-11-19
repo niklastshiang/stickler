@@ -12,8 +12,9 @@ public final class SheetModel {
     public private(set) var zoom = 1.0
     /// The note size as the menu shows it.
     public private(set) var percent = "100%"
-    /// Whether a result is shown, so the zoom items are enabled.
-    public var canZoom: Bool { music != nil }
+    /// Whether a result is shown, so the zoom items are enabled. Not while its drum track is
+    /// saved: the steps are shown then, and the core engraves nothing.
+    public var canZoom: Bool { music != nil && onScreen }
 
     /// What decides the pages of a result: a correction changes it, an export does not.
     private struct Music: Equatable {
@@ -26,6 +27,8 @@ public final class SheetModel {
     private let refused: @MainActor (any Error) -> Void
     private var core: (any Core)?
     private var music: Music?
+    private var onScreen = false  // the result is shown, not an export's steps
+    private var owed = false  // pages wanted while they could not be asked for
     private var width: Double?
     private var settling: Task<Void, Never>?
     private var request = 0  // the newest request's number; older replies are dropped
@@ -41,15 +44,16 @@ public final class SheetModel {
     func attach(_ next: (any Core)?) {
         core = next
         music = nil
+        onScreen = false
+        owed = false
         pages = []
         request += 1
         settling?.cancel()
         guard let next else { return }
-        let mine = request
         Task {
             do {
                 let settings = try await next.send(.settings).payload(Settings.self)
-                guard mine == request else { return }
+                guard next === core else { return }  // a core replaced meanwhile
                 zoom = settings.zoom
                 percent = settings.percent
             } catch {
@@ -65,13 +69,16 @@ public final class SheetModel {
         case .result(let result):
             let next = Music(
                 song: result.song, musicxml: result.musicxml, corrections: result.corrections)
-            guard next != music else { return }
+            onScreen = true
+            guard next != music || owed else { return }
             music = next
             askForPages()
         case .exporting:
-            break
+            onScreen = false
         default:
             music = nil
+            onScreen = false
+            owed = false
             pages = []
             request += 1
         }
@@ -123,6 +130,11 @@ public final class SheetModel {
 
     private func askForPages() {
         guard let core, music != nil, let width else { return }
+        guard onScreen else {
+            owed = true  // asked for when the result is back
+            return
+        }
+        owed = false
         request += 1
         let mine = request
         Task {

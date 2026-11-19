@@ -35,6 +35,10 @@ enum SheetHTML {
         localized("Sheet music of %1$@", title) + ", " + localized("%1$lld pages", pages)
     }
 
+    /// Nothing is fetched for the page: the core's SVG brings its font and styles with it.
+    static let policy =
+        "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:"
+
     /// The whole document for `pages` in the window's appearance.
     static func document(_ pages: [Page], dark: Bool) -> String {
         // the canvas inverts a light grey paper, so the dark page is not pure black
@@ -47,7 +51,8 @@ enum SheetHTML {
             "<div class=\"page\" style=\"width: \(page.width)px;\">\(page.svg)</div>"
         }
         return """
-            <!doctype html><html><head><meta charset="utf-8"><style>
+            <!doctype html><html><head><meta charset="utf-8">
+            <meta http-equiv="Content-Security-Policy" content="\(policy)"><style>
             html { background: rgb(\(desk.red), \(desk.green), \(desk.blue)); overflow-x: hidden; }
             body { margin: 0; padding: \(gutter)px; cursor: default; -webkit-user-select: none; }
             .page { margin: 0 auto \(gutter)px; box-shadow: 0 1px 3px rgba(0,0,6,.18); \(paper) }
