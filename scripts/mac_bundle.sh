@@ -6,6 +6,7 @@
 #     python/                         a relocatable Python with the core's packages and sources
 #     python/share/stickler/adapters  the adapters' sources (no environments, no weights)
 #     python/share/locale             the translations (po/ → .mo)
+#     licenses/                       the licence of every part that is shipped
 #
 #   scripts/mac_bundle.sh <Stickler.app> <folder with ffmpeg and ffprobe>
 #
@@ -20,6 +21,9 @@ UV_SHA256=5aeca67f2283f75235de40d0bd9c0a5bbc5fce23b6d48b3bf9fa1b2db08382ca
 PYTHON_VERSION=3.14.10
 PYTHON_BUILD=20261110
 PYTHON_SHA256=f15ec3d15460dd66c2eb88639b152cd9040e7d1ece11e38bf89e8f53f0171e02
+# uv's licence texts at that version (it is under either of them)
+UV_MIT_SHA256=860e3d7a86b84e6a7012c7a635fc64df475cebc6cce34dfeb73a5982ec58176c
+UV_APACHE_SHA256=c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
 
 app=${1:?usage: scripts/mac_bundle.sh <Stickler.app> <folder with ffmpeg and ffprobe>}
 tools=${2:?usage: scripts/mac_bundle.sh <Stickler.app> <folder with ffmpeg and ffprobe>}
@@ -40,6 +44,10 @@ fetch "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-aarch64-
   "$work/uv.tar.gz" "$UV_SHA256"
 tar -xzf "$work/uv.tar.gz" -C "$work"
 install -m 755 "$work/uv-aarch64-apple-darwin/uv" "$core/bin/uv"
+fetch "https://raw.githubusercontent.com/astral-sh/uv/$UV_VERSION/LICENSE-MIT" \
+  "$work/uv-LICENSE-MIT" "$UV_MIT_SHA256"
+fetch "https://raw.githubusercontent.com/astral-sh/uv/$UV_VERSION/LICENSE-APACHE" \
+  "$work/uv-LICENSE-APACHE" "$UV_APACHE_SHA256"
 
 echo "== ffmpeg and ffprobe"
 install -m 755 "$tools/ffmpeg" "$tools/ffprobe" "$core/bin/"
@@ -72,14 +80,22 @@ git ls-files adapters | while IFS= read -r file; do
 done
 
 echo "== translations"
-msgfmt=$(command -v msgfmt || echo "$(brew --prefix gettext)/bin/msgfmt")
+tool() { "$py" -I -B scripts/mac_bundle_tools.py "$@"; }
 for po in po/*.po; do
-  dir="$core/python/share/locale/$(basename "$po" .po)/LC_MESSAGES"
-  mkdir -p "$dir"
-  "$msgfmt" --check --output-file="$dir/stickler.mo" "$po"
+  tool mo "$po" "$core/python/share/locale/$(basename "$po" .po)/LC_MESSAGES/stickler.mo"
 done
 
-find "$core" -name __pycache__ -type d -prune -exec rm -rf {} +
+echo "== without what the core never runs"
+before=$(du -sm "$core/python" | cut -f1)
+tool prune "$core/python"
+echo "Python: $before MB → $(du -sm "$core/python" | cut -f1) MB"
+
+echo "== licences"
+tool licenses "$core" "uv=$work/uv-LICENSE-MIT" "uv=$work/uv-LICENSE-APACHE" \
+  "ffmpeg=$tools/ffmpeg-COPYING.LGPLv2.1" "stickler=LICENSE"
+
+echo "== nothing missing, nothing too much"
+tool check "$core"
 
 echo "== signature"
 # the helpers keep their own signatures (uv: Astral's; Python, the wheels and ffmpeg: ad hoc

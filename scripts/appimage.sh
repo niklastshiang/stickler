@@ -12,8 +12,8 @@
 set -eu
 
 QUICK_SHARUN_COMMIT=6f09e6efc7f370f51f57b9d60b98745d3080de80 # pinned: it changes almost daily
-UV_VERSION=0.13.8
-UV_SHA256=61fb26dabc4f0cf1d050fc6c67d40e43e4fae2994af21ebc1e050b233bf2b5ed
+UV_VERSION=0.13.9 # one version in every package (tests/test_mac_bundle.py)
+UV_SHA256=58ccf5f1792b8a5a88d01bc910ea131a8b3db4a319a17ad5fad75e0845a3e271
 VERSION=$(sed -n 's/^version = "\([0-9]*\)".*/\1/p' pyproject.toml)
 
 echo "== packages"

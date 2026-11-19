@@ -63,6 +63,30 @@ jobs:
           swift test --enable-code-coverage
           python3 ../../scripts/swift_coverage.py "$(swift test --show-codecov-path)" .
 
+  # ffmpeg and ffprobe for the packaged app (SPEC.md, module `mac-package`, decision 2): built
+  # from the pinned source and tried on a clip of every format, once per version of the build
+  # script; the cache then holds a build that passed.
+  ffmpeg:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
+        id: built
+        with:
+          path: ${{ runner.temp }}/ffmpeg
+          key: mac-ffmpeg-${{ hashFiles('scripts/mac_ffmpeg.sh', 'scripts/mac_ffmpeg_test.sh') }}
+      - name: Build and try it
+        if: steps.built.outputs.cache-hit != 'true'
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          start=$(date +%s)
+          scripts/mac_ffmpeg.sh "$RUNNER_TEMP/ffmpeg"
+          echo "ffmpeg from source: $(( $(date +%s) - start )) s" >> "$GITHUB_STEP_SUMMARY"
+          brew install ffmpeg >/dev/null # only to make the test clips
+          scripts/mac_ffmpeg_test.sh "$RUNNER_TEMP/ffmpeg" "$(brew --prefix)/bin/ffmpeg"
+      - name: Sizes
+        run: du -h "$RUNNER_TEMP/ffmpeg"/* | tee -a "$GITHUB_STEP_SUMMARY"
+
   # The app itself (SPEC.md, module `mac-shell`, scope 4): generated, built and tested here, its
   # screens kept as pictures and the app as a download for the owner's Mac.
   app:
