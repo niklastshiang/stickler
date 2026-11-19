@@ -2464,9 +2464,9 @@ a page view of A4 sheets in the window.
 
 ### Module `mac-package`
 
-> Status: **draft**, written 2026-11-19, not approved. Open questions 1–5 at the end are the
-> owner's; nothing is built before they are answered. The spike (scope 1) comes first, as
-> "Release 8" asks. The website's page `install-mac.html` (task 130) takes its pictures from
+> Status: **draft**, written 2026-11-19; its five questions are decided (owner, 2026-11-19, at
+> the end), the approval of the whole is asked for with the plan (`tasks/plan.md`, tasks
+> 131–137). The spike (scope 1) comes first, as "Release 8" asks. The website's page `install-mac.html` (task 130) takes its pictures from
 > this module.
 
 **Objective.** A drummer downloads `Stickler-8.dmg` from the release, drags Stickler to
@@ -2493,7 +2493,7 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
 5. ffmpeg and ffprobe: no maintained source ships a small static arm64 build under a licence
    that fits. Martin Riedl's builds (9.0.2, GPLv3, SHA-256 per file, versioned URLs; checked
    2026-11-19) are complete video builds, 28 MB zipped each. evermeet.cx has no arm64, BtbN no
-   macOS, Homebrew's bottle is bound to `/opt/homebrew`. See open question 2.
+   macOS, Homebrew's bottle is bound to `/opt/homebrew`. So they are built here (decision 2).
 6. The image needs no Finder: `hdiutil create -srcfolder` on a folder with `Stickler.app` and a
    link to `/Applications` (the runner has no display session for Finder's layout scripts).
    Checked on the runner in the spike, including that helper programs keep their executable
@@ -2514,8 +2514,8 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
 2. **What the app holds** (`Stickler.app/Contents/Resources/core/`):
    - `bin/uv`, `bin/ffmpeg`, `bin/ffprobe`, each pinned by version and SHA-256 at build time
      and signed ad-hoc one by one before the app is (Apple DTS: inside out, no `--deep`);
-   - the core: see open question 1 (a Python and the core's packages inside the app, or
-     fetched by `uv` at the first start);
+   - `python/`, a relocatable Python with the core's packages (decision 1), and the core's
+     own sources (`stickler`, `stickler_app`);
    - `share/stickler/adapters` (sources only, never environments or weights), the `.mo` files
      built from `po/` at build time, the Leipzig font as today;
    - the licences of what is shipped (uv, ffmpeg, Python, the wheels) in one folder, linked
@@ -2568,26 +2568,24 @@ the Mac App Store, Quality, the GPU.
    packages are unchanged but for `uv`'s version.
 5. The website's Mac card and `install-mac.html` have the image's size and the pictures.
 
-**Open questions (owner).**
-1. **The core's Python.** (a) Inside the app: a relocatable Python (python-build-standalone,
-   the one `uv` installs) and the core's wheels from `uv.lock`, so the app starts offline and
-   the consent comes before any download; the image grows by an estimated 60–80 MB (to be
-   measured in the spike). (b) Fetched by `uv` at the first start: a small image, but a
-   download before the consent sheet, which the core itself shows. Recommended: (a).
-2. **ffmpeg.** (a) Built on the runner from ffmpeg's own source (pinned tarball and checksum),
-   audio only (MP3, FLAC, WAV, Ogg Vorbis, Opus, AAC in; FLAC and WAV out): a few MB, a few
-   minutes of build time (not measured yet), its licence then LGPL or GPL as configured.
-   (b) Martin Riedl's GPLv3 builds: nothing to build, about 56 MB zipped for the two, one
-   more party to trust. Recommended: (a), measured in the spike; (b) if the build is a
-   burden.
-3. **M4A/AAC on the Mac.** The GTK app does not promise them (Beat This! reads through
-   soundfile). Mac users have many `.m4a` files: keep the same limit in release 8 (the empty
-   window says which files work), or make it a later module for both apps?
-4. **A second Mac.** Is a Mac or a user account without Homebrew at hand for criterion 1, or
-   does moving Homebrew's folders away on the owner's Mac count?
-5. **The image's look.** Plain (the app and the Applications link, as Finder lays them out),
-   or a background picture with an arrow (needs a layout tool, `dmgbuild`, MIT, 2.0.0 of
-   2026-11-16, which writes the layout without Finder)? Recommended: plain for release 8.
+**Decided (owner, 2026-11-19).**
+1. **The core's Python is inside the app:** a relocatable Python (python-build-standalone, the
+   one `uv` installs, pinned by version and SHA-256) and the core's wheels from `uv.lock` with
+   their hashes. The app starts offline and the consent comes before any download. The
+   image's size is measured in the spike (estimated 60–80 MB more).
+2. **ffmpeg and ffprobe are built on the runner** from ffmpeg's own source (pinned tarball
+   and checksum), audio only: the decoders and demuxers for what `paths.AUDIO_SUFFIXES`
+   accepts, FLAC and WAV out. The build time and the two programs' size are measured in the
+   spike; the licence follows the configuration and is shipped with the others.
+3. **M4A/AAC stay unpromised** on the Mac too. Seen while asking: the README's first line and
+   `AUDIO_SUFFIXES` name M4A, module `packaging` says it is not promised; which is true today
+   is not checked here and is noted in `tasks/todo.md` ("Later").
+4. **No second Mac and no spare account:** success criterion 1 is checked on the owner's Mac,
+   with Homebrew's folders and `~/.local/bin` kept out of the app's reach (the app's own
+   `PATH` for the core holds the bundle's `bin` and the system's folders only; a test fixes
+   that, and the check looks at the core's `PATH` in the technical details). Claude's reading
+   of the owner's "no"; to be corrected if a fresh account was meant.
+5. **A plain image:** the app and the link to Applications, no background picture.
 
 ## Website
 

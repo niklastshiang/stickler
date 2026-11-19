@@ -541,3 +541,27 @@ workflow with release data and axe-core (123) → DNS guide, review, owner's che
 
 ## Open Questions
 - none. The ROCm channel is decided in task 6.
+
+## Release 8 (macOS app): `mac-package` (draft, SPEC.md "Module `mac-package`"; not approved yet)
+
+The `.dmg` a drummer installs without a Terminal: the app with `uv`, a Python, the core, ffmpeg
+and the adapters' sources inside. Tasks 131–137.
+
+Design decisions:
+- **The spike first** (131): one throwaway workflow builds the whole bundle the plain way and
+  the owner opens it on the Mac. Its three answers (the core starts from inside a quarantined
+  app; `uv`'s Python and the wheels run; sizes and build times) can change everything after
+  it, so nothing else is planned in detail before checkpoint Y.
+- **One build script** (`scripts/mac_bundle.sh`, 132–133): CI and the release run the same
+  script; every download in it is pinned by version and SHA-256, as `scripts/appimage.sh` does.
+- **The app changes last** (134): the folder question stays until the bundle is proven, so
+  every push keeps giving the owner a working app.
+- **Signing inside out** (136): each helper, then the app, never `--deep` (Apple DTS).
+
+| Risk | Likelihood | What then |
+|---|---|---|
+| `uv`'s Python is killed on the owner's Mac (uv issue 16726) | Low | the core signs it ad hoc after `uv` installed it; decided at checkpoint Y |
+| The core does not start from a translocated app | Low | the guide asks to drag the app to Applications first (it does already); the app says so when it runs from a random path |
+| The ffmpeg build takes long or breaks with a new Xcode | Medium | the built programs are cached by their source's checksum; Martin Riedl's builds as the fallback (asks the owner) |
+| The image is far larger than estimated | Low | measured in the spike; the owner decides before 132 |
+

@@ -984,6 +984,49 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint X
 - [ ] All success criteria of SPEC.md "Module `mac-sheet`" met (owner); then `mac-package`'s spec
 
+## Phase 24: Release 8 (macOS app), module `mac-package` (draft 2026-11-19, SPEC.md "Module `mac-package`"; waits for the owner's approval)
+
+- [ ] **Task 131: The spike** (M)
+  - Acceptance: a workflow run by hand (`mac-spike.yml`, removed again in 136) builds an ad-hoc signed `Stickler.app` with `bin/uv`, a pinned relocatable Python with the core's wheels, the core, the adapters' sources and ffmpeg/ffprobe built from the pinned source, each helper signed, in a plain `.dmg`; the job's summary gives the image's size, each part's size and the ffmpeg build's minutes; the job mounts the image, copies the app out and has its core answer `hello`. The app in it starts the bundled core (a switch only the spike sets; the folder question stays for everyone else).
+  - Verify: the owner on the Mac: download, drag, Open Anyway, the consent, the download, a song to its sheet music; once started straight from Downloads; the technical details show the core's `PATH`
+  - Dependencies: checkpoint X is not needed (owner to confirm with the approval) · Files: `.github/workflows/mac-spike.yml`, `scripts/mac_bundle.sh`, `mac/SticklerCore/Sources/SticklerCore/CoreClient+Bridge.swift`
+
+### Checkpoint Y
+- [ ] The spike's three answers are in SPEC.md; the spec is changed where they ask for it; the owner approves going on (owner)
+
+- [ ] **Task 132: The bundle, built by one script** (M)
+  - Acceptance: `scripts/mac_bundle.sh <app>` fills `Contents/Resources/core/` as SPEC scope 2 says: every download pinned by version and SHA-256, the wheels from `uv.lock` with their hashes, the `.mo` files from `po/`, the licences collected; no environment, weight or cache inside (a test lists the bundle); `uv` at one version in both packages.
+  - Verify: the script on the runner; `uv run pytest -q tests/test_mac_bundle.py` (the pins, the file list from a made-up tree)
+  - Dependencies: checkpoint Y · Files: `scripts/mac_bundle.sh`, `tests/test_mac_bundle.py`, `scripts/appimage.sh` (uv's version)
+
+- [ ] **Task 133: ffmpeg and ffprobe from source** (S)
+  - Acceptance: the pinned ffmpeg source built audio-only for arm64 with the decoders and demuxers of `paths.AUDIO_SUFFIXES`, FLAC and WAV out; a test on the runner converts one clip of each promised format and reads its length with ffprobe; the build is cached by the source's checksum and the configuration; the licence text shipped.
+  - Verify: the runner's job; the two programs' size in the summary
+  - Dependencies: 132 · Files: `scripts/mac_ffmpeg.sh`, `.github/workflows/mac.yml`
+
+- [ ] **Task 134: The app starts its own core** (M)
+  - Acceptance: `CoreClient` starts the bundled core from `Bundle.main` with the environment of SPEC scope 3 (a `PATH` of the bundle's `bin` and the system's folders); "Where Is Stickler?", "Choose Stickler Folder…" and the search for `uv` are gone, their texts leave `po/`; a development build takes the checkout from `STICKLER_CHECKOUT`; a missing or broken bundle shows "Stickler Stopped Unexpectedly" with what is missing.
+  - Verify: `swift test` (the command line and environment from a made-up bundle, on Linux and macOS); the app's tests; screenshots without M0
+  - Dependencies: 132 · Files: `mac/SticklerCore/`, `mac/Stickler/`, `src/stickler_app/mac_texts.py`, `po/*`, `docs/mac-development.md`
+
+- [ ] **Task 135: The icon and the version** (S)
+  - Acceptance: the macOS icon of `mac-design` in the app (the consent sheet and the Dock show it); About shows the release number; a test keeps `mac/project.yml` and `pyproject.toml` at the same version.
+  - Verify: the test; the screenshot of the consent sheet
+  - Dependencies: none · Files: `mac/Stickler/Assets.xcassets`, `mac/project.yml`, `tests/`
+
+- [ ] **Task 136: The image in the release** (M)
+  - Acceptance: `release.yml` has a `mac` job: build, the bundle, each helper and then the app signed ad hoc, `codesign --verify --strict`, a plain image with the Applications link, the start test from the mounted image (`hello`, one engraved page, no models), `Stickler-<version>.dmg` attached by `gh release upload`; a manual run keeps it as an artifact; `mac.yml` stops uploading the bare app; the spike's workflow is removed; actions pinned by SHA (zizmor clean).
+  - Verify: a manual run; a draft release with the three packages
+  - Dependencies: 133, 134, 135 · Files: `.github/workflows/release.yml`, `.github/workflows/mac.yml`
+
+- [ ] **Task 137: The guide, the review and the owner's check** (S)
+  - Acceptance: `docs/install-macos.md` and the README's install section (download, drag, Open Anyway as Apple's guide has it, the first start, removing); `docs/mac-development.md` for the development build; a fresh-context review of 131–136 against SPEC.md, its findings fixed or answered; the pictures for the guide and the website taken by the owner (task 130).
+  - Verify: the owner: SPEC "mac-package" success criteria 1–5
+  - Dependencies: 136 · Files: `docs/install-macos.md`, `README.md`, `docs/mac-development.md`
+
+### Checkpoint Z
+- [ ] All success criteria of SPEC.md "Module `mac-package`" met (owner); then release 8
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [ ] **A website for Stickler** (owner, 2026-11-18): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
@@ -1073,3 +1116,5 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 
 - [ ] **Ultrareview once the application is finished**
   - The user starts it themselves with `/code-review ultra`. I cannot trigger it.
+- [ ] **M4A: the README and the spec disagree** (seen 2026-11-19 while writing `mac-package`): the README's first line and `paths.AUDIO_SUFFIXES` name M4A, SPEC module `packaging` (assumption 9) says M4A/AAC are not promised because Beat This! reads through soundfile. Owner, 2026-11-19: M4A is not promised. To check: whether an `.m4a` works today, and then make the README, the empty window and the file dialogs say the same.
+
