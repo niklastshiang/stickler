@@ -17,8 +17,8 @@ let resultLine = #"{"event": "state", "seq": 2, "state": {"kind": "result", "son
     ) throws -> (AppModel, ScriptedCore) {
         let harness = try Harness()
         let core = ScriptedCore(lines: lines, replies: replies)
-        let model = AppModel(defaults: harness.defaults, uvPlaces: [harness.uv]) { _, _, _ in core }
-        model.choose(folder: harness.folder)
+        let model = AppModel(defaults: harness.defaults) { _ in core }
+        model.launch()
         return (model, core)
     }
 

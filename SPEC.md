@@ -2537,7 +2537,7 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    - `share/stickler/adapters` (sources only, never environments or weights), the `.mo` files
      built from `po/` at build time, the Leipzig font as today;
    - the licences of what is shipped (uv, ffmpeg, Python, the wheels) in one folder, linked
-     from Help.
+     from Help (Help › "Licences" opens the folder; greyed out in a build without its core).
 3. **Starting the core:** `CoreClient` starts the bundled core with `STICKLER_PACKAGED=macos`,
    `STICKLER_ADAPTER_SOURCES`, `uv`'s folders inside Stickler's own (`UV_CACHE_DIR`,
    `UV_PYTHON_INSTALL_DIR`, managed Pythons only, as `paths.py` does for the AppImage) and a
@@ -2545,6 +2545,15 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    Folder…" and the search for `uv` and Homebrew leave the app and its texts leave `po/`; a
    debug build keeps the folder through an environment variable for development
    (`docs/mac-development.md` is rewritten for it).
+   **Built (task 134):** `CoreClient` itself sets `STICKLER_PACKAGED`, `LANGUAGE` and the
+   `PATH`; the adapters' sources and `uv`'s folders the core works out from where it lies
+   (`paths.packaged_env`, since the spike). The variable is `STICKLER_CHECKOUT`. Only a build for debugging
+   reads it and then runs `uv run stickler-bridge` in that checkout, with the `PATH` it was
+   started with (the app looks for no `uv`); a released build ignores it. Before each start
+   the client looks for the bundle's Python, `uv`, ffmpeg, ffprobe and the adapters' folder:
+   with one of them missing or not executable the core is not started, and "Stickler Stopped
+   Unexpectedly" names it, the technical details unfolded. The folder an earlier build
+   remembered is removed from the app's defaults at launch.
 4. **The app icon** of `mac-design` goes into the app (the consent sheet shows it), with the
    version from `pyproject.toml` in About (a test keeps `project.yml` and `pyproject.toml`
    equal).

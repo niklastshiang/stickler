@@ -63,8 +63,8 @@ struct ContentView: View {
 
     @ViewBuilder private var page: some View {
         switch model.phase {
-        case .needsFolder(let problem):
-            FolderView(problem: problem) { Panels.chooseFolder(model) }
+        case .launching:
+            Color.clear  // the core starts with the app; its first state follows at once
         case .stopped(let end):
             StoppedPage(model: model, end: end)
         case .running:
@@ -95,12 +95,6 @@ enum Panels {
     static func openSong(_ model: AppModel) {
         if let song = Ask.reader.song() {
             model.open(song.path)
-        }
-    }
-
-    static func chooseFolder(_ model: AppModel) {
-        if let folder = Ask.reader.folder() {
-            model.choose(folder: folder)
         }
     }
 

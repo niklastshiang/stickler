@@ -10,8 +10,6 @@ protocol Asking {
     func saveLocation(named name: String) -> URL?
     /// A song to open; nil when cancelled.
     func song() -> URL?
-    /// The Stickler folder; nil when cancelled.
-    func folder() -> URL?
     /// A program to open the MusicXML with; nil when cancelled.
     func application() -> URL?
     /// Whether to go on after reading the drum track's cost.
@@ -43,14 +41,6 @@ struct SystemAsking: Asking {
         let panel = NSOpenPanel()
         panel.title = String(localized: "Open a Song")
         panel.allowedContentTypes = [.audio]
-        return panel.runModal() == .OK ? panel.url : nil
-    }
-
-    func folder() -> URL? {
-        let panel = NSOpenPanel()
-        panel.title = String(localized: "Choose Stickler Folder…")
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
         return panel.runModal() == .OK ? panel.url : nil
     }
 

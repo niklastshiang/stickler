@@ -45,7 +45,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Stickler
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.music
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon # scripts/mac_icon.py draws it
-        ENABLE_HARDENED_RUNTIME: NO # it runs uv and the models from a folder of the reader's
+        ENABLE_HARDENED_RUNTIME: NO # it runs its own uv and the models' Pythons under ~/Library
   SticklerTests:
     type: bundle.unit-test
     platform: macOS

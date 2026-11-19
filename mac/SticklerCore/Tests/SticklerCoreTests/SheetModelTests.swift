@@ -42,7 +42,7 @@ func pagesAsked(_ core: FakeCore) -> [Command] {
 func running(settle: Duration = .milliseconds(300)) throws -> (Harness, AppModel) {
     let harness = try Harness()
     let model = harness.model(settle: settle)
-    model.choose(folder: harness.folder)
+    model.launch()
     return (harness, model)
 }
 
@@ -63,7 +63,7 @@ struct ZoomStep {
             "settings",
             with: #""ok": true, "appearance": "system", "zoom": 1.25, "song_volume": 0.7, "#
                 + #""hits_volume": 1.0, "setup_agreed": true, "percent": "125%""#)
-        model.choose(folder: harness.folder)
+        model.launch()
         #expect(await settled { model.sheet.percent == "125%" })
         #expect(model.sheet.zoom == 1.25)
     }

@@ -32,15 +32,8 @@ final class LogicTests: XCTestCase {
     ) async throws -> (AppModel, ScriptedCore) {
         let core = ScriptedCore(lines: lines, replies: replies)
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "logic-\(UUID().uuidString)"))
-        let model = AppModel(
-            defaults: defaults, uvPlaces: [URL(fileURLWithPath: "/bin/sh")], languages: ["en"]
-        ) { _, _, _ in core }
-        let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("logic-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(
-            at: folder.appendingPathComponent("adapters"), withIntermediateDirectories: true)
-        try Data().write(to: folder.appendingPathComponent("pyproject.toml"))
-        model.choose(folder: folder)
+        let model = AppModel(defaults: defaults, languages: ["en"]) { _ in core }
+        model.launch()
         let wantsResult = lines.contains(ScreenshotTests.result)
         try await until {
             guard model.phase == .running else { return false }
@@ -220,19 +213,22 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(core.sent.filter { $0.name == "open" }.count, 1)
     }
 
-    func testAChosenFolderIsUsedAndACancelledOneChangesNothing() async throws {
-        let (model, _) = try await model()
-        let before = model.folder
-        asking.chosenFolder = nil
-        Panels.chooseFolder(model)
-        XCTAssertEqual(model.folder, before)
-        let other = temporary("not-stickler")
-        try FileManager.default.createDirectory(at: other, withIntermediateDirectories: true)
-        asking.chosenFolder = other
-        Panels.chooseFolder(model)
-        guard case .needsFolder(.notStickler) = model.phase else {
-            return XCTFail("a folder without pyproject.toml is not Stickler: \(model.phase)")
-        }
+    func testBeforeTheCoreRunsNothingIsOpenedExportedOrZoomed() async throws {
+        let core = ScriptedCore(lines: [ScreenshotTests.result])
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "logic-\(UUID().uuidString)"))
+        let model = AppModel(defaults: defaults, languages: ["en"]) { _ in core }
+        XCTAssertEqual(model.phase, .launching)  // not launched: no core was made
+        asking.chosenSong = URL(fileURLWithPath: "/m/b.flac")
+        Panels.openSong(model)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertTrue(core.sent.isEmpty)
+        XCTAssertNil(Exports.result(model))
+        XCTAssertFalse(ZoomMenu.enabled(model))
+    }
+
+    func testABuildWithoutItsCoreHasNoLicencesToShow() {
+        // the tests' host is the app as built, before the core is put into it
+        XCTAssertNil(SticklerCommands.licences)
     }
 
     func testOnlySoundFilesCountAsSongs() {
@@ -277,7 +273,6 @@ final class LogicTests: XCTestCase {
 final class FakeAsking: Asking {
     var save: URL?
     var chosenSong: URL?
-    var chosenFolder: URL?
     var program: URL?
     var goOn = true
     var remove: Bool?
@@ -292,8 +287,6 @@ final class FakeAsking: Asking {
     }
 
     func song() -> URL? { chosenSong }
-
-    func folder() -> URL? { chosenFolder }
 
     func application() -> URL? { program }
 

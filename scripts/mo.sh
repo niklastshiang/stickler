@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the core's translations into the checkout's environment:
 # po/<lang>.po → .venv/share/locale/<lang>/LC_MESSAGES/stickler.mo, where `stickler_app.i18n`
-# looks for them. For the Mac app before its package (docs/mac-development.md): run it after
+# looks for them. For the Mac app's development build (docs/mac-development.md): run it after
 # `uv sync` and after every `git pull`. The GTK app's environment is built by scripts/gtk.sh,
 # the packages build their own.
 # Needs gettext (msgfmt): `brew install gettext`.

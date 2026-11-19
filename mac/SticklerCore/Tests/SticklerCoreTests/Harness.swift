@@ -75,26 +75,16 @@ final class FakeCore: Core, @unchecked Sendable {
     }
 }
 
-/// Builds models with fake cores and a Stickler folder of their own.
+/// Builds models with fake cores.
 @MainActor
 final class Harness {
     let defaults: UserDefaults
-    let folder: URL
-    let uv: URL
     private let made = Made()
-
-    /// What the model asked a core to be made with.
-    struct Call {
-        let folder: URL
-        let tool: URL
-        let languages: [String]
-    }
 
     final class Made: @unchecked Sendable {
         let lock = NSLock()
         var cores: [FakeCore] = []
-        var calls: [Call] = []
-        var bundled: [URL] = []
+        var languages: [[String]] = []
         var preset: [String: String] = [:]
     }
 
@@ -104,64 +94,36 @@ final class Harness {
     }
 
     var cores: [FakeCore] { made.lock.withLock { made.cores } }
-    var calls: [Call] { made.lock.withLock { made.calls } }
-    /// The bundled cores the model asked for (an app that brings its own).
-    var bundledCalls: [URL] { made.lock.withLock { made.bundled } }
+    /// The languages each core was made with.
+    var languages: [[String]] { made.lock.withLock { made.languages } }
     var core: FakeCore { cores[cores.count - 1] }
 
-    init(stickler: Bool = true) throws {
+    init() throws {
         defaults = try #require(UserDefaults(suiteName: "stickler-test-\(UUID().uuidString)"))
-        let base = FileManager.default.temporaryDirectory
-            .appendingPathComponent("stickler-model-\(UUID().uuidString)")
-        folder = base.appendingPathComponent("stickler")
-        try FileManager.default.createDirectory(
-            at: folder.appendingPathComponent("adapters"), withIntermediateDirectories: true)
-        if stickler {
-            try Data().write(to: folder.appendingPathComponent("pyproject.toml"))
-        }
-        uv = base.appendingPathComponent("bin/uv")
-        try FileManager.default.createDirectory(
-            at: uv.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data("#!/bin/sh\n".utf8).write(to: uv)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: uv.path)
     }
 
-    func model(
-        uvPlaces: [URL]? = nil, settle: Duration = .milliseconds(300), bundled: URL? = nil
-    ) -> AppModel {
+    func model(settle: Duration = .milliseconds(300)) -> AppModel {
         let made = made
-        return AppModel(
-            defaults: defaults,
-            uvPlaces: uvPlaces ?? [URL(fileURLWithPath: "/nonexistent/uv"), uv],
-            languages: ["de-DE", "en"],
-            settle: settle,
-            makeCore: { folder, tool, languages in
-                let core = FakeCore()
-                made.lock.withLock {
-                    for (command, fields) in made.preset {
-                        core.answer(command, with: fields)
-                    }
-                    made.cores.append(core)
-                    made.calls.append(Call(folder: folder, tool: tool, languages: languages))
+        let wanted = ["de-DE", "en"]
+        return AppModel(defaults: defaults, languages: wanted, settle: settle) { languages in
+            let core = FakeCore()
+            made.lock.withLock {
+                for (command, fields) in made.preset {
+                    core.answer(command, with: fields)
                 }
-                return core
-            },
-            bundled: bundled,
-            makeBundled: { core, _ in
-                let fake = FakeCore()
-                made.lock.withLock {
-                    made.cores.append(fake)
-                    made.bundled.append(core)
-                }
-                return fake
-            })
+                made.cores.append(core)
+                made.languages.append(languages)
+            }
+            return core
+        }
     }
 }
 
-/// Lets the model's listener run until `condition` holds.
+/// Lets the model's listener run until `condition` holds: `tries` times 5 ms at most (more
+/// for a real process, which a busy runner starts slowly).
 @MainActor
-func settled(_ condition: () -> Bool) async -> Bool {
-    for _ in 0..<500 {
+func settled(tries: Int = 500, _ condition: () -> Bool) async -> Bool {
+    for _ in 0..<tries {
         if condition() { return true }
         try? await Task.sleep(for: .milliseconds(5))
     }

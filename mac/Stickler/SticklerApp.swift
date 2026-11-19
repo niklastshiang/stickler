@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
 
     func applicationDidFinishLaunching(_: Notification) {
-        // the tests host the app: they build their own models, with no core of the reader's
+        // the tests host the app: they build their own models, and no core is started
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
             model.launch()
         }

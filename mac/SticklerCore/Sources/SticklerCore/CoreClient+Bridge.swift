@@ -1,52 +1,86 @@
 import Foundation
 
-// The Mac app's own core: how `CoreClient` is started for a Stickler folder, and the
-// environment it gets (SPEC.md, module `mac-shell`, "Where the core is").
+// The Mac app's own core (SPEC.md, module `mac-package`, scope 3): the one inside the app, or
+// in a development build the checkout named by `STICKLER_CHECKOUT`, and the environment each
+// gets.
 
 extension CoreClient {
-    /// The core of the Mac app: `uv run stickler-bridge` in the Stickler folder, as an
-    /// installed app (`STICKLER_PACKAGED=macos`: its files under ~/Library, its models set up
-    /// from the folder's adapters). `languages` are the user's, best first; `path` is this
-    /// process's `PATH`, which the core's starts from (`toolPath`).
-    public static func bridge(
-        in folder: URL, uv tool: URL, languages: [String],
-        path: String = ProcessInfo.processInfo.environment["PATH"] ?? ""
+    /// The variable a development build reads the Stickler checkout from.
+    public static let checkoutVariable = "STICKLER_CHECKOUT"
+
+    /// Whether this build is one for development (built for debugging): only such a build
+    /// reads `STICKLER_CHECKOUT`, a released app runs nothing but its own core.
+    public static let isDevelopmentBuild: Bool = {
+        #if DEBUG
+        true
+        #else
+        false
+        #endif
+    }()
+
+    /// The app's core: the one in its bundle, found through `resources` (`Bundle.main`: a
+    /// quarantined app may run from a random read-only path); in a development build the
+    /// checkout that `environment` names, if it names one. `languages` are the user's, best
+    /// first.
+    public static func app(
+        languages: [String],
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        resources: URL = Bundle.main.resourceURL ?? Bundle.main.bundleURL,
+        development: Bool = CoreClient.isDevelopmentBuild
     ) -> CoreClient {
-        CoreClient(
-            executable: tool, arguments: ["run", "--project", folder.path, "stickler-bridge"],
-            directory: folder,
-            environment: [
-                "STICKLER_PACKAGED": "macos",
-                "STICKLER_ADAPTER_SOURCES": folder.appendingPathComponent("adapters").path,
-                "LANGUAGE": gettextLanguages(languages),
-                "PATH": toolPath(uv: tool, inherited: path)
-            ])
+        if development, let folder = environment[checkoutVariable], !folder.isEmpty {
+            return checkout(URL(fileURLWithPath: folder), languages: languages)
+        }
+        return bundled(core: resources.appendingPathComponent("core"), languages: languages)
     }
 
-    /// The core an app brings along (SPEC.md, module `mac-package`, scope 3): the Python inside
-    /// `core` runs the bridge, isolated from the Mac's own Python settings (`-I`) and writing
-    /// no bytecode into the app (`-B`: a changed bundle breaks its signature). Its `PATH` is
-    /// the bundle's `bin` (`uv`, ffmpeg, ffprobe) and the system's folders, nothing of
-    /// Homebrew's or the reader's. Where its adapters are and where `uv` keeps its Python,
-    /// the core works out itself (`paths.packaged_env`).
+    /// The core an app brings along: the Python inside `core` runs the bridge, isolated from
+    /// the Mac's own Python settings (`-I`) and writing no bytecode into the app (`-B`: a
+    /// changed bundle breaks its signature). Its `PATH` is the bundle's `bin` (`uv`, ffmpeg,
+    /// ffprobe) and the system's folders, nothing of Homebrew's or the reader's. Where its
+    /// adapters are and where `uv` keeps its Python, the core works out itself
+    /// (`paths.packaged_env`). It is not started while one of its parts is missing.
     public static func bundled(core: URL, languages: [String]) -> CoreClient {
-        CoreClient(
-            executable: core.appendingPathComponent("python/bin/python3"),
+        let python = core.appendingPathComponent("python/bin/python3")
+        let parts = ["bin/uv", "bin/ffmpeg", "bin/ffprobe", "python/share/stickler/adapters"]
+        return CoreClient(
+            executable: python,
             arguments: ["-I", "-B", "-m", "stickler_app.bridge"],
             directory: core,
             environment: [
                 "STICKLER_PACKAGED": "macos",
                 "LANGUAGE": gettextLanguages(languages),
                 "PATH": core.appendingPathComponent("bin").path + ":/usr/bin:/bin:/usr/sbin:/sbin"
-            ])
+            ],
+            needs: [python] + parts.map { core.appendingPathComponent($0) })
     }
 
-    /// The core inside the app's resources, when the app brings one (its Python is there and
-    /// can run).
-    public static func bundledCore(resources: URL? = Bundle.main.resourceURL) -> URL? {
-        guard let core = resources?.appendingPathComponent("core") else { return nil }
-        let python = core.appendingPathComponent("python/bin/python3").path
-        return FileManager.default.isExecutableFile(atPath: python) ? core : nil
+    /// A development build's core: `uv run stickler-bridge` in the checkout `folder`, as an
+    /// installed app (`STICKLER_PACKAGED=macos`: its files under ~/Library, its models set up
+    /// from the folder's adapters). `uv`, ffmpeg and ffprobe come from the `PATH` the build
+    /// was started with; the app looks for none of them.
+    public static func checkout(_ folder: URL, languages: [String]) -> CoreClient {
+        let adapters = folder.appendingPathComponent("adapters")
+        return CoreClient(
+            executable: URL(fileURLWithPath: "/usr/bin/env"),
+            arguments: ["uv", "run", "--project", folder.path, "stickler-bridge"],
+            directory: folder,
+            environment: [
+                "STICKLER_PACKAGED": "macos",
+                "STICKLER_ADAPTER_SOURCES": adapters.path,
+                "LANGUAGE": gettextLanguages(languages)
+            ],
+            needs: [adapters])
+    }
+
+    /// The licences of what the app ships (`core/licenses`, an index and a folder per part),
+    /// for the Help menu; nil in a build without its core.
+    public static func licences(
+        resources: URL = Bundle.main.resourceURL ?? Bundle.main.bundleURL
+    ) -> URL? {
+        let folder = resources.appendingPathComponent("core/licenses")
+        let index = folder.appendingPathComponent("README.txt").path
+        return FileManager.default.fileExists(atPath: index) ? folder : nil
     }
 
     /// `LANGUAGE` as gettext reads it, from the user's languages (BCP 47, best first):
@@ -59,14 +93,16 @@ extension CoreClient {
             .joined(separator: ":")
     }
 
-    /// The core's `PATH`: the folder of the `uv` that was found (the core calls `uv` itself
-    /// for the models), Homebrew's two prefixes (ffmpeg and ffprobe), then `inherited`, each
-    /// folder once. An app started from the Finder inherits only the system's folders.
-    public static func toolPath(uv tool: URL, inherited: String) -> String {
-        let folders =
-            [tool.deletingLastPathComponent().path, "/opt/homebrew/bin", "/usr/local/bin"]
-            + inherited.split(separator: ":").map(String.init)
-        var seen = Set<String>()
-        return folders.filter { seen.insert($0).inserted }.joined(separator: ":")
+    /// What of `needs` is not there: each must exist, and a file among them must be a program
+    /// that can run (an image or an archive may have dropped its executable bit).
+    public static func missing(_ needs: [URL]) -> [String] {
+        needs.compactMap { need in
+            var isFolder: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: need.path, isDirectory: &isFolder) else {
+                return "missing: \(need.path)"
+            }
+            let runs = isFolder.boolValue || FileManager.default.isExecutableFile(atPath: need.path)
+            return runs ? nil : "cannot run: \(need.path)"
+        }
     }
 }
