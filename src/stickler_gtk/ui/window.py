@@ -54,7 +54,7 @@ def _empty_page(recent_songs: Gtk.Widget) -> Gtk.Widget:
         title=_("Drop a Song Here"),
         description=_(
             "Stickler listens to the drums and writes them as sheet music. "
-            "MP3, FLAC, WAV or OGG; a song takes about 15 seconds."
+            "MP3, M4A, FLAC, WAV or OGG; a song takes about 15 seconds."
         ),
         child=box,
     )

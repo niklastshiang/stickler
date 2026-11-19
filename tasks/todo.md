@@ -828,7 +828,7 @@ Status: deferred by the owner on 2026-11-17 ("maybe later, not needed now"): the
   - Dependencies: 101, 105 · Files: `src/stickler_gtk/ui/window.py`, `src/stickler_gtk/ui/worker.py`
 
 ### Checkpoint T
-- [ ] All success criteria of SPEC.md "Module `core-bridge`" met (owner); then `mac-shell`'s spec
+- [x] All success criteria of SPEC.md "Module `core-bridge`" met (owner, 2026-11-19, after the check of the GTK window by hand, task 106); then `mac-shell`'s spec
 
 ## Phase 21: Release 8 (macOS app), module `mac-shell` (approved 2026-11-18, SPEC.md "Module `mac-shell`")
 
@@ -1117,5 +1117,5 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 
 - [ ] **Ultrareview once the application is finished**
   - The user starts it themselves with `/code-review ultra`. I cannot trigger it.
-- [x] **M4A: the README and the spec disagree** (seen 2026-11-19 while writing `mac-package`): checked 2026-11-19, the README is right. Since 331c9c4 (2026-11-13) ffmpeg converts what the models cannot read to FLAC first; `stickler notate` on a 30 s AAC clip of Eye of the Tiger gave 59 hits and a MusicXML. SPEC `packaging`, assumption 9 ("M4A/AAC are not promised"), is older than that; `mac-package`'s decision 3 says so. Nothing in the README, the empty window or the dialogs was changed. Left open: whether the GTK app plays an `.m4a` (GStreamer's AAC decoder in the Flatpak and the AppImage).
+- [x] **M4A: the README and the spec disagree** (seen 2026-11-19 while writing `mac-package`): checked 2026-11-19, the README is right. Since 331c9c4 (2026-11-13) ffmpeg converts what the models cannot read to FLAC first; `stickler notate` on a 30 s AAC clip of Eye of the Tiger gave 59 hits and a MusicXML. SPEC `packaging`, assumption 9 ("M4A/AAC are not promised"), is older than that; `mac-package`'s decision 3 says so. Then named (owner, 2026-11-19: "mention that M4A works"): the empty window of both apps and the website's first step say "MP3, M4A, FLAC, WAV or OGG", with German and Spanish. Left open: whether the GTK app plays an `.m4a` (GStreamer's AAC decoder in the Flatpak and the AppImage).
 

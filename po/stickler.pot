@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-19 08:56+0100\n"
+"POT-Creation-Date: 2026-11-19 11:21+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -696,8 +696,8 @@ msgstr ""
 
 #: src/stickler_gtk/ui/window.py:56
 msgid ""
-"Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV "
-"or OGG; a song takes about 15 seconds."
+"Stickler listens to the drums and writes them as sheet music. MP3, M4A, "
+"FLAC, WAV or OGG; a song takes about 15 seconds."
 msgstr ""
 
 #: src/stickler_gtk/ui/window.py:76

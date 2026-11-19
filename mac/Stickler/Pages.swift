@@ -45,7 +45,7 @@ struct EmptyWindowView: View {
                 Text(
                     LocalizedStringKey(
                         "Stickler listens to the drums and writes them as sheet music. "
-                            + "MP3, FLAC, WAV or OGG; a song takes about 15 seconds."))
+                            + "MP3, M4A, FLAC, WAV or OGG; a song takes about 15 seconds."))
             } actions: {
                 Button("Open a Song…") { Panels.openSong(model) }
                     .buttonStyle(.borderedProminent)

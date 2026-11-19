@@ -2392,19 +2392,19 @@
         }
       }
     },
-    "Stickler listens to the drums and writes them as sheet music. MP3, FLAC, WAV or OGG; a song takes about 15 seconds." : {
+    "Stickler listens to the drums and writes them as sheet music. MP3, M4A, FLAC, WAV or OGG; a song takes about 15 seconds." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stickler hört auf das Schlagzeug und schreibt es als Noten. MP3, FLAC, WAV oder OGG; ein Song dauert etwa 15 Sekunden."
+            "value" : "Stickler hört auf das Schlagzeug und schreibt es als Noten. MP3, M4A, FLAC, WAV oder OGG; ein Song dauert etwa 15 Sekunden."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stickler escucha la batería y la escribe como partitura. MP3, FLAC, WAV u OGG; una canción tarda unos 15 segundos."
+            "value" : "Stickler escucha la batería y la escribe como partitura. MP3, M4A, FLAC, WAV u OGG; una canción tarda unos 15 segundos."
           }
         }
       }

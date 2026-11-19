@@ -2578,8 +2578,9 @@ the Mac App Store, Quality, the GPU.
    and checksum), audio only: the decoders and demuxers for what `paths.AUDIO_SUFFIXES`
    accepts, FLAC and WAV out. The build time and the two programs' size are measured in the
    spike; the licence follows the configuration and is shipped with the others.
-3. **Nothing extra is done for M4A/AAC** on the Mac (owner: not promised). Checked afterwards
-   (2026-11-19): the question's premise was out of date. Since 2026-11-13 (331c9c4) every
+3. **M4A/AAC work and are named** (owner, 2026-11-19, after the check below; before it:
+   "not promised"): the empty window of both apps and the website's first step say "MP3, M4A,
+   FLAC, WAV or OGG". Checked 2026-11-19: the question's premise was out of date. Since 2026-11-13 (331c9c4) every
    format the models cannot read is converted to FLAC by ffmpeg first, so an `.m4a` already
    works (`stickler notate` on an AAC clip of Eye of the Tiger: 59 hits, a MusicXML), as the
    README and `docs/cli.md` say; module `packaging`'s assumption 9 was written before that
