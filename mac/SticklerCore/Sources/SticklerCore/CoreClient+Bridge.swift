@@ -34,6 +34,20 @@ extension CoreClient {
         return bundled(core: resources.appendingPathComponent("core"), languages: languages)
     }
 
+    /// Variables that would lead a packaged core, `uv` or Python away from Stickler's own
+    /// folders and Python: set in a Terminal the app was started from, or with `launchctl
+    /// setenv`. Named by their beginnings.
+    public static let leadingAway = ["UV_", "XDG_", "STICKLER_", "PYTHON", "VIRTUAL_ENV"]
+
+    /// What the core is started with: this process's `own` environment without the variables
+    /// that begin with one of `drops`, then `added`.
+    public static func environment(
+        own: [String: String], dropping drops: [String], adding added: [String: String]
+    ) -> [String: String] {
+        own.filter { name, _ in !drops.contains { name.hasPrefix($0) } }
+            .merging(added) { $1 }
+    }
+
     /// The core an app brings along: the Python inside `core` runs the bridge, isolated from
     /// the Mac's own Python settings (`-I`) and writing no bytecode into the app (`-B`: a
     /// changed bundle breaks its signature). Its `PATH` is the bundle's `bin` (`uv`, ffmpeg,

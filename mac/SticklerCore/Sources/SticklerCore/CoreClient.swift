@@ -114,20 +114,6 @@ public final class CoreClient: @unchecked Sendable {
         self.drops = drops
     }
 
-    /// Variables that would lead a packaged core, `uv` or Python away from Stickler's own
-    /// folders and Python: set in a Terminal the app was started from, or with `launchctl
-    /// setenv`. Named by their beginnings.
-    public static let leadingAway = ["UV_", "XDG_", "STICKLER_", "PYTHON", "VIRTUAL_ENV"]
-
-    /// What the core is started with: this process's `own` environment without the variables
-    /// that begin with one of `drops`, then `added`.
-    public static func environment(
-        own: [String: String], dropping drops: [String], adding added: [String: String]
-    ) -> [String: String] {
-        own.filter { name, _ in !drops.contains { name.hasPrefix($0) } }
-            .merging(added) { $1 }
-    }
-
     /// Starts the core. `onEvent` gets `hello` and every event; `onEnd` comes once, also when
     /// the process cannot be started. Both are called on the client's threads; `onEnd` for
     /// a core that cannot be started comes before `start` returns, on the caller's.
