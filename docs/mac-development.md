@@ -10,7 +10,8 @@ shows *Stickler Stopped Unexpectedly* and lists the missing parts under Technica
 (that is why the workflow **mac** keeps no app to download). There are two ways to run the
 app:
 
-- **the image**, the app as a reader gets it (below), to check a build on a Mac;
+- **the image**, the app as a reader gets it (below), to check a build on a Mac; the
+  reader's own guide is [Installing Stickler on a Mac](install-macos.md);
 - **a development build** over a copy of this repository, for work on the app with Xcode.
 
 You need a Mac with Apple Silicon and macOS 26, and about 4 GB free for the models.
@@ -131,3 +132,36 @@ Module `mac-sheet` (SPEC.md, its success criteria 1–3). Take the newest image.
 5. **VoiceOver** (⌘F5): on the sheet it reads one picture, "Sheet music of Eye of the Tiger,
    3 pages" (with the song's own page count), in the Mac's language; Tab does not stop in
    the sheet.
+
+## What to check for the package (Checkpoint Z)
+
+Module `mac-package` (SPEC.md, its success criteria 1–5), with `Stickler-8.dmg` from the draft
+of release 8, downloaded with a browser so that macOS treats it as a reader's download.
+
+1. **A Mac without the tools:** on a fresh user account, or with Homebrew's ffmpeg and `uv`
+   moved away for the check, so that only the app's own are there:
+
+   ```console
+   which uv ffmpeg ffprobe
+   ```
+
+   prints nothing in a new Terminal window.
+2. **Install and first start:** follow [the reader's guide](install-macos.md) and nothing
+   else: drag, open once, **Open Anyway**, confirm. Stickler asks for no folder. Then the
+   consent, the download, and a song to its sheet music; save the PDF, the MusicXML and the
+   drum track. No Terminal is needed anywhere.
+3. **Languages:** with the Mac (or Stickler alone) set to German, then Spanish, the app's
+   texts and the core's (the steps, the models' names and sizes, an error) are in that
+   language.
+4. **Help › Licences** opens the licences of what the app ships.
+5. **Removing:** **Remove Downloaded Models…** with its box ticked, quit, drag Stickler to the
+   Bin. Then nothing of Stickler is left:
+
+   ```console
+   find ~/Library -iname '*stickler*' 2>/dev/null
+   ```
+
+6. **The release and the website:** the draft release holds the image beside the Flatpak and
+   the AppImage; the website's Mac card shows the image's size, and `install-mac.html` its
+   pictures (task 130: the image's window, the first message, Privacy & Security, the last
+   question, each in light and dark, taken during step 2).
