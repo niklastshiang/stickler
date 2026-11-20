@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The Mac app's icon from the GTK icon's layers (SPEC.md, `mac-design`: paper, staff, notes
-and sticks on the macOS shape, background #2f5d8c; `docs/design/mac/Icon.dc.html`).
+and sticks on the macOS shape, background #e8894a since 2026-11-20; `docs/design/mac/Icon.dc.html`).
 
 It writes the 1024-pixel master `packaging/icons/ng.tshia.Stickler-macos.svg` and the pictures
 of `mac/Stickler/Assets.xcassets/AppIcon.appiconset`. Drawing needs librsvg, which comes with
@@ -24,7 +24,7 @@ MASTER = ROOT / "packaging" / "icons" / "ng.tshia.Stickler-macos.svg"
 CATALOG = ROOT / "mac" / "Stickler" / "Assets.xcassets"
 ICONSET = CATALOG / "AppIcon.appiconset"
 LAYERS = ("paper", "staff", "notes", "sticks")
-BACKGROUND = "#2f5d8c"
+BACKGROUND = "#e8894a"  # the website's orange, a little deeper (owner, 2026-11-20); before #2f5d8c
 POINTS = (16, 32, 128, 256, 512)  # each at 1x and 2x
 
 

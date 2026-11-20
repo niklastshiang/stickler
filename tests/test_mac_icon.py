@@ -30,7 +30,7 @@ def test_the_master_is_the_gtk_icons_layers_on_the_macos_shape():
     master = mac_icon.master_svg(GTK_ICON.read_text(encoding="utf-8"))
     assert 'viewBox="0 0 1024 1024"' in master
     # the design board's numbers (docs/design/mac/Icon.dc.html)
-    assert '<rect x="100" y="100" width="824" height="824" rx="185" fill="#2f5d8c"/>' in master
+    assert '<rect x="100" y="100" width="824" height="824" rx="185" fill="#e8894a"/>' in master
     assert '<svg x="98" y="127" width="720" height="720" viewBox="0 0 128 128">' in master
     for layer in ("paper", "staff", "notes", "sticks"):
         assert f'<g id="{layer}">' in master
