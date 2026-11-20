@@ -1063,7 +1063,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run python scripts/linux_packages.py build`; `uv run pytest -q tests/test_linux_packages.py`
   - Dependencies: 138, 139 · Files: `scripts/linux_packages.py`, `packaging/nfpm.yaml`, tests
 
-- [ ] **Task 141: The packages in clean containers** (M)
+- [x] **Task 141: The packages in clean containers** (M): done 2026-11-20, all three green at the first run. `packaging/linux/container-test.sh` in `ubuntu:26.04`, `fedora:44` and `fedora:45` (podman, `--pull=newer`): the package manager installs the file with its dependencies, ffmpeg and GStreamer (`uridecodebin`, as the playback) decode an MP3 and an AAC clip (made in the Ubuntu container; Fedora's `ffmpeg-free` 8.1 and 9.0 decode both), the app runs 25 s as a user on Xvfb in its own D-Bus session without a traceback, and after removing nothing named `*stickler*` or `ng.tshia.*` is left under `/usr`, `/etc` or `/opt`. The app runs as a user because Python run as root would write `__pycache__` into `/usr/lib/stickler`.
   - Acceptance: `uv run python scripts/linux_packages.py test` installs each file into a clean `ubuntu:26.04`, `fedora:44` and `fedora:45` container with the system's package manager, starts the app on an invisible screen (the window opens, no exception), checks that ffmpeg and GStreamer decode an MP3 and an AAC clip, removes the package and finds nothing of it left under `/usr`. A failed decode is reported to the owner before anything changes.
   - Verify: `uv run python scripts/linux_packages.py test`
   - Dependencies: 140 · Files: `scripts/linux_packages.py`, `packaging/linux/`

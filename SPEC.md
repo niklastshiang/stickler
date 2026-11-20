@@ -2948,9 +2948,9 @@ src/stickler_app/paths.py            # + packaged() == "system"
 
 #### Open questions
 
-- None after approval; to check while building: whether Fedora's `ffmpeg-free` and its
-  GStreamer libav plugin decode MP3 and AAC (else the dependency or the promise changes, asked
-  first), and whether both software centres open an unsigned local file.
+- Answered 2026-11-20 (task 141): Fedora's `ffmpeg-free` (8.1 on 44, 9.0 on 45) and its
+  GStreamer libav plugin decode MP3 and AAC; the dependencies stay as they are.
+- Left for the owner's check: whether both software centres open an unsigned local file.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

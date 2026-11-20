@@ -130,3 +130,18 @@ def test_the_packages_own_only_sticklers_folders_and_every_staged_file(tmp_path)
 def test_the_file_names_follow_the_other_packages():
     assert lp.file_name("deb", "9") == "Stickler-9_amd64.deb"
     assert lp.file_name("rpm", "9") == "Stickler-9.x86_64.rpm"
+
+
+def test_every_promised_system_is_tested_and_ubuntu_makes_the_clips_first():
+    assert [image.rsplit(":", 1)[1] for image, _ in lp.CONTAINERS] == ["26.04", "44", "45"]
+    assert lp.CONTAINERS[0][1] == "deb"
+    command = lp.container_command(
+        "fedora:45", "rpm", Path("/x/Stickler-9.x86_64.rpm"), Path("/x/clips")
+    )
+    assert command[-4:] == [
+        "/test/container-test.sh",
+        "rpm",
+        "/test/Stickler-9.x86_64.rpm",
+        "/test/clips",
+    ]
+    assert "/x/Stickler-9.x86_64.rpm:/test/Stickler-9.x86_64.rpm:ro,Z" in command

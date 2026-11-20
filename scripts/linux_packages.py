@@ -177,10 +177,60 @@ def build() -> list[Path]:
     return built
 
 
+# clean systems the packages promise to run on (SPEC.md, module `linux-packages`, assumption 1);
+# Ubuntu first: it makes the MP3 and AAC clips the others decode
+CONTAINERS = [
+    ("docker.io/library/ubuntu:26.04", "deb"),
+    ("registry.fedoraproject.org/fedora:44", "rpm"),
+    ("registry.fedoraproject.org/fedora:45", "rpm"),
+]
+
+
+def container_command(image: str, family: str, package: Path, clips: Path) -> list[str]:
+    """podman runs packaging/linux/container-test.sh in a fresh container of `image`."""
+    script = ROOT / "packaging/linux/container-test.sh"
+    return [
+        "podman",
+        "run",
+        "--rm",
+        "--pull=newer",
+        "-v",
+        f"{package}:/test/{package.name}:ro,Z",
+        "-v",
+        f"{script}:/test/container-test.sh:ro,Z",
+        "-v",
+        f"{clips}:/test/clips:Z",
+        image,
+        "sh",
+        "/test/container-test.sh",
+        family,
+        f"/test/{package.name}",
+        "/test/clips",
+    ]
+
+
+def test(packages: list[Path]) -> int:
+    """Installs, starts and removes each package in its clean containers; 0 if all pass."""
+    clips = ROOT / "dist/clips"
+    shutil.rmtree(clips, ignore_errors=True)
+    clips.mkdir(parents=True)
+    by_family = {p.suffix.removeprefix("."): p for p in packages}
+    failed = []
+    for image, family in CONTAINERS:
+        print(f"== {image}", flush=True)
+        done = subprocess.run(container_command(image, family, by_family[family], clips))
+        if done.returncode:
+            failed.append(image)
+    print("failed: " + ", ".join(failed) if failed else "all containers passed")
+    return 1 if failed else 0
+
+
 def main(argv: list[str]) -> int:
     if argv[1:] == ["build"]:
         build()
         return 0
+    if argv[1:] == ["test"]:
+        return test(build())
     print(__doc__, file=sys.stderr)
     return 2
 
