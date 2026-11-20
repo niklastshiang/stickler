@@ -2904,8 +2904,8 @@ AppImage stay for every other distribution.
 #### Commands
 
 ```bash
-scripts/linux_packages.sh            # builds dist/Stickler-<v>_amd64.deb and .x86_64.rpm
-scripts/linux_packages.sh test       # installs, starts and removes them in the three containers
+uv run python scripts/linux_packages.py build  # builds dist/Stickler-<v>_amd64.deb and .x86_64.rpm
+uv run python scripts/linux_packages.py test   # installs, starts and removes them in the three containers
 scripts/check.sh task
 ```
 
@@ -2914,7 +2914,7 @@ scripts/check.sh task
 ```
 packaging/nfpm.yaml                  # both packages
 packaging/linux/stickler-gtk         # the launcher (Python path per minor version)
-scripts/linux_packages.sh            # wheels, nFPM, container tests
+scripts/linux_packages.py            # wheels, staging, nFPM, container tests (Python: tested)
 .github/workflows/release.yml        # + the .deb and .rpm
 src/stickler_app/paths.py            # + packaged() == "system"
 ```

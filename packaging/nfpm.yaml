@@ -1,0 +1,83 @@
+# The .deb (Ubuntu 26.04 and newer) and the .rpm (Fedora 44 and newer), built by nFPM from the
+# tree scripts/linux_packages.py stages (SPEC.md, module `linux-packages`). The system brings
+# Python, PyGObject, GTK, libadwaita (1.8 for Adw.ShortcutsDialog), GStreamer, ffmpeg and PyYAML.
+name: stickler
+arch: amd64
+platform: linux
+version: ${VERSION}
+section: sound
+priority: optional
+maintainer: Niklas Tshiang Tshiananga <62063364+niklastshiang@users.noreply.github.com>
+description: |-
+  Write the drums of a song as sheet music.
+  Stickler separates the drums from a song, transcribes them with open-source models that run
+  on your computer, and shows them as sheet music to play along with and export as PDF or
+  MusicXML. The models are downloaded once, on first start.
+vendor: Stickler
+homepage: https://stickler.tshia.ng/
+license: GPL-3.0-or-later
+
+# Stickler's own folders as trees; elsewhere single files, so the packages own no folder the
+# system or another package owns (tests/test_linux_packages.py lists every staged file here).
+contents:
+  - src: dist/linux-stage/usr/lib/stickler
+    dst: /usr/lib/stickler
+    type: tree
+  - src: dist/linux-stage/usr/share/stickler
+    dst: /usr/share/stickler
+    type: tree
+  - src: dist/linux-stage/usr/share/fonts/stickler
+    dst: /usr/share/fonts/stickler
+    type: tree
+  - src: dist/linux-stage/usr/share/licenses/stickler
+    dst: /usr/share/licenses/stickler
+    type: tree
+  - src: dist/linux-stage/usr/bin/stickler-gtk
+    dst: /usr/bin/stickler-gtk
+  - src: dist/linux-stage/usr/share/applications/ng.tshia.Stickler.desktop
+    dst: /usr/share/applications/ng.tshia.Stickler.desktop
+  - src: dist/linux-stage/usr/share/metainfo/ng.tshia.Stickler.metainfo.xml
+    dst: /usr/share/metainfo/ng.tshia.Stickler.metainfo.xml
+  - src: dist/linux-stage/usr/share/icons/hicolor/scalable/apps/ng.tshia.Stickler.svg
+    dst: /usr/share/icons/hicolor/scalable/apps/ng.tshia.Stickler.svg
+  - src: dist/linux-stage/usr/share/icons/hicolor/symbolic/apps/ng.tshia.Stickler-symbolic.svg
+    dst: /usr/share/icons/hicolor/symbolic/apps/ng.tshia.Stickler-symbolic.svg
+  - src: dist/linux-stage/usr/share/locale/de/LC_MESSAGES/stickler.mo
+    dst: /usr/share/locale/de/LC_MESSAGES/stickler.mo
+  - src: dist/linux-stage/usr/share/locale/es/LC_MESSAGES/stickler.mo
+    dst: /usr/share/locale/es/LC_MESSAGES/stickler.mo
+
+overrides:
+  deb:
+    depends:
+      - python3 (>= 3.14)
+      - python3-gi
+      - python3-gi-cairo
+      - python3-yaml
+      - gir1.2-gtk-4.0
+      - gir1.2-adw-1 (>= 1.8)
+      - gir1.2-rsvg-2.0
+      - gir1.2-gstreamer-1.0
+      - gstreamer1.0-plugins-base
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-libav
+      - ffmpeg
+  rpm:
+    depends:
+      - python3 >= 3.14
+      - python3-gobject
+      - python3-cairo
+      - python3-pyyaml
+      - gtk4
+      - libadwaita >= 1.8
+      - librsvg2
+      - gstreamer1
+      - gstreamer1-plugins-base
+      - gstreamer1-plugins-good
+      - gstreamer1-plugin-libav
+      - /usr/bin/ffmpeg
+      - /usr/bin/ffprobe
+
+rpm:
+  summary: Write the drums of a song as sheet music
+  group: Applications/Multimedia

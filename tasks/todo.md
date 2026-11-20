@@ -1058,15 +1058,15 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/test_paths.py tests/test_linux_launcher.py` (names as they turn out)
   - Dependencies: none · Files: `src/stickler_app/paths.py`, `src/stickler_app/__init__.py`, `packaging/linux/stickler-gtk`, tests
 
-- [ ] **Task 140: Building the packages** (M)
-  - Acceptance: `scripts/linux_packages.sh` stages the tree (the three packages, the wheels of `uv.lock` unpacked per Python 3.14 and 3.15 with their hashes checked, `uv` and nFPM pinned with SHA-256, adapters' sources without environments or weights, icons, desktop file, MetaInfo, `.mo` files, Leipzig font) and builds `dist/Stickler-<v>_amd64.deb` and `dist/Stickler-<v>.x86_64.rpm` from `packaging/nfpm.yaml` with the dependencies per family; a test checks the staged tree (every file in place, no `.venv`, weights or `__pycache__`).
-  - Verify: `scripts/linux_packages.sh`; `uv run pytest -q tests/test_linux_packages.py`
-  - Dependencies: 138, 139 · Files: `scripts/linux_packages.sh`, `packaging/nfpm.yaml`, tests
+- [x] **Task 140: Building the packages** (M): done 2026-11-20. `scripts/linux_packages.py build` (Python instead of the planned shell script, so its parts are tested): the wheels of numpy, mido, packaging and verovio per 3.14 and 3.15 (`flatpak_deps.pick` takes the Python tag now), uv 0.13.9 and nFPM 2.49.0 pinned by SHA-256, the adapters' tracked files only. 68.7 MB `.deb`, 71.7 MB `.rpm` (numpy and verovio twice, 30 MB each; uv 43 MB unpacked). The first build owned `/usr/share/fonts`, the icon theme's and the locale folders through one tree of `/usr`; now trees only for Stickler's own folders and single files elsewhere, tested.
+  - Acceptance: `scripts/linux_packages.py build` stages the tree (the three packages, the wheels of `uv.lock` unpacked per Python 3.14 and 3.15 with their hashes checked, `uv` and nFPM pinned with SHA-256, adapters' sources without environments or weights, icons, desktop file, MetaInfo, `.mo` files, Leipzig font) and builds `dist/Stickler-<v>_amd64.deb` and `dist/Stickler-<v>.x86_64.rpm` from `packaging/nfpm.yaml` with the dependencies per family; a test checks the staged tree (every file in place, no `.venv`, weights or `__pycache__`).
+  - Verify: `uv run python scripts/linux_packages.py build`; `uv run pytest -q tests/test_linux_packages.py`
+  - Dependencies: 138, 139 · Files: `scripts/linux_packages.py`, `packaging/nfpm.yaml`, tests
 
 - [ ] **Task 141: The packages in clean containers** (M)
-  - Acceptance: `scripts/linux_packages.sh test` installs each file into a clean `ubuntu:26.04`, `fedora:44` and `fedora:45` container with the system's package manager, starts the app on an invisible screen (the window opens, no exception), checks that ffmpeg and GStreamer decode an MP3 and an AAC clip, removes the package and finds nothing of it left under `/usr`. A failed decode is reported to the owner before anything changes.
-  - Verify: `scripts/linux_packages.sh test`
-  - Dependencies: 140 · Files: `scripts/linux_packages.sh`, `packaging/linux/`
+  - Acceptance: `uv run python scripts/linux_packages.py test` installs each file into a clean `ubuntu:26.04`, `fedora:44` and `fedora:45` container with the system's package manager, starts the app on an invisible screen (the window opens, no exception), checks that ffmpeg and GStreamer decode an MP3 and an AAC clip, removes the package and finds nothing of it left under `/usr`. A failed decode is reported to the owner before anything changes.
+  - Verify: `uv run python scripts/linux_packages.py test`
+  - Dependencies: 140 · Files: `scripts/linux_packages.py`, `packaging/linux/`
 
 - [ ] **Task 142: The release workflow** (S)
   - Acceptance: `release.yml` builds and container-tests both files on every tag and by hand, and `attach` adds them to the draft release; actions pinned by SHA, zizmor clean.

@@ -20,11 +20,12 @@ PACKAGES = ["numpy", "pyyaml", "mido", "packaging", "verovio"]
 PYTHON_TAG, PLATFORM = "cp314", "x86_64"
 
 
-def _pick(wheels: list[dict]) -> dict:
-    """A wheel the runtime's CPython 3.14 on x86_64 can install, preferring the specific one."""
+def pick(wheels: list[dict], python_tag: str = PYTHON_TAG) -> dict:
+    """A wheel CPython `python_tag` (the runtime's 3.14) on x86_64 can install, preferring the
+    specific one. The `.deb` and `.rpm` use it for 3.15 too (scripts/linux_packages.py)."""
     names = [(w, w["url"].rsplit("/", 1)[-1]) for w in wheels]
     for wheel, name in names:
-        if f"-{PYTHON_TAG}-{PYTHON_TAG}-" in name and "manylinux" in name and PLATFORM in name:
+        if f"-{python_tag}-{python_tag}-" in name and "manylinux" in name and PLATFORM in name:
             return wheel
     for wheel, name in names:
         if "-abi3-" in name and "manylinux" in name and PLATFORM in name:
@@ -32,7 +33,7 @@ def _pick(wheels: list[dict]) -> dict:
     for wheel, name in names:
         if name.endswith("-none-any.whl"):
             return wheel
-    raise LookupError(f"no wheel for {PYTHON_TAG} on {PLATFORM}: {[n for _, n in names]}")
+    raise LookupError(f"no wheel for {python_tag} on {PLATFORM}: {[n for _, n in names]}")
 
 
 def module(lock: Path, packages: list[str]) -> dict:
@@ -41,7 +42,7 @@ def module(lock: Path, packages: list[str]) -> dict:
     for name in packages:
         if name not in locked:
             raise KeyError(f"{name} is not in {lock.name}")
-        wheel = _pick(locked[name].get("wheels", []))
+        wheel = pick(locked[name].get("wheels", []))
         sources.append(
             {
                 "type": "file",
