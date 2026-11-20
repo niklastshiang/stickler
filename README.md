@@ -418,19 +418,22 @@ To keep the code from quietly getting worse, the repository enforces four rules:
 </details>
 
 <details>
-<summary><b>What the AI cost</b>: about 245 USD at API prices for release 7</summary>
+<summary><b>What the AI cost</b>: about 447 USD at API prices for release 8</summary>
 
 Claude Code logs the tokens of every response;
 [`scripts/ai_usage.py`](scripts/ai_usage.py) sums them and prices them with Anthropic's
 [API prices](https://platform.claude.com/docs/en/about-claude/pricing). The logs reach back to
 13 November 2026; the first two days of the project (the command line tool's start) are missing.
+From 19 November part of the work ran on a Mac; its logs are counted by cost only.
 On a subscription the real cost differs; this is what the same work would cost on the API.
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–17 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 2,133 | 1.9 M | 806 M | 237 USD |
-| 13–17 Nov 2026 | Claude Fable 5.2 (research subagents) | 74 | 0.08 M | 10 M | 8 USD |
-| | **Total, release 7** | | | | **about 245 USD** |
+| 13–19 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 2,810 | 2.5 M | 1,055 M | 314 USD |
+| 13–19 Nov 2026 | Claude Fable 5.2 (research subagents) | 135 | 0.31 M | 17 M | 33 USD |
+| 19–20 Nov 2026 | Claude Fable 5.2 (on the Mac) | | | | 87 USD |
+| 19–20 Nov 2026 | Claude Opus 5.5 (on the Mac) | | | | 14 USD |
+| | **Total, release 8** | | | | **about 447 USD** |
 
 </details>
 
@@ -482,7 +485,7 @@ scripts/check.sh task
   "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
   "tests": 1083,
-  "app_widget_tests": 49,
+  "app_widget_tests": 51,
   "smoke_tests_with_models": 12,
   "mac_tests": 146,
   "coverage_percent": 98,
