@@ -3,16 +3,17 @@
 Measured on the development laptop (AMD Ryzen AI 5 340, 12 threads, 30 GB RAM, Radeon 840M) and
 on rented NVIDIA GPUs. How the commands work: [CLI guide](cli.md).
 
-**The desktop app** (Flatpak or AppImage, x86_64) needs none of the software below: it brings
-`uv` and ffmpeg along. Its first start downloads the Fast models, ADTOF and Beat This! (about
-2.2 GB); the first drum-track export adds Demucs (about 1.2 GB). The Flatpak takes the GNOME 51
-runtime from Flathub.
+**The desktop app** (Flatpak or AppImage on x86_64 Linux; the `.dmg` on a Mac with Apple silicon
+and macOS 26) needs none of the software below: it brings `uv` and ffmpeg along, the Mac app its
+own Python too. Its first start downloads the Fast models, ADTOF and Beat This! (about 2.2 GB on
+Linux); the first drum-track export adds Demucs (about 1.2 GB). The Flatpak takes the GNOME 51
+runtime from Flathub. Installing on a Mac: [the guide](install-macos.md).
 
 ## Software
 
 | What | Why | Install (Fedora / Debian) |
 |---|---|---|
-| Linux | the only platform Stickler is built and tested on | – |
+| Linux | the platform the benchmark runs on; the core and the app's three models are tested on macOS too (Apple silicon) | – |
 | [`uv`](https://docs.astral.sh/uv/) | Python environments; it fetches Python (3.14 for the app's three models, 3.12 for the benchmark-only ones) and PyTorch for each model itself | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 | `ffmpeg` | decoding audio; converts formats the models cannot read (M4A/AAC, WMA, …) to FLAC | `sudo dnf install ffmpeg-free` / `sudo apt install ffmpeg` |
 | `git` | cloning; MDB Drums is downloaded with git | usually present |

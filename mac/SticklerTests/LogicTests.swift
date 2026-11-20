@@ -32,15 +32,8 @@ final class LogicTests: XCTestCase {
     ) async throws -> (AppModel, ScriptedCore) {
         let core = ScriptedCore(lines: lines, replies: replies)
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "logic-\(UUID().uuidString)"))
-        let model = AppModel(
-            defaults: defaults, uvPlaces: [URL(fileURLWithPath: "/bin/sh")], languages: ["en"]
-        ) { _, _, _ in core }
-        let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("logic-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(
-            at: folder.appendingPathComponent("adapters"), withIntermediateDirectories: true)
-        try Data().write(to: folder.appendingPathComponent("pyproject.toml"))
-        model.choose(folder: folder)
+        let model = AppModel(defaults: defaults, languages: ["en"]) { _ in core }
+        model.launch()
         let wantsResult = lines.contains(ScreenshotTests.result)
         try await until {
             guard model.phase == .running else { return false }
@@ -130,6 +123,7 @@ final class LogicTests: XCTestCase {
         await Exports.drumTrack(model)
         XCTAssertEqual(asking.costs, ["Takes about 8 minutes."])
         XCTAssertEqual(asking.offered, ["Eye of the Tiger (drums).flac"])
+        XCTAssertEqual(asking.endings, [["flac", "wav"]], "what the app's ffmpeg writes")
         try await until { core.sent.contains(.exportDrumTrack(dest: dest.path)) }
     }
 
@@ -171,6 +165,7 @@ final class LogicTests: XCTestCase {
         asking.save = dest
         await Exports.pdf(model)
         XCTAssertEqual(asking.offered, ["Eye of the Tiger.pdf"])
+        XCTAssertEqual(asking.endings, [[]], "any name, as before")
         XCTAssertTrue(FileManager.default.fileExists(atPath: dest.path))
         XCTAssertEqual(model.notice?.opens, dest.path)
     }
@@ -199,6 +194,18 @@ final class LogicTests: XCTestCase {
         }
     }
 
+    func testOnlyRemovingEverythingClearsWhatMacOSKeepsForTheApp() async throws {
+        for (answer, cleared) in [(false, false), (true, true)] {
+            Removal.everything = false
+            let (model, core) = try await model(replies: ["removal_sizes": Self.sizes])
+            asking.remove = answer
+            await Removal.ask(model)
+            try await until { core.sent.contains(.removeModels(everything: answer)) }
+            XCTAssertEqual(Removal.everything, cleared)
+        }
+        Removal.everything = false
+    }
+
     func testAKeptRemovalSendsNothing() async throws {
         let (model, core) = try await model(replies: ["removal_sizes": Self.sizes])
         asking.remove = nil
@@ -220,19 +227,22 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(core.sent.filter { $0.name == "open" }.count, 1)
     }
 
-    func testAChosenFolderIsUsedAndACancelledOneChangesNothing() async throws {
-        let (model, _) = try await model()
-        let before = model.folder
-        asking.chosenFolder = nil
-        Panels.chooseFolder(model)
-        XCTAssertEqual(model.folder, before)
-        let other = temporary("not-stickler")
-        try FileManager.default.createDirectory(at: other, withIntermediateDirectories: true)
-        asking.chosenFolder = other
-        Panels.chooseFolder(model)
-        guard case .needsFolder(.notStickler) = model.phase else {
-            return XCTFail("a folder without pyproject.toml is not Stickler: \(model.phase)")
-        }
+    func testBeforeTheCoreRunsNothingIsOpenedExportedOrZoomed() async throws {
+        let core = ScriptedCore(lines: [ScreenshotTests.result])
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "logic-\(UUID().uuidString)"))
+        let model = AppModel(defaults: defaults, languages: ["en"]) { _ in core }
+        XCTAssertEqual(model.phase, .launching)  // not launched: no core was made
+        asking.chosenSong = URL(fileURLWithPath: "/m/b.flac")
+        Panels.openSong(model)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertTrue(core.sent.isEmpty)
+        XCTAssertNil(Exports.result(model))
+        XCTAssertFalse(ZoomMenu.enabled(model))
+    }
+
+    func testABuildWithoutItsCoreHasNoLicencesToShow() {
+        // the tests' host is the app as built, before the core is put into it
+        XCTAssertNil(SticklerCommands.licences)
     }
 
     func testOnlySoundFilesCountAsSongs() {
@@ -277,7 +287,6 @@ final class LogicTests: XCTestCase {
 final class FakeAsking: Asking {
     var save: URL?
     var chosenSong: URL?
-    var chosenFolder: URL?
     var program: URL?
     var goOn = true
     var remove: Bool?
@@ -286,14 +295,15 @@ final class FakeAsking: Asking {
     private(set) var sizes: [RemovalSizes] = []
     private(set) var opened: [(URL, URL)] = []
 
-    func saveLocation(named name: String) -> URL? {
+    private(set) var endings: [[String]] = []
+
+    func saveLocation(named name: String, endings: [String]) -> URL? {
         offered.append(name)
+        self.endings.append(endings)
         return save
     }
 
     func song() -> URL? { chosenSong }
-
-    func folder() -> URL? { chosenFolder }
 
     func application() -> URL? { program }
 
@@ -309,5 +319,44 @@ final class FakeAsking: Asking {
 
     func open(_ file: URL, with application: URL) {
         opened.append((file, application))
+    }
+}
+
+/// What "Remove Downloaded Models…" with everything removes besides Stickler's own folders.
+@MainActor
+final class LeftoversTests: XCTestCase {
+    func testWhatMacOSKeepsForTheAppIsRemovedAndNothingElse() throws {
+        let library = FileManager.default.temporaryDirectory
+            .appendingPathComponent("stickler-leftovers-\(UUID().uuidString)")
+        let places = Leftovers.places(identifier: "ng.tshia.Test", library: library)
+        XCTAssertEqual(
+            places.map { $0.path.dropFirst(library.path.count + 1) },
+            [
+                "Caches/ng.tshia.Test", "WebKit/ng.tshia.Test", "HTTPStorages/ng.tshia.Test",
+                "Saved Application State/ng.tshia.Test.savedState",
+                "Preferences/ng.tshia.Test.plist"
+            ])
+        let other = library.appendingPathComponent("Caches/com.example.Other/kept")
+        for file in places.dropLast().map({ $0.appendingPathComponent("file") }) + [other] {
+            try FileManager.default.createDirectory(
+                at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data("x".utf8).write(to: file)
+        }
+        let suite = "stickler-leftovers-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.set("here", forKey: "NSWindow Frame main")
+        Leftovers.remove(identifier: suite, library: library, defaults: defaults)
+        XCTAssertNil(defaults.string(forKey: "NSWindow Frame main"))
+        Leftovers.remove(identifier: "ng.tshia.Test", library: library, defaults: defaults)
+        for place in places {
+            XCTAssertFalse(FileManager.default.fileExists(atPath: place.path), place.path)
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: other.path), "another app's stay")
+        Leftovers.remove(identifier: nil, library: library, defaults: defaults)  // nothing to do
+        try FileManager.default.removeItem(at: library)
+        // the test's own preferences leave no file in the real Library either
+        let real = try XCTUnwrap(
+            FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first)
+        Leftovers.remove(identifier: suite, library: real, defaults: defaults)
     }
 }

@@ -1,17 +1,17 @@
 import AppKit
 import SticklerCore
+import UniformTypeIdentifiers
 
 /// What the app asks the reader through AppKit's modal panels and alerts (task 117). The logic
 /// around them (`Exports`, `Removal`, `Panels`) asks through `Ask.reader`: the app answers with
 /// the real panels (`SystemAsking`), the tests with fixed answers, so that logic is tested.
 @MainActor
 protocol Asking {
-    /// Where to save a file offered as `name`; nil when the reader cancels.
-    func saveLocation(named name: String) -> URL?
+    /// Where to save a file offered as `name`; nil when the reader cancels. With `endings`,
+    /// the panel lets the name end only in one of them.
+    func saveLocation(named name: String, endings: [String]) -> URL?
     /// A song to open; nil when cancelled.
     func song() -> URL?
-    /// The Stickler folder; nil when cancelled.
-    func folder() -> URL?
     /// A program to open the MusicXML with; nil when cancelled.
     func application() -> URL?
     /// Whether to go on after reading the drum track's cost.
@@ -31,10 +31,15 @@ enum Ask {
 /// The real panels and alerts: AppKit only, every decision is made by the callers.
 @MainActor
 struct SystemAsking: Asking {
-    func saveLocation(named name: String) -> URL? {
+    func saveLocation(named name: String, endings: [String]) -> URL? {
         let panel = NSSavePanel()
         panel.title = localized("Save As")
         panel.nameFieldStringValue = name
+        let types = endings.compactMap { UTType(filenameExtension: $0) }
+        if !types.isEmpty {
+            panel.allowedContentTypes = types
+            panel.allowsOtherFileTypes = false
+        }
         panel.canCreateDirectories = true
         return panel.runModal() == .OK ? panel.url : nil
     }
@@ -43,14 +48,6 @@ struct SystemAsking: Asking {
         let panel = NSOpenPanel()
         panel.title = String(localized: "Open a Song")
         panel.allowedContentTypes = [.audio]
-        return panel.runModal() == .OK ? panel.url : nil
-    }
-
-    func folder() -> URL? {
-        let panel = NSOpenPanel()
-        panel.title = String(localized: "Choose Stickler Folder…")
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
         return panel.runModal() == .OK ? panel.url : nil
     }
 

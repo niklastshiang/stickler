@@ -1635,7 +1635,7 @@ po/*.po                                # the names
 
 ## Release 7: New candidates
 
-> Status: **approved** by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
+> Status: **done** (Checkpoint P, release 7, 2026-11-17). Approved by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
 > after a web check of each (facts and sources below). Plan: `tasks/plan.md` ("Release 7"),
 > tasks 12 and 82–86 in `tasks/todo.md`. **Result (2026-11-17):** measured on all three datasets;
 > no candidate beats or comes within 0.01 of a mode on the own songs, so Fast and Quality stay
@@ -1748,7 +1748,7 @@ docs/report.md, README.md              # results, candidates table
 
 ## Release 8: macOS app
 
-> Status: **approved** by the owner on 2026-11-17 (capability map with `mac-design`, minimum
+> Status: **done** (release 8, 2026-11-20: every module's checkpoint met). Approved by the owner on 2026-11-17 (capability map with `mac-design`, minimum
 > scope, open questions 1 and 2 decided). Module specs are written and approved one at a time, in
 > build order, as for the GTK application. Starts from the macOS research in `tasks/todo.md`
 > (2026-11-16).
@@ -1847,7 +1847,8 @@ mac/                      # the Swift package / Xcode project of the Mac app
 mac/Stickler/             # SwiftUI views and the bridge client
 mac/SticklerTests/        # XCTest
 scripts/xcstrings.py      # String Catalog from po/
-.github/workflows/mac.yml # build, lint, test, screenshots; the .dmg on release
+.github/workflows/mac.yml # build, lint, test, screenshots
+.github/workflows/release.yml # the .dmg on release (job `mac`, module `mac-package`)
 docs/install-macos.md     # install guide with the "Open Anyway" pictures
 ```
 
@@ -1957,7 +1958,7 @@ here).
 
 ### Module `mac-core`
 
-> Status: **approved** by the owner on 2026-11-17 (the peak RAM fix counts as behaviour-neutral on
+> Status: **done** (Checkpoint S, 2026-11-18). Approved by the owner on 2026-11-17 (the peak RAM fix counts as behaviour-neutral on
 > Linux, with `digests.yaml` pairs; no Hugging Face token in CI). Plan: `tasks/plan.md`
 > ("`mac-core`"), tasks 96–99.
 
@@ -2099,7 +2100,7 @@ stays as it is); the macOS app icon is part of this module.
 
 ### Module `core-bridge`
 
-> Status: **approved** by the owner on 2026-11-18 (GTK moves onto the controller in this
+> Status: **done** (Checkpoint T, 2026-11-19). Approved by the owner on 2026-11-18 (GTK moves onto the controller in this
 > module). Decided before the draft (owner, 2026-11-18): Fast only; one long-running process per
 > app start; the state lives in Python and is sent whole on every change. Plan:
 > `tasks/plan.md` ("`core-bridge`"), tasks 100–106.
@@ -2235,7 +2236,7 @@ as a toast as a `Notice`, and the bridge sends it as a `notice` event.
 
 ### Module `mac-shell`
 
-> Status: **approved** by the owner on 2026-11-18. Plan: `tasks/plan.md` ("`mac-shell`"),
+> Status: **done** (Checkpoint U, 2026-11-19). Approved by the owner on 2026-11-18. Plan: `tasks/plan.md` ("`mac-shell`"),
 > tasks 107–116. Decided before the draft (owner,
 > 2026-11-18): the owner tries each stage as an app built by CI that starts the core from a
 > checkout on the Mac; the Swift code that talks to the core is a package of its own that also
@@ -2385,7 +2386,7 @@ GPU; Intel Macs; the Mac App Store.
 
 ### Module `mac-sheet`
 
-> Status: **approved** by the owner on 2026-11-18. The sheet's model (scope 1) starts at once
+> Status: **done** (Checkpoint X, 2026-11-19). Approved by the owner on 2026-11-18. The sheet's model (scope 1) starts at once
 > (owner, 2026-11-18: it is tested on Linux and touches no view); the rest starts when
 > `mac-shell`'s checkpoint U is met (the owner's check on the Mac, task 116; met on 2026-11-19).
 > Design: screen M6 of `mac-design`
@@ -2426,9 +2427,14 @@ sheet is decided in Swift (SPEC "Release 8": one shared core, two thin interface
    dark mode the page is inverted (light notes on a dark page), as in the GTK app. The window's
    title and subtitle (artist · tempo · meter) stay as `mac-shell` made them.
 3. **Note size:** View › Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0 (`mac-design` M8), enabled
-   with a result; a trackpad pinch changes it too, applied once the fingers rest (GTK's
-   behaviour). The size is the core's setting, so it holds for every song and the GTK app's
-   value is not mixed up with the Mac's (each app has its own settings folder).
+   with a result; a trackpad pinch changes it too: while the fingers move, the shown pages
+   grow and shrink with them as a picture, around the pointer; once the fingers lift, the core
+   engraves at that size and the pages laid out anew take the picture's place (owner,
+   2026-11-19, at the check of task 129: a pinch that shows nothing until the fingers lift does
+   not read as a zoom on a Mac; the GTK app applies it once the fingers rest). New pages replace
+   the old ones in the loaded page, which is not loaded again for them. The size is the core's
+   setting, so it holds for every song and the GTK app's value is not mixed up with the Mac's
+   (each app has its own settings folder).
 4. **Accessibility:** the web view reads as one image to VoiceOver, labelled with the song's
    title and the page count ("Sheet music of Eye of the Tiger, 3 pages"); the menu items carry
    their shortcuts; nothing in the sheet takes the keyboard focus from the window's controls.
@@ -2462,9 +2468,12 @@ a page view of A4 sheets in the window.
 **Decided (owner, 2026-11-18):** the pinch comes in this module, as the GTK app has it from
 `sheet-view`; the page has the canvas's soft shadow, as macOS shows document pages.
 
+**Changed (owner, 2026-11-19, at the check on the Mac):** the pinch's picture follows the
+fingers (scope 3); before, the note size changed once, when the fingers lifted.
+
 ### Module `mac-package`
 
-> Status: **approved** by the owner on 2026-11-19 (the five questions decided, at the end;
+> Status: **done** (Checkpoint Z, 2026-11-20). Approved by the owner on 2026-11-19 (the five questions decided, at the end;
 > then the build started with `/build auto`, and the spike before `mac-sheet`'s checkpoint X:
 > "Spike: your recommendation"). Plan: `tasks/plan.md`, tasks 131–137. The spike (scope 1)
 > comes first, as "Release 8" asks; what follows it waits for checkpoint Y. The website's page `install-mac.html` (task 130) takes its pictures from
@@ -2487,7 +2496,8 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    set `com.apple.quarantine` (Apple DTS, developer forums thread 706442; uv issue 16003).
    **Known risk:** on some Macs a Python installed by `uv` is killed at start (uv issue 16726,
    open; reported on macOS 15.6 and 26.6, the maintainers suspect company security software);
-   `codesign --force -s -` on it helps. The spike shows whether the owner's Mac is affected.
+   `codesign --force -s -` on it helps. The spike shows whether the owner's Mac is affected
+   (it is not: the Python `uv` fetched there ran, 2026-11-19).
 4. A quarantined app started from Downloads or from the mounted image may run from a random
    read-only path (app translocation, forums thread 724969). So the app finds everything it
    ships through `Bundle.main` and writes nothing into itself.
@@ -2512,15 +2522,23 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    start from inside the bundle (also translocated, straight from Downloads); do `uv`'s Python
    and the wheels' compiled parts run (assumption 3); does the executable bit survive the
    image. A failure changes this spec before any task is planned.
+   **Answered on the owner's Mac (2026-11-19, macOS 27.0.1, the image of run 44507367954),
+   yes to all three, so nothing here changes:** the app copied to Applications and the one
+   started straight from the mounted image both start their core, without asking for a
+   folder; the core runs with the bundle's Python and a `PATH` of the bundle's `bin` and the
+   system's folders only, fetched a Python 3.14.10 through the bundled `uv`, made the
+   environments of ADTOF and Beat This! and turned a song into its sheet music; `uv`, ffmpeg
+   and ffprobe kept their executable bits and the copied app passes `codesign --verify
+   --strict`. Not tried: macOS 26, the deployment target (the owner's Mac runs 27).
 2. **What the app holds** (`Stickler.app/Contents/Resources/core/`):
    - `bin/uv`, `bin/ffmpeg`, `bin/ffprobe`, each pinned by version and SHA-256 at build time
      and signed ad-hoc one by one before the app is (Apple DTS: inside out, no `--deep`);
    - `python/`, a relocatable Python with the core's packages (decision 1), and the core's
      own sources (`stickler`, `stickler_app`);
-   - `share/stickler/adapters` (sources only, never environments or weights), the `.mo` files
+   - `python/share/stickler/adapters` (sources only, never environments or weights), the `.mo` files
      built from `po/` at build time, the Leipzig font as today;
    - the licences of what is shipped (uv, ffmpeg, Python, the wheels) in one folder, linked
-     from Help.
+     from Help (Help › "Licences" opens the folder; greyed out in a build without its core).
 3. **Starting the core:** `CoreClient` starts the bundled core with `STICKLER_PACKAGED=macos`,
    `STICKLER_ADAPTER_SOURCES`, `uv`'s folders inside Stickler's own (`UV_CACHE_DIR`,
    `UV_PYTHON_INSTALL_DIR`, managed Pythons only, as `paths.py` does for the AppImage) and a
@@ -2528,6 +2546,15 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    Folder…" and the search for `uv` and Homebrew leave the app and its texts leave `po/`; a
    debug build keeps the folder through an environment variable for development
    (`docs/mac-development.md` is rewritten for it).
+   **Built (task 134):** `CoreClient` itself sets `STICKLER_PACKAGED`, `LANGUAGE` and the
+   `PATH`; the adapters' sources and `uv`'s folders the core works out from where it lies
+   (`paths.packaged_env`, since the spike). The variable is `STICKLER_CHECKOUT`. Only a build for debugging
+   reads it and then runs `uv run stickler-bridge` in that checkout, with the `PATH` it was
+   started with (the app looks for no `uv`); a released build ignores it. Before each start
+   the client looks for the bundle's Python, `uv`, ffmpeg, ffprobe and the adapters' folder:
+   with one of them missing or not executable the core is not started, and "Stickler Stopped
+   Unexpectedly" names it, the technical details unfolded. The folder an earlier build
+   remembered is removed from the app's defaults at launch.
 4. **The app icon** of `mac-design` goes into the app (the consent sheet shows it), with the
    version from `pyproject.toml` in About (a test keeps `project.yml` and `pyproject.toml`
    equal).
@@ -2538,9 +2565,19 @@ no Homebrew, no checkout. The app brings the core along; `mac-shell`'s folder qu
    then `Stickler-<version>.dmg` attached to the release next to the Flatpak and the AppImage
    (`gh release upload`); a manual run gives the image as an artifact. `mac.yml` keeps testing
    every push and stops uploading the bare `.app`.
+   **Built (task 136):** the job builds ffmpeg and ffprobe anew from the pinned source rather
+   than taking `mac.yml`'s cached build, so nothing a release ships comes from a cache
+   (zizmor's `cache-poisoning`; about three minutes more). It signs every Mach-O file of the
+   core on its own (`uv`, ffmpeg, ffprobe, Python and the wheels' compiled parts; `uv`'s own
+   signature by Astral is replaced), then the app. The start test runs the core twice: straight
+   from the read-only mounted image, as a translocated app runs, and from the app copied out
+   of it. The spike's workflow is gone; the image to check a build comes from a manual run of
+   `release.yml` (its artifact `mac`).
 7. **The guide** `docs/install-macos.md` and the README's install section: download, drag,
-   Open Anyway step by step, the first start, removing. Its pictures are taken on the owner's
-   Mac (light and dark) and are the website's too (task 130).
+   Open Anyway step by step, the first start, removing. It has no pictures of its own: for
+   the windows macOS shows it points to Apple's guide ("Open a Mac app from an unknown
+   developer", Mac User Guide), as the website's page does (owner, 2026-11-19; before, four
+   pictures taken on the owner's Mac in light and dark).
 
 **Not in this module:** notarisation and a Developer ID (reconsidered if the Mac app finds
 users), updates from inside the app (a new release is a new download), Intel Macs, Homebrew,
@@ -2564,10 +2601,13 @@ the Mac App Store, Quality, the GPU.
    `uv` on the `PATH` (checked with both moved away or on a fresh account).
 2. The app is in German and Spanish as the system is set, the core's texts too.
 3. Removing everything and trashing the app leaves nothing of Stickler behind (checked with
-   `find ~/Library -iname '*stickler*'`).
+   `find ~/Library -iname '*stickler*'`). That includes what macOS keeps for the app by its
+   identifier (preferences, caches, saved windows): "Remove Downloaded Models…" with
+   everything removes them, and once more when the app quits (owner, 2026-11-19).
 4. The release workflow attaches the image; `mac.yml` and `check.yml` stay green; the Linux
    packages are unchanged but for `uv`'s version.
-5. The website's Mac card and `install-mac.html` have the image's size and the pictures.
+5. The website's Mac card has the image's size, and `install-mac.html` leads to Apple's guide
+   for the windows macOS shows (owner, 2026-11-19: instead of pictures of our own).
 
 **Decided (owner, 2026-11-19).**
 1. **The core's Python is inside the app:** a relocatable Python (python-build-standalone, the
@@ -2608,7 +2648,7 @@ the Mac App Store, Quality, the GPU.
   computer it needs, a look around, privacy, the downloads, uninstalling, the footer.
 - **Success:** someone who is not technical lands on the page and has Stickler installed and
   running without help: on Linux through the Flatpak or the AppImage, on a Mac through the
-  `.dmg` including "Open Anyway", shown with pictures.
+  `.dmg` including "Open Anyway", step by step, with a link to Apple's own guide.
 - **When (owner, 2026-11-18):** built now; online with release 8, when the Mac `.dmg` exists.
   Until then it is built and checked in the repository but not deployed.
 
@@ -2647,6 +2687,11 @@ the Mac App Store, Quality, the GPU.
    Security › Open Anyway, confirm), and the Terminal line for a Mac without that button.
    The card itself keeps one sentence and the link. The pictures are taken on the owner's
    Mac with the `.dmg` of `mac-package`, in light and dark like every screenshot.
+   Changed again (owner, 2026-11-19): the page keeps its steps in words and has no pictures;
+   at "Open Anyway" it links Apple's own guide, the German page its German edition
+   (`https://support.apple.com/guide/mac-help/mh40616/mac`, `…/de-de/guide/…`, both answered
+   on 2026-11-19). Apple shows its own windows there and keeps them current; pictures of
+   ours would show one macOS version in one language.
 10. **Uninstalling:** per package, including "Remove Downloaded Models…".
 11. **About the author** (owner, 2026-11-18, instead of "How it's made"): a photo, the
     owner's name and a few lines of their own on who they are and why Stickler exists; that it

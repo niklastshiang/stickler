@@ -3,53 +3,91 @@ import Testing
 
 @testable import SticklerCore
 
-@MainActor @Suite struct TheFolder {
-    @Test func withoutARememberedFolderTheModelAsksForIt() throws {
+/// A core for a made-up bundle: it says `hello` and reads commands until `quit`.
+let patientCore = """
+    #!/bin/sh
+    printf '%s\\n' '{"event": "hello", "protocol": 1, "version": "8", "language": "en"}'
+    while read -r line; do
+        case "$line" in *quit*) exit 0 ;; esac
+    done
+
+    """
+
+@MainActor @Suite struct TheStart {
+    @Test func beforeTheLaunchThereIsNoCore() throws {
+        let harness = try Harness()
+        let model = harness.model()
+        #expect(model.phase == .launching)
+        #expect(harness.cores.isEmpty)
+        #expect(model.title == "Stickler" && model.subtitle.isEmpty)
+    }
+
+    @Test func theLaunchStartsTheCoreInTheReadersLanguages() async throws {
         let harness = try Harness()
         let model = harness.model()
         model.launch()
-        #expect(model.phase == .needsFolder(nil) && harness.cores.isEmpty)
-    }
-
-    @Test func aFolderThatIsNotSticklerIsRefusedAndNotRemembered() throws {
-        let harness = try Harness(stickler: false)
-        let model = harness.model()
-        model.choose(folder: harness.folder)
-        #expect(model.phase == .needsFolder(.notStickler(harness.folder.path)))
-        #expect(harness.defaults.string(forKey: AppModel.folderKey) == nil)
-        #expect(AppModel.problem(with: harness.folder.appendingPathComponent("pyproject.toml"))
-                != nil)
-    }
-
-    @Test func withoutUVTheCoreCannotStart() throws {
-        let harness = try Harness()
-        let model = harness.model(uvPlaces: [URL(fileURLWithPath: "/nonexistent/uv")])
-        model.choose(folder: harness.folder)
-        #expect(model.phase == .needsFolder(.noUV) && harness.cores.isEmpty)
-    }
-
-    @Test func aChosenFolderIsRememberedAndItsCoreStarts() async throws {
-        let harness = try Harness()
-        let model = harness.model()
-        model.choose(folder: harness.folder)
-        #expect(model.phase == .running && model.folder == harness.folder)
-        #expect(harness.defaults.string(forKey: AppModel.folderKey) == harness.folder.path)
-        let call = try #require(harness.calls.first)
-        #expect(call.folder == harness.folder && call.tool == harness.uv)
-        #expect(call.languages == ["de-DE", "en"])
+        #expect(model.phase == .running)
+        #expect(harness.languages == [["de-DE", "en"]])
         #expect(await settled { harness.core.actions == [.start] })
-
-        let again = harness.model()  // the next launch
-        again.launch()
-        #expect(again.phase == .running && harness.cores.count == 2)
     }
 
-    @Test func theUVPlacesStartWithTheInstallerAndHomebrewThenPath() {
-        let places = AppModel.defaultUVPlaces(environment: ["PATH": "/a/bin:/b/bin"]).map(\.path)
-        #expect(places.first?.hasSuffix("/.local/bin/uv") == true)
-        #expect(Array(places.dropFirst()) == [
-            "/opt/homebrew/bin/uv", "/usr/local/bin/uv", "/a/bin/uv", "/b/bin/uv"
-        ])
+    @Test func theFolderAnEarlierBuildAskedForIsForgotten() throws {
+        // builds before the app brought its core asked "Where Is Stickler?" and kept the answer
+        let harness = try Harness()
+        harness.defaults.set("/Users/me/stickler", forKey: "SticklerFolder")
+        let model = harness.model()
+        #expect(AppModel.formerFolderKey == "SticklerFolder")
+        model.launch()
+        #expect(harness.defaults.object(forKey: "SticklerFolder") == nil)
+        #expect(model.phase == .running)  // and nothing is asked
+        #expect(harness.cores.count == 1)
+    }
+
+    /// A model over the real client for the made-up app at `resources`.
+    func model(_ harness: Harness, resources: URL) -> AppModel {
+        AppModel(defaults: harness.defaults, languages: ["en"]) { languages in
+            CoreClient.app(
+                languages: languages, environment: [:], resources: resources, development: false)
+        }
+    }
+
+    @Test func anAppWithoutItsCoreStopsAndSaysWhatIsMissing() async throws {
+        let bare = FileManager.default.temporaryDirectory
+            .appendingPathComponent("stickler-bare-\(UUID().uuidString)")
+        let model = model(try Harness(), resources: bare)
+        model.launch()
+        #expect(await settled { model.phase != .running })
+        guard case .stopped(let end) = model.phase else {
+            Issue.record("not stopped: \(model.phase)")
+            return
+        }
+        #expect(end.reason == .notStarted("parts of it are missing"))
+        #expect(end.neverStarted)  // the page shows the details unfolded
+        #expect(end.details.count == 5)  // Python, uv, ffmpeg, ffprobe and the adapters
+        #expect(end.details.first == "missing: \(bare.path)/core/python/bin/python3")
+        #expect(end.details.last == "missing: \(bare.path)/core/python/share/stickler/adapters")
+        #expect(model.notice == nil)  // the page says it; `start` going nowhere is no notice
+        model.startAgain()
+        #expect(await settled { model.phase == .stopped(end) })  // still not there
+    }
+
+    @Test(.timeLimit(.minutes(1))) func startAgainRunsTheCoreOnceTheBundleIsWhole() async throws {
+        let resources = try madeUpBundle(python: patientCore, without: ["bin/ffprobe"])
+        let ffprobe = resources.appendingPathComponent("core/bin/ffprobe")
+        let model = model(try Harness(), resources: resources)
+        model.launch()
+        #expect(await settled { model.phase != .running })
+        #expect(model.phase == .stopped(CoreEnd(
+            reason: .notStarted("parts of it are missing"),
+            details: ["missing: \(ffprobe.path)"])))
+        try Data("#!/bin/sh\n".utf8).write(to: ffprobe)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: ffprobe.path)
+        model.startAgain()
+        #expect(await settled(tries: 2000) { model.language == "en" })  // its hello came
+        #expect(model.phase == .running)
+        await model.quit()
+        #expect(model.phase == .running)  // quitting shows no page
     }
 }
 
@@ -57,7 +95,7 @@ import Testing
     @Test func eventsBecomeTheStateTheListAndTheNotice() async throws {
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         let core = harness.core
         try core.emit(#"{"event": "hello", "protocol": 1, "version": "7", "language": "de"}"#)
         try core.emit(#"{"event": "state", "seq": 1, "state": \#(analysing)}"#)
@@ -77,7 +115,7 @@ import Testing
     @Test func aLateEventIsDropped() async throws {
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         try harness.core.emit(#"{"event": "state", "seq": 5, "state": \#(analysing)}"#)
         try harness.core.emit(#"{"event": "state", "seq": 4, "state": \#(emptyState)}"#)
         try harness.core.emit(#"{"event": "notice", "seq": 6, "text": "done", "opens": null}"#)
@@ -88,7 +126,7 @@ import Testing
     @Test func aStoppedCoreShowsItsEndAndStartAgainStartsANewOne() async throws {
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         let first = harness.core
         try first.emit(#"{"event": "state", "seq": 1, "state": \#(analysing)}"#)
         let end = CoreEnd(reason: .signalled(9), details: ["Killed"])
@@ -99,6 +137,7 @@ import Testing
 
         model.startAgain()
         #expect(model.phase == .running && harness.cores.count == 2)
+        #expect(first.quitWith == nil)  // a core that ended by itself is not asked to quit
         #expect(model.state == .empty)  // the new core's state comes from the core
         try first.emit(#"{"event": "notice", "seq": 2, "text": "old", "opens": null}"#)
         try harness.core.emit(#"{"event": "notice", "seq": 1, "text": "new", "opens": null}"#)
@@ -107,30 +146,20 @@ import Testing
         #expect(await settled { harness.core.actions == [.start] })
     }
 
-    @Test func anotherFolderEndsTheRunningCoreFirst() async throws {
+    @Test func aCoreStillRunningIsToldToQuitWhenTheNextOneStarts() async throws {
+        // two cores would share the same settings, recent songs and cache; the old one is
+        // let go at once and ends in the background
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         let first = harness.core
-        model.choose(folder: harness.folder)
+        model.startAgain()
         #expect(harness.cores.count == 2 && model.phase == .running)
         #expect(await settled { first.quitWith == 3 })
+        try first.emit(#"{"event": "state", "seq": 1, "state": \#(analysing)}"#)
         first.stop(CoreEnd(reason: .exited(0), details: []))  // its end is not the new core's
         try await Task.sleep(for: .milliseconds(50))
         #expect(model.phase == .running)
-    }
-
-    @Test func aFolderThatCannotRunEndsTheRunningCoreToo() async throws {
-        let harness = try Harness()
-        let model = harness.model()
-        model.choose(folder: harness.folder)
-        let first = harness.core
-        let elsewhere = harness.folder.deletingLastPathComponent()
-        model.choose(folder: elsewhere)
-        #expect(model.phase == .needsFolder(.notStickler(elsewhere.path)))
-        #expect(await settled { first.quitWith == 3 })
-        try first.emit(#"{"event": "state", "seq": 1, "state": \#(analysing)}"#)
-        try await Task.sleep(for: .milliseconds(50))
         #expect(model.state == .empty)  // a core that was let go is not listened to
     }
 
@@ -143,32 +172,10 @@ import Testing
         #expect(model.noticeSerial == first + 1)
     }
 
-    @Test func startAgainWithoutAFolderAsksForOne() throws {
-        let harness = try Harness()
-        let model = harness.model()
-        model.startAgain()
-        #expect(model.phase == .needsFolder(nil))
-    }
-
-    @Test func anAppWithItsOwnCoreStartsItAndNeverAsksForAFolder() async throws {
-        let harness = try Harness()
-        let core = URL(fileURLWithPath: "/Stickler.app/Contents/Resources/core")
-        let model = harness.model(bundled: core)
-        model.launch()
-        #expect(model.phase == .running)
-        #expect(harness.bundledCalls == [core])
-        #expect(harness.calls.isEmpty)  // no folder, no uv of the Mac's
-        harness.core.stop(CoreEnd(reason: .exited(1), details: []))
-        #expect(await settled { model.phase != .running })
-        model.startAgain()
-        #expect(model.phase == .running)
-        #expect(harness.bundledCalls == [core, core])
-    }
-
     @Test func quittingEndsTheCorePolitely() async throws {
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         await model.quit()
         #expect(harness.core.quitWith == 3)
     }
@@ -183,7 +190,7 @@ func refusal(_ message: String) -> String {
     @Test func eachActionSendsItsOneCommand() async throws {
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         model.open("/m/a.flac")
         model.cancel()
         model.retry()
@@ -208,7 +215,7 @@ func refusal(_ message: String) -> String {
     @Test func aRefusedCommandSaysWhyAndAStoppedCoreSaysNothing() async throws {
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         harness.core.answer("retry", with: refusal("Nicht jetzt."))
         harness.core.answer("cancel", with: "not running")
         model.cancel()
@@ -220,7 +227,7 @@ func refusal(_ message: String) -> String {
     @Test func questionsReturnTheirAnswers() async throws {
         let harness = try Harness()
         let model = harness.model()
-        model.choose(folder: harness.folder)
+        model.launch()
         harness.core.answer(
             "drum_track_cost",
             with: #""ok": true, "minutes": 8, "text": "8 min", "download": true"#)
@@ -249,6 +256,6 @@ func refusal(_ message: String) -> String {
         let model = try Harness().model()
         #expect(await model.drumTrackCost() == nil)
         model.open("/m/a.flac")  // nothing happens
-        #expect(model.phase == .needsFolder(nil))
+        #expect(model.phase == .launching)
     }
 }

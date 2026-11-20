@@ -13,7 +13,7 @@ public struct CoreEnd: Equatable, Sendable {
         case signalled(Int32)
         /// Its `hello` named another protocol version: app and core are from different releases.
         case wrongProtocol(Int)
-        /// It could not be started at all (no `uv`, a wrong folder).
+        /// It could not be started at all (a part of the app is missing, a wrong checkout).
         case notStarted(String)
     }
 
@@ -39,6 +39,12 @@ public struct CoreEnd: Equatable, Sendable {
         case .notStarted(let why):
             "The core could not be started: \(why)"
         }
+    }
+
+    /// Whether the core never ran: its details then say what is missing, and the page shows
+    /// them at once instead of folded.
+    public var neverStarted: Bool {
+        if case .notStarted = reason { true } else { false }
     }
 
     /// The summary and the details, as "Technical Details" shows them.
@@ -72,6 +78,10 @@ public final class CoreClient: @unchecked Sendable {
     public let arguments: [String]
     public let directory: URL?
     public let environment: [String: String]
+    /// The programs and folders the core cannot do without, looked for before each start.
+    public let needs: [URL]
+    /// Beginnings of the app's own variables the core does not get (`leadingAway`).
+    public let drops: [String]
 
     // Everything below is guarded by `lock`.
     private let lock = NSLock()
@@ -89,29 +99,39 @@ public final class CoreClient: @unchecked Sendable {
     private var onEvent: @Sendable (Incoming) -> Void = { _ in }
     private var onEnd: @Sendable (CoreEnd) -> Void = { _ in }
 
-    /// `environment` is added to this process's own.
+    /// `environment` is added to this process's own. A core whose `needs` are not all there
+    /// is not started: `start` ends at once and names them (`CoreClient.missing`).
     public init(
         executable: URL, arguments: [String], directory: URL? = nil,
-        environment: [String: String] = [:]
+        environment: [String: String] = [:], needs: [URL] = [], drops: [String] = []
     ) {
         _ = Self.ignoreBrokenPipes
         self.executable = executable
         self.arguments = arguments
         self.directory = directory
         self.environment = environment
+        self.needs = needs
+        self.drops = drops
     }
 
     /// Starts the core. `onEvent` gets `hello` and every event; `onEnd` comes once, also when
-    /// the process cannot be started. Both are called on the client's threads.
+    /// the process cannot be started. Both are called on the client's threads; `onEnd` for
+    /// a core that cannot be started comes before `start` returns, on the caller's.
     public func start(
         onEvent: @escaping @Sendable (Incoming) -> Void,
         onEnd: @escaping @Sendable (CoreEnd) -> Void
     ) {
+        let missing = Self.missing(needs)
+        guard missing.isEmpty else {
+            onEnd(CoreEnd(reason: .notStarted("parts of it are missing"), details: missing))
+            return
+        }
         let process = Process()
         process.executableURL = executable
         process.arguments = arguments
         process.currentDirectoryURL = directory
-        process.environment = ProcessInfo.processInfo.environment.merging(environment) { $1 }
+        process.environment = Self.environment(
+            own: ProcessInfo.processInfo.environment, dropping: drops, adding: environment)
         let stdin = Pipe(), stdout = Pipe(), stderr = Pipe()
         process.standardInput = stdin
         process.standardOutput = stdout

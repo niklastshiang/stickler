@@ -1,38 +1,6 @@
 import SticklerCore
 import SwiftUI
 
-/// The first start, or a folder that cannot run the core: where the Stickler checkout is.
-struct FolderView: View {
-    let problem: FolderProblem?
-    let choose: () -> Void
-
-    var body: some View {
-        ContentUnavailableView {
-            Label("Where Is Stickler?", systemImage: "folder.badge.questionmark")
-        } description: {
-            Text(message)
-        } actions: {
-            Button("Choose Stickler Folder…", action: choose)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-        }
-    }
-
-    private var message: LocalizedStringKey {
-        switch problem {
-        case nil:
-            // the key is one text of the catalog; `+` alone would make a plain String
-            LocalizedStringKey(
-                "Until Stickler comes as an app, it runs from the folder you downloaded with git. "
-                    + "Choose that folder.")
-        case .notStickler:
-            "This folder is not Stickler. Choose the folder with pyproject.toml and adapters in it."
-        case .noUV:
-            "uv was not found. Install it as the guide says, then choose the folder again."
-        }
-    }
-}
-
 /// Design screen M4: drop or open a song, and the recent songs.
 struct EmptyWindowView: View {
     let model: AppModel

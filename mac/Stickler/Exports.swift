@@ -51,7 +51,7 @@ enum Exports {
     /// The sheet music as an A4 PDF, written by the app (the core engraves the pages).
     static func pdf(_ model: AppModel) async {
         guard let result = result(model),
-            let dest = Ask.reader.saveLocation(named: ExportName.pdf(result.song)),
+            let dest = Ask.reader.saveLocation(named: ExportName.pdf(result.song), endings: []),
             let pages = await model.a4Pages()
         else { return }
         do {
@@ -66,7 +66,7 @@ enum Exports {
 
     static func musicXML(_ model: AppModel) {
         guard let result = result(model),
-            let dest = Ask.reader.saveLocation(named: ExportName.musicXML(result.song))
+            let dest = Ask.reader.saveLocation(named: ExportName.musicXML(result.song), endings: [])
         else { return }
         model.exportMusicXML(to: dest.path)
     }
@@ -75,10 +75,16 @@ enum Exports {
     static func drumTrack(_ model: AppModel) async {
         guard let result = result(model), let cost = await model.drumTrackCost(),
             Ask.reader.drumTrack(cost: cost.text),
-            let dest = Ask.reader.saveLocation(named: drumTrackName(result.song))
+            let dest = Ask.reader.saveLocation(
+                named: drumTrackName(result.song), endings: drumTrackEndings)
         else { return }
         model.exportDrumTrack(to: dest.path)
     }
+
+    /// What a drum track can be saved as: the app's own ffmpeg writes these two only (SPEC.md,
+    /// module `mac-package`, decision 2), while the core would take `.mp3` and `.ogg` too and
+    /// fail at the last step, after minutes of separating.
+    static let drumTrackEndings = ["flac", "wav"]
 
     /// "Eye of the Tiger (drums).flac", "(drums)" in the reader's language.
     static func drumTrackName(_ song: String) -> String {

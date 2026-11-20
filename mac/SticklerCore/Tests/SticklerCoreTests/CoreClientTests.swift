@@ -14,7 +14,7 @@ let repository = URL(fileURLWithPath: #filePath)
     .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     .deletingLastPathComponent().deletingLastPathComponent()
 
-/// `uv`, as the app looks for it: on PATH or in ~/.local/bin.
+/// `uv` for these tests: on PATH or in ~/.local/bin (uv's installer).
 func uv() throws -> URL {
     let home = FileManager.default.homeDirectoryForCurrentUser.path
     let folders = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":")
@@ -267,20 +267,19 @@ func bridgeProcess(under uvPID: Int32) async throws -> Int32 {
     #expect(await eventually(10) { seen.ended?.reason == .signalled(SIGTERM) })
 }
 
-@Test func theMacAppsCoreRunsAsAnInstalledAppFromTheChosenFolder() {
+@Test func aDevelopmentBuildsCoreRunsFromTheCheckoutAsAnInstalledApp() {
     let folder = URL(fileURLWithPath: "/Users/me/stickler")
-    let client = CoreClient.bridge(
-        in: folder, uv: URL(fileURLWithPath: "/opt/homebrew/bin/uv"), languages: ["de-DE", "en"],
-        path: "/usr/bin:/bin")
-    #expect(client.executable.path == "/opt/homebrew/bin/uv")
-    #expect(client.arguments == ["run", "--project", "/Users/me/stickler", "stickler-bridge"])
+    let client = CoreClient.checkout(folder, languages: ["de-DE", "en"])
+    // `uv` comes from the PATH the build was started with: the app looks for none itself
+    #expect(client.executable.path == "/usr/bin/env")
+    #expect(client.arguments == ["uv", "run", "--project", "/Users/me/stickler", "stickler-bridge"])
     #expect(client.directory == folder)
     #expect(client.environment == [
         "STICKLER_PACKAGED": "macos",
         "STICKLER_ADAPTER_SOURCES": "/Users/me/stickler/adapters",
-        "LANGUAGE": "de_DE:en",
-        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+        "LANGUAGE": "de_DE:en"
     ])
+    #expect(client.needs.map(\.path) == ["/Users/me/stickler/adapters"])
 }
 
 @Test func theCoresLanguagesAreWrittenAsGettextReadsThem() {
@@ -291,19 +290,6 @@ func bridgeProcess(under uvPID: Int32) async throws -> Int32 {
     #expect(CoreClient.gettextLanguages(["en-GB", "de-DE"]) == "en")
     #expect(CoreClient.gettextLanguages(["de-DE", "en", "es-ES"]) == "de_DE:en")
     #expect(CoreClient.gettextLanguages([]) == "en")
-}
-
-@Test func theCoreFindsUVAndHomebrewsToolsWhenTheAppWasStartedFromTheFinder() {
-    // the Finder's PATH on the owner's Mac (2026-11-19): neither ~/.local/bin nor Homebrew
-    let finder = "/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-    let path = CoreClient.toolPath(
-        uv: URL(fileURLWithPath: "/Users/me/.local/bin/uv"), inherited: finder)
-    #expect(path.split(separator: ":").map(String.init) == [
-        "/Users/me/.local/bin", "/opt/homebrew/bin", "/usr/local/bin",
-        "/System/Cryptexes/App/usr/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"
-    ])
-    #expect(CoreClient.toolPath(uv: URL(fileURLWithPath: "/a/uv"), inherited: "")
-        == "/a:/opt/homebrew/bin:/usr/local/bin")
 }
 
 @Test func aPathForTheCoreReplacesTheAppsOwn() async {
@@ -364,19 +350,35 @@ func bridgeProcess(under uvPID: Int32) async throws -> Int32 {
         "LANGUAGE": "de_DE:en",
         "PATH": core.path + "/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     ])
+    #expect(client.needs.map(\.path) == [
+        "python/bin/python3", "bin/uv", "bin/ffmpeg", "bin/ffprobe",
+        "python/share/stickler/adapters"
+    ].map { core.path + "/" + $0 })
 }
 
-@Test func aCoreInTheAppIsFoundByItsPython() throws {
-    let resources = FileManager.default.temporaryDirectory
-        .appendingPathComponent("stickler-bundle-\(UUID().uuidString)")
-    #expect(CoreClient.bundledCore(resources: resources) == nil)
-    #expect(CoreClient.bundledCore(resources: nil) == nil)
-    let bin = resources.appendingPathComponent("core/python/bin")
-    try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
-    let python = bin.appendingPathComponent("python3")
-    try Data("#!/bin/sh\n".utf8).write(to: python)
-    #expect(CoreClient.bundledCore(resources: resources) == nil)  // not a program yet
-    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: python.path)
-    #expect(CoreClient.bundledCore(resources: resources)?.path
-        == resources.appendingPathComponent("core").path)
+@Test func aCoreWhosePartsAreMissingOrCannotRunIsNotStartedAndSaysWhich() throws {
+    let folder = FileManager.default.temporaryDirectory
+        .appendingPathComponent("stickler-needs-\(UUID().uuidString)")
+    let program = folder.appendingPathComponent("bin/tool")
+    let data = folder.appendingPathComponent("data")
+    let gone = folder.appendingPathComponent("bin/gone")
+    try FileManager.default.createDirectory(at: data, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(
+        at: program.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try Data("#!/bin/sh\n".utf8).write(to: program)  // not a program yet: no executable bit
+    #expect(CoreClient.missing([program, data, gone]) == [
+        "cannot run: \(program.path)", "missing: \(gone.path)"
+    ])
+    let client = CoreClient(
+        executable: URL(fileURLWithPath: "/usr/bin/env"), arguments: ["true"],
+        needs: [program, data, gone])
+    let seen = Recorder()
+    seen.start(client)
+    #expect(seen.ended?.reason == .notStarted("parts of it are missing"))
+    #expect(seen.ended?.details == ["cannot run: \(program.path)", "missing: \(gone.path)"])
+    #expect(seen.ended?.neverStarted == true)  // the page then shows the details unfolded
+    #expect(!CoreEnd(reason: .exited(1), details: []).neverStarted)
+    #expect(!client.isRunning)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: program.path)
+    #expect(CoreClient.missing([program, data]).isEmpty)
 }

@@ -203,7 +203,10 @@ PAIRS = (
 )
 # outside pages that exist in German too: the German page links the German one
 LOCALISED = {
-    "https://mailbox.org/en/data-protection-privacy-policy/": "https://mailbox.org/de/datenschutz/"
+    "https://mailbox.org/en/data-protection-privacy-policy/": "https://mailbox.org/de/datenschutz/",
+    "https://support.apple.com/guide/mac-help/mh40616/mac": (
+        "https://support.apple.com/de-de/guide/mac-help/mh40616/mac"
+    ),
 }
 
 
@@ -317,9 +320,9 @@ def test_search_engines_find_every_page_in_both_languages():
 
 
 @pytest.mark.parametrize("folder", ["", "de/"])
-def test_the_mac_card_leads_to_the_guide_with_pictures(folder):
+def test_the_mac_card_leads_to_the_guide(folder):
     """SPEC "Website", content 9 (owner, 2026-11-19): the card keeps one sentence and the
-    link; the steps with their pictures have a page of their own."""
+    link; the steps have a page of their own."""
     start = SITE / folder / "index.html"
     html = start.read_text(encoding="utf-8")
     card = html[html.index('data-size="dmg"') : html.index('data-size="flatpak"')]
@@ -329,14 +332,32 @@ def test_the_mac_card_leads_to_the_guide_with_pictures(folder):
     assert [a for _t, a in guide.tags if a.get("data-copy") == "xattr-command"]
 
 
-def test_a_picture_still_to_come_stops_the_deploy():
-    """Until the owner's screenshots exist, the guide names each one in a placeholder; the
-    workflow publishes no page that holds one."""
+APPLE_GUIDE = {
+    "": "https://support.apple.com/guide/mac-help/mh40616/mac",
+    "de/": "https://support.apple.com/de-de/guide/mac-help/mh40616/mac",
+}
+
+
+def test_a_placeholder_stops_the_deploy():
+    """A page that still holds a placeholder (words or a picture to come) is never published:
+    every placeholder there is one the workflow looks for."""
     workflow = (SITE.parent / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8")
     stops = re.compile(re.search(r"grep -rnE '([^']+)' _site", workflow).group(1))
-    found = 0
+    assert stops.search("[The owner's words]") and stops.search("[Bild folgt: ein Bild]")
     for path in PAGES:
         for text in re.findall(r'class="placeholder">\s*([^<]+)', path.read_text(encoding="utf-8")):
-            found += 1
             assert stops.search(text), (path.name, text)
-    assert found >= 8  # four pictures in two languages, until they are taken
+
+
+@pytest.mark.parametrize("folder", ["", "de/"])
+def test_the_mac_guide_leads_to_apples_own_for_the_windows_macos_shows(folder):
+    """SPEC "Website", content 9 (owner, 2026-11-19): the steps in words, no pictures of our
+    own; at "Open Anyway" a link to Apple's guide in the page's language."""
+    path = SITE / folder / "install-mac.html"
+    html = path.read_text(encoding="utf-8")
+    assert 'class="placeholder"' not in html and "<picture" not in html
+    steps = html[html.index('<ol class="steps">') : html.index("</ol>")]
+    assert steps.count("<li>") == 5
+    allow = steps[steps.index('id="step-allow"') : steps.index('id="step-confirm"')]
+    assert f'href="{APPLE_GUIDE[folder]}"' in allow
+    assert html.count("support.apple.com") == 1, "one link, in the page's language"

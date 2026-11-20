@@ -6,16 +6,6 @@ never shows them; everything the core says arrives translated already."""
 from stickler_app.i18n import N_, ngettext
 
 TEXTS = (
-    # Translators: Mac app, File menu and the first start: where the Stickler folder is
-    N_("Choose Stickler Folder…"),
-    # Translators: Mac app, the first start's title when no Stickler folder is chosen yet
-    N_("Where Is Stickler?"),
-    N_(
-        "Until Stickler comes as an app, it runs from the folder you downloaded with git. "
-        "Choose that folder."
-    ),
-    N_("This folder is not Stickler. Choose the folder with pyproject.toml and adapters in it."),
-    N_("uv was not found. Install it as the guide says, then choose the folder again."),
     # Translators: Mac app, what VoiceOver reads for the sheet music, which is one picture
     # to it; the page count follows ("Sheet music of Eye of the Tiger, 3 pages")
     N_("Sheet music of {title}"),
@@ -25,6 +15,9 @@ TEXTS = (
     N_("Clear Menu"),
     # Translators: Mac app, Help menu
     N_("Stickler Help"),
+    # Translators: Mac app, Help menu: opens the folder with the licences of the programs
+    # that come inside the app (Python, uv, ffmpeg and others)
+    N_("Licences"),
     # Translators: Mac app, under "Writing the Drum Part" (design screen M5)
     N_("Takes about 15 seconds"),
     # Translators: Mac app, a step that is running now (next to "Done" and "Waiting")

@@ -73,11 +73,18 @@ def _distributions(site: Path) -> list[tuple[str, str, Path]]:
     return rows
 
 
-def _licence_files(info: Path) -> list[Path]:
+def _licence_files(info: Path) -> list[tuple[Path, Path]]:
+    """A package's licence files, each with the place it keeps below the package's folder:
+    a wheel has files of the same name in folders of its own (numpy's `LICENSE.txt` and
+    those of what it bundles)."""
     inside = info / "licenses"
-    found = [p for p in sorted(inside.rglob("*")) if p.is_file()] if inside.is_dir() else []
+    found = [(p, p.relative_to(inside)) for p in sorted(inside.rglob("*")) if p.is_file()]
     marks = ("LICENSE", "LICENCE", "COPYING", "NOTICE")
-    found += [p for p in sorted(info.iterdir()) if p.is_file() and p.name.upper().startswith(marks)]
+    found += [
+        (p, Path(p.name))
+        for p in sorted(info.iterdir())
+        if p.is_file() and p.name.upper().startswith(marks)
+    ]
     return found
 
 
@@ -87,7 +94,9 @@ def collect_licenses(core: Path, extra: dict[str, list[Path]]) -> None:
     site = _site(core)
     if site is None:
         raise ValueError(f"no Python packages in {core}")
-    parts: dict[str, tuple[str, list[Path]]] = {name: ("", files) for name, files in extra.items()}
+    parts: dict[str, tuple[str, list[tuple[Path, Path]]]] = {
+        name: ("", [(file, Path(file.name)) for file in files]) for name, files in extra.items()
+    }
     for name, version, info in _distributions(site):
         if name in parts:
             continue
@@ -95,13 +104,16 @@ def collect_licenses(core: Path, extra: dict[str, list[Path]]) -> None:
         if not files:
             raise ValueError(f"{name} {version} ships no licence file ({info.name})")
         parts[name] = (version, files)
-    parts["python"] = ("", sorted(site.parent.glob("LICENSE*")))
+    parts["python"] = ("", [(p, Path(p.name)) for p in sorted(site.parent.glob("LICENSE*"))])
     out = core / "licenses"
     shutil.rmtree(out, ignore_errors=True)
     for name, (_version, files) in parts.items():
         (out / name).mkdir(parents=True)
-        for file in files:
-            shutil.copyfile(file, out / name / file.name)
+        for file, place in files:
+            if (out / name / place).exists():
+                raise ValueError(f"{name} has two licence files at {place}")
+            (out / name / place).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(file, out / name / place)
     lines = ["Stickler ships these parts; each folder here holds that part's licence.", ""]
     lines += sorted(f"{name} {version}".strip() for name, (version, _files) in parts.items())
     (out / "README.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")

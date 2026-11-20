@@ -36,20 +36,12 @@ final class ScreenshotTests: XCTestCase {
         + #""repeats": true}, "correcting": false, "can_open": true, "can_close": true, "#
         + #""can_export": true}}"#
 
-    /// A model whose core plays `lines`, its folder a Stickler checkout of its own.
-    func model(_ lines: [String]?, core given: (any Core)? = nil) async throws -> AppModel {
+    /// A launched model whose core plays `lines`.
+    func model(_ lines: [String], core given: (any Core)? = nil) async throws -> AppModel {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "screens-\(UUID().uuidString)"))
-        let core = given ?? ScriptedCore(lines: lines ?? [])
-        let model = AppModel(
-            defaults: defaults, uvPlaces: [URL(fileURLWithPath: "/bin/sh")], languages: ["en"]
-        ) { _, _, _ in core }
-        guard let lines else { return model }  // the first start: no folder yet
-        let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("screens-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(
-            at: folder.appendingPathComponent("adapters"), withIntermediateDirectories: true)
-        try Data().write(to: folder.appendingPathComponent("pyproject.toml"))
-        model.choose(folder: folder)
+        let core = given ?? ScriptedCore(lines: lines)
+        let model = AppModel(defaults: defaults, languages: ["en"]) { _ in core }
+        model.launch()
         for _ in 0..<200 where model.recent.isEmpty && !lines.isEmpty {
             try await Task.sleep(for: .milliseconds(10))
         }
@@ -93,12 +85,6 @@ final class ScreenshotTests: XCTestCase {
             }
         }
         return seen.count
-    }
-
-    func testTheFirstStartAsksForTheFolder() async throws {
-        let model = try await model(nil)
-        XCTAssertEqual(model.phase, .needsFolder(nil))
-        try await shoot(model, "M0-folder")
     }
 
     func testTheEmptyWindowShowsTheRecentSongs() async throws {
@@ -284,6 +270,31 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(Panels.isSong(URL(fileURLWithPath: "/m/a.MP3")))
         XCTAssertFalse(Panels.isSong(URL(fileURLWithPath: "/m/notes.txt")))
         XCTAssertFalse(Panels.isSong(URL(fileURLWithPath: "/m/folder")))
+    }
+}
+
+/// The app as a build leaves it, without its core (SPEC.md, module `mac-package`, scope 3).
+extension ScreenshotTests {
+    func testAnAppWithoutItsCoreSaysWhatIsMissing() async throws {
+        // the app as the build leaves it, before `scripts/mac_bundle.sh` puts the core in
+        let resources = FileManager.default.temporaryDirectory
+            .appendingPathComponent("screens-\(UUID().uuidString)/Stickler.app/Contents/Resources")
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "screens-\(UUID().uuidString)"))
+        let model = AppModel(defaults: defaults, languages: ["en"]) { languages in
+            CoreClient.app(
+                languages: languages, environment: [:], resources: resources, development: false)
+        }
+        model.launch()
+        for _ in 0..<200 where model.phase == .running {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        guard case .stopped(let end) = model.phase else {
+            return XCTFail("a core that is not there cannot run: \(model.phase)")
+        }
+        XCTAssertTrue(end.neverStarted)
+        XCTAssertEqual(
+            end.details.first, "missing: \(resources.path)/core/python/bin/python3")
+        try await shoot(model, "stopped-incomplete")
     }
 }
 

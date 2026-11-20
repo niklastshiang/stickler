@@ -124,6 +124,24 @@ def test_the_licences_of_everything_shipped_are_collected(tmp_path):
         assert name in index
 
 
+def test_licence_files_of_the_same_name_do_not_replace_each_other(tmp_path):
+    """numpy's wheel has its own LICENSE.txt and, in folders below, those of what it bundles
+    under the same name (seen in the spike's app: numpy's file was lapack_lite's)."""
+    core = _core(tmp_path)
+    site = core / "python" / "lib" / "python3.14" / "site-packages"
+    inside = site / "numpy-2.5.4.dist-info" / "licenses"
+    _file(inside / "numpy" / "linalg" / "lapack_lite" / "LICENSE.txt", "lapack_lite")
+    _file(inside / "numpy" / "random" / "LICENSE.md", "random")
+    _file(inside / "numpy" / "ma" / "LICENSE", "ma")
+    _licensed(core, tmp_path)
+    numpy = core / "licenses" / "numpy"
+    assert (numpy / "LICENSE.txt").read_text() == "BSD"
+    assert (numpy / "numpy" / "linalg" / "lapack_lite" / "LICENSE.txt").read_text() == "lapack_lite"
+    assert (numpy / "numpy" / "random" / "LICENSE.md").read_text() == "random"
+    assert (numpy / "numpy" / "ma" / "LICENSE").read_text() == "ma"
+    assert sum(1 for p in numpy.rglob("*") if p.is_file()) == 4
+
+
 def test_a_package_without_a_licence_file_stops_the_build(tmp_path):
     core = _core(tmp_path)
     site = core / "python" / "lib" / "python3.14" / "site-packages"

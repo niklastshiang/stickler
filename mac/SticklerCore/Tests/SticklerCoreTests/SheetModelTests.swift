@@ -42,7 +42,7 @@ func pagesAsked(_ core: FakeCore) -> [Command] {
 func running(settle: Duration = .milliseconds(300)) throws -> (Harness, AppModel) {
     let harness = try Harness()
     let model = harness.model(settle: settle)
-    model.choose(folder: harness.folder)
+    model.launch()
     return (harness, model)
 }
 
@@ -63,7 +63,7 @@ struct ZoomStep {
             "settings",
             with: #""ok": true, "appearance": "system", "zoom": 1.25, "song_volume": 0.7, "#
                 + #""hits_volume": 1.0, "setup_agreed": true, "percent": "125%""#)
-        model.choose(folder: harness.folder)
+        model.launch()
         #expect(await settled { model.sheet.percent == "125%" })
         #expect(model.sheet.zoom == 1.25)
     }
@@ -312,6 +312,25 @@ struct ZoomStep {
         pinch.begin()
         pinch.change(by: -0.5)
         #expect(pinch.end() == 0.5)
+    }
+
+    @Test func aPinchTellsItsScaleSoFarWhileTheFingersMove() {
+        var pinch = Pinch()
+        #expect(pinch.soFar == nil)  // no fingers on the trackpad
+        pinch.begin()
+        #expect(pinch.soFar == 1)
+        pinch.change(by: 0.25)
+        #expect(pinch.soFar == 1.25)
+        pinch.change(by: 0.6)
+        #expect(pinch.soFar == 2.0)
+        pinch.change(by: -1.5)  // nothing can be shown at a negative size
+        #expect(pinch.soFar == nil)
+        pinch.cancel()
+        #expect(pinch.soFar == nil)
+        pinch.begin()
+        pinch.change(by: 0.5)
+        _ = pinch.end()
+        #expect(pinch.soFar == nil)  // the fingers lifted
     }
 
     @Test func aPinchSetsTheNoteSizeItBeganAtTimesItsScale() async throws {

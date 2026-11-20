@@ -39,8 +39,27 @@ enum SheetHTML {
     static let policy =
         "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:"
 
-    /// The whole document for `pages` in the window's appearance.
-    static func document(_ pages: [Page], dark: Bool) -> String {
+    /// What the web view shows: the page's styles and its sheets. The document is loaded once;
+    /// pages laid out again replace both in it, so the sheet is never blank in between.
+    struct Content: Equatable {
+        let style: String
+        let sheets: String
+
+        /// The whole document, for the first load.
+        var document: String {
+            """
+            <!doctype html><html><head><meta charset="utf-8">
+            <meta http-equiv="Content-Security-Policy" content="\(SheetHTML.policy)"><style>
+            \(style)
+            </style></head><body aria-hidden="true">
+            \(sheets)
+            </body></html>
+            """
+        }
+    }
+
+    /// The styles and sheets for `pages` in the window's appearance.
+    static func content(_ pages: [Page], dark: Bool) -> Content {
         // the canvas inverts a light grey paper, so the dark page is not pure black
         let paper =
             dark
@@ -50,17 +69,18 @@ enum SheetHTML {
         let sheets = pages.map { page in
             "<div class=\"page\" style=\"width: \(page.width)px;\">\(page.svg)</div>"
         }
-        return """
-            <!doctype html><html><head><meta charset="utf-8">
-            <meta http-equiv="Content-Security-Policy" content="\(policy)"><style>
+        let style = """
             html { background: rgb(\(desk.red), \(desk.green), \(desk.blue)); overflow-x: hidden; }
             body { margin: 0; padding: \(gutter)px; cursor: default; -webkit-user-select: none; }
             .page { margin: 0 auto \(gutter)px; box-shadow: 0 1px 3px rgba(0,0,6,.18); \(paper) }
             .page:last-child { margin-bottom: 0; }
             .page svg { display: block; }
-            </style></head><body aria-hidden="true">
-            \(sheets.joined(separator: "\n"))
-            </body></html>
             """
+        return Content(style: style, sheets: sheets.joined(separator: "\n"))
+    }
+
+    /// The whole document for `pages` in the window's appearance.
+    static func document(_ pages: [Page], dark: Bool) -> String {
+        content(pages, dark: dark).document
     }
 }

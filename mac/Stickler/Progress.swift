@@ -121,7 +121,8 @@ struct StoppedPage: View {
                 LocalizedStringKey(
                     "The part of Stickler that listens to the songs has ended. A song it was "
                         + "writing has to be opened again; finished ones are kept.")),
-            details: end.technicalDetails
+            details: end.technicalDetails,
+            unfolded: end.neverStarted  // what is missing is the page's message then
         ) {
             Button("Start Again") { model.startAgain() }
                 .buttonStyle(.borderedProminent)
@@ -135,8 +136,19 @@ struct TroublePage<Actions: View>: View {
     let title: Text
     let description: Text
     let details: String
+    /// Whether the details start unfolded.
+    var unfolded = false
     @ViewBuilder let actions: () -> Actions
-    @State private var showsDetails = false
+    /// The reader's own folding, once they used it.
+    @State private var folding: Bool?
+
+    private var showsDetails: Binding<Bool> {
+        // read here, in the page's own drawing, so the page is drawn anew when it changes;
+        // the closures hold a Bool and the state's binding, not the view
+        let shown = folding ?? unfolded
+        let chosen = $folding
+        return Binding(get: { shown }, set: { chosen.wrappedValue = $0 })
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -148,7 +160,7 @@ struct TroublePage<Actions: View>: View {
             description
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            DisclosureGroup("Technical Details", isExpanded: $showsDetails) {
+            DisclosureGroup("Technical Details", isExpanded: showsDetails) {
                 ScrollView {
                     Text(verbatim: details)
                         .font(.system(.caption, design: .monospaced))

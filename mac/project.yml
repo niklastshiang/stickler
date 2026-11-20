@@ -16,8 +16,8 @@ settings:
     SWIFT_VERSION: "6.0"
     # the project's version (pyproject.toml; ADR 0006: releases are numbered 1, 2, 3 …); both
     # move at a release, tests/test_mac_icon.py keeps them equal
-    MARKETING_VERSION: "7"
-    CURRENT_PROJECT_VERSION: "7"
+    MARKETING_VERSION: "8"
+    CURRENT_PROJECT_VERSION: "8"
     CODE_SIGN_IDENTITY: "-" # ad-hoc, no Apple Developer Program (SPEC.md "Release 8")
     CODE_SIGN_STYLE: Manual
     DEVELOPMENT_TEAM: ""
@@ -45,7 +45,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Stickler
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.music
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon # scripts/mac_icon.py draws it
-        ENABLE_HARDENED_RUNTIME: NO # it runs uv and the models from a folder of the reader's
+        ENABLE_HARDENED_RUNTIME: NO # it runs its own uv and the models' Pythons under ~/Library
   SticklerTests:
     type: bundle.unit-test
     platform: macOS

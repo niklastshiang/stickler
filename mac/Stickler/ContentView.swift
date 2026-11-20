@@ -34,6 +34,9 @@ struct ContentView: View {
                         Label("Export", systemImage: "square.and.arrow.up")
                     }
                     .help(Text("Export"))
+                    // said again for VoiceOver: built with the macOS 26 SDK and run on
+                    // macOS 27, the menu button's name was its arrow's, "chevron.pulldown"
+                    .accessibilityLabel(Text("Export"))
                     .disabled(Exports.result(model) == nil)
                 }
             }
@@ -60,8 +63,8 @@ struct ContentView: View {
 
     @ViewBuilder private var page: some View {
         switch model.phase {
-        case .needsFolder(let problem):
-            FolderView(problem: problem) { Panels.chooseFolder(model) }
+        case .launching:
+            Color.clear  // the core starts with the app; its first state follows at once
         case .stopped(let end):
             StoppedPage(model: model, end: end)
         case .running:
@@ -92,12 +95,6 @@ enum Panels {
     static func openSong(_ model: AppModel) {
         if let song = Ask.reader.song() {
             model.open(song.path)
-        }
-    }
-
-    static func chooseFolder(_ model: AppModel) {
-        if let folder = Ask.reader.folder() {
-            model.choose(folder: folder)
         }
     }
 

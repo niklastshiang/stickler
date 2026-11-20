@@ -1,45 +1,30 @@
-# The Mac app before its package
+# Developing the Mac app
 
-Until release 8 ships a `.dmg` (module `mac-package`), the Mac app is built by GitHub on every
-push and runs Stickler's core from a copy of this repository on your Mac. This guide sets that
-up once and says what to check at a checkpoint (SPEC.md, module `mac-shell`).
+The Mac app brings Stickler's core along (SPEC.md, module `mac-package`):
+`Stickler.app/Contents/Resources/core` holds a Python with the core, `uv`, ffmpeg, ffprobe and
+the models' sources, put there by `scripts/mac_bundle.sh`. The app starts that core and
+nothing else; it asks for no folder and looks for no `uv` on the Mac.
+
+What Xcode or `xcodebuild` builds has no core in it yet. Opened from the Finder, such an app
+shows *Stickler Stopped Unexpectedly* and lists the missing parts under Technical Details
+(that is why the workflow **mac** keeps no app to download). There are two ways to run the
+app:
+
+- **the image**, the app as a reader gets it (below), to check a build on a Mac; the
+  reader's own guide is [Installing Stickler on a Mac](install-macos.md);
+- **a development build** over a copy of this repository, for work on the app with Xcode.
 
 You need a Mac with Apple Silicon and macOS 26, and about 4 GB free for the models.
 
-## Once: the tools and the repository
+## The image: the app with its core
 
-1. Open **Terminal** (Applications › Utilities).
-2. Install Homebrew if it is not there yet (the command on [brew.sh](https://brew.sh)), then:
-
-   ```console
-   brew install git ffmpeg gettext
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
-
-   `uv` lands in `~/.local/bin`, where the app looks for it (also `/opt/homebrew/bin`).
-   `gettext` builds the German and Spanish texts of Stickler's core (step 3).
-3. Get the repository and its Python environment:
-
-   ```console
-   git clone https://github.com/niklastshiang/stickler.git ~/stickler
-   cd ~/stickler
-   uv sync
-   scripts/mo.sh
-   ```
-
-   `scripts/mo.sh` builds the core's translations; without them the app's own texts follow
-   the Mac's language while everything the core says (the steps, the models' names and
-   sizes, errors) stays English. The models are not downloaded here: the app's first start
-   does that, as the packaged app will.
-
-To update later: `cd ~/stickler && git pull && uv sync && scripts/mo.sh`.
-
-## Each time: the app from GitHub
-
-1. Open the repository's **Actions** tab, the newest green run of the workflow **mac**, and
-   download the artifact **Stickler.zip** (it holds `Stickler.app`). The artifact **screenshots**
-   holds every screen in light and dark and a sample PDF.
-2. Unzip it and move `Stickler.app` wherever you like (Applications is fine).
+1. A released image is on the repository's **Releases** page, next to the Flatpak and the
+   AppImage. To check a build that is not released, open the **Actions** tab, choose the
+   workflow **release**, **Run workflow**, choose the branch (for example `claude/mac-shell`)
+   and wait for the run (about ten minutes; the Linux packages are built too). Its artifact
+   **mac** is a zip with `Stickler-<version>.dmg`. The workflow **mac** runs on every push;
+   its artifact **screenshots** holds every screen in light and dark and a sample PDF.
+2. Open the image and drag Stickler to Applications.
 3. Open it. macOS blocks the first start of an app that is not from the App Store or a known
    developer: open **System Settings › Privacy & Security**, scroll to the note about
    Stickler and click **Open Anyway**, then **Open**. This is needed once per downloaded app.
@@ -51,13 +36,56 @@ To update later: `cd ~/stickler && git pull && uv sync && scripts/mo.sh`.
    xattr -dr com.apple.quarantine /Applications/Stickler.app
    ```
 
-4. On the first start the app asks **Where Is Stickler?**: choose `~/stickler` (in the open
-   panel, press ⇧⌘G and type `~/stickler`). It remembers the folder; File › Choose Stickler
-   Folder… changes it.
+The models, settings and recent songs go to `~/Library/Application Support/Stickler`, the
+scores to `~/Library/Caches/Stickler`. Nothing is written into the app. **Help › Licences**
+opens the licences of what the app ships.
 
-The app runs the core as an installed app would: the models, settings and recent songs go to
-`~/Library/Application Support/Stickler`, the scores to `~/Library/Caches/Stickler`. The
-repository only provides the code.
+## A development build: the core from a checkout
+
+A build for debugging (Xcode's Debug configuration) reads the environment variable
+`STICKLER_CHECKOUT` and, when it names a copy of this repository, runs `uv run
+stickler-bridge` there instead of the core in its bundle. A released build ignores the
+variable. The app looks for no tools itself: `uv`, ffmpeg and ffprobe come from the `PATH`
+the app was started with.
+
+Once, the tools and the repository (Xcode 26 and [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+besides):
+
+```console
+brew install git ffmpeg gettext xcodegen
+curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone https://github.com/niklastshiang/stickler.git ~/stickler
+cd ~/stickler
+uv sync
+scripts/mo.sh
+```
+
+`scripts/mo.sh` builds the core's German and Spanish texts into the checkout's environment;
+without them everything the core says stays English. Run `uv sync` and `scripts/mo.sh` again
+after every `git pull`.
+
+Build and start it from Terminal, so that it gets Terminal's `PATH`:
+
+```console
+cd ~/stickler
+xcodegen generate --spec mac/project.yml
+xcodebuild build -project mac/Stickler.xcodeproj -scheme Stickler -configuration Debug \
+  -derivedDataPath mac/build
+STICKLER_CHECKOUT="$PWD" mac/build/Build/Products/Debug/Stickler.app/Contents/MacOS/Stickler
+```
+
+Started from Xcode instead, give the scheme both variables (Product › Scheme › Edit Scheme… ›
+Run › Arguments › Environment Variables): `STICKLER_CHECKOUT` and a `PATH` that holds `uv` and
+ffmpeg, for example `/Users/you/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`.
+The project is generated, so they are set again after `xcodegen generate`.
+
+A checkout that is not there, or a `PATH` without `uv`, shows *Stickler Stopped
+Unexpectedly* with the reason under Technical Details. The development build keeps its files
+where the packaged app does (`~/Library/Application Support/Stickler`), so the two share
+models and settings; do not run both at once.
+
+Without Xcode: `swift test` in `mac/SticklerCore` runs the tests of everything below the
+views, on Linux too; the app itself is compiled and tested only by the workflow **mac**.
 
 ## What to check (Checkpoint U)
 
@@ -73,8 +101,10 @@ repository only provides the code.
    *Stickler Stopped Unexpectedly*; **Start Again** brings it back:
 
    ```console
-   pkill -f stickler-bridge
+   pkill -f stickler_app.bridge
    ```
+
+   (`pkill -f stickler-bridge` for a development build.)
 
 5. **Languages:** System Settings › General › Language & Region, set Stickler to German or
    Spanish (or the whole Mac), open the app again.
@@ -84,15 +114,15 @@ repository only provides the code.
 
 ## What to check for the sheet music (Checkpoint X)
 
-Module `mac-sheet` (SPEC.md, its success criteria 1–3). Update first (`git pull`, `uv sync`,
-`scripts/mo.sh`) and take the newest **Stickler.zip**.
+Module `mac-sheet` (SPEC.md, its success criteria 1–3). Take the newest image.
 
 1. **The sheet:** open Eye of the Tiger. Its sheet music is in the window, one page under the
    other on the grey desk; the tempo mark (♩ = 109) is drawn, not a box. Make the window about
    800 points wide, then about 1600: shortly after you let go, the notes are laid out anew
    over the whole width, and it scrolls up and down only.
 2. **Note size:** View › Zoom In (⌘+), Zoom Out (⌘−), Actual Size (⌘0), and a pinch with two
-   fingers on the trackpad over the sheet (the notes change once, when the fingers lift). The
+   fingers on the trackpad over the sheet (the notes grow and shrink under the fingers; when
+   they lift, the lines are laid out anew at that size, without a flash of an empty page). The
    three items are grey while no song is shown. Open another song, then quit and open the
    app again: the size is still the one you chose.
 3. **Staying in place:** scroll to the middle of a long song, then zoom or resize: the same
@@ -102,3 +132,35 @@ Module `mac-sheet` (SPEC.md, its success criteria 1–3). Update first (`git pul
 5. **VoiceOver** (⌘F5): on the sheet it reads one picture, "Sheet music of Eye of the Tiger,
    3 pages" (with the song's own page count), in the Mac's language; Tab does not stop in
    the sheet.
+
+## What to check for the package (Checkpoint Z)
+
+Module `mac-package` (SPEC.md, its success criteria 1–5), with `Stickler-8.dmg` from the draft
+of release 8, downloaded with a browser so that macOS treats it as a reader's download.
+
+1. **A Mac without the tools:** on a fresh user account, or with Homebrew's ffmpeg and `uv`
+   moved away for the check, so that only the app's own are there:
+
+   ```console
+   which uv ffmpeg ffprobe
+   ```
+
+   prints nothing in a new Terminal window.
+2. **Install and first start:** follow [the reader's guide](install-macos.md) and nothing
+   else: drag, open once, **Open Anyway**, confirm. Stickler asks for no folder. Then the
+   consent, the download, and a song to its sheet music; save the PDF, the MusicXML and the
+   drum track. No Terminal is needed anywhere.
+3. **Languages:** with the Mac (or Stickler alone) set to German, then Spanish, the app's
+   texts and the core's (the steps, the models' names and sizes, an error) are in that
+   language.
+4. **Help › Licences** opens the licences of what the app ships.
+5. **Removing:** **Remove Downloaded Models…** with its box ticked, quit, drag Stickler to the
+   Bin. Then nothing of Stickler is left:
+
+   ```console
+   find ~/Library -iname '*stickler*' 2>/dev/null
+   ```
+
+6. **The release and the website:** the draft release holds the image beside the Flatpak and
+   the AppImage; the website's Mac card shows the image's size (`install-mac.html` has no
+   pictures of its own: it links Apple's guide).

@@ -2,13 +2,16 @@ import AppKit
 import SticklerCore
 import SwiftUI
 
-/// The menu bar (design screen M8): File with Open, Open Recent, Export, Close Song and the
-/// Stickler folder; View with the note size; Help.
+/// The menu bar (design screen M8): File with Open, Open Recent, Export and Close Song; View
+/// with the note size; Help with the guide and the licences of what the app ships.
 /// The app menu, Edit, the rest of View (Full Screen) and Window are the system's.
 struct SticklerCommands: Commands {
     let model: AppModel
 
     static let help = URL(string: "https://github.com/niklastshiang/stickler#readme")
+    /// The licences inside the app (SPEC.md, module `mac-package`, scope 2); a development
+    /// build has no core of its own and so none to show.
+    static let licences = CoreClient.licences()
 
     var body: some Commands {
         CommandGroup(after: .appInfo) {
@@ -36,8 +39,6 @@ struct SticklerCommands: Commands {
                 ExportMenu(model: model)
             }
             .disabled(Exports.result(model) == nil)
-            Divider()
-            Button("Choose Stickler Folder…") { Panels.chooseFolder(model) }
         }
         CommandGroup(replacing: .saveItem) {
             CloseItem(model: model)
@@ -52,6 +53,12 @@ struct SticklerCommands: Commands {
                     NSWorkspace.shared.open(help)
                 }
             }
+            Button("Licences") {
+                if let licences = Self.licences {
+                    NSWorkspace.shared.open(licences)
+                }
+            }
+            .disabled(Self.licences == nil)
         }
     }
 }

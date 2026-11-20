@@ -193,9 +193,44 @@ struct SetupFailedSheet: View {
 /// the checkbox for everything else.
 @MainActor
 enum Removal {
+    /// The reader chose to remove everything: what macOS keeps for the app goes too, now and
+    /// once more when the app quits (it writes the window's place again until then).
+    static var everything = false
+
     static func ask(_ model: AppModel) async {
         guard let sizes = await model.removalSizes(), let everything = Ask.reader.removal(sizes)
         else { return }
         model.removeModels(everything: everything)
+        if everything {
+            Self.everything = true
+            Leftovers.remove()
+        }
+    }
+}
+
+/// What macOS itself keeps for the app outside Stickler's folders, by the app's identifier:
+/// its preferences (the window's place), its caches and its saved windows. "Remove Downloaded
+/// Models…" with everything removes them too, so that nothing of Stickler is left once the
+/// app is in the Bin (SPEC.md, module `mac-package`, success criterion 3).
+enum Leftovers {
+    static func places(identifier: String, library: URL) -> [URL] {
+        [
+            "Caches/\(identifier)", "WebKit/\(identifier)", "HTTPStorages/\(identifier)",
+            "Saved Application State/\(identifier).savedState",
+            "Preferences/\(identifier).plist"
+        ].map { library.appendingPathComponent($0) }
+    }
+
+    /// Removes them for `identifier` below `library`; what is not there is left out.
+    static func remove(
+        identifier: String? = Bundle.main.bundleIdentifier,
+        library: URL? = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first,
+        defaults: UserDefaults = .standard
+    ) {
+        guard let identifier, let library else { return }
+        defaults.removePersistentDomain(forName: identifier)
+        for place in places(identifier: identifier, library: library) {
+            try? FileManager.default.removeItem(at: place)
+        }
     }
 }
