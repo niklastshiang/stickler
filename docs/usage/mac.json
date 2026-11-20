@@ -1,0 +1,36 @@
+{
+  "device": "mac",
+  "days": {
+    "2026-11-19": {
+      "active_minutes": 244,
+      "models": {
+        "claude-fable-5-2": {
+          "responses": 610,
+          "input": 1406,
+          "output": 634345,
+          "cache_read": 152894308,
+          "cache_write": 1910182
+        },
+        "claude-opus-5-5": {
+          "responses": 95,
+          "input": 214,
+          "output": 50469,
+          "cache_read": 15886970,
+          "cache_write": 553211
+        }
+      }
+    },
+    "2026-11-20": {
+      "active_minutes": 39,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 101,
+          "input": 232,
+          "output": 58367,
+          "cache_read": 45468686,
+          "cache_write": 895963
+        }
+      }
+    }
+  }
+}
