@@ -293,9 +293,10 @@ def test_other_formats_reach_the_adapter_as_flac_but_keep_their_cache_key(tmp_pa
 
 
 def test_cache_keys_do_not_depend_on_the_harness_python(tmp_path):
-    """The harness runs on Python 3.12 to 3.14 (CLI on 3.12, the GTK app on the system's 3.14);
-    the same adapter code must give the same key, or every result is computed again. Python
-    3.13 changed what ast.dump prints; the expected value was computed on 3.12. Since 2026-11-16
+    """The harness runs on Python 3.12 to 3.15 (CLI on 3.12, the GTK app on the system's 3.14 or
+    3.15); the same adapter code must give the same key, or every result is computed again.
+    Python 3.13 changed what ast.dump prints, 3.15 added `is_lazy` to imports; the expected value
+    was computed on 3.12. Since 2026-11-16
     the digest also covers adapters/_common, so an edit there changes this value too.
 
     The digest also covers uv.lock, which other tests may create in the fixture (it is not in

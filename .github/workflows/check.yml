@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.12", "3.14"] # the ends of the harness's range (pyproject.toml)
+        python: ["3.12", "3.15"] # the ends of the harness's range (pyproject.toml)
     env:
       UV_PYTHON: ${{ matrix.python }}
     steps:

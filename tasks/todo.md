@@ -1048,7 +1048,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ## Phase 25: Release 9, module `linux-packages` (approved 2026-11-20, SPEC.md "Module `linux-packages`")
 
-- [ ] **Task 138: Python 3.15 for the app** (S)
+- [x] **Task 138: Python 3.15 for the app** (S): done 2026-11-20. The relock only added cp315 wheels (no version changed). On 3.15 two cache-key tests failed: 3.15's lazy imports give every import an `is_lazy` field in `ast.dump`; `runner._canonical` drops it for ordinary imports, so every adapter's digest is identical on 3.12 and 3.15 and unchanged by the fix (`stickler cache-digests` on both). The full suite passes on 3.15 (1085).
   - Acceptance: `requires-python = ">=3.12,<3.16"`, `uv.lock` relocked (no adapter cache key changes: adapters have their own locks); CI's matrix tests the ends 3.12 and 3.15; the full test suite passes on 3.15 locally.
   - Verify: `UV_PYTHON=3.15 uv run pytest -q`; `scripts/check.sh task`
   - Dependencies: none · Files: `pyproject.toml`, `uv.lock`, `.github/workflows/check.yml`

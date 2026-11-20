@@ -118,6 +118,10 @@ def _canonical(path: Path) -> bytes:
                 and isinstance(body[0].value.value, str)
             ):
                 node.body = body[1:] or [ast.Pass()]
+            # Python 3.15 added lazy imports: every import gets an `is_lazy` field. An ordinary
+            # import drops it, so 3.15 dumps as 3.12 does; a lazy one keeps it, as it differs.
+            if isinstance(node, ast.Import | ast.ImportFrom) and not getattr(node, "is_lazy", 1):
+                del node.is_lazy
         return ast.dump(tree, **_DUMP_AS_312).encode()
     if path.suffix == ".toml" or path.name == "uv.lock":
         return json.dumps(tomllib.loads(text), sort_keys=True).encode()
