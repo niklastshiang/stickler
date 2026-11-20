@@ -2094,8 +2094,8 @@ stays as it is); the macOS app icon is part of this module.
   Window), Edit (the system's), View (Zoom In ⌘+, Zoom Out ⌘−, Actual Size ⌘0, Full Screen),
   Window, Help.
 - **App icon:** the GTK icon's layers on the macOS shape, background `#e8894a` (owner, 2026-11-20:
-  the website's orange, a little deeper; before `#2f5d8c`; the sticks dark wood in both icons so
-  they stand out on it), a dark variant on
+  the website's orange, a little deeper; before `#2f5d8c`; the sticks keep their colours), a dark
+  variant on
   `#1c1c1e`.
 - **New texts for `po/`** (added by `mac-shell`): "Show in Finder", "Takes about 15 seconds",
   "Open Recent", "Clear Menu" (the last two may come from the system).

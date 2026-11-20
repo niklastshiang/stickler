@@ -19,20 +19,20 @@
     <ellipse cx="54" cy="40" rx="3.8" ry="3"/><ellipse cx="86" cy="40" rx="3.8" ry="3"/></g>
   </g>
   <g id="sticks">
-    <path d="M59.1 124.7 L109.4 70.9 L106.7 68.2 L52.9 118.5Z" fill="#4a2c17"/>
-    <circle cx="56.0" cy="121.6" r="4.4" fill="#4a2c17"/>
-    <ellipse cx="113.7" cy="63.9" rx="5" ry="3.3" transform="rotate(-45.0 113.7 63.9)" fill="#4a2c17"/>
-    <path d="M59.1 123.1 L109.4 69.3 L106.7 66.6 L52.9 116.9Z" fill="#7a4a28"/>
-    <circle cx="56.0" cy="120.0" r="4.4" fill="#7a4a28"/>
-    <ellipse cx="113.7" cy="62.3" rx="5" ry="3.3" transform="rotate(-45.0 113.7 62.3)" fill="#a8723f"/>
-    <path d="M66.5 115.6 L60.4 109.5" stroke="#4a2c17" stroke-width="1.6" opacity="0.6"/>
-    <path d="M121.1 116.4 L72.3 72.9 L69.6 75.6 L114.9 122.8Z" fill="#4a2c17"/>
-    <circle cx="118.0" cy="119.6" r="4.4" fill="#4a2c17"/>
-    <ellipse cx="65.9" cy="69.4" rx="5" ry="3.3" transform="rotate(-136.0 65.9 69.4)" fill="#4a2c17"/>
-    <path d="M121.1 114.8 L72.3 71.3 L69.6 74.0 L114.9 121.2Z" fill="#7a4a28"/>
-    <circle cx="118.0" cy="118.0" r="4.4" fill="#7a4a28"/>
-    <ellipse cx="65.9" cy="67.8" rx="5" ry="3.3" transform="rotate(-136.0 65.9 67.8)" fill="#a8723f"/>
-    <path d="M114.3 108.4 L108.3 114.6" stroke="#4a2c17" stroke-width="1.6" opacity="0.6"/>
+    <path d="M59.1 124.7 L109.4 70.9 L106.7 68.2 L52.9 118.5Z" fill="#986a44"/>
+    <circle cx="56.0" cy="121.6" r="4.4" fill="#986a44"/>
+    <ellipse cx="113.7" cy="63.9" rx="5" ry="3.3" transform="rotate(-45.0 113.7 63.9)" fill="#986a44"/>
+    <path d="M59.1 123.1 L109.4 69.3 L106.7 66.6 L52.9 116.9Z" fill="#cdab8f"/>
+    <circle cx="56.0" cy="120.0" r="4.4" fill="#cdab8f"/>
+    <ellipse cx="113.7" cy="62.3" rx="5" ry="3.3" transform="rotate(-45.0 113.7 62.3)" fill="#deb98b"/>
+    <path d="M66.5 115.6 L60.4 109.5" stroke="#986a44" stroke-width="1.6" opacity="0.6"/>
+    <path d="M121.1 116.4 L72.3 72.9 L69.6 75.6 L114.9 122.8Z" fill="#986a44"/>
+    <circle cx="118.0" cy="119.6" r="4.4" fill="#986a44"/>
+    <ellipse cx="65.9" cy="69.4" rx="5" ry="3.3" transform="rotate(-136.0 65.9 69.4)" fill="#986a44"/>
+    <path d="M121.1 114.8 L72.3 71.3 L69.6 74.0 L114.9 121.2Z" fill="#cdab8f"/>
+    <circle cx="118.0" cy="118.0" r="4.4" fill="#cdab8f"/>
+    <ellipse cx="65.9" cy="67.8" rx="5" ry="3.3" transform="rotate(-136.0 65.9 67.8)" fill="#deb98b"/>
+    <path d="M114.3 108.4 L108.3 114.6" stroke="#986a44" stroke-width="1.6" opacity="0.6"/>
   </g>
   </svg>
 </svg>
