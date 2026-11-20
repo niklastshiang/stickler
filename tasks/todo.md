@@ -1039,6 +1039,13 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint Z
 - [x] All success criteria of SPEC.md "Module `mac-package`" met (owner, 2026-11-20: "Checkpoint Z ist erfüllt"; checked on the owner's Mac, macOS 27.2.1, with `Stickler-7.dmg` of the manual release run 44610956957, put into Downloads with the quarantine mark a browser sets); then release 8
 
+### Release 8
+- [x] Prepared and committed as "Release 8" (2026-11-20; ADR 0006): no open Dependabot alerts; version 8 in `pyproject.toml`, `src/stickler/__init__.py`, `mac/project.yml` and `uv.lock`; the MetaInfo's `<release>` and `CITATION.cff` dated 2026-11-20 (change both if the tag comes on another day); README, `docs/requirements.md` and `docs/bridge.md` name the Mac app; SPEC's statuses of release 7, release 8 and the five Mac modules are done.
+- [ ] **Two figures that only the owner's Linux computer has** (owner, 2026-11-20: committed without them, kept as a todo):
+  - The README's AI cost table and the badges `origin-ai-cost` and `origin-tokens`: `uv run python scripts/ai_usage.py` there (the sessions of 17–19 November) together with this Mac's logs (from 19 November 05:42, about 100 USD: Fable 5.2 86.53, Opus 5.5 13.60 on 2026-11-20). `scripts/badges.py` on one machine alone counts only its own logs: on the Mac it gave about 100 USD instead of 245, so those two badges were set back.
+  - The README's `app_widget_tests` (49 since release 7): `scripts/gtk.sh test` in the owner's WSL; `tests/gtk/test_widgets.py` has 46 test functions now, 44 at `v7`.
+- [ ] Merge `claude/mac-shell` into `main`, then the tag `v8` and `git push --tags` (only with the owner's yes); the workflow makes the draft release with the Flatpak, the AppImage and `Stickler-8.dmg` (task 136's last step); the owner checks that all three are there and publishes it. The website goes online with a published release ≥ 8 (task 124: the domain first).
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [ ] **A website for Stickler** (owner, 2026-11-18): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.

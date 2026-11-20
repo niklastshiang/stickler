@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 from fakes import FakeApi, FakeSetup, groove_score, wait
 
+import stickler
 from stickler import api
 from stickler_app import bridge, i18n, recent, session, steps
 
@@ -108,7 +109,12 @@ def running():
 def test_the_bridge_says_hello_then_sends_the_state_and_the_recent_songs(running):
     assert wait(lambda: len(running.stdout.lines()) >= 3)
     hello, state, songs = running.stdout.lines()[:3]
-    assert hello == {"event": "hello", "protocol": 1, "version": "7", "language": "en"}
+    assert hello == {
+        "event": "hello",
+        "protocol": 1,
+        "version": stickler.__version__,  # the release's number, not one frozen here
+        "language": "en",
+    }
     assert state["event"] == "state" and state["seq"] == 1
     assert state["state"] == {
         "kind": "empty",

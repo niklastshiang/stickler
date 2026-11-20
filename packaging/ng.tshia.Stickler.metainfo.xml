@@ -82,6 +82,16 @@
   </keywords>
 
   <releases>
+    <release version="8" date="2026-11-20">
+      <description>
+        <p>Stickler now also comes for the Mac, with Apple silicon and macOS 26.</p>
+        <ul>
+          <li>Close Song in the main menu (Ctrl+W) goes back to the empty window</li>
+          <li>The tempo mark no longer runs into a first bar of rest</li>
+          <li>Remove Downloaded Models says why it waits while something runs</li>
+        </ul>
+      </description>
+    </release>
     <release version="7" date="2026-11-17">
       <description>
         <p>Three newer models measured; the app's models stay, as none was better on real songs.</p>

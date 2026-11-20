@@ -57,7 +57,8 @@ data and, above all, on real music. The results are below, in [`> RESULTS`](#-re
 
 The desktop app writes the drums of a song as sheet music for drummers who never open a
 terminal: drop a song in, play along with the detected hits, export a PDF. It comes as a Flatpak
-and an AppImage with every release, see [`> INSTALL THE APP`](#-install-the-app).
+and an AppImage for Linux and, from release 8, as a native app for the Mac, see
+[`> INSTALL THE APP`](#-install-the-app).
 
 Stickler only uses open-source models from actively maintained projects.
 
@@ -88,7 +89,7 @@ Stickler only uses open-source models from actively maintained projects.
 ## `> INSTALL THE APP`
 
 Every [release](https://github.com/niklastshiang/stickler/releases) has the app for Linux on
-x86_64, in two forms, and from release 8 for a Mac with Apple silicon. On first start it asks to
+x86_64, in two forms, and for a Mac with Apple silicon. On first start it asks to
 download its two models once; after that it runs offline. Stickler ships no model itself, and each comes with its own licence, which the app names
 before the download; some are for non-commercial use only (see [`> LICENSE`](#-license)).
 
@@ -106,17 +107,17 @@ More on disk, memory and time: [requirements](docs/requirements.md).
 Software, or install it in a terminal; the GNOME runtime comes from Flathub:
 
 ```bash
-flatpak install --user Stickler-7.flatpak
+flatpak install --user Stickler-8.flatpak
 ```
 
 **AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
 and start it.
 
 ```bash
-chmod +x Stickler-7-x86_64.AppImage && ./Stickler-7-x86_64.AppImage
+chmod +x Stickler-8-x86_64.AppImage && ./Stickler-8-x86_64.AppImage
 ```
 
-**Mac** (from release 8): download `Stickler-<version>.dmg`, open it and drag Stickler to
+**Mac**: download `Stickler-<version>.dmg`, open it and drag Stickler to
 Applications. macOS blocks the first start of an app that is not from the App Store: allow it
 once under **System Settings › Privacy & Security › Open Anyway**. The steps one by one, and
 what to do when that button is missing: [Installing Stickler on a Mac](docs/install-macos.md).
@@ -263,7 +264,7 @@ Source, version and own measurements are in the README of the respective adapter
 - [ ] Ultrareview of the finished application
 
 <details>
-<summary><b>Done</b>: releases 1–7</summary>
+<summary><b>Done</b>: releases 1–8</summary>
 
 **Done**
 
@@ -314,6 +315,12 @@ Source, version and own measurements are in the README of the respective adapter
 - [x] New candidate models: DrumSep with onset detection, MuScriptor large, Separate-and-Detect (none beats Fast or Quality on real songs)
 - [x] The app starts the models without a network connection
 - [x] **Release 7:** new candidates
+
+**Release 8**
+
+- [x] A native macOS app (SwiftUI) over the same core: sheet music with zoom and pinch, exports, the setup assistant, English, German and Spanish
+- [x] A `.dmg` for Apple silicon that brings its own Python, `uv` and ffmpeg
+- [x] **Release 8:** the Mac app
 
 </details>
 
@@ -474,14 +481,15 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 746,
+  "tests": 1083,
   "app_widget_tests": 49,
   "smoke_tests_with_models": 12,
+  "mac_tests": 146,
   "coverage_percent": 98,
   "coverage_minimum": 95,
   "adrs": 8,
-  "version": 7,
-  "status": "release 7: new candidates"
+  "version": 8,
+  "status": "release 8: the Mac app"
 }
 ```
 
@@ -489,6 +497,7 @@ scripts/check.sh task
 |---|---|
 | `app_widget_tests` | The GTK app's windows, on an invisible screen: `scripts/gtk.sh test` |
 | `smoke_tests_with_models` | Runs real models, therefore not part of the default run: `uv run pytest -m adapters` |
+| `mac_tests` | The Mac app's: `SticklerCore` (89, `swift test`, on Linux and macOS) and the app with its screenshots (57), run by the workflow `mac` |
 | `coverage_minimum` | Below this, the pre-commit hook blocks. Limit and rules in [`CONSTRAINTS.md`](CONSTRAINTS.md) |
 | `own_songs` | Described in `references/own/`. Only songs that pass the quality criteria enter the scoring |
 
@@ -508,7 +517,7 @@ stickler/
 │   ├── transcribers/    # adtof, adt_str, muscriptor_s/_m/_l, drumsep_onset, sad
 │   └── beats/           # beat_this
 ├── config/              # benchmark, own and enst configs
-├── mac/                 # the macOS app (release 8, in progress): SticklerCore, the SwiftUI app
+├── mac/                 # the macOS app (release 8): SticklerCore, the SwiftUI app
 ├── po/                  # translations (German, Spanish), po/LINGUAS lists them
 ├── packaging/           # Flatpak manifest, AppStream MetaInfo, desktop file, icons, font
 ├── references/own/      # own songs: title, recording, manual exclusions

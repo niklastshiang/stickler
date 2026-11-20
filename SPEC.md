@@ -1635,7 +1635,7 @@ po/*.po                                # the names
 
 ## Release 7: New candidates
 
-> Status: **approved** by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
+> Status: **done** (Checkpoint P, release 7, 2026-11-17). Approved by the owner on 2026-11-16. Candidates chosen by the owner on 2026-11-16
 > after a web check of each (facts and sources below). Plan: `tasks/plan.md` ("Release 7"),
 > tasks 12 and 82–86 in `tasks/todo.md`. **Result (2026-11-17):** measured on all three datasets;
 > no candidate beats or comes within 0.01 of a mode on the own songs, so Fast and Quality stay
@@ -1748,7 +1748,7 @@ docs/report.md, README.md              # results, candidates table
 
 ## Release 8: macOS app
 
-> Status: **approved** by the owner on 2026-11-17 (capability map with `mac-design`, minimum
+> Status: **done** (release 8, 2026-11-20: every module's checkpoint met). Approved by the owner on 2026-11-17 (capability map with `mac-design`, minimum
 > scope, open questions 1 and 2 decided). Module specs are written and approved one at a time, in
 > build order, as for the GTK application. Starts from the macOS research in `tasks/todo.md`
 > (2026-11-16).
@@ -1958,7 +1958,7 @@ here).
 
 ### Module `mac-core`
 
-> Status: **approved** by the owner on 2026-11-17 (the peak RAM fix counts as behaviour-neutral on
+> Status: **done** (Checkpoint S, 2026-11-18). Approved by the owner on 2026-11-17 (the peak RAM fix counts as behaviour-neutral on
 > Linux, with `digests.yaml` pairs; no Hugging Face token in CI). Plan: `tasks/plan.md`
 > ("`mac-core`"), tasks 96–99.
 
@@ -2100,7 +2100,7 @@ stays as it is); the macOS app icon is part of this module.
 
 ### Module `core-bridge`
 
-> Status: **approved** by the owner on 2026-11-18 (GTK moves onto the controller in this
+> Status: **done** (Checkpoint T, 2026-11-19). Approved by the owner on 2026-11-18 (GTK moves onto the controller in this
 > module). Decided before the draft (owner, 2026-11-18): Fast only; one long-running process per
 > app start; the state lives in Python and is sent whole on every change. Plan:
 > `tasks/plan.md` ("`core-bridge`"), tasks 100–106.
@@ -2236,7 +2236,7 @@ as a toast as a `Notice`, and the bridge sends it as a `notice` event.
 
 ### Module `mac-shell`
 
-> Status: **approved** by the owner on 2026-11-18. Plan: `tasks/plan.md` ("`mac-shell`"),
+> Status: **done** (Checkpoint U, 2026-11-19). Approved by the owner on 2026-11-18. Plan: `tasks/plan.md` ("`mac-shell`"),
 > tasks 107–116. Decided before the draft (owner,
 > 2026-11-18): the owner tries each stage as an app built by CI that starts the core from a
 > checkout on the Mac; the Swift code that talks to the core is a package of its own that also
@@ -2386,7 +2386,7 @@ GPU; Intel Macs; the Mac App Store.
 
 ### Module `mac-sheet`
 
-> Status: **approved** by the owner on 2026-11-18. The sheet's model (scope 1) starts at once
+> Status: **done** (Checkpoint X, 2026-11-19). Approved by the owner on 2026-11-18. The sheet's model (scope 1) starts at once
 > (owner, 2026-11-18: it is tested on Linux and touches no view); the rest starts when
 > `mac-shell`'s checkpoint U is met (the owner's check on the Mac, task 116; met on 2026-11-19).
 > Design: screen M6 of `mac-design`
@@ -2473,7 +2473,7 @@ fingers (scope 3); before, the note size changed once, when the fingers lifted.
 
 ### Module `mac-package`
 
-> Status: **approved** by the owner on 2026-11-19 (the five questions decided, at the end;
+> Status: **done** (Checkpoint Z, 2026-11-20). Approved by the owner on 2026-11-19 (the five questions decided, at the end;
 > then the build started with `/build auto`, and the spike before `mac-sheet`'s checkpoint X:
 > "Spike: your recommendation"). Plan: `tasks/plan.md`, tasks 131–137. The spike (scope 1)
 > comes first, as "Release 8" asks; what follows it waits for checkpoint Y. The website's page `install-mac.html` (task 130) takes its pictures from
