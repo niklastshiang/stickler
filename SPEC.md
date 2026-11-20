@@ -2635,7 +2635,8 @@ the Mac App Store, Quality, the GPU.
 
 ## Website
 
-> Status: **approved** by the owner on 2026-11-18, after the interview (`docs/intent/website.md`)
+> Status: **done**, online with release 8 on 2026-11-20 (Checkpoint W). Approved by the owner on
+> 2026-11-18, after the interview (`docs/intent/website.md`)
 > and the mockup (private canvas "Stickler website"). Plan: `tasks/plan.md` ("Website"). Replaces
 > the older "GitHub Pages site" idea (a generator-built site from `docs/`), which is dropped.
 
