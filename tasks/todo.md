@@ -1162,6 +1162,8 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 
 - [ ] **Mac screenshots in the website's "A look around" (owner, 2026-11-20: idea for later)**: the gallery (`site/index.html` `#look`, and `/de/`) shows only the GTK app; add the Mac app's windows, light and dark, e.g. from the `mac` workflow's screenshot artifacts. Best done together with the new example song (above), so all pictures are recorded once.
 
+- [ ] **Back up settings and analysed songs (owner, 2026-11-20: idea for later)**: one way in the app to save and restore what a user would miss after a new computer or a reinstall: the settings (`settings.json`), recent songs and corrections (`recent.json`, `corrections.json`), and the analyses (sheet music and hits under the cache folder, the models' results), without the models themselves (downloaded again). To work out first: one archive file or a folder, what an analysis needs to be found again (the song's path or its content's digest, as songs move), the same on Linux and the Mac (its folders differ), and whether the Flatpak's sandbox needs a file chooser portal for it.
+
 - [ ] **Own package repositories for the `.deb` and `.rpm` (owner, 2026-11-20: idea for later)**: an apt repository (e.g. on GitHub Pages) and a Fedora COPR or an own dnf repository, so updates come with the system's. Needs a signing key in GitHub's secrets, its care, and a guide to add the repository. The first `.deb`/`.rpm` release ships the files on the release page only (owner, 2026-11-20).
 
 - [ ] **"Uninstall Stickler…" in the app (owner, 2026-11-20: idea for later)**
