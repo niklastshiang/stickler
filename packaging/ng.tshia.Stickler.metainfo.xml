@@ -37,8 +37,8 @@
   <url type="vcs-browser">https://github.com/niklastshiang/stickler</url>
 
   <branding>
-    <color type="primary" scheme_preference="light">#cdab8f</color>
-    <color type="primary" scheme_preference="dark">#865e3c</color>
+    <color type="primary" scheme_preference="light">#e8894a</color>
+    <color type="primary" scheme_preference="dark">#6b3816</color>
   </branding>
 
   <screenshots>

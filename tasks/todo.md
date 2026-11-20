@@ -1084,6 +1084,8 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: the owner
   - Dependencies: 143
 
+- Prepared for release 9 (2026-11-20): the release notes' draft in `tasks/release-9-notes.md`; the MetaInfo's branding colours are the Mac icon's orange `#e8894a` and `#6b3816` in dark (owner, from three rendered banners; before the sticks' `#cdab8f` / `#865e3c`).
+
 ### Checkpoint AA
 - [ ] All success criteria of SPEC.md "Module `linux-packages`" met (owner); then release 9
 
