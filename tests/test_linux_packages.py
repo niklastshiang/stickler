@@ -145,3 +145,10 @@ def test_every_promised_system_is_tested_and_ubuntu_makes_the_clips_first():
         "/test/clips",
     ]
     assert "/x/Stickler-9.x86_64.rpm:/test/Stickler-9.x86_64.rpm:ro,Z" in command
+
+
+def test_a_release_attaches_both_packages_after_their_container_test():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8"))
+    job = workflow["jobs"]["linux-packages"]
+    assert any(step.get("run") == "python3 scripts/linux_packages.py test" for step in job["steps"])
+    assert "linux-packages" in workflow["jobs"]["attach"]["needs"]

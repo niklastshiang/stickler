@@ -1,5 +1,6 @@
-# A .flatpak, an AppImage (SPEC.md, module `packaging`) and the Mac image (module `mac-package`)
-# for every release. A release tag (vN) attaches the three to its release (made as a draft if it
+# A .flatpak, an AppImage (SPEC.md, module `packaging`), the Mac image (module `mac-package`) and
+# a .deb and .rpm (module `linux-packages`) for every release. A release tag (vN) attaches them
+# to its release (made as a draft if it
 # does not exist yet); a manual run only builds them, as artifacts to try.
 name: release
 
@@ -68,6 +69,28 @@ jobs:
         with:
           name: appimage
           path: dist/Stickler-*
+          if-no-files-found: error
+
+  # The .deb and .rpm, each installed, started and removed again in clean Ubuntu 26.04, Fedora
+  # 44 and Fedora 45 containers before it is kept (SPEC.md, module `linux-packages`).
+  linux-packages:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gettext podman
+      - name: Build and test in the containers
+        run: python3 scripts/linux_packages.py test
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-packages
+          path: |
+            dist/Stickler-*.deb
+            dist/Stickler-*.rpm
           if-no-files-found: error
 
   # The Mac app with its core, ad-hoc signed, in a plain image (SPEC.md, module `mac-package`,
@@ -204,7 +227,7 @@ jobs:
 
   attach:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [flatpak, appimage, mac]
+    needs: [flatpak, appimage, mac, linux-packages]
     runs-on: ubuntu-26.04
     permissions:
       contents: write # upload to the release

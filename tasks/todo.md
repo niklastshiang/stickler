@@ -1068,7 +1068,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run python scripts/linux_packages.py test`
   - Dependencies: 140 · Files: `scripts/linux_packages.py`, `packaging/linux/`
 
-- [ ] **Task 142: The release workflow** (S)
+- [ ] **Task 142: The release workflow** (S): built 2026-11-20, the manual run waits for a push (owner). Job `linux-packages` on `ubuntu-26.04` (gettext and podman from apt, then `python3 scripts/linux_packages.py test`), its two files an artifact, `attach` needs it; zizmor clean.
   - Acceptance: `release.yml` builds and container-tests both files on every tag and by hand, and `attach` adds them to the draft release; actions pinned by SHA, zizmor clean.
   - Verify: a manual run green; `scripts/check.sh task`
   - Dependencies: 141 · Files: `.github/workflows/release.yml`
