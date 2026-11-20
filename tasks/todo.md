@@ -1118,6 +1118,10 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 - [ ] **The Mac app in Spanish, checked by the owner** (put off by the owner, 2026-11-19)
   - German was checked at checkpoint U; the bridge answers `es` for `es_ES:en` (seen on the Mac), the app itself was not looked at in Spanish.
 
+- [ ] **A rock or metal song as the example instead of "Fluffing a Duck" (owner, 2026-11-20: idea for later)**: an openly licensed song (e.g. CC BY, as Kevin MacLeod's) in the owner's genres for the screenshots, the website's clip and the README picture; licence and attribution checked on the web first, then the pictures recorded again (`docs/website.md`, `scripts/gtk.sh demo`).
+
+- [ ] **Own package repositories for the `.deb` and `.rpm` (owner, 2026-11-20: idea for later)**: an apt repository (e.g. on GitHub Pages) and a Fedora COPR or an own dnf repository, so updates come with the system's. Needs a signing key in GitHub's secrets, its care, and a guide to add the repository. The first `.deb`/`.rpm` release ships the files on the release page only (owner, 2026-11-20).
+
 - [ ] **"Uninstall Stickler…" in the app (owner, 2026-11-20: idea for later)**
   - Seen at TuxTalk: one entry in the preferences removes the program and everything it set up (its downloads, starting at login, the menu entry, …), may ask for the password once; models in a folder other apps share go only with a ticked box, settings and the word list stay unless a second box is ticked.
   - Stickler today: "Remove Downloaded Models…" (`stickler_app/removal.py`) deletes the models, their environments, uv's Python and downloads and the saved analyses; "everything" also the data, cache and settings folders. The program itself stays: the Flatpak needs `flatpak uninstall --delete-data`, the AppImage file and the Mac's `.app` are deleted by hand (the uninstall texts on the website and in the README).

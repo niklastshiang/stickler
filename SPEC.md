@@ -2846,6 +2846,112 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
    only, no postal address (owner, 2026-11-18), although § 18 Abs. 1 MStV asks for one; it and the privacy page follow the owner's own texts for tshia.ng, adapted
    to GitHub Pages as the host (no own server logs) and mailbox.org for mail.
 
+## Release 9: `.deb` and `.rpm`
+
+> Status: **draft** (2026-11-20), waiting for the owner's approval. Decided by the owner on
+> 2026-11-20: Ubuntu 26.04 LTS and newer, Fedora 44 and newer; the files on the release page,
+> no own repositories (those are a todo for later). Facts checked on the web 2026-11-20.
+
+### Module `linux-packages`
+
+#### Objective
+
+A drummer on Ubuntu or Fedora downloads one file from a release, opens it with the system's
+software centre (or `sudo apt install ./…` / `sudo dnf install ./…`), and Stickler is in the
+app menu, using the system's GTK, libadwaita and GStreamer like any other GNOME app. Flatpak and
+AppImage stay for every other distribution.
+
+#### Assumptions
+
+1. **Systems** (owner, 2026-11-20): Ubuntu 26.04 LTS and newer (`.deb`), Fedora 44 and newer
+   (`.rpm`), x86_64. The app needs libadwaita ≥ 1.8 (`Adw.ShortcutsDialog`; `WrapBox` and
+   `ToggleGroup` are 1.7): Ubuntu 26.04 has 1.8/1.9, Fedora 44 has 1.9 and Fedora 45 GNOME 51.
+   Not supported: Debian 13 (libadwaita 1.7.6) and Ubuntu 24.04 (1.5); the package's dependency
+   `libadwaita ≥ 1.8` stops the install there with the package manager's message.
+2. **One `.deb` and one `.rpm`**, not one per distribution version, built with nFPM (goreleaser,
+   MIT, v2.49.0 of 2026-11-12, active) from one file `packaging/nfpm.yaml`; the nFPM binary is
+   pinned by version and SHA-256, as `uv` is.
+3. **From the system** (package dependencies): Python 3, PyGObject, GTK 4, libadwaita ≥ 1.8,
+   librsvg, GStreamer with the good plugins and libav, ffmpeg, PyYAML. The exact package names
+   per family are written in the task and checked by installing into clean containers.
+4. **Python 3.14 and 3.15:** Ubuntu 26.04 and Fedora 44 have 3.14, Fedora 45 has 3.15 (its
+   default since 2026-11-03). The app's own packages that the systems do not have (numpy,
+   mido, packaging, verovio) ship in `/usr/lib/stickler/` as wheels unpacked per Python minor
+   version (numpy 2.5.4 has cp315 wheels; verovio is abi3, mido and packaging pure Python); the
+   launcher puts the folder of the running Python on the path. PyYAML has no cp315 wheel yet
+   (6.0.3), so it comes from the system (`python3-yaml` / `python3-pyyaml`). The app's
+   `requires-python` becomes `>=3.12,<3.16` and CI tests 3.15 too.
+5. **The models** stay on Python 3.14 as in the AppImage: the bundled `uv` downloads its own
+   3.14 into Stickler's folders (`~/.local/share/stickler/python`), so the system's Python
+   version never touches the models.
+6. **Where things go:** the code under Python's site path is avoided (no clash with the system's
+   packages): `/usr/lib/stickler/` holds the three packages, the wheels' folders and `uv`
+   (pinned, not on `PATH`, so a system `uv` is untouched); `/usr/share/stickler/adapters` the
+   adapters' sources (as in the AppImage); `/usr/bin/stickler-gtk` the launcher; icons, desktop
+   file, MetaInfo, `.mo` files and the Leipzig font in the usual `/usr/share` folders.
+   `paths.packaged()` learns `"system"` (set by the launcher), with the AppImage's folders.
+7. **Names:** the package is `stickler`, version `9`; the release files are
+   `Stickler-9_amd64.deb` and `Stickler-9.x86_64.rpm`. Unsigned (GPG signing comes with own
+   repositories); a local file installs without a key on both systems (to be checked).
+8. **Built and tested in CI** with every release tag, like the other packages: install into
+   clean `ubuntu:26.04`, `fedora:44` and `fedora:45` containers, start the app on an invisible
+   screen (the window opens, no exception), remove it again (no files left under `/usr`).
+9. **Uninstall:** `apt remove` / `dnf remove` removes the program; models and settings stay in
+   the home folder until "Remove Downloaded Models…" or by hand, as with the AppImage (README).
+10. **Flatpak next to it:** both use the app ID `ng.tshia.Stickler`, so with both installed the
+   menu shows two "Stickler" entries; the install texts say to use one.
+
+#### Commands
+
+```bash
+scripts/linux_packages.sh            # builds dist/Stickler-<v>_amd64.deb and .x86_64.rpm
+scripts/linux_packages.sh test       # installs, starts and removes them in the three containers
+scripts/check.sh task
+```
+
+#### Project structure (additions)
+
+```
+packaging/nfpm.yaml                  # both packages
+packaging/linux/stickler-gtk         # the launcher (Python path per minor version)
+scripts/linux_packages.sh            # wheels, nFPM, container tests
+.github/workflows/release.yml        # + the .deb and .rpm
+src/stickler_app/paths.py            # + packaged() == "system"
+```
+
+#### Testing strategy
+
+- Unit: `packaged()` and the folders for `"system"`; the launcher picks the right wheel folder.
+- Package contents: every file in place, no adapter environment or weight, no `__pycache__`.
+- CI: install, start and remove in the three containers.
+- By hand (owner): install the `.deb` on Ubuntu 26.04 and the `.rpm` on Fedora (the owner's
+  computer), through the software centre; set up the models, analyse, play and export a song.
+
+#### Boundaries
+
+- **Always:** pinned versions and checksums; the packages built in CI; dependencies from the
+  distributions, not copies of system libraries.
+- **Ask first:** another distribution or version; own repositories or signing; arm64.
+- **Never:** ship model weights; touch files outside the package's own paths; run scripts
+  that change the system beyond what the package manager does.
+
+#### Success criteria
+
+1. A release tag attaches `Stickler-<v>_amd64.deb` and `Stickler-<v>.x86_64.rpm`; a manual run
+   builds them without a release.
+2. Both install, start and uninstall cleanly in clean Ubuntu 26.04, Fedora 44 and Fedora 45
+   containers (CI).
+3. On Ubuntu 26.04 and on the owner's Fedora, a song can be set up, analysed, played and
+   exported (owner).
+4. README, website and release notes name both files with their systems.
+5. `scripts/check.sh task` is green; the app's tests also pass on Python 3.15.
+
+#### Open questions
+
+- None after approval; to check while building: whether Fedora's `ffmpeg-free` and its
+  GStreamer libav plugin decode MP3 and AAC (else the dependency or the promise changes, asked
+  first), and whether both software centres open an unsigned local file.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
