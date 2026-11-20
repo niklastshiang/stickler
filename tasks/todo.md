@@ -1053,7 +1053,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `UV_PYTHON=3.15 uv run pytest -q`; `scripts/check.sh task`
   - Dependencies: none · Files: `pyproject.toml`, `uv.lock`, `.github/workflows/check.yml`
 
-- [ ] **Task 139: The app installed by the system** (S)
+- [x] **Task 139: The app installed by the system** (S): done 2026-11-20. `paths.packaged()` gives `"system"` for `STICKLER_PACKAGED=system`, with the AppImage's folders and uv settings; the prefix is the system Python's (`/usr`). The launcher `packaging/linux/stickler-gtk` runs `python3 -I` (no user site-packages), puts `/usr/lib/stickler` and `python3.<minor>` on the path, `/usr/lib/stickler/bin` (uv) first on `PATH` (no empty entry), and names the supported versions when the running Python has no folder.
   - Acceptance: `paths.packaged()` gives `"system"` when the launcher set `STICKLER_PACKAGED=system`; folders and `packaged_env()` as for the AppImage (uv's own Python 3.14, downloads in Stickler's folders, the adapters' sources from `/usr/share/stickler/adapters`); the launcher `packaging/linux/stickler-gtk` puts `/usr/lib/stickler` and the wheels' folder of the running Python minor version on the path, says clearly when there is none, and starts the app.
   - Verify: `uv run pytest -q tests/test_paths.py tests/test_linux_launcher.py` (names as they turn out)
   - Dependencies: none · Files: `src/stickler_app/paths.py`, `src/stickler_app/__init__.py`, `packaging/linux/stickler-gtk`, tests

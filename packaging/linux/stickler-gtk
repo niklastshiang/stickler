@@ -1,0 +1,39 @@
+#!/usr/bin/python3 -I
+"""Starts Stickler installed from a `.deb` or `.rpm` (SPEC.md, module `linux-packages`).
+
+The system brings Python, PyGObject, GTK, libadwaita, GStreamer and PyYAML; /usr/lib/stickler
+holds the app's packages, the wheels it needs that the system lacks (one folder per Python minor
+version, as Fedora 44 and 45 differ) and bin/uv, which stays off the system's PATH. `-I` keeps a
+user's own site-packages and PYTHONPATH out of the app."""
+
+import os
+import sys
+from collections.abc import Mapping
+from pathlib import Path
+
+LIB = Path("/usr/lib/stickler")
+
+
+def prepare(
+    lib: Path, version: tuple[int, int], env: Mapping[str, str]
+) -> tuple[list[str], dict[str, str]]:
+    """The folders for sys.path and the environment the app starts with."""
+    wheels = lib / f"python{version[0]}.{version[1]}"
+    if not wheels.is_dir():
+        supported = sorted(p.name.removeprefix("python") for p in lib.glob("python3.*"))
+        raise SystemExit(
+            f"Stickler needs Python {' or '.join(supported)}; this system's Python is "
+            f"{version[0]}.{version[1]}. The Flatpak or the AppImage runs on any system."
+        )
+    search = [str(lib / "bin"), *filter(None, [env.get("PATH")])]
+    return [str(lib), str(wheels)], {"STICKLER_PACKAGED": "system", "PATH": os.pathsep.join(search)}
+
+
+if __name__ == "__main__":
+    path, added = prepare(LIB, sys.version_info[:2], os.environ)
+    sys.path[:0] = path
+    os.environ.update(added)
+
+    from stickler_gtk.main import main
+
+    raise SystemExit(main())

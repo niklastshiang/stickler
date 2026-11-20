@@ -163,6 +163,26 @@ def test_an_appimage_sets_where_its_files_are_and_keeps_uv_off_its_own_python():
     assert paths.packaged_env({}) == {}
 
 
+def test_a_deb_or_rpm_keeps_uv_and_its_python_in_sticklers_folders():
+    """Installed by the system's package manager (SPEC.md, module `linux-packages`): the
+    launcher says so; the adapters' sources lie under the system's prefix, and uv brings its
+    own Python 3.14 into Stickler's folders, so the system's Python never runs the models."""
+    import sys
+
+    import stickler_app
+
+    env = {"STICKLER_PACKAGED": "system", "XDG_DATA_HOME": "/d", "XDG_CACHE_HOME": "/c"}
+    assert paths.packaged(env) == "system"
+    assert stickler_app.prefix(env=env) == Path(sys.prefix)  # /usr for the system's Python
+    assert paths.packaged_env(env) == {
+        "STICKLER_ADAPTER_SOURCES": str(Path(sys.prefix) / "share/stickler/adapters"),
+        "UV_PYTHON_PREFERENCE": "only-managed",
+        "UV_PYTHON_DOWNLOADS": "automatic",
+        "UV_CACHE_DIR": "/c/stickler/uv",
+        "UV_PYTHON_INSTALL_DIR": "/d/stickler/python",
+    }
+
+
 def test_new_weight_downloads_drop_the_finished_mark_so_setup_runs_again(tmp_path):
     """An update that changes where a model's weights come from must download them again
     (code review before release 5)."""

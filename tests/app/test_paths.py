@@ -119,8 +119,22 @@ LINUX_HOME = "/home/me"
                 "corrections": "/v/data/stickler/corrections.json",
             },
         ),
+        (
+            {"STICKLER_PACKAGED": "system", "HOME": LINUX_HOME},
+            {
+                "data": "/home/me/.local/share/stickler",
+                "cache": "/home/me/.cache/stickler",
+                "adapters": "/home/me/.local/share/stickler/adapters",
+                "results": "/home/me/.cache/stickler/results",
+                "score": "/home/me/.cache/stickler/scores",
+                "hits": "/home/me/.cache/stickler/hits",
+                "settings": "/home/me/.config/stickler/settings.json",
+                "recent": "/home/me/.local/share/stickler/recent.json",
+                "corrections": "/home/me/.local/share/stickler/corrections.json",
+            },
+        ),
     ],
-    ids=["checkout", "appimage", "flatpak"],
+    ids=["checkout", "appimage", "flatpak", "deb-rpm"],
 )
 def test_linux_keeps_its_folders(env, expected):
     assert {k: str(v) for k, v in _where(env).items()} == expected

@@ -54,14 +54,15 @@ def hits_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
 
 
 def packaged(env: Mapping[str, str] = os.environ) -> str | None:
-    """ "flatpak", "appimage" or "macos" when installed as one; None when run from the
-    checkout. The Mac app's launcher sets STICKLER_PACKAGED=macos."""
+    """ "flatpak", "appimage", "macos" or "system" (a `.deb` or `.rpm`) when installed as one;
+    None when run from the checkout. The launchers of the Mac app and of the `.deb`/`.rpm` set
+    STICKLER_PACKAGED."""
     if env.get("FLATPAK_ID") == APP_ID:
         return "flatpak"
     if env.get("APPIMAGE") and env.get("SHARUN_DIR"):  # ours: another AppImage has no SHARUN_DIR
         return "appimage"
-    if env.get("STICKLER_PACKAGED") == "macos":
-        return "macos"
+    if env.get("STICKLER_PACKAGED") in ("macos", "system"):
+        return env["STICKLER_PACKAGED"]
     return None
 
 
@@ -108,13 +109,14 @@ def results_cache(env: Mapping[str, str] = os.environ) -> Path:
 
 
 def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
-    """What an AppImage sets for itself (the Flatpak's manifest sets the same), and the Mac
-    app that brings its own core (module `mac-package`): where its adapters' sources are; that
+    """What an AppImage sets for itself (the Flatpak's manifest sets the same), a `.deb` or
+    `.rpm` (module `linux-packages`), and the Mac app that brings its own core (module
+    `mac-package`): where its adapters' sources are; that
     uv uses a Python of its own, never the AppImage's, whose path changes with every mount; and
     that uv keeps its downloads and that Python in Stickler's folders. The Python settings
     always apply (otherwise uv may take the AppImage's own); other values already set stay."""
     kind = packaged(env)
-    if kind not in ("appimage", "macos"):
+    if kind not in ("appimage", "macos", "system"):
         return {}
     import stickler_app
 
