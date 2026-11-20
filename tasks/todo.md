@@ -1120,6 +1120,8 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 
 - [ ] **A rock or metal song as the example instead of "Fluffing a Duck" (owner, 2026-11-20: idea for later)**: an openly licensed song (e.g. CC BY, as Kevin MacLeod's) in the owner's genres for the screenshots, the website's clip and the README picture; licence and attribution checked on the web first, then the pictures recorded again (`docs/website.md`, `scripts/gtk.sh demo`).
 
+- [ ] **Mac screenshots in the website's "A look around" (owner, 2026-11-20: idea for later)**: the gallery (`site/index.html` `#look`, and `/de/`) shows only the GTK app; add the Mac app's windows, light and dark, e.g. from the `mac` workflow's screenshot artifacts. Best done together with the new example song (above), so all pictures are recorded once.
+
 - [ ] **Own package repositories for the `.deb` and `.rpm` (owner, 2026-11-20: idea for later)**: an apt repository (e.g. on GitHub Pages) and a Fedora COPR or an own dnf repository, so updates come with the system's. Needs a signing key in GitHub's secrets, its care, and a guide to add the repository. The first `.deb`/`.rpm` release ships the files on the release page only (owner, 2026-11-20).
 
 - [ ] **"Uninstall Stickler…" in the app (owner, 2026-11-20: idea for later)**
