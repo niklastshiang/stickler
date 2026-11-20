@@ -1118,6 +1118,12 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 - [ ] **The Mac app in Spanish, checked by the owner** (put off by the owner, 2026-11-19)
   - German was checked at checkpoint U; the bridge answers `es` for `es_ES:en` (seen on the Mac), the app itself was not looked at in Spanish.
 
+- [ ] **"Uninstall Stickler…" in the app (owner, 2026-11-20: idea for later)**
+  - Seen at TuxTalk: one entry in the preferences removes the program and everything it set up (its downloads, starting at login, the menu entry, …), may ask for the password once; models in a folder other apps share go only with a ticked box, settings and the word list stay unless a second box is ticked.
+  - Stickler today: "Remove Downloaded Models…" (`stickler_app/removal.py`) deletes the models, their environments, uv's Python and downloads and the saved analyses; "everything" also the data, cache and settings folders. The program itself stays: the Flatpak needs `flatpak uninstall --delete-data`, the AppImage file and the Mac's `.app` are deleted by hand (the uninstall texts on the website and in the README).
+  - **Only if it makes sense on every system (owner, 2026-11-20)**: Flatpak, AppImage and Mac; otherwise not at all. The Flatpak is the likely blocker: removing itself from the sandbox needs `flatpak-spawn --host`, i.e. a hole in the sandbox.
+  - To work out first: what an uninstall can remove from inside each package (the Flatpak cannot uninstall itself from the sandbox; the AppImage knows its own path through `$APPIMAGE`, and a desktop entry only if an integration tool made one; the Mac app can move itself to the Bin after quitting); which boxes make sense (models, settings, recent songs and corrections); the texts in English, German and Spanish, in both apps.
+
 - [ ] **The app icon's background in orange, like the website (owner, 2026-11-20: later)**
   - The website's orange is `--accent: #f4a26b` (`site/style.css`). Icons: `packaging/icons/ng.tshia.Stickler.svg` (also `site/images/icon.svg`, the same file) and `ng.tshia.Stickler-macos.svg`; the symbolic icon has no colour. Check the contrast of the drawing on the new background, and rebuild what is made from the icons (the Mac icon via `scripts/mac_icon.py`; the site and the README use the SVG directly).
 
