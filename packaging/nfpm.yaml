@@ -5,6 +5,7 @@ name: stickler
 arch: amd64
 platform: linux
 version: ${VERSION}
+version_schema: none # the release number as it is, 9 not 9.0.0 (ADR 0006)
 section: sound
 priority: optional
 maintainer: Niklas Tshiang Tshiananga <62063364+niklastshiang@users.noreply.github.com>

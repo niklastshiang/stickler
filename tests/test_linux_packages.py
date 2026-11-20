@@ -108,6 +108,7 @@ def test_both_formats_need_libadwaita_18_and_take_ffmpeg_from_the_system():
     assert "ffmpeg" in deb and "/usr/bin/ffmpeg" in rpm and "/usr/bin/ffprobe" in rpm
     assert "python3-yaml" in deb and "python3-pyyaml" in rpm
     assert config["name"] == "stickler" and config["arch"] == "amd64"
+    assert config["version_schema"] == "none"  # nFPM would make 9 into 9.0.0
     assert str(lp.STAGE) == "dist/linux-stage"
 
 
