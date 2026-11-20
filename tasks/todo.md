@@ -1046,6 +1046,46 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - [x] The README's `app_widget_tests`: 51 (2026-11-20, `scripts/gtk.sh test` on the owner's Fedora computer: 51 passed; 49 at `v7`).
 - [x] Released 2026-11-20 (owner: "if green, merge to main and set the tag v8", then "release it"): `claude/mac-shell` merged into `main` as 7311aaf (check, mac, site and models-macos green on it), the tag `v8` on it, the release run 44699332411 green, the draft held `Stickler-8.dmg`, `Stickler-8.flatpak`, `Stickler-8-x86_64.AppImage` and its `.zsync`; release notes in English with the website named (owner), published 08:11 UTC; the site's run 44700567199 deployed it: `https://stickler.tshia.ng/`, `/de/` and `/install-mac.html` answer 200, a missing page shows Stickler's own 404, the download cards link the three v8 files (55, 33 and 136 MB). Planned before: the workflow makes the draft release with the Flatpak, the AppImage and `Stickler-8.dmg` (task 136's last step); the owner checks that all three are there and publishes it. The website goes online with a published release ≥ 8 (task 124: the domain first).
 
+## Phase 25: Release 9, module `linux-packages` (approved 2026-11-20, SPEC.md "Module `linux-packages`")
+
+- [ ] **Task 138: Python 3.15 for the app** (S)
+  - Acceptance: `requires-python = ">=3.12,<3.16"`, `uv.lock` relocked (no adapter cache key changes: adapters have their own locks); CI's matrix tests the ends 3.12 and 3.15; the full test suite passes on 3.15 locally.
+  - Verify: `UV_PYTHON=3.15 uv run pytest -q`; `scripts/check.sh task`
+  - Dependencies: none · Files: `pyproject.toml`, `uv.lock`, `.github/workflows/check.yml`
+
+- [ ] **Task 139: The app installed by the system** (S)
+  - Acceptance: `paths.packaged()` gives `"system"` when the launcher set `STICKLER_PACKAGED=system`; folders and `packaged_env()` as for the AppImage (uv's own Python 3.14, downloads in Stickler's folders, the adapters' sources from `/usr/share/stickler/adapters`); the launcher `packaging/linux/stickler-gtk` puts `/usr/lib/stickler` and the wheels' folder of the running Python minor version on the path, says clearly when there is none, and starts the app.
+  - Verify: `uv run pytest -q tests/test_paths.py tests/test_linux_launcher.py` (names as they turn out)
+  - Dependencies: none · Files: `src/stickler_app/paths.py`, `src/stickler_app/__init__.py`, `packaging/linux/stickler-gtk`, tests
+
+- [ ] **Task 140: Building the packages** (M)
+  - Acceptance: `scripts/linux_packages.sh` stages the tree (the three packages, the wheels of `uv.lock` unpacked per Python 3.14 and 3.15 with their hashes checked, `uv` and nFPM pinned with SHA-256, adapters' sources without environments or weights, icons, desktop file, MetaInfo, `.mo` files, Leipzig font) and builds `dist/Stickler-<v>_amd64.deb` and `dist/Stickler-<v>.x86_64.rpm` from `packaging/nfpm.yaml` with the dependencies per family; a test checks the staged tree (every file in place, no `.venv`, weights or `__pycache__`).
+  - Verify: `scripts/linux_packages.sh`; `uv run pytest -q tests/test_linux_packages.py`
+  - Dependencies: 138, 139 · Files: `scripts/linux_packages.sh`, `packaging/nfpm.yaml`, tests
+
+- [ ] **Task 141: The packages in clean containers** (M)
+  - Acceptance: `scripts/linux_packages.sh test` installs each file into a clean `ubuntu:26.04`, `fedora:44` and `fedora:45` container with the system's package manager, starts the app on an invisible screen (the window opens, no exception), checks that ffmpeg and GStreamer decode an MP3 and an AAC clip, removes the package and finds nothing of it left under `/usr`. A failed decode is reported to the owner before anything changes.
+  - Verify: `scripts/linux_packages.sh test`
+  - Dependencies: 140 · Files: `scripts/linux_packages.sh`, `packaging/linux/`
+
+- [ ] **Task 142: The release workflow** (S)
+  - Acceptance: `release.yml` builds and container-tests both files on every tag and by hand, and `attach` adds them to the draft release; actions pinned by SHA, zizmor clean.
+  - Verify: a manual run green; `scripts/check.sh task`
+  - Dependencies: 141 · Files: `.github/workflows/release.yml`
+
+- [ ] **Task 143: Install texts** (S)
+  - Acceptance: the README's `> INSTALL THE APP`, `docs/requirements.md`, the website's download cards in English and German (filled by `scripts/site_release.py`) and the release-note template name `.deb` (Ubuntu 26.04+) and `.rpm` (Fedora 44+), the terminal lines, uninstalling, and to use one package, not the Flatpak as well.
+  - Verify: `uv run pytest -q tests/test_site.py`; `scripts/site_axe.py`
+  - Dependencies: 142 · Files: `README.md`, `docs/requirements.md`, `site/`, `scripts/site_release.py`, tests
+
+- [ ] **Task 144: Review and the owner's check** (S)
+  - Acceptance: a fresh-context review of 138–143, each finding checked; the owner installs the `.rpm` on their Fedora and the `.deb` on Ubuntu 26.04 (a VM is fine), through the software centre, and sets up, analyses, plays and exports a song.
+  - Verify: the owner
+  - Dependencies: 143
+
+### Checkpoint AA
+- [ ] All success criteria of SPEC.md "Module `linux-packages`" met (owner); then release 9
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.

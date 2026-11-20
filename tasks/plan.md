@@ -565,3 +565,25 @@ Design decisions:
 | The ffmpeg build takes long or breaks with a new Xcode | Medium | the built programs are cached by their source's checksum; Martin Riedl's builds as the fallback (asks the owner) |
 | The image is far larger than estimated | Low | measured in the spike; the owner decides before 132 |
 
+
+## Release 9: `linux-packages` (approved 2026-11-20, SPEC.md "Module `linux-packages`")
+
+A `.deb` for Ubuntu 26.04+ and an `.rpm` for Fedora 44+, on the release page next to the
+Flatpak, the AppImage and the `.dmg`. Tasks 138–144.
+
+Design decisions:
+- **Python 3.15 first** (138): Fedora 45's Python decides whether one `.rpm` can serve 44 and 45;
+  the app's range is raised and tested before any packaging code exists.
+- **The app learns `"system"`** (139) like the AppImage: models, uv's Python and downloads in
+  Stickler's XDG folders, the adapters' sources read-only under `/usr/share/stickler`.
+- **One build script** (140) for CI and by hand, every download pinned by version and SHA-256 (nFPM,
+  `uv`, the wheels from `uv.lock`); one `packaging/nfpm.yaml` for both formats.
+- **Containers prove it** (141): install, start on an invisible screen, remove, in clean
+  `ubuntu:26.04`, `fedora:44` and `fedora:45`; the same script runs in CI and locally (podman).
+
+| Risk | Likelihood | What then |
+|---|---|---|
+| A harness dependency has no cp315 wheel, so the lock cannot cover 3.15 | Medium | only the app's packages are tested on 3.15 (a marker in `pyproject.toml`); asks the owner if even that fails |
+| Fedora's `ffmpeg-free` or its GStreamer libav plugin cannot decode MP3 or AAC | Medium | measured in 141; the owner decides (RPM Fusion as a recommendation, or fewer formats promised) |
+| A software centre refuses an unsigned local file | Low | the install texts give the terminal line first |
+| GitHub has no Ubuntu 26.04 runner image yet | Low | the containers run on the existing runner, as the AppImage's Arch container does |
