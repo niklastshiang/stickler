@@ -28,6 +28,16 @@ RELEASE = {
             "url": DOWNLOAD + "Stickler-8-x86_64.AppImage",
         },
         {"name": "Stickler-8-x86_64.AppImage.zsync", "size": 228_000, "url": DOWNLOAD + "x.zsync"},
+        {
+            "name": "Stickler-8_amd64.deb",
+            "size": 68_700_000,
+            "url": DOWNLOAD + "Stickler-8_amd64.deb",
+        },
+        {
+            "name": "Stickler-8.x86_64.rpm",
+            "size": 71_700_000,
+            "url": DOWNLOAD + "Stickler-8.x86_64.rpm",
+        },
     ],
 }
 
@@ -54,6 +64,8 @@ def test_each_kind_of_package_is_found_and_the_zsync_is_not():
         "dmg": "Stickler-8.dmg",
         "flatpak": "Stickler-8.flatpak",
         "appimage": "Stickler-8-x86_64.AppImage",
+        "deb": "Stickler-8_amd64.deb",
+        "rpm": "Stickler-8.x86_64.rpm",
     }
 
 
@@ -65,6 +77,13 @@ def test_the_copy_names_the_release_files_in_both_languages(built):
         assert '<span data-name="flatpak">Stickler-8.flatpak</span>' in html
         assert f'href="{DOWNLOAD}Stickler-8.dmg"' in html
         assert "releases/latest" not in html
+    for page in ("index.html", "de/index.html"):
+        html = (built / page).read_text(encoding="utf-8")
+        assert f'data-asset="deb"\n              href="{DOWNLOAD}Stickler-8_amd64.deb"' in html
+        assert '<span data-size="deb">69 MB</span>' in html
+        assert '<span data-name="deb">Stickler-8_amd64.deb</span>' in html
+        assert '<span data-name="rpm">Stickler-8.x86_64.rpm</span>' in html
+        assert '<span data-size="rpm">72 MB</span>' in html
     assert '<span data-size="dmg">412 MB</span>' in (built / "index.html").read_text()
     assert '<span data-size="dmg">412 MB</span>' in (built / "de/index.html").read_text()
 

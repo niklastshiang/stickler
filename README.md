@@ -89,19 +89,29 @@ Stickler only uses open-source models from actively maintained projects.
 ## `> INSTALL THE APP`
 
 Every [release](https://github.com/niklastshiang/stickler/releases) has the app for Linux on
-x86_64, in two forms, and for a Mac with Apple silicon. On first start it asks to
+x86_64, in four forms, and for a Mac with Apple silicon. On first start it asks to
 download its two models once; after that it runs offline. Stickler ships no model itself, and each comes with its own licence, which the app names
 before the download; some are for non-commercial use only (see [`> LICENSE`](#-license)).
 
 | What | How much |
 |---|---|
-| System | Linux on x86_64, or a Mac with Apple silicon and macOS 26 |
+| System | Linux on x86_64 (the `.deb`: Ubuntu 26.04 or newer; the `.rpm`: Fedora 44 or newer), or a Mac with Apple silicon and macOS 26 |
 | Download on first start | about 2.2 GB on Linux (ADTOF and Beat This!); the app names the size before it downloads |
 | First drum-track export | about 1.2 GB more (Demucs) |
 | Memory | about 1 GB while a song is analysed |
-| Also needed | nothing: no Python, `uv` or ffmpeg to install; the Flatpak takes the GNOME 51 runtime from Flathub |
+| Also needed | nothing: no Python, `uv` or ffmpeg to install; the Flatpak takes the GNOME 51 runtime from Flathub, the `.deb` and `.rpm` take Python, GTK and ffmpeg from the system |
 
 More on disk, memory and time: [requirements](docs/requirements.md).
+
+**Ubuntu** (26.04 or newer) and **Fedora** (44 or newer): download `Stickler-<version>_amd64.deb`
+or `Stickler-<version>.x86_64.rpm` and open it with the Software app, or install it in a
+terminal; the package manager brings what Stickler needs from the system. Use one way to install
+Stickler, not the Flatpak as well: both would show up in the app menu.
+
+```bash
+sudo apt install ./Stickler-9_amd64.deb      # Ubuntu
+sudo dnf install ./Stickler-9.x86_64.rpm     # Fedora
+```
 
 **Flatpak** (recommended on GNOME): download `Stickler-<version>.flatpak` and open it with GNOME
 Software, or install it in a terminal; the GNOME runtime comes from Flathub:
@@ -125,7 +135,7 @@ what to do when that button is missing: [Installing Stickler on a Mac](docs/inst
 ### Removing it
 
 To free the models' space but keep the app, choose **Remove Downloaded Models…** in its main
-menu (Flatpak and AppImage); a check box there removes the settings, recent songs and
+menu (every Linux package); a check box there removes the settings, recent songs and
 corrections too.
 
 **Mac:** choose **Remove Downloaded Models…** in the Stickler menu with its box ticked, then
@@ -136,6 +146,19 @@ drag Stickler from Applications to the Bin.
 ```bash
 flatpak uninstall --delete-data ng.tshia.Stickler
 ```
+
+<details>
+<summary><b>Ubuntu, Fedora</b>: remove the package and Stickler's folders</summary>
+
+Remove it with the Software app or in a terminal, then Stickler's three folders as for the
+AppImage below:
+
+```bash
+sudo apt remove stickler     # Ubuntu
+sudo dnf remove stickler     # Fedora
+```
+
+</details>
 
 <details>
 <summary><b>AppImage</b>: delete the file and Stickler's folders</summary>

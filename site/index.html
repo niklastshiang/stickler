@@ -276,7 +276,7 @@
           <h2 id="get-title">Get Stickler</h2>
           <p class="muted">Free. Pick your computer.</p>
         </div>
-        <div class="grid">
+        <div class="grid downloads">
           <div class="card lined download first">
             <div class="download-head"><h3>Mac</h3><span data-size="dmg">.dmg</span></div>
             <span class="muted">Apple silicon, macOS 26</span>
@@ -286,31 +286,61 @@
               You allow it once: <a href="install-mac.html">how to install it, step by step</a>.</p>
           </div>
           <div class="card lined download">
-            <div class="download-head"><h3>Linux · Flatpak</h3><span data-size="flatpak">33 MB</span></div>
-            <span class="muted">Best on GNOME.</span>
-            <a class="button" data-asset="flatpak"
-              href="https://github.com/niklastshiang/stickler/releases/latest">Download the Flatpak</a>
-            <p class="note">Or in a terminal, in the folder you downloaded it to:</p>
-            <div class="command">
-              <code id="flatpak-command">flatpak install --user <span data-name="flatpak">Stickler-8.flatpak</span></code>
-              <button type="button" hidden data-copy="flatpak-command" data-status="flatpak-status"
-                data-done="Copied" data-failed="Could not copy; select the command instead"
-                aria-label="Copy the command">
+            <div class="download-head"><h3>Linux</h3><span>x86_64</span></div>
+            <dl class="systems">
+              <dt>Ubuntu 26.04 or newer</dt>
+              <dd><a class="button" data-asset="deb"
+              href="https://github.com/niklastshiang/stickler/releases/latest"><span>Download the .deb · <span data-size="deb">69 MB</span></span></a></dd>
+              <dt>Fedora 44 or newer</dt>
+              <dd><a class="button" data-asset="rpm"
+              href="https://github.com/niklastshiang/stickler/releases/latest"><span>Download the .rpm · <span data-size="rpm">72 MB</span></span></a></dd>
+              <dt>Any other Linux</dt>
+              <dd><a class="button secondary" data-asset="flatpak"
+              href="https://github.com/niklastshiang/stickler/releases/latest"><span>Flatpak · <span data-size="flatpak">33 MB</span></span></a>
+                <a class="button secondary" data-asset="appimage"
+              href="https://github.com/niklastshiang/stickler/releases/latest"><span>AppImage · <span data-size="appimage">134 MB</span></span></a></dd>
+            </dl>
+            <p class="note">Open the file with the Software app. The Flatpak is best on GNOME. The AppImage needs nothing installed: right-click it, choose Properties, turn on “Executable as Program”, then open it.</p>
+            <details class="terminal">
+              <summary>In a terminal</summary>
+              <p class="note">In the folder you downloaded the file to:</p>
+              <div class="command">
+                <code id="deb-command">sudo apt install ./<span data-name="deb">Stickler-9_amd64.deb</span></code>
+                <button type="button" hidden data-copy="deb-command" data-status="deb-command-status"
+                  data-done="Copied" data-failed="Could not copy; select the command instead"
+                  aria-label="Copy the command">
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
                 </svg>
-              </button>
-            </div>
-            <p class="visually-hidden" id="flatpak-status" role="status"></p>
-          </div>
-          <div class="card lined download">
-            <div class="download-head"><h3>Linux · AppImage</h3><span data-size="appimage">134 MB</span></div>
-            <span class="muted">Any Linux. One file, nothing to install.</span>
-            <a class="button" data-asset="appimage"
-              href="https://github.com/niklastshiang/stickler/releases/latest">Download the AppImage</a>
-            <p class="note">Right-click it, choose Properties, turn on “Executable as Program”, then
-              open it.</p>
+                </button>
+              </div>
+              <p class="visually-hidden" id="deb-command-status" role="status"></p>
+              <div class="command">
+                <code id="rpm-command">sudo dnf install ./<span data-name="rpm">Stickler-9.x86_64.rpm</span></code>
+                <button type="button" hidden data-copy="rpm-command" data-status="rpm-command-status"
+                  data-done="Copied" data-failed="Could not copy; select the command instead"
+                  aria-label="Copy the command">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+                </svg>
+                </button>
+              </div>
+              <p class="visually-hidden" id="rpm-command-status" role="status"></p>
+              <div class="command">
+                <code id="flatpak-command">flatpak install --user <span data-name="flatpak">Stickler-8.flatpak</span></code>
+                <button type="button" hidden data-copy="flatpak-command" data-status="flatpak-command-status"
+                  data-done="Copied" data-failed="Could not copy; select the command instead"
+                  aria-label="Copy the command">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+                </svg>
+                </button>
+              </div>
+              <p class="visually-hidden" id="flatpak-command-status" role="status"></p>
+            </details>
           </div>
         </div>
       </div>
@@ -354,6 +384,10 @@
               </button>
             </div>
             <p class="visually-hidden" id="uninstall-appimage-status" role="status"></p></dd>
+            <dt>Ubuntu, Fedora</dt>
+            <dd>Remove it with the Software app, or in a terminal with
+              <code>sudo apt remove stickler</code> or <code>sudo dnf remove stickler</code>; then
+              delete its three folders as for the AppImage.</dd>
           </dl>
         </div>
         <div>

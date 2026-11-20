@@ -23,6 +23,8 @@ KINDS = {  # a card's data-asset → how its file's name ends
     "dmg": ".dmg",
     "flatpak": ".flatpak",
     "appimage": "-x86_64.AppImage",
+    "deb": "_amd64.deb",
+    "rpm": ".x86_64.rpm",
 }
 
 

@@ -2679,8 +2679,10 @@ the Mac App Store, Quality, the GPU.
 7. **A look around:** the screenshots (sheet, corrections, dark, the Mac app), each enlarging
    on click with `<a href>` to the image or `<dialog>` without script.
 8. **Privacy:** everything runs on the computer; the only network use is the model download.
-9. **Get Stickler:** one card per package (Mac `.dmg`, Flatpak, AppImage) with the system it
-   needs, its size and a download button; the Mac card shows "Open Anyway" in three pictures
+9. **Get Stickler:** one card per computer (owner, 2026-11-20, with release 9; before: one card
+   per package): the Mac card with the `.dmg`, and one Linux card that leads by system (Ubuntu
+   26.04+ the `.deb`, Fedora 44+ the `.rpm`, any other Linux the Flatpak or the AppImage), each
+   download with its size, and the terminal lines folded away under "In a terminal"; the Mac card shows "Open Anyway" in three pictures
    (from `mac-package`'s install guide); the Flatpak card a copyable command.
    Changed (owner, 2026-11-19): the pictures get a page of their own, `install-mac.html` in
    both languages, linked from the Mac card: a short guide in steps, each with its picture

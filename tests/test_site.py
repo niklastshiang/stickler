@@ -188,7 +188,7 @@ def test_everything_the_site_uses_is_in_git():
 def test_downloads_point_at_the_newest_release_until_the_workflow_fills_them():
     page = _page(SITE / "index.html")
     assets = {a["data-asset"]: a for a in page.all("a") if "data-asset" in a}
-    assert set(assets) == {"dmg", "flatpak", "appimage"}
+    assert set(assets) == {"dmg", "flatpak", "appimage", "deb", "rpm"}
     for attrs in assets.values():
         assert attrs["href"] == "https://github.com/niklastshiang/stickler/releases/latest"
 

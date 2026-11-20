@@ -1073,7 +1073,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: a manual run green; `scripts/check.sh task`
   - Dependencies: 141 · Files: `.github/workflows/release.yml`
 
-- [ ] **Task 143: Install texts** (S)
+- [x] **Task 143: Install texts** (S): done 2026-11-20. README (`> INSTALL THE APP`, the system row, removing), `docs/requirements.md`, the website in English and German: one Linux card instead of three (owner, 2026-11-20: "mach Linux alles zu einer Karte"), leading by system, the Flatpak and the AppImage as secondary buttons, the three terminal lines under a `<details>`; the short Mac card no longer stretched to the Linux card's height; uninstalling for Ubuntu and Fedora. `site_release.py` fills `.deb` and `.rpm`; axe 0 violations, looked at in light and dark, desktop and phone. There is no release-note template in the repository; the notes of release 9 name both files when written.
   - Acceptance: the README's `> INSTALL THE APP`, `docs/requirements.md`, the website's download cards in English and German (filled by `scripts/site_release.py`) and the release-note template name `.deb` (Ubuntu 26.04+) and `.rpm` (Fedora 44+), the terminal lines, uninstalling, and to use one package, not the Flatpak as well.
   - Verify: `uv run pytest -q tests/test_site.py`; `scripts/site_axe.py`
   - Dependencies: 142 · Files: `README.md`, `docs/requirements.md`, `site/`, `scripts/site_release.py`, tests

@@ -3,9 +3,10 @@
 Measured on the development laptop (AMD Ryzen AI 5 340, 12 threads, 30 GB RAM, Radeon 840M) and
 on rented NVIDIA GPUs. How the commands work: [CLI guide](cli.md).
 
-**The desktop app** (Flatpak or AppImage on x86_64 Linux; the `.dmg` on a Mac with Apple silicon
-and macOS 26) needs none of the software below: it brings `uv` and ffmpeg along, the Mac app its
-own Python too. Its first start downloads the Fast models, ADTOF and Beat This! (about 2.2 GB on
+**The desktop app** (Flatpak, AppImage, `.deb` or `.rpm` on x86_64 Linux; the `.dmg` on a Mac
+with Apple silicon and macOS 26) needs none of the software below: it brings `uv` along, and
+ffmpeg except in the `.deb` and `.rpm`, which take it, Python and GTK from the system (Ubuntu
+26.04 or newer, Fedora 44 or newer); the Mac app brings its own Python too. Its first start downloads the Fast models, ADTOF and Beat This! (about 2.2 GB on
 Linux); the first drum-track export adds Demucs (about 1.2 GB). The Flatpak takes the GNOME 51
 runtime from Flathub. Installing on a Mac: [the guide](install-macos.md).
 
