@@ -74,6 +74,9 @@ def test_the_staged_tree_has_everything_the_app_needs_and_nothing_else(tmp_path)
         assert not any(unwanted in p.parts for p in files), unwanted
     assert not any(p.suffix in (".pyc", ".ckpt", ".pth", ".safetensors") for p in files)
     assert not any(p.name.endswith(".dist-info") for p in (lib / "python3.14").iterdir())
+    # the same modes whatever the builder's umask: nothing writable but by its owner (root)
+    modes = {p.stat().st_mode & 0o777 for p in tree.rglob("*")}
+    assert modes <= {0o644, 0o755}, sorted(oct(m) for m in modes)
 
 
 def test_the_adapters_are_exactly_the_tracked_files():
@@ -96,7 +99,12 @@ def test_both_formats_need_libadwaita_18_and_take_ffmpeg_from_the_system():
     deb = config["overrides"]["deb"]["depends"]
     rpm = config["overrides"]["rpm"]["depends"]
     assert "gir1.2-adw-1 (>= 1.8)" in deb and "libadwaita >= 1.8" in rpm
-    assert "python3 (>= 3.14)" in deb and "python3 >= 3.14" in rpm
+    assert "python3 (>= 3.14)" in deb and "python3 (<< 3.16)" in deb  # the wheels' versions
+    assert "(python(abi) = 3.14 or python(abi) = 3.15)" in rpm
+    assert (
+        "gstreamer1.0-pipewire | gstreamer1.0-pulseaudio"
+        in config["overrides"]["deb"]["recommends"]
+    )
     assert "ffmpeg" in deb and "/usr/bin/ffmpeg" in rpm and "/usr/bin/ffprobe" in rpm
     assert "python3-yaml" in deb and "python3-pyyaml" in rpm
     assert config["name"] == "stickler" and config["arch"] == "amd64"

@@ -1,8 +1,9 @@
 #!/bin/sh
 # Runs inside a clean container (scripts/linux_packages.py test; SPEC.md, module `linux-packages`):
 # installs the package with the system's package manager, decodes an MP3 and an AAC clip with
-# ffmpeg and with GStreamer (the analysis and the playback), starts the app as a user on an
-# invisible screen, removes the package and looks for anything left of it.
+# ffmpeg and with GStreamer (the analysis and the playback), checks the bundled uv, starts the
+# app as a user on an invisible screen until its window is there, removes the package and looks
+# for anything left of it.
 #
 #   sh container-test.sh deb|rpm <package file> <clips folder>
 set -eu
@@ -15,10 +16,10 @@ case $family in
 deb)
 	export DEBIAN_FRONTEND=noninteractive
 	apt-get update -qq
-	apt-get install -y -qq "$package" xvfb xauth dbus-daemon >/dev/null
+	apt-get install -y -qq "$package" xvfb xauth dbus-daemon x11-utils >/dev/null
 	;;
 rpm)
-	dnf install -y -q "$package" xorg-x11-server-Xvfb xorg-x11-xauth dbus-daemon util-linux >/dev/null
+	dnf install -y -q "$package" xorg-x11-server-Xvfb xorg-x11-xauth dbus-daemon util-linux xwininfo >/dev/null
 	;;
 esac
 
@@ -57,14 +58,31 @@ for path in sys.argv[1:]:
         sys.exit(f"GStreamer cannot decode {path.rsplit('/', 1)[-1]}: {error}")
 EOF
 
-echo "== start the app as a user"
+echo "== the bundled uv and the adapters' sources"
+/usr/lib/stickler/bin/uv --version
+test -f /usr/share/stickler/adapters/_common/pyproject.toml
+
+echo "== start the app as a user, until its window is there"
 useradd -m drummer
-status=0
-su - drummer -c 'dbus-run-session -- xvfb-run -a timeout 25 stickler-gtk' >/tmp/app.log 2>&1 ||
-	status=$?
-if [ "$status" -ne 124 ] || grep -q Traceback /tmp/app.log; then
+cat >/tmp/run-app.sh <<'RUN'
+stickler-gtk &
+app=$!
+for _ in $(seq 30); do
+	sleep 1
+	kill -0 "$app" 2>/dev/null || break
+	if xwininfo -root -tree | grep -q '"Stickler"'; then
+		echo "window: open"
+		break
+	fi
+done
+kill "$app" 2>/dev/null
+wait "$app" 2>/dev/null
+exit 0
+RUN
+su - drummer -c 'dbus-run-session -- xvfb-run -a sh /tmp/run-app.sh' >/tmp/app.log 2>&1 || true
+if ! grep -q "window: open" /tmp/app.log || grep -qE "Traceback|CRITICAL" /tmp/app.log; then
 	cat /tmp/app.log >&2
-	echo "the app did not keep running (exit $status)" >&2
+	echo "the app's window did not open, or it reported an error" >&2
 	exit 1
 fi
 

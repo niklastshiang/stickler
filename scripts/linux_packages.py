@@ -113,7 +113,10 @@ def stage(root: Path, tree: Path, wheel_files: dict[str, list[Path]], uv: Path) 
         mo = usr / "share/locale" / po.stem / "LC_MESSAGES/stickler.mo"
         mo.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["msgfmt", "--check", "-o", str(mo), str(po)], check=True)
-        mo.chmod(0o644)
+    # the builder's umask must not reach the package (a umask of 002 made files group-writable)
+    for path in [tree, *tree.rglob("*")]:
+        executable = path.is_dir() or path.stat().st_mode & 0o100
+        path.chmod(0o755 if executable else 0o644)
 
 
 def _download(url: str, sha256: str, folder: Path) -> Path:

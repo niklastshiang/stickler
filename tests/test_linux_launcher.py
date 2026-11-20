@@ -27,10 +27,14 @@ def test_the_wheels_of_the_running_python_go_on_the_path(tmp_path):
     assert env == {"STICKLER_PACKAGED": "system", "PATH": f"{tmp_path / 'bin'}:/usr/bin:/bin"}
 
 
-def test_an_empty_path_does_not_add_the_current_folder(tmp_path):
+def test_without_a_path_the_systems_default_still_finds_ffmpeg(tmp_path):
+    import os
+
     (tmp_path / "python3.14").mkdir()
     _, env = _launcher().prepare(tmp_path, (3, 14), {})
-    assert env["PATH"] == str(tmp_path / "bin")
+    assert env["PATH"] == f"{tmp_path / 'bin'}:{os.defpath}"
+    _, env = _launcher().prepare(tmp_path, (3, 14), {"PATH": ""})
+    assert env["PATH"] == f"{tmp_path / 'bin'}:{os.defpath}"  # never the current folder
 
 
 def test_a_python_without_wheels_names_the_supported_ones(tmp_path):

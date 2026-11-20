@@ -1068,7 +1068,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run python scripts/linux_packages.py test`
   - Dependencies: 140 · Files: `scripts/linux_packages.py`, `packaging/linux/`
 
-- [ ] **Task 142: The release workflow** (S): built 2026-11-20, the manual run waits for a push (owner). Job `linux-packages` on `ubuntu-26.04` (gettext and podman from apt, then `python3 scripts/linux_packages.py test`), its two files an artifact, `attach` needs it; zizmor clean.
+- [x] **Task 142: The release workflow** (S): done 2026-11-20, the manual run 44708663463 green (flatpak, appimage, mac, linux-packages; attach skipped without a tag). Job `linux-packages` on `ubuntu-26.04` (gettext and podman from apt, then `python3 scripts/linux_packages.py test`), its two files an artifact, `attach` needs it; zizmor clean.
   - Acceptance: `release.yml` builds and container-tests both files on every tag and by hand, and `attach` adds them to the draft release; actions pinned by SHA, zizmor clean.
   - Verify: a manual run green; `scripts/check.sh task`
   - Dependencies: 141 · Files: `.github/workflows/release.yml`
@@ -1078,7 +1078,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/test_site.py`; `scripts/site_axe.py`
   - Dependencies: 142 · Files: `README.md`, `docs/requirements.md`, `site/`, `scripts/site_release.py`, tests
 
-- [ ] **Task 144: Review and the owner's check** (S)
+- [ ] **Task 144: Review and the owner's check** (S): the review done 2026-11-20 (fresh context, each finding checked): fixed: the Linux card overflowed the page between about 640 and 900 px (it stacks by the card's own width now, a container query; measured at 11 widths from 320 to 1280 px in both languages, no overflow); the container test now waits for the app's window (`xwininfo`), fails on `CRITICAL` too and runs the bundled uv; the launcher writes no bytecode (a start as root would leave `__pycache__` no package owns) and falls back to the system's default `PATH`; the `.deb` recommends a GStreamer audio output (PipeWire or PulseAudio) and both packages bound Python to 3.14–3.15; the three copy buttons have their own names; file modes no longer depend on the builder's umask. Not changed: no bytecode is shipped (about 0.3 s more at each start). Left: the owner's check.
   - Acceptance: a fresh-context review of 138–143, each finding checked; the owner installs the `.rpm` on their Fedora and the `.deb` on Ubuntu 26.04 (a VM is fine), through the software centre, and sets up, analyses, plays and exports a song.
   - Verify: the owner
   - Dependencies: 143

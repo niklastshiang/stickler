@@ -25,11 +25,13 @@ def prepare(
             f"Stickler needs Python {' or '.join(supported)}; this system's Python is "
             f"{version[0]}.{version[1]}. The Flatpak or the AppImage runs on any system."
         )
-    search = [str(lib / "bin"), *filter(None, [env.get("PATH")])]
+    search = [str(lib / "bin"), env.get("PATH") or os.defpath]  # ffmpeg is the system's
     return [str(lib), str(wheels)], {"STICKLER_PACKAGED": "system", "PATH": os.pathsep.join(search)}
 
 
 if __name__ == "__main__":
+    # no __pycache__ under /usr/lib/stickler: a start as root would leave folders no package owns
+    sys.dont_write_bytecode = True
     path, added = prepare(LIB, sys.version_info[:2], os.environ)
     sys.path[:0] = path
     os.environ.update(added)

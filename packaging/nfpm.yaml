@@ -51,6 +51,7 @@ overrides:
   deb:
     depends:
       - python3 (>= 3.14)
+      - python3 (<< 3.16)
       - python3-gi
       - python3-gi-cairo
       - python3-yaml
@@ -62,9 +63,11 @@ overrides:
       - gstreamer1.0-plugins-good
       - gstreamer1.0-libav
       - ffmpeg
+    recommends:
+      - gstreamer1.0-pipewire | gstreamer1.0-pulseaudio # playback: autoaudiosink's outputs
   rpm:
     depends:
-      - python3 >= 3.14
+      - (python(abi) = 3.14 or python(abi) = 3.15)
       - python3-gobject
       - python3-cairo
       - python3-pyyaml

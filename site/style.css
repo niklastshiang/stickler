@@ -598,14 +598,16 @@ audio {
   align-items: start; /* the short Mac card keeps its own height */
 }
 
-.systems .button {
-  white-space: nowrap;
+/* the Linux card: one row per system, its download beside it; stacked when the card itself is
+   narrow (a container query: two cards sit side by side from about 33rem, so the viewport's
+   width says nothing about the card's) */
+.download {
+  container-type: inline-size;
 }
 
-/* the Linux card: one row per system, its download beside it (stacked on a phone) */
 .systems {
   display: grid;
-  grid-template-columns: minmax(9rem, auto) 1fr;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
   align-items: center;
   gap: 0.75rem 1rem;
   margin: 0;
@@ -622,7 +624,7 @@ audio {
   margin: 0;
 }
 
-@media (max-width: 30rem) {
+@container (max-width: 34rem) {
   .systems {
     grid-template-columns: 1fr;
     gap: 0.375rem;
