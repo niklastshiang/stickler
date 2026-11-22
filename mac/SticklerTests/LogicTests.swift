@@ -282,7 +282,6 @@ final class LogicTests: XCTestCase {
     }
 }
 
-
 /// What "Remove Downloaded Models…" with everything removes besides Stickler's own folders.
 @MainActor
 final class LeftoversTests: XCTestCase {
