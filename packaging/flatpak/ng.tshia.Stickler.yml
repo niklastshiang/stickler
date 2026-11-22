@@ -9,6 +9,9 @@ runtime: org.gnome.Platform
 runtime-version: "51"
 sdk: org.gnome.Sdk
 command: stickler-gtk
+# the translations inside the app: a single-file bundle carries no .Locale extension, so with
+# the default the app's own texts showed in English among GTK's German ones (2026-11-22)
+separate-locales: false
 finish-args:
   # the permissions of SPEC.md, module `app-shell`, and no more (no file system access:
   # songs come in and exports go out through portals)
