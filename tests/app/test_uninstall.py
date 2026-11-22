@@ -94,7 +94,7 @@ def test_from_the_checkout_nothing_is_removed(tmp_path):
 
 
 def test_the_flatpak_command_to_copy_where_no_software_app_opens_its_page():
-    assert uninstall.flatpak_command() == "flatpak uninstall --user ng.tshia.Stickler"
+    assert uninstall.flatpak_command() == "flatpak uninstall --user --delete-data ng.tshia.Stickler"
 
 
 def test_removing_deletes_folders_and_files_and_tolerates_what_is_gone(tmp_path):
@@ -208,3 +208,17 @@ def test_an_unreachable_package_service_is_named_in_words():
     "Could not connect: No such file or directory"."""
     reason = uninstall.unreachable()
     assert "PackageKit" in reason and "connect" not in reason
+
+
+def test_the_flatpak_removes_nothing_itself_the_software_app_asks_about_the_data(tmp_path):
+    """Owner, 2026-11-22: the Software app asks whether the data goes when it uninstalls, so
+    the Flatpak's own dialog has no box and nothing is removed by the app."""
+    env = {"HOME": str(tmp_path), "FLATPAK_ID": "ng.tshia.Stickler"}
+    _stored(env)
+    for keep in (True, False):
+        plan = uninstall.plan(env, keep_settings=keep)
+        assert (plan.kind, plan.folders, plan.files, plan.size) == ("flatpak", [], [], 0)
+    settings.save(settings.store_path(env), settings.Settings(setup_agreed=True))
+    uninstall.remove(uninstall.plan(env), env)
+    assert settings.load(settings.store_path(env)).setup_agreed is True  # its data, its choice
+    assert uninstall.flatpak_command() == "flatpak uninstall --user --delete-data ng.tshia.Stickler"

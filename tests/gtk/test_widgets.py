@@ -1078,6 +1078,26 @@ def test_a_package_keeps_its_folders_until_packagekit_removed_it(monkeypatch, tm
         window.close()
 
 
+def test_the_flatpaks_question_has_no_box_and_the_others_have_one(monkeypatch, tmp_path):
+    """Owner, 2026-11-22: in the Flatpak the Software app asks whether the data goes."""
+    from stickler_app import uninstall
+    from stickler_gtk.ui.window import Window
+
+    window = Window()
+    try:
+        monkeypatch.setenv("FLATPAK_ID", "ng.tshia.Stickler")
+        flatpak = uninstall.plan(keep_settings=True)
+        question = window.uninstall_question(flatpak, uninstall.plan(keep_settings=False))
+        assert question.get_extra_child() is None and "Software app" in question.get_body()
+        monkeypatch.delenv("FLATPAK_ID")
+        monkeypatch.setenv("STICKLER_PACKAGED", "system")
+        system = uninstall.plan(keep_settings=True)
+        question = window.uninstall_question(system, uninstall.plan(keep_settings=False))
+        assert question.get_extra_child() is not None
+    finally:
+        window.close()
+
+
 def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
     monkeypatch, tmp_path
 ):

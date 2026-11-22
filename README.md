@@ -144,8 +144,8 @@ from another folder. The models are downloaded again.
 Choose **Uninstall Stickler…** in the app's main menu (the Stickler menu on a Mac). It removes
 the app with its models and analyses; a box removes your settings, recent songs and
 corrections too. The AppImage and the Mac app move themselves to the Bin, the `.deb` and the
-`.rpm` ask for your password; the Flatpak removes its data and opens the Software app on
-Stickler's page, where you press Uninstall. To free the models' space but keep the app, choose
+`.rpm` ask for your password; the Flatpak opens the Software app on Stickler's page, where you
+press Uninstall and choose whether its data goes too. To free the models' space but keep the app, choose
 **Remove Downloaded Models…** instead.
 
 Without the app:

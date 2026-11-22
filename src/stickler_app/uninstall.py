@@ -43,6 +43,10 @@ def plan(env: Mapping[str, str] = os.environ, *, keep_settings: bool = True) -> 
     kind = paths.packaged(env)
     if kind is None:
         return Plan(None, [], [], "", 0)
+    if kind == "flatpak":
+        # the Software app asks whether the data goes when it uninstalls (owner, 2026-11-22):
+        # the app removes nothing itself
+        return Plan(kind, [], [], APP_ID, 0, keep_settings)
     folders = removal.targets(env, everything=not keep_settings)
     files = _integration(env) if kind == "appimage" else []
     image = env.get("APPIMAGE", "")
@@ -85,7 +89,7 @@ def is_appimage(path: Path) -> bool:
 
 def flatpak_command() -> str:
     """For a system whose Software app does not open `appstream:` links (Ubuntu's App Center)."""
-    return f"flatpak uninstall --user {APP_ID}"
+    return f"flatpak uninstall --user --delete-data {APP_ID}"
 
 
 def _entries(desktop: Path) -> dict[str, str]:
@@ -159,7 +163,7 @@ def remove(chosen: Plan, env: Mapping[str, str] = os.environ) -> None:
     """Deletes the plan's folders and files; what is already gone is fine. Kept settings forget
     the consent to download the models, as "Remove Downloaded Models…" does: a new install asks
     again before it downloads gigabytes."""
-    if chosen.kind is not None and chosen.keep_settings:
+    if chosen.kind not in (None, "flatpak") and chosen.keep_settings:
         with contextlib.suppress(OSError):
             if settings.store_path(env).exists():
                 settings.update(settings.store_path(env), setup_agreed=False)

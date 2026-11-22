@@ -1511,6 +1511,23 @@
         }
       }
     },
+    "No Software app opens Stickler’s page here. To remove Stickler, run in a terminal (without --delete-data its models, settings and recent songs stay):" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier öffnet keine Software-App die Seite von Stickler. Um Stickler zu entfernen, führe im Terminal aus (ohne --delete-data bleiben seine Modelle, Einstellungen und zuletzt geöffneten Songs):"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquí ninguna app de software abre la página de Stickler. Para quitar Stickler, ejecuta en una terminal (sin --delete-data se quedan sus modelos, ajustes y canciones recientes):"
+          }
+        }
+      }
+    },
     "Not Now" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2665,23 +2682,6 @@
         }
       }
     },
-    "Stickler’s data is removed. To remove the app, run in a terminal:" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Daten von Stickler sind entfernt. Um die App zu entfernen, führe im Terminal aus:"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los datos de Stickler se quitaron. Para quitar la app, ejecuta en una terminal:"
-          }
-        }
-      }
-    },
     "Takes about 15 seconds" : {
       "comment" : "Translators: Mac app, under \"Writing the Drum Part\" (design screen M5)",
       "extractionState" : "manual",
@@ -2798,6 +2798,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "El MusicXML en otro programa"
+          }
+        }
+      }
+    },
+    "The Software app opens on Stickler’s page. Uninstall it there; it asks whether Stickler’s data goes too." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Software-App öffnet sich auf der Seite von Stickler. Deinstalliere es dort; sie fragt, ob auch die Daten von Stickler entfernt werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La app de software se abre en la página de Stickler. Desinstálalo ahí; te pregunta si también se quitan los datos de Stickler."
           }
         }
       }

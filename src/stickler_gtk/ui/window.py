@@ -662,17 +662,35 @@ class Window(Adw.ApplicationWindow):
         )
 
     def _ask_to_uninstall(self, keeping: uninstall.Plan, everything: uninstall.Plan) -> None:
-        def body(all_of_it: bool) -> str:
-            freed = GLib.format_size((everything if all_of_it else keeping).size)
-            return _("This removes Stickler and frees {size}. Your songs and exports stay.").format(
-                size=freed
-            )
+        self.uninstall_question(keeping, everything).present(self)
 
-        also = Gtk.CheckButton(label=_("Also remove my settings, recent songs and corrections"))
-        alert = Adw.AlertDialog(
-            heading=_("Uninstall Stickler?"), body=body(False), extra_child=also
-        )
-        also.connect("toggled", lambda b: alert.set_body(body(b.get_active())))
+    def uninstall_question(
+        self, keeping: uninstall.Plan, everything: uninstall.Plan
+    ) -> Adw.AlertDialog:
+        """The question with the size and the box (off). The Flatpak's has neither: the Software
+        app it opens asks whether the data goes (owner, 2026-11-22)."""
+        if keeping.kind == "flatpak":
+            alert = Adw.AlertDialog(
+                heading=_("Uninstall Stickler?"),
+                body=_(
+                    "The Software app opens on Stickler’s page. Uninstall it there; it asks"
+                    " whether Stickler’s data goes too."
+                ),
+            )
+            also = None
+        else:
+
+            def body(all_of_it: bool) -> str:
+                freed = GLib.format_size((everything if all_of_it else keeping).size)
+                return _(
+                    "This removes Stickler and frees {size}. Your songs and exports stay."
+                ).format(size=freed)
+
+            also = Gtk.CheckButton(label=_("Also remove my settings, recent songs and corrections"))
+            alert = Adw.AlertDialog(
+                heading=_("Uninstall Stickler?"), body=body(False), extra_child=also
+            )
+            also.connect("toggled", lambda b: alert.set_body(body(b.get_active())))
         alert.add_response("cancel", _("Cancel"))
         alert.add_response("uninstall", _("Uninstall"))
         alert.set_response_appearance("uninstall", Adw.ResponseAppearance.DESTRUCTIVE)
@@ -682,10 +700,10 @@ class Window(Adw.ApplicationWindow):
             "response",
             lambda _a, answer: (
                 answer == "uninstall"
-                and self.uninstall_now(everything if also.get_active() else keeping)
+                and self.uninstall_now(everything if also and also.get_active() else keeping)
             ),
         )
-        alert.present(self)
+        return alert
 
     def uninstall_now(self, chosen: uninstall.Plan) -> None:
         """Per package (scope B2), the app held until it ends (`begin_uninstall`). The
@@ -706,13 +724,9 @@ class Window(Adw.ApplicationWindow):
                     self._trash(Path(chosen.program))
 
             worker.run(remove_all, lambda _r: self._finish(), self._uninstall_failed)
-        elif chosen.kind == "flatpak":
-            worker.run(
-                lambda: uninstall.remove(chosen),
-                lambda _r: Gio.AppInfo.launch_default_for_uri_async(
-                    f"appstream:{APP_ID}", None, None, self._software_opened
-                ),
-                self._uninstall_failed,
+        elif chosen.kind == "flatpak":  # removes nothing itself: the Software app does
+            Gio.AppInfo.launch_default_for_uri_async(
+                f"appstream:{APP_ID}", None, None, self._software_opened
             )
         else:
             self.controller.end_uninstall()
@@ -756,12 +770,16 @@ class Window(Adw.ApplicationWindow):
             command = uninstall.flatpak_command()
             alert = Adw.AlertDialog(
                 heading=_("Remove the Flatpak"),
-                body=_("Stickler’s data is removed. To remove the app, run in a terminal:")
+                body=_(
+                    "No Software app opens Stickler’s page here. To remove Stickler, run in a"
+                    " terminal (without --delete-data its models, settings and recent songs"
+                    " stay):"
+                )
                 + f"\n\n{command}",
             )
             alert.set_body_use_markup(False)
             alert.add_response("close", _("Close"))
-            alert.connect("response", lambda *_a: self._finish())
+            alert.connect("response", lambda *_a: self.controller.end_uninstall())
             alert.present(self)
             return
         self._finish()
