@@ -105,21 +105,21 @@
       }
     },
     "2026-11-22": {
-      "active_minutes": 33,
+      "active_minutes": 388,
       "models": {
         "claude-haiku-5-5": {
-          "responses": 2,
-          "input": 4,
-          "output": 2291,
-          "cache_read": 4236,
-          "cache_write": 18263
+          "responses": 6,
+          "input": 12,
+          "output": 7146,
+          "cache_read": 12728,
+          "cache_write": 43522
         },
         "claude-opus-5-5": {
-          "responses": 55,
-          "input": 122,
-          "output": 32906,
-          "cache_read": 5256471,
-          "cache_write": 102937
+          "responses": 805,
+          "input": 1816,
+          "output": 689173,
+          "cache_read": 340629632,
+          "cache_write": 1946418
         }
       }
     }
