@@ -2740,8 +2740,10 @@ widgets of GNOME or macOS.
    cards and type, light and dark), from real data: the waveform from the song's first 20
    seconds, the hits from Stickler's Fast analysis of the song (the ones `scripts/site_clip.py`
    clicks), the notes from Stickler's engraving of it (the first two systems, without the tempo
-   mark, whose note needs a music font the site does not load; an `<img>` of
-   `site/story/notes.svg`, turned light in dark mode).
+   mark and the music font Verovio embeds for its note, 58 kB that nothing else uses; an `<img>`
+   of `site/story/notes.svg`, turned light in dark mode). The site's Content-Security-Policy
+   allows no style attributes, so each hit's and bar's part of the scroll is a rule in
+   `site/story/story.css`, written with the pictures.
    `scripts/site_story.py` analyses once and keeps the data it needs in the repository
    (`site/story/*.json`), then writes the SVGs from that data; a test fails when the stored SVGs
    differ from what the script makes of the stored data.

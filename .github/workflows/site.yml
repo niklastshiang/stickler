@@ -44,7 +44,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: The site's tests
-        run: uv run pytest -q tests/test_site.py tests/test_site_release.py
+        run: uv run pytest -q tests/test_site.py tests/test_site_release.py tests/test_site_story.py
       - name: The download cards name the release's files
         env:
           GH_TOKEN: ${{ github.token }}

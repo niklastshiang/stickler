@@ -328,6 +328,8 @@ def test_how_it_works_is_four_steps_each_with_its_picture_hidden_from_screen_rea
     section = section[: section.index("</section>")]
     assert section.count('<li class="story-step ') == 4 and '<ol class="story">' in section
     assert section.count('<div class="story-picture" aria-hidden="true">') == 4
+    # the list numbers the steps for a screen reader; the big number is for the eye
+    assert section.count('<span class="step-number" aria-hidden="true">') == 4
     assert "story-hit" in section and "story-bar" in section and "story/notes.svg" in section
     assert 'class="card"' not in section and "step-icon" not in section
     assert 'story/story.css">' in html  # each hit's and bar's part of the scroll
@@ -353,7 +355,13 @@ def test_the_story_moves_only_where_motion_is_wanted_and_supported():
         "  @supports (animation-timeline: view()) {"
     )
     assert css.count(opening) == 1
+    # one column below 48rem, two from just above it: the ranges must not overlap at 48rem,
+    # where the motion's sticky text would cover the picture of a one-column step (iPad, 768 px)
+    one_column = css[css.index(".story-step {") :]
+    one_column = one_column[: one_column.index("order: -1;")]
+    assert "@media (max-width: 47.99rem) {" in one_column
     block = _braced(css, css.index(opening))
+    assert "@media (min-width: 48rem)" in block
     rest = css.replace(block, "")
     assert "animation-timeline" in block and "view-timeline" in block
     assert "animation-timeline" not in rest and "view-timeline" not in rest

@@ -86,7 +86,7 @@ def test_each_hit_is_a_dot_in_its_lane():
     wave = site_story.waveform(data)
     dots = re.findall(r'<circle class="story-hit (\w+)" cx="([\d.]+)" cy="([\d.]+)"', wave)
     (kick, cymbals) = dots
-    assert kick[0] == "kick" and float(kick[1]) == 0.0
+    assert kick[0] == "kick" and float(kick[1]) == site_story.DOT  # whole, at the edge
     assert cymbals[0] == "cymbals" and float(cymbals[1]) == site_story.WIDTH / 2
     assert float(cymbals[2]) > float(kick[2])  # the cymbals' lane is below the kick's
     assert 'aria-hidden="true"' in wave
@@ -157,3 +157,49 @@ def test_the_stored_ranges_are_what_the_stored_data_gives():
     """Changing the data or the script without `site_story.py draw` fails here."""
     data = json.loads(site_story.DATA.read_text(encoding="utf-8"))
     assert site_story.RANGES.read_text(encoding="utf-8") == site_story.ranges(data)
+
+
+def test_the_last_hit_keeps_its_whole_dot_inside_the_picture():
+    data = {"seconds": 20, "loudness": [1.0], "hits": [[19.99, "kick"]]}
+    (cx,) = re.findall(
+        r'<circle[^>]*cx="([\d.]+)" cy="[\d.]+" r="(\d+)"', site_story.waveform(data)
+    )
+    assert float(cx[0]) + int(cx[1]) <= site_story.WIDTH
+
+
+def test_the_cut_drops_the_embedded_music_font_the_kept_systems_do_not_use():
+    svg = (
+        '<svg width="900px" height="2000px" xmlns="http://www.w3.org/2000/svg">'
+        "<style>@font-face { font-family: Leipzig; src: url(data:font/woff2;base64,AAAA); }</style>"
+        '<g class="system"/></svg>'
+    )
+    cut, _bars = site_story.first_systems(svg, {1: (50, 100, 200, 40)}, systems=1)
+    assert "@font-face" not in cut and "<style" not in cut
+
+
+def test_sheet_music_without_bars_is_refused_with_a_reason():
+    with pytest.raises(ValueError, match="no bars"):
+        site_story.first_systems('<svg width="900px" height="2000px"/>', {}, systems=2)
+
+
+def test_a_failing_page_leaves_every_file_as_it_was(tmp_path, monkeypatch):
+    good, bad = tmp_path / "good.html", tmp_path / "bad.html"
+    good.write_text(
+        "<!-- story:wave --><!-- /story:wave --><!-- story:marks --><!-- /story:marks -->"
+    )
+    bad.write_text("<p>no places</p>")
+    ranges = tmp_path / "story.css"
+    monkeypatch.setattr(site_story, "PAGES", (good, bad))
+    monkeypatch.setattr(site_story, "RANGES", ranges)
+    with pytest.raises(ValueError):
+        site_story.draw()
+    assert not ranges.exists() and "<svg" not in good.read_text()
+
+
+@pytest.mark.parametrize("page", site_story.PAGES, ids=["en", "de"])
+def test_the_sheet_musics_reserved_size_is_the_svgs(page):
+    """The <img> keeps its space before it loads only if its width and height are the file's."""
+    svg = site_story.NOTES.read_text(encoding="utf-8")
+    width, height = re.search(r'<svg[^>]*width="(\d+)px" height="(\d+)px"', svg).groups()
+    html = page.read_text(encoding="utf-8")
+    assert f'story/notes.svg" alt="" width="{width}" height="{height}"' in html

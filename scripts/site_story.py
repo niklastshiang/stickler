@@ -39,6 +39,7 @@ SYSTEMS = 2
 
 # the waveform picture's own coordinates
 WIDTH, WAVE_HEIGHT, LANE = 1000, 160, 26
+DOT = 7  # a hit's radius
 
 
 # ---------- analyse: the song → story.json and notes.svg ----------
@@ -62,8 +63,9 @@ def first_hits(hits: list[tuple[float, int, int]], seconds: float = SECONDS) -> 
 
 
 def _drop_systems(svg: str, keep: int) -> str:
-    """The SVG without the systems after the first `keep` (Verovio's `<g class="system">`) and
-    without the tempo mark, whose note is a glyph of a font the site does not load."""
+    """The SVG without the systems after the first `keep` (Verovio's `<g class="system">`),
+    without the tempo mark (its note is the one glyph set in the music font Leipzig) and without
+    the font itself, embedded as a `<style>` (58 kB): the kept notes are drawn as paths."""
     import xml.etree.ElementTree as ET
 
     ET.register_namespace("", "http://www.w3.org/2000/svg")
@@ -75,12 +77,16 @@ def _drop_systems(svg: str, keep: int) -> str:
             parent.remove(system)
         for tempo in [child for child in parent if child.get("class") == "tempo"]:
             parent.remove(tempo)
+        for style in [child for child in parent if child.tag.endswith("}style")]:
+            parent.remove(style)
     return ET.tostring(root, encoding="unicode")
 
 
 def first_systems(svg: str, boxes: dict[int, tuple], systems: int = SYSTEMS) -> tuple[str, dict]:
     """The page cut below its `systems`-th system: the SVG with its new height and the bars of
     those systems as [left, top, width, height] fractions of the cut picture."""
+    if not boxes:
+        raise ValueError("the sheet music has no bars to show")
     rows = sorted({round(box[1]) for box in boxes.values()})[:systems]
     kept = {bar: box for bar, box in boxes.items() if round(box[1]) in rows}
     svg = _drop_systems(svg, systems)
@@ -156,9 +162,9 @@ def waveform(data: dict) -> str:
     height = lanes_top + LANE * len(GROUPS)
     dots = []
     for t, group in data["hits"]:
-        x = t / seconds * WIDTH
+        x = DOT + t / seconds * (WIDTH - 2 * DOT)  # the first and last dots stay whole
         y = lanes_top + LANE * GROUPS.index(group) + LANE / 2
-        dots.append(f'<circle class="story-hit {group}" cx="{x:.1f}" cy="{y:.1f}" r="7"/>')
+        dots.append(f'<circle class="story-hit {group}" cx="{x:.1f}" cy="{y:.1f}" r="{DOT}"/>')
     lines = "".join(
         f'<path class="story-lane" d="M0 {lanes_top + LANE * k + LANE / 2:.1f}H{WIDTH}"/>'
         for k in range(len(GROUPS))
@@ -218,9 +224,11 @@ def fill(html: str, drawn: dict[str, str]) -> str:
 def draw() -> None:
     data = json.loads(DATA.read_text(encoding="utf-8"))
     drawn = pictures(data)
+    # everything is made before anything is written: a page without its places changes nothing
+    pages = {page: fill(page.read_text(encoding="utf-8"), drawn) for page in PAGES}
     RANGES.write_text(ranges(data), encoding="utf-8")
-    for page in PAGES:
-        page.write_text(fill(page.read_text(encoding="utf-8"), drawn), encoding="utf-8")
+    for page, html in pages.items():
+        page.write_text(html, encoding="utf-8")
     print(f"site-story: {', '.join(drawn)} drawn into {len(PAGES)} pages, {RANGES.name} written")
 
 

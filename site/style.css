@@ -440,7 +440,8 @@ h3 {
   background: var(--card);
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.99rem) {
+  /* one column below 48rem; the motion's two sticky columns start at 48rem */
   .story-step {
     grid-template-columns: minmax(0, 1fr);
   }
