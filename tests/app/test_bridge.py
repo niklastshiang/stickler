@@ -709,3 +709,34 @@ def test_a_file_that_is_no_backup_is_refused_with_its_reason(running, tmp_path):
     assert reply["error"]["code"] == "not_a_backup"
     assert reply["error"]["message"].startswith("This is no Stickler backup:")
     assert running.send("back_up")["error"]["code"] == "bad_argument"
+
+
+# Uninstall Stickler… for the Mac app (SPEC.md "Release 10 (proposed): keep and remove", B)
+
+
+def test_the_mac_app_uninstalls_its_data_over_the_bridge_and_is_told_when_it_is_gone(
+    monkeypatch, tmp_path
+):
+    from stickler_app import paths, settings
+
+    monkeypatch.setenv("STICKLER_PACKAGED", "macos")
+    weights = paths.data_home() / "adapters" / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    (weights / "model.ckpt").write_bytes(b"x" * 2_000_000)
+    settings.update(settings.store_path(), zoom=1.25)
+    running = Running()
+    try:
+        assert wait(lambda: running.states())
+        sizes = running.send("uninstall_sizes")
+        assert sizes["keep"] >= 2_000_000 and sizes["everything"] >= sizes["keep"]
+        assert sizes["keep_text"].startswith("This removes Stickler and frees 2 MB.")
+        assert running.send("uninstall")["error"]["code"] == "bad_argument"
+        assert running.send("uninstall", everything=False)["ok"]  # the reply: all is gone
+        assert not weights.exists()
+        assert settings.load(settings.store_path()).zoom == 1.25  # kept: the box not ticked
+    finally:
+        running.stop()
+
+
+def test_from_the_checkout_nothing_is_uninstalled(running):
+    assert running.send("uninstall", everything=True)["error"]["code"] == "not_now"

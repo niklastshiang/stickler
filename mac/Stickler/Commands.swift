@@ -26,6 +26,10 @@ struct SticklerCommands: Commands {
                 Task { await Removal.ask(model) }
             }
             .disabled(!(model.phase == .running && model.state.can.removeModels))
+            Button("Uninstall Stickler…") {
+                Task { await Uninstalling.ask(model) }
+            }
+            .disabled(!(model.phase == .running && model.state.can.removeModels))
         }
         CommandGroup(replacing: .newItem) {
             Button("Open…") { Panels.openSong(model) }

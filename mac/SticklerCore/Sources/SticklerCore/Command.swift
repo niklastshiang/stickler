@@ -26,6 +26,8 @@ public enum Command: Equatable, Sendable {
     case backUp(dest: String)
     case backupSummary(src: String)
     case restore(src: String)
+    case uninstallSizes
+    case uninstall(everything: Bool)
     case quit
 
     /// The command's name on the wire.
@@ -55,6 +57,8 @@ public enum Command: Equatable, Sendable {
         case .backUp: "back_up"
         case .backupSummary: "backup_summary"
         case .restore: "restore"
+        case .uninstallSizes: "uninstall_sizes"
+        case .uninstall: "uninstall"
         case .quit: "quit"
         }
     }
@@ -88,7 +92,7 @@ private struct CommandWire: Encodable {
             try container.encodeIfPresent(zoom, forKey: .zoom)  // the stored size without
         case .setZoom(let zoom):
             try container.encode(zoom, forKey: .zoom)
-        case .removeModels(let everything):
+        case .removeModels(let everything), .uninstall(let everything):
             try container.encode(everything, forKey: .everything)
         case .backupSummary(let src), .restore(let src):
             try container.encode(src, forKey: .src)

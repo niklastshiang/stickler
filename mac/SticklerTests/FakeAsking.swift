@@ -49,6 +49,17 @@ final class FakeAsking: Asking {
         return restoreIt
     }
 
+    var uninstallAnswer: Bool?
+    private(set) var uninstallSizes: [UninstallSizes] = []
+    private(set) var told: [String] = []
+
+    func uninstall(_ sizes: UninstallSizes) -> Bool? {
+        uninstallSizes.append(sizes)
+        return uninstallAnswer
+    }
+
+    func tell(_ text: String) { told.append(text) }
+
     func open(_ file: URL, with application: URL) {
         opened.append((file, application))
     }

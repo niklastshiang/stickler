@@ -33,6 +33,7 @@ from stickler_app import (
     settings,
     setup,
     steps,
+    uninstall,
     zoom,
 )
 from stickler_app.i18n import _
@@ -319,6 +320,8 @@ class Bridge:
             "back_up": lambda c: self._back_up(Path(_text(c, "dest"))),
             "backup_summary": lambda c: self._backup_summary(Path(_text(c, "src"))),
             "restore": lambda c: self._fits(self._ctl.restore(Path(_text(c, "src")))),
+            "uninstall_sizes": self._uninstall_sizes,
+            "uninstall": lambda c: self._uninstall(_flag(c, "everything")),
             "quit": lambda _c: {},
         }
 
@@ -474,6 +477,33 @@ class Bridge:
             "size": summary.size,
             "text": backup.question(summary, setup.size_text(summary.size)),
         }
+
+    def _uninstall_sizes(self, _command: dict[str, Any]) -> dict[str, Any]:
+        """What "Uninstall Stickler…" frees (SPEC.md "Release 10", scope B1), with the dialog's
+        text: the settings kept (the box not ticked) or everything."""
+        keep = uninstall.plan(keep_settings=True).size
+        everything = uninstall.plan(keep_settings=False).size
+
+        def text(size: int) -> str:
+            return _("This removes Stickler and frees {size}. Your songs and exports stay.").format(
+                size=setup.size_text(size)
+            )
+
+        return {
+            "keep": keep,
+            "everything": everything,
+            "keep_text": text(keep),
+            "everything_text": text(everything),
+        }
+
+    def _uninstall(self, everything: bool) -> dict[str, Any]:
+        """Removes Stickler's folders before it replies, so the Mac app quits only once they
+        are gone (it moves its own bundle to the Bin itself). Not while something runs, and not
+        from the checkout."""
+        if not self._ctl.can_remove_models:
+            raise _not_now()
+        uninstall.remove(uninstall.plan(keep_settings=not everything))
+        return {}
 
     def _removal_sizes(self, _command: dict[str, Any]) -> dict[str, Any]:
         """What "Remove Downloaded Models…" would free, with the dialog's text for each

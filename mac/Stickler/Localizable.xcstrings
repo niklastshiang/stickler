@@ -2647,6 +2647,23 @@
         }
       }
     },
+    "Stickler’s data is removed. To remove the app, quit it and drag Stickler from the Applications folder to the Bin." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Daten von Stickler sind entfernt. Um die App zu entfernen, beende sie und zieh Stickler aus dem Ordner „Programme“ in den Papierkorb."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los datos de Stickler se quitaron. Para quitar la app, ciérrala y arrastra Stickler de la carpeta Aplicaciones a la Papelera."
+          }
+        }
+      }
+    },
     "Stickler’s data is removed. To remove the app, run in a terminal:" : {
       "extractionState" : "manual",
       "localizations" : {

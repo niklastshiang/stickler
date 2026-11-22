@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-22 16:18+0100\n"
+"POT-Creation-Date: 2026-11-22 16:47+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -27,35 +27,41 @@ msgstr ""
 "correcciones que ya están en esta computadora se quedan; los ajustes se "
 "reemplazan."
 
-#: src/stickler_app/bridge.py:192
+#: src/stickler_app/bridge.py:193
 msgid "This is not possible right now."
 msgstr "Ahora mismo no es posible."
 
-#: src/stickler_app/bridge.py:197
+#: src/stickler_app/bridge.py:198
 #, python-brace-format
 msgid "The value of “{argument}” is not valid."
 msgstr "El valor de «{argument}» no es válido."
 
-#: src/stickler_app/bridge.py:367
+#: src/stickler_app/bridge.py:370
 msgid "The request could not be read."
 msgstr "No se pudo leer la solicitud."
 
-#: src/stickler_app/bridge.py:371
+#: src/stickler_app/bridge.py:374
 #, python-brace-format
 msgid "Stickler does not know the command “{name}”."
 msgstr "Stickler no conoce el comando «{name}»."
 
-#: src/stickler_app/bridge.py:381
+#: src/stickler_app/bridge.py:384
 msgid "Something went wrong inside Stickler."
 msgstr "Algo salió mal dentro de Stickler."
 
-#: src/stickler_app/bridge.py:469 src/stickler_app/controller.py:368
+#: src/stickler_app/bridge.py:472 src/stickler_app/controller.py:368
 #: src/stickler_gtk/ui/window.py:637
 #, python-brace-format
 msgid "This is no Stickler backup: {reason}"
 msgstr "Esto no es una copia de seguridad de Stickler: {reason}"
 
-#: src/stickler_app/bridge.py:485 src/stickler_gtk/ui/window.py:583
+#: src/stickler_app/bridge.py:488 src/stickler_gtk/ui/window.py:667
+#, python-brace-format
+msgid "This removes Stickler and frees {size}. Your songs and exports stay."
+msgstr ""
+"Esto quita Stickler y libera {size}. Tus canciones y exportaciones se quedan."
+
+#: src/stickler_app/bridge.py:515 src/stickler_gtk/ui/window.py:583
 #, python-brace-format
 msgid "This frees {size}. Stickler asks before it downloads the models again."
 msgstr ""
@@ -278,8 +284,16 @@ msgstr "Cerrar la ventana"
 msgid "Actual Size"
 msgstr "Tamaño real"
 
+#: src/stickler_app/mac_texts.py:42
+msgid ""
+"Stickler’s data is removed. To remove the app, quit it and drag Stickler "
+"from the Applications folder to the Bin."
+msgstr ""
+"Los datos de Stickler se quitaron. Para quitar la app, ciérrala y arrastra "
+"Stickler de la carpeta Aplicaciones a la Papelera."
+
 #. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
-#: src/stickler_app/mac_texts.py:45
+#: src/stickler_app/mac_texts.py:51
 #, python-brace-format
 msgid "{count} page"
 msgid_plural "{count} pages"
@@ -877,12 +891,6 @@ msgstr "Restaurar"
 msgid "The backup can be restored once the current work is done"
 msgstr ""
 "La copia de seguridad se puede restaurar cuando termine el trabajo en curso"
-
-#: src/stickler_gtk/ui/window.py:667
-#, python-brace-format
-msgid "This removes Stickler and frees {size}. Your songs and exports stay."
-msgstr ""
-"Esto quita Stickler y libera {size}. Tus canciones y exportaciones se quedan."
 
 #: src/stickler_gtk/ui/window.py:671
 msgid "Also remove my settings, recent songs and corrections"

@@ -30,6 +30,7 @@ LOGIC = (
     "SheetHTML",
     "ZoomMenu",
     "Backups",
+    "Uninstalling",
 )
 
 

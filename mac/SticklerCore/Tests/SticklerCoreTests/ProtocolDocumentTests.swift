@@ -124,7 +124,8 @@ let sampleCommands: [Command] = [
     .zoomOut, .actualSize, .removalSizes, .removeModels(everything: false),
     .backUp(dest: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
     .backupSummary(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
-    .restore(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"), .quit
+    .restore(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"), .uninstallSizes,
+    .uninstall(everything: false), .quit
 ]
 
 @Test func everyCommandIsWrittenAsTheDocumentShowsIt() throws {

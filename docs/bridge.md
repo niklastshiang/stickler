@@ -425,6 +425,28 @@ runs (`can_remove_models`, the same folders). A `notice` and a `recent` event fo
 {"id": 24, "ok": true}
 ```
 
+### `uninstall_sizes`
+
+What "Uninstall Stickler…" would free (SPEC.md "Release 10 (proposed): keep and remove",
+scope B1): with the settings, recent songs and corrections kept (`keep`, the default) or all of
+Stickler's folders (`everything`), each with the dialog's text. It walks the folders.
+
+```json
+{"id": 25, "cmd": "uninstall_sizes"}
+{"id": 25, "ok": true, "keep": 2213000000, "everything": 2213400000, "keep_text": "This removes Stickler and frees 2.2 GB. Your songs and exports stay.", "everything_text": "This removes Stickler and frees 2.2 GB. Your songs and exports stay."}
+```
+
+### `uninstall`
+
+Removes Stickler's folders, with `everything` the settings, recent songs and corrections too,
+and replies once they are gone; the Mac app then moves its own bundle to the Bin and quits.
+Only in an installed app, and not while something runs (`can_remove_models`).
+
+```json
+{"id": 26, "cmd": "uninstall", "everything": false}
+{"id": 26, "ok": true}
+```
+
 ### `quit`
 
 Cancels what runs, waits at most 2 s for its clean-up and exits 0. The reply comes first; a

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-22 16:18+0100\n"
+"POT-Creation-Date: 2026-11-22 16:47+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,35 +25,40 @@ msgid ""
 "already on this computer stay; the settings are replaced."
 msgstr ""
 
-#: src/stickler_app/bridge.py:192
+#: src/stickler_app/bridge.py:193
 msgid "This is not possible right now."
 msgstr ""
 
-#: src/stickler_app/bridge.py:197
+#: src/stickler_app/bridge.py:198
 #, python-brace-format
 msgid "The value of “{argument}” is not valid."
 msgstr ""
 
-#: src/stickler_app/bridge.py:367
+#: src/stickler_app/bridge.py:370
 msgid "The request could not be read."
 msgstr ""
 
-#: src/stickler_app/bridge.py:371
+#: src/stickler_app/bridge.py:374
 #, python-brace-format
 msgid "Stickler does not know the command “{name}”."
 msgstr ""
 
-#: src/stickler_app/bridge.py:381
+#: src/stickler_app/bridge.py:384
 msgid "Something went wrong inside Stickler."
 msgstr ""
 
-#: src/stickler_app/bridge.py:469 src/stickler_app/controller.py:368
+#: src/stickler_app/bridge.py:472 src/stickler_app/controller.py:368
 #: src/stickler_gtk/ui/window.py:637
 #, python-brace-format
 msgid "This is no Stickler backup: {reason}"
 msgstr ""
 
-#: src/stickler_app/bridge.py:485 src/stickler_gtk/ui/window.py:583
+#: src/stickler_app/bridge.py:488 src/stickler_gtk/ui/window.py:667
+#, python-brace-format
+msgid "This removes Stickler and frees {size}. Your songs and exports stay."
+msgstr ""
+
+#: src/stickler_app/bridge.py:515 src/stickler_gtk/ui/window.py:583
 #, python-brace-format
 msgid "This frees {size}. Stickler asks before it downloads the models again."
 msgstr ""
@@ -268,8 +273,14 @@ msgstr ""
 msgid "Actual Size"
 msgstr ""
 
+#: src/stickler_app/mac_texts.py:42
+msgid ""
+"Stickler’s data is removed. To remove the app, quit it and drag Stickler "
+"from the Applications folder to the Bin."
+msgstr ""
+
 #. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
-#: src/stickler_app/mac_texts.py:45
+#: src/stickler_app/mac_texts.py:51
 #, python-brace-format
 msgid "{count} page"
 msgid_plural "{count} pages"
@@ -848,11 +859,6 @@ msgstr ""
 
 #: src/stickler_gtk/ui/window.py:652
 msgid "The backup can be restored once the current work is done"
-msgstr ""
-
-#: src/stickler_gtk/ui/window.py:667
-#, python-brace-format
-msgid "This removes Stickler and frees {size}. Your songs and exports stay."
 msgstr ""
 
 #: src/stickler_gtk/ui/window.py:671

@@ -239,6 +239,17 @@ public final class AppModel {
         await ask(.backupSummary(src: path), BackupSummary.self)
     }
 
+    /// What "Uninstall Stickler…" frees, for its dialog.
+    public func uninstallSizes() async -> UninstallSizes? {
+        await ask(.uninstallSizes, UninstallSizes.self)
+    }
+
+    /// Removes Stickler's folders through the core; true once they are gone (the core replies
+    /// after it removed them), false when it refused (with its reason as the notice).
+    public func uninstall(everything: Bool) async -> Bool {
+        await ask(.uninstall(everything: everything), Done.self) != nil
+    }
+
     /// What "Remove Downloaded Models…" frees, for its dialog.
     public func removalSizes() async -> RemovalSizes? {
         await ask(.removalSizes, RemovalSizes.self)
