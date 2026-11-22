@@ -60,7 +60,7 @@ event is ever dropped.
 The first line. `language` is the catalogue found, `en` without one.
 
 ```json
-{"event": "hello", "protocol": 1, "version": "8", "language": "de"}
+{"event": "hello", "protocol": 1, "version": "9", "language": "de"}
 ```
 
 ### `state`

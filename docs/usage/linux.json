@@ -1,0 +1,127 @@
+{
+  "device": "linux",
+  "days": {
+    "2026-11-13": {
+      "active_minutes": 21,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 66,
+          "input": 144,
+          "output": 54593,
+          "cache_read": 7983514,
+          "cache_write": 148511
+        }
+      }
+    },
+    "2026-11-14": {
+      "active_minutes": 213,
+      "models": {
+        "claude-fable-5-2": {
+          "responses": 74,
+          "input": 176,
+          "output": 81668,
+          "cache_read": 10083575,
+          "cache_write": 191793
+        },
+        "claude-opus-5-5": {
+          "responses": 487,
+          "input": 1062,
+          "output": 557160,
+          "cache_read": 157980524,
+          "cache_write": 1186725
+        }
+      }
+    },
+    "2026-11-15": {
+      "active_minutes": 406,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 968,
+          "input": 2156,
+          "output": 876157,
+          "cache_read": 470898548,
+          "cache_write": 2226297
+        }
+      }
+    },
+    "2026-11-16": {
+      "active_minutes": 82,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 111,
+          "input": 264,
+          "output": 58295,
+          "cache_read": 11238455,
+          "cache_write": 318392
+        }
+      }
+    },
+    "2026-11-17": {
+      "active_minutes": 306,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 528,
+          "input": 1220,
+          "output": 380467,
+          "cache_read": 161744259,
+          "cache_write": 785905
+        }
+      }
+    },
+    "2026-11-18": {
+      "active_minutes": 403,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 650,
+          "input": 1522,
+          "output": 612999,
+          "cache_read": 244936327,
+          "cache_write": 1858881
+        }
+      }
+    },
+    "2026-11-19": {
+      "active_minutes": 32,
+      "models": {
+        "claude-fable-5-2": {
+          "responses": 61,
+          "input": 146,
+          "output": 227794,
+          "cache_read": 6848464,
+          "cache_write": 906941
+        }
+      }
+    },
+    "2026-11-20": {
+      "active_minutes": 79,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 235,
+          "input": 536,
+          "output": 174875,
+          "cache_read": 41611930,
+          "cache_write": 413297
+        }
+      }
+    },
+    "2026-11-22": {
+      "active_minutes": 33,
+      "models": {
+        "claude-haiku-5-5": {
+          "responses": 2,
+          "input": 4,
+          "output": 2291,
+          "cache_read": 4236,
+          "cache_write": 18263
+        },
+        "claude-opus-5-5": {
+          "responses": 55,
+          "input": 122,
+          "output": 32906,
+          "cache_read": 5256471,
+          "cache_write": 102937
+        }
+      }
+    }
+  }
+}

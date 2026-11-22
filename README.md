@@ -17,7 +17,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="docs/badges/facts-license.svg" alt="license: GPL-3.0-or-later" /></a>
-  <img src="docs/badges/facts-python.svg" alt="python 3.12 · 3.14" />
+  <img src="docs/badges/facts-python.svg" alt="python 3.12 · 3.15" />
   <img src="docs/badges/facts-coverage.svg" alt="coverage" />
   <a href="https://github.com/niklastshiang/stickler/releases/latest"><img src="docs/badges/facts-version.svg" alt="version" /></a>
   <img src="docs/badges/facts-local.svg" alt="runs 100% local" />
@@ -56,8 +56,8 @@ references (kick, snare, toms, hi-hat and cymbals, every hit accurate to ±50 ms
 data and, above all, on real music. The results are below, in [`> RESULTS`](#-results).
 
 The desktop app writes the drums of a song as sheet music for drummers who never open a
-terminal: drop a song in, play along with the detected hits, export a PDF. It comes as a Flatpak
-and an AppImage for Linux and, from release 8, as a native app for the Mac, see
+terminal: drop a song in, play along with the detected hits, export a PDF. It comes for Linux as a Flatpak,
+an AppImage, a `.deb` for Ubuntu and an `.rpm` for Fedora, and as a native app for the Mac, see
 [`> INSTALL THE APP`](#-install-the-app).
 
 Stickler only uses open-source models from actively maintained projects.
@@ -117,14 +117,14 @@ sudo dnf install ./Stickler-9.x86_64.rpm     # Fedora
 Software, or install it in a terminal; the GNOME runtime comes from Flathub:
 
 ```bash
-flatpak install --user Stickler-8.flatpak
+flatpak install --user Stickler-9.flatpak
 ```
 
 **AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
 and start it.
 
 ```bash
-chmod +x Stickler-8-x86_64.AppImage && ./Stickler-8-x86_64.AppImage
+chmod +x Stickler-9-x86_64.AppImage && ./Stickler-9-x86_64.AppImage
 ```
 
 **Mac**: download `Stickler-<version>.dmg`, open it and drag Stickler to
@@ -287,7 +287,7 @@ Source, version and own measurements are in the README of the respective adapter
 - [ ] Ultrareview of the finished application
 
 <details>
-<summary><b>Done</b>: releases 1–8</summary>
+<summary><b>Done</b>: releases 1–9</summary>
 
 **Done**
 
@@ -343,6 +343,10 @@ Source, version and own measurements are in the README of the respective adapter
 
 - [x] A native macOS app (SwiftUI) over the same core: sheet music with zoom and pinch, exports, the setup assistant, English, German and Spanish
 - [x] A `.dmg` for Apple silicon that brings its own Python, `uv` and ffmpeg
+
+**Release 9**
+
+- [x] A `.deb` for Ubuntu and an `.rpm` for Fedora, tested in clean systems before every release
 - [x] **Release 8:** the Mac app
 
 </details>
@@ -441,22 +445,23 @@ To keep the code from quietly getting worse, the repository enforces four rules:
 </details>
 
 <details>
-<summary><b>What the AI cost</b>: about 447 USD at API prices for release 8</summary>
+<summary><b>What the AI cost</b>: about 478 USD at API prices for release 9</summary>
 
 Claude Code logs the tokens of every response;
 [`scripts/ai_usage.py`](scripts/ai_usage.py) sums them and prices them with Anthropic's
-[API prices](https://platform.claude.com/docs/en/about-claude/pricing). The logs reach back to
-13 November 2026; the first two days of the project (the command line tool's start) are missing.
-From 19 November part of the work ran on a Mac; its logs are counted by cost only.
-On a subscription the real cost differs; this is what the same work would cost on the API.
+[API prices](https://platform.claude.com/docs/en/about-claude/pricing). Every computer that works
+on Stickler records its days in [`docs/usage/`](docs/usage/), and the table adds them up. The logs
+reach back to 13 November 2026; the first two days of the project (the command line tool's start)
+are missing. On a subscription the real cost differs; this is what the same work would cost on
+the API.
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–19 Nov 2026 | Claude Opus 5.5 (the work, reviews) | 2,810 | 2.5 M | 1,055 M | 314 USD |
-| 13–19 Nov 2026 | Claude Fable 5.2 (research subagents) | 135 | 0.31 M | 17 M | 33 USD |
-| 19–20 Nov 2026 | Claude Fable 5.2 (on the Mac) | | | | 87 USD |
-| 19–20 Nov 2026 | Claude Opus 5.5 (on the Mac) | | | | 14 USD |
-| | **Total, release 8** | | | | **about 447 USD** |
+| 13–22 Nov 2026 | Claude Opus 5.5 (the work, reviews; Linux) | 3,100 | 2.8 M | 1,102 M | 332 USD |
+| 13–22 Nov 2026 | Claude Fable 5.2 (research subagents; Linux) | 135 | 0.31 M | 17 M | 33 USD |
+| 19–20 Nov 2026 | Claude Fable 5.2 (on the Mac) | 610 | 0.63 M | 153 M | 87 USD |
+| 19–20 Nov 2026 | Claude Opus 5.5 (on the Mac) | 196 | 0.11 M | 61 M | 26 USD |
+| | **Total, release 9** (1,348 M tokens, about 31 hours active) | | | | **about 478 USD** |
 
 </details>
 
@@ -507,15 +512,15 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 1083,
+  "tests": 1103,
   "app_widget_tests": 51,
   "smoke_tests_with_models": 12,
   "mac_tests": 146,
   "coverage_percent": 98,
   "coverage_minimum": 95,
   "adrs": 8,
-  "version": 8,
-  "status": "release 8: the Mac app"
+  "version": 9,
+  "status": "release 9: Linux packages"
 }
 ```
 

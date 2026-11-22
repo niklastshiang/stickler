@@ -82,6 +82,15 @@
   </keywords>
 
   <releases>
+    <release version="9" date="2026-11-22">
+      <description>
+        <p>Stickler now also comes as a package for Ubuntu and Fedora.</p>
+        <ul>
+          <li>A .deb for Ubuntu 26.04 or newer and an .rpm for Fedora 44 or newer, using the system's GTK, GStreamer and ffmpeg</li>
+          <li>Runs on Python 3.15 too</li>
+        </ul>
+      </description>
+    </release>
     <release version="8" date="2026-11-20">
       <description>
         <p>Stickler now also comes for the Mac, with Apple silicon and macOS 26.</p>

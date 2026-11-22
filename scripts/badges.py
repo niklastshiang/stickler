@@ -66,13 +66,15 @@ def facts() -> dict[str, str]:
 
 
 def ai_figures() -> dict[str, str]:
-    """What building Stickler with Claude Code cost, from its local logs (scripts/ai_usage.py)."""
+    """What building Stickler with Claude Code cost, summed over every device's record in
+    docs/usage/ (scripts/ai_usage.py --record), not one machine's logs."""
     import ai_usage  # next to this script
 
-    totals, _first, _last = ai_usage.collect([ai_usage.log_folder()])
-    dollars = sum(ai_usage.cost(model, counts) or 0.0 for model, counts in totals.items())
-    tokens = sum(sum(counts[kind] for kind in ai_usage.KINDS) for counts in totals.values())
-    return {"ai_cost": f"≈ {dollars:,.0f} USD", "ai_tokens": f"{tokens / 1e6:,.0f} M"}
+    _rows, total = ai_usage.summary()
+    return {
+        "ai_cost": f"≈ {total['cost']:,.0f} USD",
+        "ai_tokens": f"{total['tokens'] / 1e6:,.0f} M",
+    }
 
 
 def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
@@ -80,7 +82,7 @@ def rows(f: dict[str, str]) -> dict[str, list[tuple[str, str, str]]]:
     return {
         "facts": [
             ("license", "license", "GPL-3.0"),
-            ("python", "python", "3.12 · 3.14"),
+            ("python", "python", "3.12 · 3.15"),
             ("coverage", "coverage", f"{f['coverage']}%"),
             ("version", "version", f["version"]),
             ("local", "runs", "100% local"),

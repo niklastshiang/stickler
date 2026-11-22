@@ -2852,7 +2852,7 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
 
 ## Release 9: `.deb` and `.rpm`
 
-> Status: **approved** by the owner on 2026-11-20. Plan: `tasks/plan.md` ("Release 9"), tasks 138–144. Decided by the owner on
+> Status: **done** (Checkpoint AA, release 9, 2026-11-22). Approved by the owner on 2026-11-20. Plan: `tasks/plan.md` ("Release 9"), tasks 138–144. Decided by the owner on
 > 2026-11-20: Ubuntu 26.04 LTS and newer, Fedora 44 and newer; the files on the release page,
 > no own repositories (those are a todo for later). Facts checked on the web 2026-11-20.
 
