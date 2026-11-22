@@ -2727,18 +2727,21 @@ widgets of GNOME or macOS.
    1. *Open a song*: "Drop an MP3, M4A, FLAC or WAV on Stickler, or choose one." Picture: a file
       card `fluffing-a-duck.mp3` over a dashed drop area; it slides in and settles.
    2. *Stickler listens*: "It finds every hit, then the beat and the bars. About 15 seconds."
-      Picture: the clip's waveform with the detected hits as dots by drum (kick, snare, hi-hat,
-      others), the three stages (hits, beat and bars, notes) below; the dots appear from left to
-      right, the stages tick off one after the other.
+      Picture: the song's first 20 seconds as a waveform with the detected hits as dots in the
+      three groups the clicks have (kick, snare and toms, cymbals), the three stages (hits, beat
+      and bars, notes) below; the dots appear from left to right, the stages tick off one after
+      the other.
    3. *Read and play along*: "The sheet music follows the song, bar by bar." Picture: the first
       two systems of Stickler's sheet music of the clip and a plain bar with play and time; the
       current bar's mark moves from bar to bar.
    4. *Keep it*: "PDF to print, MusicXML for MuseScore, the drum track to practise with."
       Picture: three file cards, PDF, MusicXML and FLAC; they fan out.
 2. **The pictures are made of HTML, CSS and inline SVG** in the site's own look (its colours,
-   cards and type, light and dark), from real data: the waveform from
-   `site/media/fluffing-a-duck.ogg`, the hits from Stickler's Fast analysis of that clip (the
-   same as `scripts/site_clip.py` clicks), the notes from Stickler's engraving of it.
+   cards and type, light and dark), from real data: the waveform from the song's first 20
+   seconds, the hits from Stickler's Fast analysis of the song (the ones `scripts/site_clip.py`
+   clicks), the notes from Stickler's engraving of it (the first two systems, without the tempo
+   mark, whose note needs a music font the site does not load; an `<img>` of
+   `site/story/notes.svg`, turned light in dark mode).
    `scripts/site_story.py` analyses once and keeps the data it needs in the repository
    (`site/story/*.json`), then writes the SVGs from that data; a test fails when the stored SVGs
    differ from what the script makes of the stored data.

@@ -1095,7 +1095,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ## Phase 26: Website, How it works as a story (approved 2026-11-22, SPEC.md "Website", "Change 2026-11-22")
 
-- [ ] **Task 145: The story's data and pictures** (M)
+- [x] **Task 145: The story's data and pictures** (M): done 2026-11-22. `scripts/site_story.py analyse` ran the app's Fast analysis of `Fluffing a Duck.mp3` (13 s): 45 hits in the first 20 s (34 snare and toms, 10 kick, 1 cymbal: the first bars have almost no hi-hat), 9 bars in the first two systems; `notes.svg` keeps those two systems (Verovio's inner scale cut by the same share, the tempo mark dropped: its note is a glyph of Leipzig, which the site does not load), 99 kB. `draw` makes the waveform with the hits' dots and the bar marks, each with its part of the scroll in `--from`/`--to`; the pages get their places in 146 (the test that they hold the drawing moves there). SPEC adjusted: the clicks' three groups instead of four, the waveform from the song, the notes as an `<img>`.
   - Acceptance: `scripts/site_story.py analyse` runs the Fast analysis of the example song once and stores what the pictures need in `site/story/*.json` (the clip's waveform envelope, the hits of its first 20 s by class, the engraved first systems as SVG); `scripts/site_story.py draw` writes the four pictures' SVGs from that data only, in the site's colours through CSS custom properties (light and dark).
   - Verify: `uv run pytest -q tests/test_site_story.py` (the stored SVGs equal what `draw` makes of the stored data; the hits are those of `site_clip.py`'s clip)
   - Dependencies: none · Files: `scripts/site_story.py`, `site/story/`, `tests/test_site_story.py`
