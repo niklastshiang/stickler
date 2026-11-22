@@ -228,6 +228,29 @@ def test_quick_corrections_make_one_run_and_the_newest_is_stored(monkeypatch, tm
     assert ctl.state.notation.tempo == 54
 
 
+def test_a_moved_song_opens_with_its_corrections_and_one_recent_entry(monkeypatch, tmp_path, host):
+    """SPEC.md "Release 10", scope A3: songs are found again by their content."""
+    fake = FakeApi(monkeypatch)
+    ctl = _made(host)
+    song = tmp_path / "old" / "eye.flac"
+    song.parent.mkdir()
+    song.write_bytes(b"the same song")
+    _result(ctl, song)
+    assert ctl.correct(api.Corrections(tempo="half"))
+    assert wait(lambda: ctl.state.pending is None)
+    moved = tmp_path / "new" / "eye.flac"
+    moved.parent.mkdir()
+    song.rename(moved)
+
+    ctl.open(moved)
+    assert wait(lambda: isinstance(ctl.state, session.Result) and ctl.state.song == moved)
+    assert fake.runs[-1] == (moved, api.Corrections(tempo="half"))
+    assert [r.path for r in recent.load(recent.store_path())] == [moved]
+    assert corrections.load(corrections.store_path()) == {
+        moved.absolute(): api.Corrections(tempo="half")
+    }
+
+
 def test_a_failed_correction_keeps_the_sheet_and_says_why(monkeypatch, tmp_path, host):
     fake = FakeApi(monkeypatch)
     ctl = _made(host)
@@ -242,7 +265,7 @@ def test_a_failed_correction_keeps_the_sheet_and_says_why(monkeypatch, tmp_path,
 
 
 def test_a_correction_that_cannot_be_stored_still_shows(monkeypatch, tmp_path, host):
-    def read_only(store, song, fix):
+    def read_only(store, song, fix, digest=""):
         raise OSError(30, "Read-only file system")
 
     monkeypatch.setattr(corrections, "remember", read_only)

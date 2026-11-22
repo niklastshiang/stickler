@@ -79,6 +79,7 @@ class Controller:
         self._state: session.State = session.Empty()
         self._recent_store = recent.store_path()
         self._recent = recent.load(self._recent_store)
+        self._digests: dict[Path, str] = {}  # each opened song's content (paths.song_digest)
         self._token: api.CancelToken | None = None
         self._threads: set[threading.Thread] = set()  # jobs still running, replaced ones too
         self._closed = False  # after `shutdown` no job starts
@@ -342,11 +343,11 @@ class Controller:
 
     # the flows
 
-    @staticmethod
-    def _stored(song: Path) -> api.Corrections:
-        """The song's remembered corrections (SPEC.md, module `corrections`)."""
-        stored = corrections.load(corrections.store_path())
-        return stored.get(song.absolute(), corrections.DETECTED)
+    def _stored(self, song: Path) -> api.Corrections:
+        """The song's remembered corrections (SPEC.md, module `corrections`), by its path or, when
+        it moved, by its content (SPEC.md "Release 10", scope A3)."""
+        digest = self._digests[song] = paths.song_digest(song)
+        return corrections.lookup(corrections.store_path(), song.absolute(), digest)
 
     def _start(self, state: session.Analysing) -> None:
         if self._closed:
@@ -364,7 +365,8 @@ class Controller:
             info, notation = finished
             state = session.finished(self._state, job, info, notation)
             if isinstance(state, session.Result):
-                entry = recent.opened_now(state.song, info.title, info.artist)
+                digest = self._digests.get(state.song, "")
+                entry = recent.opened_now(state.song, info.title, info.artist, digest)
                 self._set_recent(recent.add(self._recent, entry))
             self._set(state)
 
@@ -415,7 +417,8 @@ class Controller:
 
     def _remember(self, song: Path, fix: api.Corrections) -> None:
         try:
-            corrections.remember(corrections.store_path(), song.absolute(), fix)
+            digest = self._digests.get(song, "")
+            corrections.remember(corrections.store_path(), song.absolute(), fix, digest)
         except OSError as exc:  # the correction still shows for this session
             self._notice(
                 _("The correction could not be saved: {reason}").format(reason=exc.strerror)

@@ -22,6 +22,7 @@ class Recent:
     title: str
     artist: str
     opened: date
+    digest: str = ""  # the song's content (paths.song_digest); empty in lists before Release 10
 
 
 @dataclass(frozen=True)
@@ -39,7 +40,11 @@ def store_path(env: Mapping[str, str] = os.environ) -> Path:
 
 
 def add(songs: list[Recent], song: Recent) -> list[Recent]:
-    others = [s for s in songs if s.path != song.path]
+    """The song first; its earlier entry goes, also one at another path with the same content
+    (the song moved)."""
+    others = [
+        s for s in songs if s.path != song.path and not (song.digest and s.digest == song.digest)
+    ]
     return [song, *others][:LIMIT]
 
 
@@ -52,7 +57,13 @@ def load(store: Path) -> list[Recent]:
     try:
         raw = json.loads(store.read_text(encoding="utf-8"))
         songs = [
-            Recent(Path(e["path"]), e["title"], e["artist"], date.fromisoformat(e["opened"]))
+            Recent(
+                Path(e["path"]),
+                e["title"],
+                e["artist"],
+                date.fromisoformat(e["opened"]),
+                str(e.get("digest", "")),
+            )
             for e in raw
         ]
     except (OSError, ValueError, TypeError, KeyError):
@@ -65,6 +76,7 @@ def save(store: Path, songs: list[Recent]) -> None:
     store.parent.mkdir(parents=True, exist_ok=True)
     data = [
         {"path": str(s.path), "title": s.title, "artist": s.artist, "opened": s.opened.isoformat()}
+        | ({"digest": s.digest} if s.digest else {})
         for s in songs
     ]
     part = store.with_suffix(".json.part")
@@ -97,5 +109,5 @@ def rows(
     return shown
 
 
-def opened_now(song: Path, title: str, artist: str) -> Recent:
-    return Recent(song, title, artist, date.today())
+def opened_now(song: Path, title: str, artist: str, digest: str = "") -> Recent:
+    return Recent(song, title, artist, date.today(), digest)

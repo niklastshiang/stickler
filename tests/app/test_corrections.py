@@ -77,3 +77,35 @@ def test_the_store_lives_next_to_the_recent_songs(tmp_path):
     assert corrections.store_path({"XDG_DATA_HOME": str(tmp_path)}) == (
         tmp_path / "stickler" / "corrections.json"
     )
+
+
+# Release 10 (SPEC.md "keep and remove", scope A3): songs found again by their content
+
+
+def test_a_moved_song_keeps_its_corrections(tmp_path):
+    store = tmp_path / "corrections.json"
+    fix = api.Corrections(tempo="half")
+    corrections.remember(store, Path("/old/song.mp3"), fix, digest="abc")
+    assert corrections.lookup(store, Path("/new/song.mp3"), "abc") == fix
+    # the entry moved with the song: the new path is remembered, the old one is gone
+    assert set(json.loads(store.read_text())) == {"/new/song.mp3"}
+    assert corrections.lookup(store, Path("/new/song.mp3"), "abc") == fix
+
+
+def test_an_entry_without_a_digest_gets_one_when_its_song_is_opened(tmp_path):
+    store = tmp_path / "corrections.json"
+    store.write_text(json.dumps({"/a/song.mp3": {"tempo": "double"}}))  # before Release 10
+    assert corrections.lookup(store, Path("/a/song.mp3"), "abc") == api.Corrections(tempo="double")
+    assert json.loads(store.read_text())["/a/song.mp3"]["digest"] == "abc"
+
+
+def test_an_unknown_song_has_the_detected_values_and_changes_nothing(tmp_path):
+    store = tmp_path / "corrections.json"
+    corrections.remember(store, Path("/a/song.mp3"), api.Corrections(tempo="half"), digest="abc")
+    before = store.read_text()
+    assert corrections.lookup(store, Path("/b/other.mp3"), "xyz") == DETECTED
+    assert store.read_text() == before
+
+
+def test_the_digest_is_not_a_correction():
+    assert corrections._parse({"tempo": "half", "digest": "abc"}) == api.Corrections(tempo="half")

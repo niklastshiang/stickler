@@ -48,6 +48,17 @@ def score_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
     return cache_home(env) / "scores" / f"{song.stem}-{key}.musicxml"
 
 
+def song_digest(song: Path) -> str:
+    """The song's content as the models' results cache keys it (SHA-1 of the file), so a song is
+    found again after it moved or on another computer (SPEC.md "Release 10", scope A3); empty
+    when it cannot be read."""
+    try:
+        with song.open("rb") as f:
+            return hashlib.file_digest(f, "sha1").hexdigest()
+    except OSError:
+        return ""
+
+
 def hits_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
     """The detected hits of a song as clicks (api.render_hits), next to its score's name."""
     return cache_home(env) / "hits" / f"{score_path(song, env).stem}.wav"
