@@ -9,8 +9,9 @@ drawn from Stickler's real output for the example song, not from screenshots.
 and keeps what the pictures need in `site/story/`: `story.json` (the first seconds' loudness and
 hits) and `notes.svg` (the first two systems of the engraved sheet music, with the bars' places
 in `story.json`). `draw` turns that data into the inline pictures of both index pages, between
-`<!-- story:NAME -->` and `<!-- /story:NAME -->`; it needs no models, and a test checks that the
-pages hold what it draws.
+`<!-- story:NAME -->` and `<!-- /story:NAME -->`, and each hit's and bar's part of the scroll
+into `site/story/story.css` (the site's Content-Security-Policy allows no style attributes); it
+needs no models, and a test checks that the pages and the CSS hold what it draws.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ SITE = ROOT / "site"
 STORY = SITE / "story"
 DATA = STORY / "story.json"
 NOTES = STORY / "notes.svg"
+RANGES = STORY / "story.css"  # each hit's and bar's part of the scroll
 PAGES = (SITE / "index.html", SITE / "de" / "index.html")
 
 SECONDS = 20  # as the example clip (scripts/site_clip.py)
@@ -139,14 +141,9 @@ def analyse(song: Path) -> None:
 # ---------- draw: story.json → the inline pictures ----------
 
 
-def _range(start: float, end: float) -> str:
-    """A part of the step's view timeline, as the CSS custom properties the motion reads."""
-    return f"--from: {start:.0f}%; --to: {end:.0f}%"
-
-
 def waveform(data: dict) -> str:
     """The loudness as mirrored bars and the hits as dots in three lanes (kick, snare and toms,
-    cymbals), each dot with the part of the scroll it appears in."""
+    cymbals)."""
     loudness, seconds = data["loudness"], data["seconds"]
     step = WIDTH / len(loudness)
     middle = WAVE_HEIGHT / 2
@@ -161,11 +158,7 @@ def waveform(data: dict) -> str:
     for t, group in data["hits"]:
         x = t / seconds * WIDTH
         y = lanes_top + LANE * GROUPS.index(group) + LANE / 2
-        start = 20 + t / seconds * 50  # the dots appear from 20 % to 70 % of the step
-        dots.append(
-            f'<circle class="story-hit {group}" cx="{x:.1f}" cy="{y:.1f}" r="7" '
-            f'style="{_range(start, start + 4)}"/>'
-        )
+        dots.append(f'<circle class="story-hit {group}" cx="{x:.1f}" cy="{y:.1f}" r="7"/>')
     lines = "".join(
         f'<path class="story-lane" d="M0 {lanes_top + LANE * k + LANE / 2:.1f}H{WIDTH}"/>'
         for k in range(len(GROUPS))
@@ -178,20 +171,34 @@ def waveform(data: dict) -> str:
 
 
 def bar_marks(data: dict) -> str:
-    """One mark per bar of the shown systems over the sheet music, each lit in its own part of
-    the scroll, bar after bar; the last one stays lit."""
-    bars = list(data["bars"].values())
-    share = 60 / len(bars)
-    marks = []
-    for k, (x, y, w, h) in enumerate(bars):
-        start = 20 + k * share
-        end = start + share if k < len(bars) - 1 else 100
-        marks.append(
-            f'<rect class="story-bar" x="{x * 100:.2f}%" y="{y * 100:.2f}%" '
-            f'width="{w * 100:.2f}%" height="{h * 100:.2f}%" rx="4" '
-            f'style="{_range(start, end)}"/>'
+    """One mark per bar of the shown systems over the sheet music."""
+    marks = "".join(
+        f'<rect class="story-bar" x="{x * 100:.2f}%" y="{y * 100:.2f}%" '
+        f'width="{w * 100:.2f}%" height="{h * 100:.2f}%" rx="4"/>'
+        for x, y, w, h in data["bars"].values()
+    )
+    return f'<svg class="story-marks" aria-hidden="true">{marks}</svg>'
+
+
+def ranges(data: dict) -> str:
+    """Each picture part's share of its step's view timeline: the hits appear from 20 % to 74 %
+    in the order of their times, the bar marks light one after the other from 20 % and the last
+    one stays to the end."""
+
+    def rule(part: str, k: int, start: float, end: float) -> str:
+        return (
+            f".{part}:nth-of-type({k}) {{ animation-range: cover {start:.0f}% cover {end:.0f}%; }}"
         )
-    return f'<svg class="story-marks" aria-hidden="true">{"".join(marks)}</svg>'
+
+    lines = ["/* written by scripts/site_story.py draw from site/story/story.json */"]
+    for k, (t, _group) in enumerate(data["hits"], start=1):
+        start = 20 + t / data["seconds"] * 50
+        lines.append(rule("story-hit", k, start, start + 4))
+    bars = len(data["bars"])
+    for k in range(1, bars + 1):
+        start = 20 + (k - 1) * 60 / bars
+        lines.append(rule("story-bar", k, start, start + 60 / bars if k < bars else 100))
+    return "\n".join(lines) + "\n"
 
 
 def pictures(data: dict) -> dict[str, str]:
@@ -209,10 +216,12 @@ def fill(html: str, drawn: dict[str, str]) -> str:
 
 
 def draw() -> None:
-    drawn = pictures(json.loads(DATA.read_text(encoding="utf-8")))
+    data = json.loads(DATA.read_text(encoding="utf-8"))
+    drawn = pictures(data)
+    RANGES.write_text(ranges(data), encoding="utf-8")
     for page in PAGES:
         page.write_text(fill(page.read_text(encoding="utf-8"), drawn), encoding="utf-8")
-    print(f"site-story: {', '.join(drawn)} drawn into {len(PAGES)} pages")
+    print(f"site-story: {', '.join(drawn)} drawn into {len(PAGES)} pages, {RANGES.name} written")
 
 
 def main(argv: list[str]) -> int:

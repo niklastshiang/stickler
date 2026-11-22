@@ -81,26 +81,45 @@ def test_the_cut_has_no_tempo_mark_whose_note_needs_a_font_the_site_lacks():
     assert 'class="system"' in cut and 'class="tempo"' not in cut
 
 
-def test_each_hit_is_a_dot_in_its_lane_that_appears_with_the_scroll():
+def test_each_hit_is_a_dot_in_its_lane():
     data = {"seconds": 20, "loudness": [0.5, 1.0], "hits": [[0.0, "kick"], [10.0, "cymbals"]]}
     wave = site_story.waveform(data)
-    dots = re.findall(
-        r'<circle class="story-hit (\w+)" cx="([\d.]+)" cy="([\d.]+)"[^>]*style="([^"]+)"', wave
-    )
+    dots = re.findall(r'<circle class="story-hit (\w+)" cx="([\d.]+)" cy="([\d.]+)"', wave)
     (kick, cymbals) = dots
     assert kick[0] == "kick" and float(kick[1]) == 0.0
     assert cymbals[0] == "cymbals" and float(cymbals[1]) == site_story.WIDTH / 2
     assert float(cymbals[2]) > float(kick[2])  # the cymbals' lane is below the kick's
-    assert kick[3] == "--from: 20%; --to: 24%" and cymbals[3] == "--from: 45%; --to: 49%"
     assert 'aria-hidden="true"' in wave
+
+
+def test_no_picture_carries_a_style_attribute_the_sites_policy_would_block():
+    """The site's Content-Security-Policy allows styles from its own files only."""
+    data = {
+        "seconds": 20,
+        "loudness": [0.5, 1.0],
+        "hits": [[0.0, "kick"]],
+        "bars": {"1": [0.1, 0.1, 0.2, 0.2]},
+    }
+    assert all("style=" not in picture for picture in site_story.pictures(data).values())
+
+
+def test_each_hit_appears_in_its_own_part_of_the_scroll_from_left_to_right():
+    data = {"seconds": 20, "hits": [[0.0, "kick"], [10.0, "cymbals"]], "bars": {}}
+    css = site_story.ranges(data)
+    assert ".story-hit:nth-of-type(1) { animation-range: cover 20% cover 24%; }" in css
+    assert ".story-hit:nth-of-type(2) { animation-range: cover 45% cover 49%; }" in css
 
 
 def test_the_bar_marks_light_one_after_the_other_and_the_last_stays():
     data = {
-        "bars": {"1": [0.1, 0.1, 0.2, 0.2], "2": [0.3, 0.1, 0.2, 0.2], "3": [0.1, 0.6, 0.4, 0.2]}
+        "hits": [],
+        "bars": {"1": [0.1, 0.1, 0.2, 0.2], "2": [0.3, 0.1, 0.2, 0.2], "3": [0.1, 0.6, 0.4, 0.2]},
     }
-    marks = re.findall(r'style="--from: (\d+)%; --to: (\d+)%"', site_story.bar_marks(data))
-    assert marks == [("20", "40"), ("40", "60"), ("60", "100")]
+    marks = re.findall(
+        r"\.story-bar:nth-of-type\((\d)\) \{ animation-range: cover (\d+)% cover (\d+)%; \}",
+        site_story.ranges(data),
+    )
+    assert marks == [("1", "20", "40"), ("2", "40", "60"), ("3", "60", "100")]
 
 
 def test_a_page_without_a_place_for_a_picture_is_refused():
@@ -132,3 +151,9 @@ def test_the_pages_hold_what_the_stored_data_draws(page):
     html = page.read_text(encoding="utf-8")
     drawn = site_story.pictures(json.loads(site_story.DATA.read_text(encoding="utf-8")))
     assert site_story.fill(html, drawn) == html
+
+
+def test_the_stored_ranges_are_what_the_stored_data_gives():
+    """Changing the data or the script without `site_story.py draw` fails here."""
+    data = json.loads(site_story.DATA.read_text(encoding="utf-8"))
+    assert site_story.RANGES.read_text(encoding="utf-8") == site_story.ranges(data)

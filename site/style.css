@@ -1218,3 +1218,183 @@ audio {
     text-align: left;
   }
 }
+
+/* How it works, in motion (SPEC "Website", "Change 2026-11-22"): each picture moves on its own
+   step's view timeline while the step scrolls by. Only where the browser has view timelines and
+   the visitor has not asked for reduced motion; elsewhere the end states above stay. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .story-step {
+      view-timeline: --story-step block;
+    }
+
+    @media (min-width: 48rem) {
+      /* the step is a screen tall; its text and picture stay in view while it passes */
+      .story-step {
+        min-height: 90vh;
+        align-items: start;
+      }
+
+      .story-text,
+      .story-picture {
+        position: sticky;
+        top: 22vh;
+      }
+    }
+
+    .story-file,
+    .story-hit,
+    .story-tick,
+    .story-bar,
+    .story-track span,
+    .story-out {
+      animation-timeline: --story-step;
+      animation-fill-mode: both;
+      animation-timing-function: ease-out;
+    }
+
+    /* 1: the file drops in */
+    .story-file {
+      animation-name: story-drop;
+      animation-range: cover 15% cover 40%;
+    }
+
+    @keyframes story-drop {
+      from {
+        opacity: 0;
+        transform: translateY(-4rem) rotate(-4deg);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* 2: the hits appear from left to right, each in its own part of the scroll
+       (site/story/story.css); the stages' ticks appear one after the other (their text stays
+       readable) */
+    .story-hit {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation-name: story-pop;
+    }
+
+    @keyframes story-pop {
+      from {
+        opacity: 0;
+        transform: scale(0);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .story-tick {
+      animation-name: story-stage;
+    }
+
+    .story-stage-1 .story-tick {
+      animation-range: cover 25% cover 35%;
+    }
+
+    .story-stage-2 .story-tick {
+      animation-range: cover 45% cover 55%;
+    }
+
+    .story-stage-3 .story-tick {
+      animation-range: cover 65% cover 75%;
+    }
+
+    @keyframes story-stage {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* 3: the mark goes from bar to bar (site/story/story.css); the last one stays; the play
+       bar fills */
+    .story-bar {
+      animation-name: story-bar;
+    }
+
+    .story-bar:last-child {
+      animation-name: story-bar-last;
+    }
+
+    @keyframes story-bar {
+      0%,
+      100% {
+        opacity: 0;
+      }
+
+      15%,
+      85% {
+        opacity: 0.35;
+      }
+    }
+
+    @keyframes story-bar-last {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 0.35;
+      }
+    }
+
+    .story-track span {
+      transform-origin: left;
+      animation-name: story-track;
+      animation-range: cover 20% cover 80%;
+    }
+
+    @keyframes story-track {
+      from {
+        transform: scaleX(0);
+      }
+
+      to {
+        transform: scaleX(2.5); /* the bar's span is 40 % of the track; full at the end */
+      }
+    }
+
+    /* 4: the three files fan out from the first */
+    .story-out {
+      animation-name: story-out;
+    }
+
+    .story-out-1 {
+      animation-range: cover 20% cover 35%;
+    }
+
+    .story-out-2 {
+      --from-y: -4.5rem;
+      animation-range: cover 25% cover 42%;
+    }
+
+    .story-out-3 {
+      --from-y: -9rem;
+      animation-range: cover 30% cover 50%;
+    }
+
+    @keyframes story-out {
+      from {
+        opacity: 0;
+        transform: translateY(var(--from-y, 0)) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
+}

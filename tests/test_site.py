@@ -330,6 +330,38 @@ def test_how_it_works_is_four_steps_each_with_its_picture_hidden_from_screen_rea
     assert section.count('<div class="story-picture" aria-hidden="true">') == 4
     assert "story-hit" in section and "story-bar" in section and "story/notes.svg" in section
     assert 'class="card"' not in section and "step-icon" not in section
+    assert 'story/story.css">' in html  # each hit's and bar's part of the scroll
+
+
+def _braced(css: str, start: int) -> str:
+    """The text from `start` to the brace that closes the first one opened after it."""
+    depth = 0
+    for end in range(css.index("{", start), len(css)):
+        depth += {"{": 1, "}": -1}.get(css[end], 0)
+        if depth == 0:
+            return css[start : end + 1]
+    raise AssertionError("unbalanced braces")
+
+
+def test_the_story_moves_only_where_motion_is_wanted_and_supported():
+    """SPEC "Website", "Change 2026-11-22", scope 4 and 5: the motion is scroll-driven CSS, all
+    of it in one block that a browser without view timelines or a visitor who asked for
+    reduced motion never applies; only opacity and transform move."""
+    css = (SITE / "style.css").read_text(encoding="utf-8")
+    opening = (
+        "@media (prefers-reduced-motion: no-preference) {\n"
+        "  @supports (animation-timeline: view()) {"
+    )
+    assert css.count(opening) == 1
+    block = _braced(css, css.index(opening))
+    rest = css.replace(block, "")
+    assert "animation-timeline" in block and "view-timeline" in block
+    assert "animation-timeline" not in rest and "view-timeline" not in rest
+    assert "timeline-scope" not in css
+    frames = [_braced(block, m.start()) for m in re.finditer(r"@keyframes", block)]
+    assert frames
+    moved = {m for f in frames for m in re.findall(r"([a-z-]+)\s*:", f)}
+    assert moved <= {"opacity", "transform"}, moved
 
 
 @pytest.mark.parametrize("folder", ["", "de/"])
