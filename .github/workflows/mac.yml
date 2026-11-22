@@ -5,7 +5,7 @@ name: mac
 
 on:
   push:
-    branches: [main, "claude/mac-shell"] # the app compiles only here: each task is checked on the branch before main
+    branches: [main, "claude/mac-*"] # the app compiles only here: each task is checked on its branch before main
   pull_request:
 
 permissions:
