@@ -163,7 +163,7 @@ def waveform(data: dict) -> str:
         y = lanes_top + LANE * GROUPS.index(group) + LANE / 2
         start = 20 + t / seconds * 50  # the dots appear from 20 % to 70 % of the step
         dots.append(
-            f'<circle class="story-hit {group}" cx="{x:.1f}" cy="{y:.1f}" r="5" '
+            f'<circle class="story-hit {group}" cx="{x:.1f}" cy="{y:.1f}" r="7" '
             f'style="{_range(start, start + 4)}"/>'
         )
     lines = "".join(

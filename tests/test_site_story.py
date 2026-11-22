@@ -124,3 +124,11 @@ def test_the_stored_data_is_the_example_songs_first_seconds():
     assert {group for _t, group in data["hits"]} == set(site_story.GROUPS)
     assert list(data["bars"]) == [str(n) for n in range(1, len(data["bars"]) + 1)]
     assert site_story.NOTES.read_text(encoding="utf-8").lstrip().startswith("<svg")
+
+
+@pytest.mark.parametrize("page", site_story.PAGES, ids=["en", "de"])
+def test_the_pages_hold_what_the_stored_data_draws(page):
+    """Changing the data or the script without `site_story.py draw` fails here."""
+    html = page.read_text(encoding="utf-8")
+    drawn = site_story.pictures(json.loads(site_story.DATA.read_text(encoding="utf-8")))
+    assert site_story.fill(html, drawn) == html

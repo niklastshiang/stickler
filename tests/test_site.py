@@ -320,6 +320,19 @@ def test_search_engines_find_every_page_in_both_languages():
 
 
 @pytest.mark.parametrize("folder", ["", "de/"])
+def test_how_it_works_is_four_steps_each_with_its_picture_hidden_from_screen_readers(folder):
+    """SPEC "Website", "Change 2026-11-22": the story replaces the four cards; the text says
+    everything, the pictures are decoration drawn from Stickler's output."""
+    html = (SITE / folder / "index.html").read_text(encoding="utf-8")
+    section = html[html.index('<section id="how"') :]
+    section = section[: section.index("</section>")]
+    assert section.count('<li class="story-step ') == 4 and '<ol class="story">' in section
+    assert section.count('<div class="story-picture" aria-hidden="true">') == 4
+    assert "story-hit" in section and "story-bar" in section and "story/notes.svg" in section
+    assert 'class="card"' not in section and "step-icon" not in section
+
+
+@pytest.mark.parametrize("folder", ["", "de/"])
 def test_get_stickler_is_one_row_per_download_with_its_line_to_copy(folder):
     """SPEC "Website", content 9 (owner, 2026-11-22, after TuxTalk's page): one row per file,
     in this order; each Linux row has its terminal line with a copy button beside its
