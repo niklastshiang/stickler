@@ -3038,6 +3038,109 @@ src/stickler_app/paths.py            # + packaged() == "system"
   unsigned file. Not checked: the clicks in either window and how the warning about an unsigned
   package looks (that would need a desktop VM; the owner, 2026-11-22: fine without).
 
+## Release 10 (proposed): keep and remove
+
+> Status: **draft**, for the owner's approval (written 2026-11-22 at the owner's request, from
+> two ideas: "Back up settings and analysed songs" and "Uninstall Stickler…", both seen at
+> TuxTalk). Facts on uninstalling checked on the web on 2026-11-22 (a research subagent, the
+> key points checked here; the ones not confirmed are marked). Plan and tasks follow the
+> approval.
+
+### Objective
+- **User:** a drummer who changes computers, reinstalls the system, or wants Stickler gone,
+  and does not know where an app keeps its files.
+- **What:** two entries in the apps' menus. **Back Up… / Restore Backup…** keeps what a user
+  would miss in one file and brings it back on another computer. **Uninstall Stickler…**
+  removes the app and everything it downloaded, the same question on every system, with the
+  user's settings kept unless they say otherwise.
+- **Success:** after a restore on a new computer, a song analysed before opens with its sheet
+  music and its corrections without a new analysis; after an uninstall nothing of Stickler is
+  left except what the user chose to keep, without a terminal (one exception, the Flatpak, see
+  scope B3).
+
+### Scope A: backup
+1. **The menu:** "Back Up…" and "Restore Backup…" in the GTK app's main menu and in the Mac
+   app's Stickler menu, next to "Remove Downloaded Models…"; only in an installed app (from the
+   checkout the files are the benchmark's, as for the removal).
+2. **One file:** `Stickler Backup 2026-11-22.zip`, saved where the user chooses (the file
+   chooser; in the Flatpak through its portal, as the exports). A zip, so a user can look
+   inside. It holds:
+   - `backup.json`: the format's version, the app's version, the date, the system;
+   - the settings, the recent songs and the corrections (`settings.json`, `recent.json`,
+     `corrections.json`);
+   - the models' results for the analysed songs (`results/`, keyed by the song's content and
+     the model's code, so they are found again wherever the song now lies), without Demucs's
+     separated drum tracks (tens of MB per song; the next drum-track export makes them again).
+   - Not in it: the models, uv and its Python (downloaded again by the setup assistant), the
+     engraved scores and clicks (made again from the results in seconds), the songs themselves
+     and the user's exports (they are the user's own files).
+3. **Songs found again by content:** today recent songs and corrections are remembered by the
+   song's path, which differs on a new computer. Each entry also gets the song's SHA-1 (the
+   digest the results cache already uses); when a song is opened whose path is unknown but
+   whose content is known, its corrections apply and its recent entry moves to the new path.
+   Older entries without a digest get one the next time their song is opened.
+4. **Restore:** the app shows what the file holds (date, songs, size) and asks; it then adds
+   the results, adds the recent songs and corrections the computer does not have yet (an
+   entry already here stays), and takes the backup's settings. A file of a newer format
+   version, or not a Stickler backup, is refused with a reason; nothing is changed then.
+5. **Across systems:** a backup made by any of the packages or the Mac app restores in any of
+   them (only relative paths inside the file; each app puts the parts into its own folders).
+6. **Not included:** an automatic history of earlier settings (TuxTalk keeps its last ten):
+   Stickler's settings are a few volumes and sizes, nothing an update could break (open
+   question 2).
+
+### Scope B: uninstall
+1. **The menu:** "Uninstall Stickler…" below "Remove Downloaded Models…", in both apps, only
+   in an installed app. The dialog says what goes and how much space that frees: the program,
+   the models with their programs and downloads, the saved analyses; one box, off by default,
+   "Also remove my settings, recent songs and corrections" (as TuxTalk: a reinstall then picks
+   up where the user left off). The user's songs and exports are never touched.
+2. **Behind the same dialog, per package** (facts of 2026-11-22):
+
+   | Package | What the app does |
+   |---|---|
+   | AppImage | Removes its data, the menu entries and icons that an integration tool made for this file (Gear Lever, AppImageLauncher, appimaged: found by `Exec`/`TryExec` pointing at `$APPIMAGE` or by `X-AppImage-Identifier`), moves the AppImage file to the Bin, quits. The running file stays mounted until the app exits (follows from unlink(2); to be checked by a test). |
+   | `.deb` / `.rpm` | Asks PackageKit over D-Bus to remove the package (`RemovePackages`; the system asks for the password, polkit `package-remove` is `auth_admin_keep`). The same call on Ubuntu 26.04 and Fedora 44/45, where PackageKit is installed by default; not dnf5daemon, which removes without a password for an administrator. Only after the removal succeeded the app deletes its data, with code it loaded before (the package's files are gone by then), and quits. A cancelled password prompt changes nothing. |
+   | Mac | Deletes its folders under `~/Library` (Application Support, Caches, its preferences through `UserDefaults`, saved state, WebKit data), starts a small helper that moves the `.app` to the Bin once the app has quit (as Apple's developer support recommends, so Launch Services forgets it), quits. An app running from a translocated path (started from the download without moving it) cannot move itself: it says so and shows the steps. |
+   | Flatpak | Removes its data in its own folder (`~/.var/app/ng.tshia.Stickler`), then opens the Software app on Stickler's page (`appstream:ng.tshia.Stickler` through the open-URI portal; GNOME Software and KDE Discover claim it), where the user presses Uninstall; where no app claims it (Ubuntu's App Center does not), the dialog shows `flatpak uninstall --user ng.tshia.Stickler` to copy. A Flatpak cannot remove itself without the permission to run commands outside its sandbox (`org.freedesktop.Flatpak`), which turns the sandbox off: Stickler does not ask for it. |
+3. **The owner's condition** (2026-11-20: "only if it makes sense on every system, otherwise not
+   at all"): on three packages the app removes itself; on the Flatpak it removes everything it
+   can and hands the last step to the Software app. Whether that is enough is open question 1.
+4. **Texts** in English, German and Spanish, in both apps; the website's and the README's
+   uninstall texts name the menu entry first and keep the terminal lines.
+
+### Boundaries
+- **Always:** ask before anything is deleted; delete nothing when a step before failed or was
+  cancelled; only Stickler's own folders and files.
+- **Ask first:** a new permission for any package; a backup format others could edit.
+- **Never:** the Flatpak's permission to run commands on the host; dnf5daemon for the removal;
+  touching the user's songs or exports; deleting anything from the checkout.
+
+### Success criteria
+1. A backup made in one package restores in another and on the Mac: the songs open with their
+   corrections and need no new analysis (tested with a song moved to another folder).
+2. A broken, foreign or newer backup file is refused and changes nothing.
+3. In clean containers, the `.deb` and the `.rpm` remove themselves through PackageKit and
+   leave nothing in the user's folders (ticked) or only the settings (not ticked); the
+   AppImage removes its data, its integration's entries and itself.
+4. On the owner's computers: the Mac app goes to the Bin and its folders are gone; the Flatpak
+   removes its data and opens the Software app on its page (or shows the command).
+5. `scripts/check.sh task` and the `mac` workflow green; coverage as CONSTRAINTS.md.
+
+### Open questions
+1. **Is the Flatpak's hand-off to the Software app enough** for the owner's condition, or no
+   uninstall at all? Recommendation: enough. The dialog and what it removes are the same
+   everywhere; only the last click differs, and the sandbox stays whole.
+2. **An automatic history of earlier settings** (TuxTalk's "last 10")? Recommendation: no, as
+   scope A6 says.
+3. **The box "Also remove my settings…" off by default?** Recommendation: yes (TuxTalk does
+   the same; a reinstall picks up where the user left off).
+4. **To check before the plan** (not confirmed on 2026-11-22): whether GNOME Software shows an
+   Uninstall button for a Flatpak installed from a file (`appstream:<id>` with or without
+   `.desktop`), and which app opens `appstream:` on the owner's Bluefin; whether a running
+   AppImage may be moved to the Bin; whether a running Mac app may hand its bundle to the Bin
+   through a helper on macOS 26.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
