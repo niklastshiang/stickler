@@ -2681,7 +2681,7 @@ the Mac App Store, Quality, the GPU.
 7. **A look around:** the screenshots (sheet, corrections, dark, the Mac app), each enlarging
    on click with `<a href>` to the image or `<dialog>` without script.
 8. **Privacy:** everything runs on the computer; the only network use is the model download.
-9. **Get Stickler:** one list, one row per download (owner, 2026-11-22, after TuxTalk's page;
+9. **Download Stickler** ("Stickler herunterladen"; owner, 2026-11-22, with a joke under it): one list, one row per download (owner, 2026-11-22, after TuxTalk's page;
    before: one card per computer): the Mac's `.dmg`, Ubuntu's `.deb`, Fedora's `.rpm`, the
    Flatpak and the AppImage, each row with the system it is for, its terminal line to copy (the
    Mac's row: the link to `install-mac.html` instead) and its download with the size; below it
