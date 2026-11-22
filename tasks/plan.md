@@ -608,3 +608,30 @@ Design decisions:
 | A sticky picture inside its step jumps when the next step starts | Medium | the step's height and the picture's `top` are tuned at 390, 900 and 1280 px; else the picture stays still and only fades |
 | The engraved notes are too small to read on a phone | Medium | one system only on a phone, two on a wide screen |
 | Safari or Firefox animate a property differently | Low | only `opacity` and `transform` are animated |
+
+
+## Release 10: keep and remove (approved 2026-11-22, SPEC.md "Release 10 (proposed): keep and remove")
+
+Back Up / Restore Backup and Uninstall Stickler, in the GTK app and the Mac app. Tasks 150–160.
+
+Design decisions:
+- **Risk first** (150): the three things not confirmed (a running AppImage to the Bin, a running
+  Mac app handing its bundle to a helper, GNOME Software's uninstall button for a Flatpak from a
+  file) are tried before any feature code depends on them.
+- **Logic in `stickler_app`, system calls at the edge:** what a backup holds, how it merges, what
+  an uninstall removes and which menu entries an AppImage integration made are plain Python
+  in `stickler_app` (no `gi`, CONSTRAINTS.md "GTK boundary"), tested with temporary folders.
+  The D-Bus call to PackageKit and the open-URI call live in `stickler_gtk` (Gio); the Mac app
+  does its own `~/Library` cleanup and helper in Swift, and asks the core for the rest over the
+  bridge, as it does for "Remove Downloaded Models…".
+- **Songs by content before the backup** (151): without it a restored backup finds nothing on
+  a new computer; it also helps when a user moves a song today.
+- **Containers prove the removal:** the `.deb` and `.rpm` remove themselves through PackageKit
+  in the existing container test (as the Software app's install does since task 144).
+
+| Risk | Likelihood | What then |
+|---|---|---|
+| A running AppImage cannot go to the Bin (the trash may refuse a mounted file) | Low | it is deleted instead after the user agreed; the menu entries and data go as planned |
+| The Mac helper cannot move the bundle (permissions, translocation) | Medium | the app shows the steps instead, as for a translocated app |
+| GNOME Software shows no uninstall button for a Flatpak from a file | Low | the dialog shows the `flatpak uninstall` line there too |
+| PackageKit asks no password on some system (a polkit rule) | Low | the app's own dialog has already asked; documented |

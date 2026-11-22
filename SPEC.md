@@ -3040,11 +3040,11 @@ src/stickler_app/paths.py            # + packaged() == "system"
 
 ## Release 10 (proposed): keep and remove
 
-> Status: **draft**, for the owner's approval (written 2026-11-22 at the owner's request, from
-> two ideas: "Back up settings and analysed songs" and "Uninstall Stickler…", both seen at
-> TuxTalk). Facts on uninstalling checked on the web on 2026-11-22 (a research subagent, the
-> key points checked here; the ones not confirmed are marked). Plan and tasks follow the
-> approval.
+> Status: **approved** by the owner on 2026-11-22 (open questions 1–3 answered; on the owner's
+> Bluefin, `appstream:ng.tshia.Stickler` opens Bazaar on Stickler's page with its uninstall
+> button). Written at the owner's request from two ideas, "Back up settings and analysed
+> songs" and "Uninstall Stickler…", both seen at TuxTalk. Facts on uninstalling checked on the
+> web on 2026-11-22. Plan: `tasks/plan.md` ("Release 10: keep and remove"), tasks 150–160.
 
 ### Objective
 - **User:** a drummer who changes computers, reinstalls the system, or wants Stickler gone,
@@ -3105,7 +3105,7 @@ src/stickler_app/paths.py            # + packaged() == "system"
    | Flatpak | Removes its data in its own folder (`~/.var/app/ng.tshia.Stickler`), then opens the Software app on Stickler's page (`appstream:ng.tshia.Stickler` through the open-URI portal; GNOME Software and KDE Discover claim it), where the user presses Uninstall; where no app claims it (Ubuntu's App Center does not), the dialog shows `flatpak uninstall --user ng.tshia.Stickler` to copy. A Flatpak cannot remove itself without the permission to run commands outside its sandbox (`org.freedesktop.Flatpak`), which turns the sandbox off: Stickler does not ask for it. |
 3. **The owner's condition** (2026-11-20: "only if it makes sense on every system, otherwise not
    at all"): on three packages the app removes itself; on the Flatpak it removes everything it
-   can and hands the last step to the Software app. Whether that is enough is open question 1.
+   can and hands the last step to the Software app; the owner finds that enough (2026-11-22).
 4. **Texts** in English, German and Spanish, in both apps; the website's and the README's
    uninstall texts name the menu entry first and keep the terminal lines.
 
@@ -3128,14 +3128,13 @@ src/stickler_app/paths.py            # + packaged() == "system"
 5. `scripts/check.sh task` and the `mac` workflow green; coverage as CONSTRAINTS.md.
 
 ### Open questions
-1. **Is the Flatpak's hand-off to the Software app enough** for the owner's condition, or no
-   uninstall at all? Recommendation: enough. The dialog and what it removes are the same
-   everywhere; only the last click differs, and the sandbox stays whole.
-2. **An automatic history of earlier settings** (TuxTalk's "last 10")? Recommendation: no, as
-   scope A6 says.
-3. **The box "Also remove my settings…" off by default?** Recommendation: yes (TuxTalk does
-   the same; a reinstall picks up where the user left off).
-4. **To check before the plan** (not confirmed on 2026-11-22): whether GNOME Software shows an
+1. Answered (owner, 2026-11-22): the Flatpak's hand-off to the Software app is enough for the
+   condition; the uninstall comes on every package.
+2. Answered (owner, 2026-11-22): no automatic history of earlier settings, not now.
+3. Answered (owner, 2026-11-22): the box "Also remove my settings…" is off by default.
+4. **Checked 2026-11-22:** the owner's Bluefin opens `appstream:` with Bazaar, which shows
+   Stickler's page with an uninstall button for the Flatpak installed from a file. **Left for
+   task 150** (not confirmed on 2026-11-22): whether GNOME Software shows an
    Uninstall button for a Flatpak installed from a file (`appstream:<id>` with or without
    `.desktop`), and which app opens `appstream:` on the owner's Bluefin; whether a running
    AppImage may be moved to the Bin; whether a running Mac app may hand its bundle to the Bin

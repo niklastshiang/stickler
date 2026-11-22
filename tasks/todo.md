@@ -1116,6 +1116,61 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 - [x] **Task 149: The owner's check and going online** (S): done 2026-11-22. The owner saw the scroll recordings at 1280 and 390 px ("passt, geh online damit"); `claude/site-story` fast-forwarded into `main`, the site's workflow run by hand with `deploy: true`.
   - Dependencies: 148
 
+## Phase 27: Release 10, keep and remove (approved 2026-11-22, SPEC.md "Release 10 (proposed): keep and remove")
+
+- [ ] **Task 150: The three unknowns** (S)
+  - Acceptance: tried and written down here: a running AppImage moved to the Bin (in the AppImage's container or by hand on the owner's computer: the app keeps running, the file is in the Bin); a Mac test app that hands its bundle to a helper and quits (in the `mac` workflow: the bundle ends in the Bin, Launch Services forgets it); `appstream:<id>` in GNOME Software for a Flatpak installed from a file (a Fedora VM or the owner's check; Bazaar already shows the button). SPEC's open question 4 closed with the results; a failed one changes the scope as the plan's risks say, asked first.
+  - Dependencies: none
+
+- [ ] **Task 151: Songs found again by their content** (M)
+  - Acceptance: recent songs and corrections keep the song's SHA-1 (the results cache's digest); opening a song at an unknown path whose content is known applies its corrections and moves its recent entry; entries without a digest get one when their song is opened; old files load as before.
+  - Verify: `uv run pytest -q tests/test_recent.py tests/test_corrections.py` (names as they are)
+  - Dependencies: none · Files: `src/stickler_app/{recent,corrections,session}.py`, tests
+
+- [ ] **Task 152: The backup file** (M)
+  - Acceptance: `stickler_app/backup.py` writes the zip of SPEC scope A2 (with `backup.json`, without Demucs's tracks, scores, clicks, models) and reads it back: a summary (date, songs, size) before the restore, then the merge of scope A4; a broken, foreign or newer file is refused and changes nothing; a backup restores into another platform's folders (tested with the Linux and the Mac layout of `paths`).
+  - Verify: `uv run pytest -q tests/test_backup.py`
+  - Dependencies: 151 · Files: `src/stickler_app/backup.py`, tests
+
+- [ ] **Task 153: Backup in the GTK app** (M)
+  - Acceptance: "Back Up…" and "Restore Backup…" in the main menu of an installed app; the save and open dialogs (portals in the Flatpak); the restore's question with the summary; work in the worker with a toast at the end; texts in English, German, Spanish.
+  - Verify: widget tests (`scripts/gtk.sh test`); `uv run pytest -q tests/gtk/test_translations.py`; by hand in the Flatpak
+  - Dependencies: 152 · Files: `src/stickler_app/controller.py`, `src/stickler_gtk/ui/`, `po/`
+
+- [ ] **Task 154: Backup in the Mac app** (M)
+  - Acceptance: the bridge's `back-up` and `restore` commands (summary, then restore) documented in `docs/bridge.md`; the Stickler menu's two entries with the system's save and open panels; texts from the GTK catalogue.
+  - Verify: bridge tests; `SticklerCore` and app tests in the `mac` workflow
+  - Dependencies: 152 · Files: `src/stickler_app/bridge.py`, `docs/bridge.md`, `mac/`
+
+- [ ] **Task 155: What an uninstall removes** (M)
+  - Acceptance: `stickler_app/uninstall.py` gives, per package, the folders and files to remove (with or without the user's settings) and their size; for an AppImage also the menu entries and icons an integration made for `$APPIMAGE` (Gear Lever, AppImageLauncher/appimaged by `Exec`/`TryExec`/`X-AppImage-Identifier`), never another app's; nothing from the checkout.
+  - Verify: `uv run pytest -q tests/test_uninstall.py` (temporary home folders with each tool's entries)
+  - Dependencies: 150 · Files: `src/stickler_app/uninstall.py`, tests
+
+- [ ] **Task 156: Uninstall in the GTK app** (M)
+  - Acceptance: "Uninstall Stickler…" below "Remove Downloaded Models…"; the dialog of SPEC scope B1 with the size and the box (off); then per package as scope B2: AppImage to the Bin, `.deb`/`.rpm` through PackageKit's `RemovePackages` over D-Bus (data only after success, the code it needs loaded before), Flatpak's data and `appstream:` through the portal or the command to copy; texts in three languages.
+  - Verify: widget tests; `packaging/linux/container-test.sh` removes each package through PackageKit as the app does and finds nothing left (ticked) or only the settings (not ticked)
+  - Dependencies: 155 · Files: `src/stickler_gtk/`, `packaging/linux/container-test.sh`, `po/`
+
+- [ ] **Task 157: Uninstall in the Mac app** (M)
+  - Acceptance: the Stickler menu's entry with the same dialog; the core removes its data over the bridge; the app clears its preferences, saved state and WebKit data, starts the helper of task 150 and quits; a translocated app shows the steps instead.
+  - Verify: tests in the `mac` workflow (the helper with a test bundle); the owner on the Mac
+  - Dependencies: 150, 155 · Files: `mac/`, `src/stickler_app/bridge.py`, `docs/bridge.md`
+
+- [ ] **Task 158: The texts around it** (S)
+  - Acceptance: README (`> INSTALL THE APP`, removing), `docs/requirements.md`, the website's uninstall section in both languages and `install-mac.html` name the menu entries first and keep the terminal lines; the MetaInfo's release notes for 10.
+  - Verify: `uv run pytest -q tests/test_site.py`; axe
+  - Dependencies: 153, 156, 157
+
+- [ ] **Task 159: Review** (S): a fresh-context review of 150–158, each finding checked.
+  - Dependencies: 158
+
+- [ ] **Task 160: The owner's check** (S): a backup from the owner's Linux computer restored on the Mac (and back): songs open with their corrections without a new analysis; the uninstall on the Mac and in the Flatpak (Bazaar); the `.deb` or `.rpm` in a Distrobox or VM.
+  - Dependencies: 159
+
+### Checkpoint AB
+- [ ] All success criteria of SPEC.md "Release 10 (proposed): keep and remove" met (owner)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
