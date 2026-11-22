@@ -393,6 +393,38 @@ follows when it is done.
 {"id": 21, "ok": true}
 ```
 
+### `back_up`
+
+Writes a backup to `dest` (SPEC.md "Release 10 (proposed): keep and remove", scope A): the
+settings, recent songs, corrections and the models' results in one zip. Only in an installed
+app. A `notice` follows when it is saved (its `opens` is the file) or why it is not.
+
+```json
+{"id": 22, "cmd": "back_up", "dest": "/Users/me/Documents/Stickler Backup 2026-11-22.zip"}
+{"id": 22, "ok": true}
+```
+
+### `backup_summary`
+
+What a backup holds, with the restore's question as the dialog's text. A file that is no
+backup Stickler can read is refused with the code `not_a_backup` and the reason.
+
+```json
+{"id": 23, "cmd": "backup_summary", "src": "/Users/me/Documents/Stickler Backup 2026-11-22.zip"}
+{"id": 23, "ok": true, "created": "2026-11-22", "songs": 12, "size": 418000, "text": "Made on 2026-11-22, analysed songs: 12, 0.4 MB. Songs and corrections already on this computer stay; the settings are replaced."}
+```
+
+### `restore`
+
+Restores a backup: adds the results, recent songs and corrections this computer does not have
+yet and takes the settings, except the consent to download the models. Not while something
+runs (`can_remove_models`, the same folders). A `notice` and a `recent` event follow.
+
+```json
+{"id": 24, "cmd": "restore", "src": "/Users/me/Documents/Stickler Backup 2026-11-22.zip"}
+{"id": 24, "ok": true}
+```
+
 ### `quit`
 
 Cancels what runs, waits at most 2 s for its clean-up and exits 0. The reply comes first; a

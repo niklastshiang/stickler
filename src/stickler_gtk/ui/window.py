@@ -635,14 +635,7 @@ class Window(Adw.ApplicationWindow):
         )
 
     def _restore_question(self, src: Path, summary: backup.Summary) -> None:
-        body = _(
-            "Made on {date}, analysed songs: {songs}, {size}. Songs and corrections already on"
-            " this computer stay; the settings are replaced."
-        ).format(
-            date=summary.created.isoformat(),
-            songs=summary.songs,
-            size=GLib.format_size(summary.size),
-        )
+        body = backup.question(summary, GLib.format_size(summary.size))
         alert = Adw.AlertDialog(heading=_("Restore Backup?"), body=body)
         alert.add_response("cancel", _("Cancel"))
         alert.add_response("restore", _("Restore"))

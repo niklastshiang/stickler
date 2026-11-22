@@ -204,6 +204,8 @@ public final class AppModel {
     public func exportMusicXML(to path: String) { send(.exportMusicXML(dest: path)) }
     public func exportDrumTrack(to path: String) { send(.exportDrumTrack(dest: path)) }
     public func removeModels(everything: Bool) { send(.removeModels(everything: everything)) }
+    public func backUp(to path: String) { send(.backUp(dest: path)) }
+    public func restore(from path: String) { send(.restore(src: path)) }
 
     /// File › Open Recent › Clear Menu: every recent song forgotten.
     public func clearRecent() {
@@ -229,6 +231,12 @@ public final class AppModel {
     /// The PDF's pages and title.
     public func a4Pages() async -> A4Pages? {
         await ask(.a4Pages, A4Pages.self)
+    }
+
+    /// What a backup holds and the restore's question; nil (with the core's reason as the
+    /// notice) when the file is no backup.
+    public func backupSummary(of path: String) async -> BackupSummary? {
+        await ask(.backupSummary(src: path), BackupSummary.self)
     }
 
     /// What "Remove Downloaded Models…" frees, for its dialog.

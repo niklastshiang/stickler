@@ -23,6 +23,9 @@ public enum Command: Equatable, Sendable {
     case actualSize
     case removalSizes
     case removeModels(everything: Bool)
+    case backUp(dest: String)
+    case backupSummary(src: String)
+    case restore(src: String)
     case quit
 
     /// The command's name on the wire.
@@ -49,6 +52,9 @@ public enum Command: Equatable, Sendable {
         case .actualSize: "actual_size"
         case .removalSizes: "removal_sizes"
         case .removeModels: "remove_models"
+        case .backUp: "back_up"
+        case .backupSummary: "backup_summary"
+        case .restore: "restore"
         case .quit: "quit"
         }
     }
@@ -65,7 +71,7 @@ private struct CommandWire: Encodable {
     let command: Command
 
     private enum Keys: String, CodingKey {
-        case id, cmd, path, dest, width, zoom, everything
+        case id, cmd, path, dest, src, width, zoom, everything
     }
 
     func encode(to encoder: any Encoder) throws {
@@ -75,7 +81,7 @@ private struct CommandWire: Encodable {
         switch command {
         case .open(let path), .forgetRecent(let path):
             try container.encode(path, forKey: .path)
-        case .exportMusicXML(let dest), .exportDrumTrack(let dest):
+        case .exportMusicXML(let dest), .exportDrumTrack(let dest), .backUp(let dest):
             try container.encode(dest, forKey: .dest)
         case .pages(let width, let zoom):
             try container.encode(width, forKey: .width)
@@ -84,6 +90,8 @@ private struct CommandWire: Encodable {
             try container.encode(zoom, forKey: .zoom)
         case .removeModels(let everything):
             try container.encode(everything, forKey: .everything)
+        case .backupSummary(let src), .restore(let src):
+            try container.encode(src, forKey: .src)
         default:
             break
         }

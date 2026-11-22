@@ -19,6 +19,7 @@ from pathlib import Path, PurePosixPath
 
 import stickler
 from stickler_app import corrections, paths, recent, settings
+from stickler_app.i18n import _
 
 FORMAT = 1  # raised when a backup's layout changes; a newer one is refused
 SEPARATORS = ("demucs", "roformer")  # their results are whole drum tracks: left out
@@ -36,6 +37,14 @@ class Summary:
     created: date
     songs: int  # songs with saved analyses
     size: int  # bytes of the file
+
+
+def question(summary: Summary, size: str) -> str:
+    """The restore's question: what the backup holds and what happens (both apps show it)."""
+    return _(
+        "Made on {date}, analysed songs: {songs}, {size}. Songs and corrections already on"
+        " this computer stay; the settings are replaced."
+    ).format(date=summary.created.isoformat(), songs=summary.songs, size=size)
 
 
 def file_name(today: date) -> str:

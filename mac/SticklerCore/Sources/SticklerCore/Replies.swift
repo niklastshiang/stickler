@@ -69,6 +69,21 @@ public struct RemovalSizes: Codable, Equatable, Sendable {
     }
 }
 
+/// `backup_summary`: what a backup holds, and the restore's question.
+public struct BackupSummary: Codable, Equatable, Sendable {
+    public var created: String
+    public var songs: Int
+    public var size: Int64
+    public var text: String
+
+    public init(created: String, songs: Int, size: Int64, text: String) {
+        self.created = created
+        self.songs = songs
+        self.size = size
+        self.text = text
+    }
+}
+
 /// The names the save panels propose, as the GTK app's (`stickler_app.exports`).
 public enum ExportName {
     /// The song's file name without its suffix, or "Stickler" when that is blank.

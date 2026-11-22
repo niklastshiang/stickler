@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from stickler_app import (
+    backup,
     controller,
     engraving,
     i18n,
@@ -315,6 +316,9 @@ class Bridge:
             "actual_size": lambda _c: self._zoom(lambda _now: 1.0),
             "removal_sizes": self._removal_sizes,
             "remove_models": lambda c: self._fits(self._ctl.remove_models(_flag(c, "everything"))),
+            "back_up": lambda c: self._back_up(Path(_text(c, "dest"))),
+            "backup_summary": lambda c: self._backup_summary(Path(_text(c, "src"))),
+            "restore": lambda c: self._fits(self._ctl.restore(Path(_text(c, "src")))),
             "quit": lambda _c: {},
         }
 
@@ -452,6 +456,24 @@ class Bridge:
         except OSError:
             log.warning("the note size could not be saved")
         return _zoom_reply(new)
+
+    def _back_up(self, dest: Path) -> dict[str, Any]:
+        self._ctl.back_up(dest)  # a notice follows
+        return {}
+
+    def _backup_summary(self, src: Path) -> dict[str, Any]:
+        """What a backup holds and the restore's question (SPEC.md "Release 10", scope A4)."""
+        try:
+            summary = self._ctl.backup_summary(src)
+        except backup.NotABackup as exc:
+            text = _("This is no Stickler backup: {reason}").format(reason=exc)
+            raise CommandError("not_a_backup", text) from exc
+        return {
+            "created": summary.created.isoformat(),
+            "songs": summary.songs,
+            "size": summary.size,
+            "text": backup.question(summary, setup.size_text(summary.size)),
+        }
 
     def _removal_sizes(self, _command: dict[str, Any]) -> dict[str, Any]:
         """What "Remove Downloaded Models…" would free, with the dialog's text for each

@@ -1139,7 +1139,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: widget tests (`scripts/gtk.sh test`); `uv run pytest -q tests/gtk/test_translations.py`; by hand in the Flatpak
   - Dependencies: 152 · Files: `src/stickler_app/controller.py`, `src/stickler_gtk/ui/`, `po/`
 
-- [ ] **Task 154: Backup in the Mac app** (M)
+- [x] **Task 154: Backup in the Mac app** (M): done 2026-11-22 (Swift checked by the `mac` workflow only: no Swift on this computer). The bridge's `back_up`, `backup_summary` (refused with `not_a_backup` and the reason) and `restore`, documented in `docs/bridge.md`; the restore's question is one text for both apps (`backup.question`). SticklerCore: the three commands, `BackupSummary`, `AppModel.backUp`/`restore`/`backupSummary`. The app: `Backups` (the dated name, the save panel for zips, the open panel, the question) in the Stickler menu above "Remove Downloaded Models…" (restore only when `can_remove_models`); `Backups` joins the logic types of the Swift coverage gate (CONSTRAINTS.md and `scripts/xccov_gate.py`). Tests: two bridge tests, SticklerCore's protocol and model tests, four logic tests.
   - Acceptance: the bridge's `back-up` and `restore` commands (summary, then restore) documented in `docs/bridge.md`; the Stickler menu's two entries with the system's save and open panels; texts from the GTK catalogue.
   - Verify: bridge tests; `SticklerCore` and app tests in the `mac` workflow
   - Dependencies: 152 · Files: `src/stickler_app/bridge.py`, `docs/bridge.md`, `mac/`

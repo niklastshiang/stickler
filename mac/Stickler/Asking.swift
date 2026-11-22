@@ -18,6 +18,10 @@ protocol Asking {
     func drumTrack(cost: String) -> Bool
     /// nil: keep everything; false: remove the models; true: remove everything else too.
     func removal(_ sizes: RemovalSizes) -> Bool?
+    /// A backup to restore; nil when cancelled.
+    func backup() -> URL?
+    /// Whether to restore after reading what the backup holds (`text`, the core's question).
+    func restore(_ text: String) -> Bool
     /// Opens `file` with `application`.
     func open(_ file: URL, with application: URL)
 }
@@ -57,6 +61,22 @@ struct SystemAsking: Asking {
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         panel.allowedContentTypes = [.application]
         return panel.runModal() == .OK ? panel.url : nil
+    }
+
+    func backup() -> URL? {
+        let panel = NSOpenPanel()
+        panel.title = localized("Restore Backup")
+        panel.allowedContentTypes = [.zip]
+        return panel.runModal() == .OK ? panel.url : nil
+    }
+
+    func restore(_ text: String) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = localized("Restore Backup?")
+        alert.informativeText = text
+        alert.addButton(withTitle: localized("Restore"))
+        alert.addButton(withTitle: localized("Cancel"))
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     func drumTrack(cost: String) -> Bool {
