@@ -3081,7 +3081,8 @@ src/stickler_app/paths.py            # + packaged() == "system"
    Older entries without a digest get one the next time their song is opened.
 4. **Restore:** the app shows what the file holds (date, songs, size) and asks; it then adds
    the results, adds the recent songs and corrections the computer does not have yet (an
-   entry already here stays), and takes the backup's settings. A file of a newer format
+   entry already here stays), and takes the backup's settings, except the consent to download
+   the models, which stays this computer's (a new computer asks again). A file of a newer format
    version, or not a Stickler backup, is refused with a reason; nothing is changed then.
 5. **Across systems:** a backup made by any of the packages or the Mac app restores in any of
    them (only relative paths inside the file; each app puts the parts into its own folders).

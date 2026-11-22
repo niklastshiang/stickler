@@ -1127,7 +1127,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/test_recent.py tests/test_corrections.py` (names as they are)
   - Dependencies: none · Files: `src/stickler_app/{recent,corrections,session}.py`, tests
 
-- [ ] **Task 152: The backup file** (M)
+- [x] **Task 152: The backup file** (M): done 2026-11-22. `stickler_app/backup.py`: `write` makes the zip (`backup.json` with format 1, app version, date, system; the three stores; `results/` without the separators' tracks, checked against `adapters/separators`), `read` gives the summary (date, songs with saved analyses, size), `restore` adds results, recent songs and corrections this computer does not have (here's stay) and takes the settings, except `setup_agreed`: the consent to download the models stays this computer's (found while writing it; SPEC scope A4 says so now). Broken, foreign, newer files and paths outside are refused before anything changes. Tested Linux → Mac layout, the song then found by its content. `corrections.save` went (unused since `remember` writes the entries with their digest).
   - Acceptance: `stickler_app/backup.py` writes the zip of SPEC scope A2 (with `backup.json`, without Demucs's tracks, scores, clicks, models) and reads it back: a summary (date, songs, size) before the restore, then the merge of scope A4; a broken, foreign or newer file is refused and changes nothing; a backup restores into another platform's folders (tested with the Linux and the Mac layout of `paths`).
   - Verify: `uv run pytest -q tests/test_backup.py`
   - Dependencies: 151 · Files: `src/stickler_app/backup.py`, tests
