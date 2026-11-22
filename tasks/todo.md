@@ -1144,7 +1144,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: bridge tests; `SticklerCore` and app tests in the `mac` workflow
   - Dependencies: 152 · Files: `src/stickler_app/bridge.py`, `docs/bridge.md`, `mac/`
 
-- [ ] **Task 155: What an uninstall removes** (M)
+- [x] **Task 155: What an uninstall removes** (M): done 2026-11-22. `stickler_app/uninstall.py`: `plan(env, keep_settings)` gives the kind, the folders (the removal's targets: with the box not ticked the settings, recent songs and corrections stay), an AppImage integration's menu entries and icons, the program (the AppImage's path, the package `stickler`, the Flatpak's id) and the size; `remove(plan)`; `flatpak_command()`. Integrations found: an entry whose Exec/TryExec is this file (Gear Lever, its icon by its absolute path) or whose `X-AppImage-Identifier` is the MD5 of the file's URI (libappimage, icons `appimagekit_<md5>_…` under hicolor); another app's or another Stickler copy's entries stay. Tests: 8, in temporary homes.
   - Acceptance: `stickler_app/uninstall.py` gives, per package, the folders and files to remove (with or without the user's settings) and their size; for an AppImage also the menu entries and icons an integration made for `$APPIMAGE` (Gear Lever, AppImageLauncher/appimaged by `Exec`/`TryExec`/`X-AppImage-Identifier`), never another app's; nothing from the checkout.
   - Verify: `uv run pytest -q tests/test_uninstall.py` (temporary home folders with each tool's entries)
   - Dependencies: 150 · Files: `src/stickler_app/uninstall.py`, tests
