@@ -131,9 +131,11 @@ def test_a_transaction_that_did_not_succeed_says_why():
     assert uninstall.transaction_failed(1, "Not authorized") == "Not authorized"
 
 
-def test_where_packagekit_cannot_remove_it_the_terminal_line_for_the_system():
-    assert uninstall.terminal_command("/etc/fedora-release") == "sudo dnf remove stickler"
-    assert uninstall.terminal_command("/nonexistent") == "sudo apt remove stickler"
+def test_where_packagekit_cannot_remove_it_the_terminal_line_for_the_system(tmp_path):
+    fedora = tmp_path / "fedora-release"  # not the host's: the test runs on a Mac too
+    fedora.write_text("Fedora release 45\n")
+    assert uninstall.terminal_command(str(fedora)) == "sudo dnf remove stickler"
+    assert uninstall.terminal_command(str(tmp_path / "none")) == "sudo apt remove stickler"
 
 
 def test_keeping_the_settings_still_asks_again_before_the_next_download(tmp_path):

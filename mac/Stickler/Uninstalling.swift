@@ -14,7 +14,13 @@ enum Uninstalling {
     static var trash: (URL) throws -> Void = { bundle in
         try FileManager.default.trashItem(at: bundle, resultingItemURL: nil)
     }
-    static var quit: () -> Void = { NSApp.terminate(nil) }
+    /// Quits from the run loop, not from here: `ask` runs as a job on the main queue, and
+    /// `terminate` called inside it waits (`.terminateLater`) for the delegate's reply, which
+    /// comes from another main-queue job that cannot run until this one ends: the app hung
+    /// with Quit dimmed (the owner, 2026-11-22).
+    static var quit: () -> Void = {
+        NSApp.perform(#selector(NSApplication.terminate(_:)), with: nil, afterDelay: 0)
+    }
     /// What macOS keeps for the app; replaced in tests, which must not clear their own host's.
     static var clearLeftovers: () -> Void = { Leftovers.remove() }
     static var bundle: URL = Bundle.main.bundleURL
