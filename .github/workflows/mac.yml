@@ -5,7 +5,7 @@ name: mac
 
 on:
   push:
-    branches: [main, "claude/mac-shell"] # the app compiles only here: each task is checked on the branch before main
+    branches: [main, "claude/mac-*"] # the app compiles only here: each task is checked on its branch before main
   pull_request:
 
 permissions:
@@ -133,6 +133,15 @@ jobs:
             -configuration Release -destination 'platform=macOS,arch=arm64' \
             -derivedDataPath "$RUNNER_TEMP/release" -quiet
           codesign --verify --verbose "$RUNNER_TEMP/release/Build/Products/Release/Stickler.app"
+      - name: The icon is built from AppIcon.icon (scripts/mac_icon.py)
+        run: |
+          app="$RUNNER_TEMP/release/Build/Products/Release/Stickler.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$app/Contents/Info.plist")" = AppIcon
+          test -s "$app/Contents/Resources/AppIcon.icns"
+          test -s "$app/Contents/Resources/Assets.car"
+          xcrun assetutil --info "$app/Contents/Resources/Assets.car" \
+            | python3 -c 'import json, sys; names = {a.get("Name") for a in json.load(sys.stdin)}; print(sorted(n for n in names if n)); sys.exit(0 if "AppIcon" in names else "no AppIcon in Assets.car")'
+          sips -s format png "$app/Contents/Resources/AppIcon.icns" --out "$RUNNER_TEMP/screenshots/AppIcon.png"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
