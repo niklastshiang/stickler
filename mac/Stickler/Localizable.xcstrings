@@ -2647,19 +2647,20 @@
         }
       }
     },
-    "Stickler’s data is removed. To remove the app, quit it and drag Stickler from the Applications folder to the Bin." : {
+    "Stickler’s data is removed. To remove the app too, drag Stickler to the Bin." : {
+      "comment" : "Translators: Mac app, after \"Uninstall Stickler…\" when the app cannot move itself to the Bin (it was started from the download without being moved)",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Daten von Stickler sind entfernt. Um die App zu entfernen, beende sie und zieh Stickler aus dem Ordner „Programme“ in den Papierkorb."
+            "value" : "Die Daten von Stickler sind entfernt. Um auch die App zu entfernen, zieh Stickler in den Papierkorb."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Los datos de Stickler se quitaron. Para quitar la app, ciérrala y arrastra Stickler de la carpeta Aplicaciones a la Papelera."
+            "value" : "Los datos de Stickler se quitaron. Para quitar también la app, arrastra Stickler a la Papelera."
           }
         }
       }

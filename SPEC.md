@@ -3070,7 +3070,10 @@ src/stickler_app/paths.py            # + packaged() == "system"
      `corrections.json`);
    - the models' results for the analysed songs (`results/`, keyed by the song's content and
      the model's code, so they are found again wherever the song now lies), without Demucs's
-     separated drum tracks (tens of MB per song; the next drum-track export makes them again).
+     separated drum tracks (tens of MB per song; the next drum-track export makes them again)
+     and the analysis's own copies of mp3 and m4a songs (`_decoded`, the songs themselves).
+     The apps analyse in Fast; a song analysed in Quality (the command line's mode, on
+     Demucs's track) needs its analysis again after a restore.
    - Not in it: the models, uv and its Python (downloaded again by the setup assistant), the
      engraved scores and clicks (made again from the results in seconds), the songs themselves
      and the user's exports (they are the user's own files).

@@ -11,14 +11,16 @@ another app's or another copy's."""
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import shutil
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import quote
 
-from stickler_app import APP_ID, paths, removal
+from stickler_app import APP_ID, paths, removal, settings
 
 PACKAGE = "stickler"  # the `.deb`'s and the `.rpm`'s name (packaging/nfpm.yaml)
 # PackageKit's numbers (its D-Bus API): the filter for installed packages, a successful exit
@@ -33,6 +35,7 @@ class Plan:
     files: list[Path]  # an AppImage integration's menu entries and icons
     program: str  # the AppImage's path, the package's name or the Flatpak's id ("" else)
     size: int  # bytes the folders and files hold
+    keep_settings: bool = True
 
 
 def plan(env: Mapping[str, str] = os.environ, *, keep_settings: bool = True) -> Plan:
@@ -43,7 +46,7 @@ def plan(env: Mapping[str, str] = os.environ, *, keep_settings: bool = True) -> 
     files = _integration(env) if kind == "appimage" else []
     program = {"appimage": env.get("APPIMAGE", ""), "system": PACKAGE, "flatpak": APP_ID}
     size = removal.size(folders) + sum(f.stat().st_size for f in files if f.is_file())
-    return Plan(kind, folders, files, program.get(kind, ""), size)
+    return Plan(kind, folders, files, program.get(kind, ""), size, keep_settings)
 
 
 def terminal_command(fedora_marker: str = "/etc/fedora-release") -> str:
@@ -80,23 +83,35 @@ def _integration(env: Mapping[str, str]) -> list[Path]:
     image = env.get("APPIMAGE", "")
     if not image:
         return []
-    md5 = hashlib.md5(f"file://{image}".encode()).hexdigest()
+    # libappimage hashes the file's URI, escaped where the path needs it; both forms are this file
+    md5s = {hashlib.md5(f"file://{form}".encode()).hexdigest() for form in (image, quote(image))}
     data = Path(env.get("XDG_DATA_HOME") or Path(env.get("HOME") or Path.home()) / ".local/share")
+    # an icon is deleted only from where the tools put them: never a picture of the user's own
+    icon_folders = (data / "icons", Path(image).parent / ".icons")
     found: list[Path] = []
     for desktop in sorted((data / "applications").glob("*.desktop")):
         values = _entries(desktop)
         commands = [values.get("Exec", ""), values.get("TryExec", "")]
-        ours = any(c == image or c.startswith(f"{image} ") for c in commands)
-        if not (ours or values.get("X-AppImage-Identifier") == md5):
+        ours = any(_runs(c, image) for c in commands)
+        if not (ours or values.get("X-AppImage-Identifier") in md5s):
             continue
         found.append(desktop)
         icon = values.get("Icon", "")
         if icon.startswith("/"):
-            if Path(icon).is_file():
-                found.append(Path(icon))
-        elif icon.startswith(f"appimagekit_{md5}"):
+            path = Path(icon)
+            if path.is_file() and any(path.is_relative_to(f) for f in icon_folders):
+                found.append(path)
+        elif any(icon.startswith(f"appimagekit_{md5}") for md5 in md5s):
             found.extend(sorted((data / "icons").glob(f"*/*/apps/{icon}.*")))
     return found
+
+
+def _runs(command: str, image: str) -> bool:
+    """Whether a desktop entry's Exec or TryExec starts this file, quoted or not."""
+    line = command.strip()
+    if line.startswith('"'):
+        return line[1:].split('"', 1)[0] == image
+    return line == image or line.startswith(f"{image} ")
 
 
 def chosen_package(name: str, package_ids: list[str]) -> str | None:
@@ -112,10 +127,17 @@ def transaction_failed(exit_code: int, error: str) -> str | None:
     return None if exit_code == SUCCESS else "the package was not removed"
 
 
-def remove(chosen: Plan) -> None:
-    """Deletes the plan's folders and files; what is already gone is fine."""
+def remove(chosen: Plan, env: Mapping[str, str] = os.environ) -> None:
+    """Deletes the plan's folders and files; what is already gone is fine. Kept settings forget
+    the consent to download the models, as "Remove Downloaded Models…" does: a new install asks
+    again before it downloads gigabytes."""
+    if chosen.kind is not None and chosen.keep_settings:
+        with contextlib.suppress(OSError):
+            if settings.store_path(env).exists():
+                settings.update(settings.store_path(env), setup_agreed=False)
     for folder in chosen.folders:
         if folder.exists():
             shutil.rmtree(folder)
     for file in chosen.files:
-        file.unlink(missing_ok=True)
+        with contextlib.suppress(OSError):  # an entry the user cannot delete stays
+            file.unlink(missing_ok=True)

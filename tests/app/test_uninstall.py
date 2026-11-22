@@ -129,3 +129,40 @@ def test_a_transaction_that_did_not_succeed_says_why():
 def test_where_packagekit_cannot_remove_it_the_terminal_line_for_the_system():
     assert uninstall.terminal_command("/etc/fedora-release") == "sudo dnf remove stickler"
     assert uninstall.terminal_command("/nonexistent") == "sudo apt remove stickler"
+
+
+def test_keeping_the_settings_still_asks_again_before_the_next_download(tmp_path):
+    """As "Remove Downloaded Models…" does (review of 2026-11-22): a reinstall must not start a
+    multi-GB download on a consent given before."""
+    env = _appimage(tmp_path, tmp_path / "Apps" / "Stickler.AppImage")
+    _stored(env)
+    settings.save(settings.store_path(env), settings.Settings(zoom=1.25, setup_agreed=True))
+    uninstall.remove(uninstall.plan(env, keep_settings=True), env)
+    kept = settings.load(settings.store_path(env))
+    assert (kept.zoom, kept.setup_agreed) == (1.25, False)
+
+
+def test_an_icon_outside_the_integrations_folders_is_never_deleted(tmp_path):
+    image = tmp_path / "AppImages" / "Stickler.AppImage"
+    env = _appimage(tmp_path, image)
+    apps = tmp_path / ".local" / "share" / "applications"
+    apps.mkdir(parents=True)
+    picture = tmp_path / "Pictures" / "drums.png"
+    picture.parent.mkdir()
+    picture.write_bytes(b"mine")
+    (apps / "my-launcher.desktop").write_text(f"[Desktop Entry]\nExec={image}\nIcon={picture}\n")
+    plan = uninstall.plan(env)
+    assert apps / "my-launcher.desktop" in plan.files and picture not in plan.files
+
+
+def test_quoted_exec_lines_and_escaped_uris_are_this_files_too(tmp_path):
+    image = tmp_path / "My Apps" / "Stickler.AppImage"
+    env = _appimage(tmp_path, image)
+    apps = tmp_path / ".local" / "share" / "applications"
+    apps.mkdir(parents=True)
+    (apps / "quoted.desktop").write_text(f'[Desktop Entry]\nExec="{image}" %U\n')
+    from urllib.parse import quote
+
+    md5 = hashlib.md5(f"file://{quote(str(image))}".encode()).hexdigest()
+    (apps / "escaped.desktop").write_text(f"[Desktop Entry]\nX-AppImage-Identifier={md5}\n")
+    assert {apps / "quoted.desktop", apps / "escaped.desktop"} <= set(uninstall.plan(env).files)

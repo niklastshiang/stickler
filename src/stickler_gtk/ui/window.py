@@ -688,31 +688,47 @@ class Window(Adw.ApplicationWindow):
         alert.present(self)
 
     def uninstall_now(self, chosen: uninstall.Plan) -> None:
-        """Per package (scope B2). The `.deb`/`.rpm`: PackageKit first, Stickler's folders only
-        after it removed the package (a cancelled password prompt changes nothing)."""
-        if not self.controller.can_remove_models:
+        """Per package (scope B2), the app held until it ends (`begin_uninstall`). The
+        `.deb`/`.rpm`: PackageKit first, Stickler's folders only after it removed the package (a
+        cancelled password prompt changes nothing). The folders go in the worker; an error there
+        is told and the app goes on."""
+        if not self.controller.begin_uninstall():
             self.toast(_("Stickler can be uninstalled once the current work is done"))
             return
         self.playbar.stop()
         if chosen.kind == "system":
             packagekit.remove(uninstall.PACKAGE, lambda reason: self._removed(chosen, reason))
         elif chosen.kind == "appimage":
-            uninstall.remove(chosen)
-            self._trash(Path(chosen.program))
-            self._finish()
+
+            def remove_all() -> None:
+                uninstall.remove(chosen)
+                self._trash(Path(chosen.program))
+
+            worker.run(remove_all, lambda _r: self._finish(), self._uninstall_failed)
         elif chosen.kind == "flatpak":
-            uninstall.remove(chosen)
-            Gio.AppInfo.launch_default_for_uri_async(
-                f"appstream:{APP_ID}", None, None, self._software_opened
+            worker.run(
+                lambda: uninstall.remove(chosen),
+                lambda _r: Gio.AppInfo.launch_default_for_uri_async(
+                    f"appstream:{APP_ID}", None, None, self._software_opened
+                ),
+                self._uninstall_failed,
             )
+        else:
+            self.controller.end_uninstall()
+
+    def _uninstall_failed(self, exc: BaseException) -> None:
+        self.controller.end_uninstall()
+        self.toast(_("Stickler could not be uninstalled: {reason}").format(reason=exc))
 
     def _removed(self, chosen: uninstall.Plan, reason: str | None) -> None:
         """A refused or cancelled password prompt changes nothing; a package PackageKit cannot
         find or remove gets the terminal line, and Stickler's folders stay until it is gone."""
         if reason is None:
-            uninstall.remove(chosen)
-            self._finish()
+            worker.run(
+                lambda: uninstall.remove(chosen), lambda _r: self._finish(), self._uninstall_failed
+            )
             return
+        self.controller.end_uninstall()
         alert = Adw.AlertDialog(
             heading=_("Stickler could not be uninstalled: {reason}").format(reason=reason),
             body=_("To remove it, run in a terminal:") + f"\n\n{uninstall.terminal_command()}",

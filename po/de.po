@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-22 16:47+0100\n"
+"POT-Creation-Date: 2026-11-22 16:50+0100\n"
 "PO-Revision-Date: 2026-11-14 16:03+0100\n"
 "Last-Translator: Stickler maintainers\n"
 "Language-Team: none\n"
@@ -49,7 +49,7 @@ msgstr "Stickler kennt den Befehl „{name}“ nicht."
 msgid "Something went wrong inside Stickler."
 msgstr "In Stickler ist etwas schiefgegangen."
 
-#: src/stickler_app/bridge.py:472 src/stickler_app/controller.py:368
+#: src/stickler_app/bridge.py:472 src/stickler_app/controller.py:388
 #: src/stickler_gtk/ui/window.py:637
 #, python-brace-format
 msgid "This is no Stickler backup: {reason}"
@@ -88,41 +88,41 @@ msgstr "Die heruntergeladenen Modelle sind entfernt"
 msgid "Could not remove everything: {reason}"
 msgstr "Nicht alles ließ sich entfernen: {reason}"
 
-#: src/stickler_app/controller.py:336
+#: src/stickler_app/controller.py:356
 msgid "Backup saved"
 msgstr "Sicherung gespeichert"
 
-#: src/stickler_app/controller.py:339
+#: src/stickler_app/controller.py:359
 #, python-brace-format
 msgid "The backup could not be saved: {reason}"
 msgstr "Die Sicherung konnte nicht gespeichert werden: {reason}"
 
-#: src/stickler_app/controller.py:362
+#: src/stickler_app/controller.py:382
 msgid "Backup restored"
 msgstr "Sicherung wiederhergestellt"
 
-#: src/stickler_app/controller.py:370
+#: src/stickler_app/controller.py:390
 #, python-brace-format
 msgid "The backup could not be restored: {reason}"
 msgstr "Die Sicherung konnte nicht wiederhergestellt werden: {reason}"
 
-#: src/stickler_app/controller.py:455
+#: src/stickler_app/controller.py:475
 #, python-brace-format
 msgid "The correction did not work: {reason}"
 msgstr "Die Korrektur hat nicht geklappt: {reason}"
 
-#: src/stickler_app/controller.py:471
+#: src/stickler_app/controller.py:491
 #, python-brace-format
 msgid "The correction could not be saved: {reason}"
 msgstr "Die Korrektur ließ sich nicht speichern: {reason}"
 
-#: src/stickler_app/controller.py:479
+#: src/stickler_app/controller.py:499
 #, python-brace-format
 msgid "Recent songs could not be saved: {reason}"
 msgstr ""
 "Die zuletzt geöffneten Songs konnten nicht gespeichert werden: {reason}"
 
-#: src/stickler_app/controller.py:540 src/stickler_gtk/ui/window.py:439
+#: src/stickler_app/controller.py:560 src/stickler_gtk/ui/window.py:439
 #, python-brace-format
 msgid "Saved “{name}”"
 msgstr "„{name}“ gespeichert"
@@ -285,16 +285,17 @@ msgstr "Fenster schließen"
 msgid "Actual Size"
 msgstr "Originalgröße"
 
-#: src/stickler_app/mac_texts.py:42
+#. Translators: Mac app, after "Uninstall Stickler…" when the app cannot move itself to the
+#. Bin (it was started from the download without being moved)
+#: src/stickler_app/mac_texts.py:41
 msgid ""
-"Stickler’s data is removed. To remove the app, quit it and drag Stickler "
-"from the Applications folder to the Bin."
+"Stickler’s data is removed. To remove the app too, drag Stickler to the Bin."
 msgstr ""
-"Die Daten von Stickler sind entfernt. Um die App zu entfernen, beende sie "
-"und zieh Stickler aus dem Ordner „Programme“ in den Papierkorb."
+"Die Daten von Stickler sind entfernt. Um auch die App zu entfernen, zieh "
+"Stickler in den Papierkorb."
 
 #. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
-#: src/stickler_app/mac_texts.py:51
+#: src/stickler_app/mac_texts.py:48
 #, python-brace-format
 msgid "{count} page"
 msgid_plural "{count} pages"
@@ -783,7 +784,7 @@ msgstr "Öffnen …"
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/stickler_gtk/ui/window.py:156 src/stickler_gtk/ui/window.py:834
+#: src/stickler_gtk/ui/window.py:156 src/stickler_gtk/ui/window.py:850
 msgid "Writing the Drum Part"
 msgstr "Schlagzeugstimme wird geschrieben"
 
@@ -908,39 +909,39 @@ msgstr "Stickler deinstallieren?"
 msgid "Uninstall"
 msgstr "Deinstallieren"
 
-#: src/stickler_gtk/ui/window.py:694
+#: src/stickler_gtk/ui/window.py:696
 msgid "Stickler can be uninstalled once the current work is done"
 msgstr ""
 "Stickler lässt sich deinstallieren, sobald die laufende Arbeit fertig ist"
 
-#: src/stickler_gtk/ui/window.py:717
+#: src/stickler_gtk/ui/window.py:721 src/stickler_gtk/ui/window.py:733
 #, python-brace-format
 msgid "Stickler could not be uninstalled: {reason}"
 msgstr "Stickler konnte nicht deinstalliert werden: {reason}"
 
-#: src/stickler_gtk/ui/window.py:718
+#: src/stickler_gtk/ui/window.py:734
 msgid "To remove it, run in a terminal:"
 msgstr "Um es zu entfernen, führe im Terminal aus:"
 
-#: src/stickler_gtk/ui/window.py:721 src/stickler_gtk/ui/window.py:746
+#: src/stickler_gtk/ui/window.py:737 src/stickler_gtk/ui/window.py:762
 msgid "Close"
 msgstr "Schließen"
 
-#: src/stickler_gtk/ui/window.py:741
+#: src/stickler_gtk/ui/window.py:757
 msgid "Remove the Flatpak"
 msgstr "Das Flatpak entfernen"
 
-#: src/stickler_gtk/ui/window.py:742
+#: src/stickler_gtk/ui/window.py:758
 msgid "Stickler’s data is removed. To remove the app, run in a terminal:"
 msgstr ""
 "Die Daten von Stickler sind entfernt. Um die App zu entfernen, führe im "
 "Terminal aus:"
 
-#: src/stickler_gtk/ui/window.py:818
+#: src/stickler_gtk/ui/window.py:834
 msgid "Downloading the Models"
 msgstr "Die Modelle werden heruntergeladen"
 
-#: src/stickler_gtk/ui/window.py:821
+#: src/stickler_gtk/ui/window.py:837
 msgid ""
 "If this is interrupted, Stickler picks up where it stopped the next time you "
 "open it."
@@ -948,6 +949,6 @@ msgstr ""
 "Wird das unterbrochen, macht Stickler beim nächsten Öffnen dort weiter, wo "
 "es aufgehört hat."
 
-#: src/stickler_gtk/ui/window.py:829
+#: src/stickler_gtk/ui/window.py:845
 msgid "Saving the Drum Track"
 msgstr "Schlagzeugspur wird gespeichert"

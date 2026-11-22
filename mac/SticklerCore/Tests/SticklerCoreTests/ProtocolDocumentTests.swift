@@ -165,6 +165,8 @@ func payloadMatches(_ command: String, _ line: Data) throws -> NSDictionary? {
     case "set_zoom", "zoom_in", "zoom_out", "actual_size":
         return try object(encoding: reply.payload(Zoom.self))
     case "removal_sizes": return try object(encoding: reply.payload(RemovalSizes.self))
+    case "uninstall_sizes": return try object(encoding: reply.payload(UninstallSizes.self))
+    case "backup_summary": return try object(encoding: reply.payload(BackupSummary.self))
     default: return NSDictionary()
     }
 }

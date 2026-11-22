@@ -145,3 +145,20 @@ def test_a_broken_foreign_or_newer_file_is_refused_and_changes_nothing(tmp_path,
 def test_the_left_out_results_are_the_repositorys_separators():
     on_disk = {p.name for p in (ROOT / "adapters" / "separators").iterdir() if p.is_dir()}
     assert set(backup.SEPARATORS) == on_disk
+
+
+def test_an_mp3s_decoded_copy_is_left_out_and_does_not_stop_a_restore(tmp_path):
+    """The analysis keeps a FLAC copy of an mp3 or m4a song in results/_decoded/: the song itself,
+    which a backup does not hold (review of 2026-11-22: it broke the restore)."""
+    env = _linux(tmp_path / "home")
+    _filled(env)
+    decoded = paths.results_cache(env) / "_decoded"
+    decoded.mkdir()
+    (decoded / "abc.flac").write_bytes(b"f" * 1000)
+    backup.write(tmp_path / "b.zip", env, today=date(2026, 11, 22))
+    with zipfile.ZipFile(tmp_path / "b.zip") as z:
+        assert not any("_decoded" in n for n in z.namelist())
+    with zipfile.ZipFile(tmp_path / "b.zip", "a") as z:  # an older backup that has one
+        z.writestr("results/_decoded/abc.flac", "f")
+    with pytest.raises(backup.NotABackup):
+        backup.read(tmp_path / "b.zip")

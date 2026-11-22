@@ -327,6 +327,26 @@ class Controller:
             self._run(remove, done, failed)
             return True
 
+    # Uninstall Stickler… (SPEC.md "Release 10 (proposed): keep and remove", scope B)
+
+    def begin_uninstall(self) -> bool:
+        """Holds the app for an uninstall: nothing starts until `end_uninstall` (the system may
+        ask for a password for minutes). False while something runs."""
+        with self._lock:
+            if not self.can_remove_models:
+                return False
+            self._stop_job()
+            self._removing = True
+            self._set(session.Empty())
+            return True
+
+    def end_uninstall(self) -> None:
+        """The uninstall did not happen (a cancelled password prompt, an error): the app goes
+        on."""
+        with self._lock:
+            self._removing = False
+            self._set(self._state)
+
     # Back Up… and Restore Backup… (SPEC.md "Release 10 (proposed): keep and remove", scope A)
 
     def back_up(self, dest: Path) -> None:

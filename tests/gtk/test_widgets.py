@@ -1047,8 +1047,33 @@ def test_an_appimage_uninstalls_itself_its_entries_and_its_models(monkeypatch, t
     try:
         assert window.actions["uninstall"].get_enabled()
         window.uninstall_now(uninstall.plan(keep_settings=True))
-        assert not image.exists() and not entry.exists() and not weights.exists()
+        assert _wait(lambda: not image.exists())
+        assert not entry.exists() and not weights.exists()
         assert settings.load(settings.store_path()).zoom == 1.25
+    finally:
+        window.close()
+
+
+def test_a_package_keeps_its_folders_until_packagekit_removed_it(monkeypatch, tmp_path):
+    """SPEC.md "Release 10", scope B2 (review of 2026-11-22): a cancelled password prompt
+    removes nothing and the app goes on; a removed package takes Stickler's folders with it."""
+    from stickler_app import paths, uninstall
+    from stickler_gtk.ui import packagekit
+    from stickler_gtk.ui.window import Window
+
+    monkeypatch.setenv("STICKLER_PACKAGED", "system")
+    weights = paths.adapters_root() / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    (weights / "m.ckpt").write_bytes(b"x")
+    answers = ["Not authorized"]
+    monkeypatch.setattr(packagekit, "remove", lambda name, done: done(answers.pop(0)))
+    window = Window()
+    try:
+        window.uninstall_now(uninstall.plan(keep_settings=True))
+        assert weights.exists() and window.controller.can_remove_models  # nothing removed
+        answers.append(None)
+        window.uninstall_now(uninstall.plan(keep_settings=True))
+        assert _wait(lambda: not weights.exists())
     finally:
         window.close()
 

@@ -783,3 +783,14 @@ def test_no_restore_while_a_song_is_analysed(monkeypatch, tmp_path, host):
     ctl.open(tmp_path / "eye.flac")
     assert wait(lambda: isinstance(ctl.state, session.Analysing))
     assert not ctl.restore(tmp_path / "b.zip")
+
+
+def test_an_uninstall_holds_the_app_until_it_ends_or_fails(monkeypatch, tmp_path, host):
+    """Review of 2026-11-22: while the system asks for the password nothing may start."""
+    _installed(monkeypatch)
+    ctl = _made(host)
+    assert ctl.begin_uninstall()
+    assert not ctl.can_remove_models and not ctl.begin_uninstall()
+    assert not ctl.restore(tmp_path / "b.zip")
+    ctl.end_uninstall()  # the password prompt was cancelled: the app goes on
+    assert ctl.can_remove_models

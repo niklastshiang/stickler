@@ -65,7 +65,9 @@ def _results(env: Mapping[str, str]) -> list[tuple[str, Path]]:
     found = []
     if root.is_dir():
         for adapter in sorted(p for p in root.iterdir() if p.is_dir()):
-            if adapter.name in SEPARATORS:
+            # the separators' tracks, and the analysis's own folders (`_decoded`: a FLAC copy of
+            # an mp3 or m4a song, the song itself)
+            if adapter.name in SEPARATORS or adapter.name.startswith("_"):
                 continue
             for path in sorted(adapter.rglob("*")):
                 if path.is_file() and not path.is_symlink():
@@ -121,7 +123,8 @@ def _checked(src: Path) -> tuple[zipfile.ZipFile, dict]:
         raise NotABackup("made by a newer Stickler")
     for name in z.namelist():
         parts = PurePosixPath(name).parts
-        safe = name in (META, *STORES) or (len(parts) >= 3 and parts[0] == RESULTS)
+        result = len(parts) >= 4 and parts[0] == RESULTS and not parts[1].startswith("_")
+        safe = name in (META, *STORES) or result
         if not safe or ".." in parts or name.startswith("/"):
             z.close()
             raise NotABackup(f"an unexpected file: {name}")
@@ -155,11 +158,14 @@ def _restore_results(source: Path, cache: Path) -> None:
     if not source.is_dir():
         return
     for adapter in source.iterdir():
-        for key in adapter.iterdir():
+        for key in (k for k in adapter.iterdir() if k.is_dir()):
             target = cache / adapter.name / key.name
             if not target.exists():  # a result here stays
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copytree(key, target)
+                # through a partial folder: a half-copied result is never taken for a whole one
+                part = target.with_name(target.name + ".part")
+                shutil.rmtree(part, ignore_errors=True)
+                shutil.copytree(key, part)
+                part.rename(target)
 
 
 def _restore_recent(source: Path, store: Path) -> None:
