@@ -92,8 +92,14 @@ def test_the_layers_fill_icon_composers_canvas_as_the_drawing_fills_the_board():
 
 def test_the_descriptor_is_the_orange_with_a_light_and_a_dark_picture_for_macos():
     descriptor = json.loads(mac_icon.descriptor_text())
-    assert descriptor["fill"] == {"solid": "srgb:0.90980,0.53725,0.29020,1.00000"}
-    assert "fill-specializations" not in descriptor  # the orange stays in dark (owner)
+    # the orange in dark too (owner): a plain "fill" counts for light only, and macOS put its
+    # own black behind the dark picture (seen on the owner's Mac, 2026-11-22)
+    orange = {"solid": "srgb:0.90980,0.53725,0.29020,1.00000"}
+    assert "fill" not in descriptor
+    assert descriptor["fill-specializations"] == [
+        {"value": orange},
+        {"appearance": "dark", "value": orange},
+    ]
     assert descriptor["supported-platforms"] == {"squares": ["macOS"]}
     (group,) = descriptor["groups"]
     (layer,) = group["layers"]
@@ -102,7 +108,7 @@ def test_the_descriptor_is_the_orange_with_a_light_and_a_dark_picture_for_macos(
         {"value": "drawing.svg"},
         {"appearance": "dark", "value": "drawing-dark.svg"},
     ]
-    assert mac_icon.descriptor_text().startswith('{\n  "fill" : {')
+    assert mac_icon.descriptor_text().startswith('{\n  "fill-specializations" : [')
 
 
 def test_colours_are_written_as_icon_composer_writes_them():

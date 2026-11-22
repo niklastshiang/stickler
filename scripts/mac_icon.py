@@ -124,9 +124,12 @@ def colour(hex_colour: str) -> str:
 def descriptor() -> dict:
     """The bundle's icon.json: the orange in both appearances, one flat layer (no glass,
     shadow or translucency: the design is the flat icon) whose picture follows the appearance;
-    the tinted appearance is made by macOS from the light one."""
+    the tinted appearance is made by macOS from the light one. The orange is named for dark
+    too: a plain "fill" is the light one only, and macOS put its own black behind the dark
+    picture (the owner's Mac, 2026-11-22). Icon Composer writes it so (HandBrake, Gifski)."""
+    orange = {"solid": colour(BACKGROUND)}
     return {
-        "fill": {"solid": colour(BACKGROUND)},
+        "fill-specializations": [{"value": orange}, {"appearance": "dark", "value": orange}],
         "groups": [
             {
                 "layers": [
