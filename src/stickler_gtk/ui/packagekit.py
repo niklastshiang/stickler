@@ -44,17 +44,40 @@ class _Transaction:
             self._signal = bus.signal_subscribe(
                 NAME, TRANSACTION, None, self.path, None, Gio.DBusSignalFlags.NONE, self._on
             )
+
+            def hinted(bus: Gio.DBusConnection, result: Gio.AsyncResult) -> None:
+                try:
+                    bus.call_finish(result)
+                except GLib.Error as exc:
+                    self.error = exc.message
+                    self._end()
+                    return
+                bus.call(
+                    NAME,
+                    self.path,
+                    TRANSACTION,
+                    method,
+                    args,
+                    None,
+                    Gio.DBusCallFlags.NONE,
+                    -1,
+                    None,
+                    self._called,
+                )
+
+            # first the hints (a person is there: polkit may ask for the password), then the
+            # method itself
             bus.call(
                 NAME,
                 self.path,
                 TRANSACTION,
-                method,
-                args,
+                "SetHints",
+                GLib.Variant("(as)", (uninstall.HINTS,)),
                 None,
                 Gio.DBusCallFlags.NONE,
                 -1,
                 None,
-                self._called,
+                hinted,
             )
 
         self.bus.call(

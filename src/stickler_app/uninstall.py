@@ -27,6 +27,10 @@ PACKAGE = "stickler"  # the `.deb`'s and the `.rpm`'s name (packaging/nfpm.yaml)
 # PackageKit's numbers (its D-Bus API): the filter for installed packages, a successful exit
 INSTALLED = 1 << 2  # PK_FILTER_ENUM_INSTALLED as a bitfield
 SUCCESS = 1  # PK_EXIT_ENUM_SUCCESS
+# a person is there to type the password: without it polkit may not ask and PackageKit fails
+# with "Failed to obtain authentication" (owner, 2026-11-22, Ubuntu 26.04; PackageKit's job is
+# not interactive unless a hint says so, in 1.3 and 1.4)
+HINTS = ["interactive=true"]
 
 
 @dataclass(frozen=True)

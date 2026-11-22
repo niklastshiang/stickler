@@ -222,3 +222,8 @@ def test_the_flatpak_removes_nothing_itself_the_software_app_asks_about_the_data
     uninstall.remove(uninstall.plan(env), env)
     assert settings.load(settings.store_path(env)).setup_agreed is True  # its data, its choice
     assert uninstall.flatpak_command() == "flatpak uninstall --user --delete-data ng.tshia.Stickler"
+
+
+def test_packagekit_is_told_that_a_person_may_be_asked_for_the_password():
+    """Owner, 2026-11-22, Ubuntu 26.04: without the hint polkit may not ask."""
+    assert "interactive=true" in uninstall.HINTS
