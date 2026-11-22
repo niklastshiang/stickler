@@ -1118,7 +1118,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ## Phase 27: Release 10, keep and remove (approved 2026-11-22, SPEC.md "Release 10 (proposed): keep and remove")
 
-- [ ] **Task 150: The three unknowns** (S)
+- [x] **Task 150: The three unknowns** (S): done 2026-11-22. A running AppImage moved to the Bin keeps running: `Stickler-9-x86_64.AppImage` mounted from a folder in the home, `gio trash` while mounted, the mount stayed readable and the process held the file at its place in the Bin (removed from the owner's Bin afterwards); from `/tmp` (another file system) the Bin refuses, so the app deletes the file there instead, after the user agreed. A running Mac app moves its own bundle to the Bin: a bare app from `mac/probes/TrashSelf.swift` calling `FileManager.trashItem` on `Bundle.main.bundleURL`, started from a folder in the home, in the `mac` workflow on macOS 26 (run 45035344176, job `probe-trash-self` green; the probe job was removed again, its source stays for task 157). So the Mac app needs no helper (SPEC scope B2 changed). GNOME Software's uninstall button for a Flatpak from a file stays for the owner's check (task 160); Bazaar on the owner's Bluefin shows it.
   - Acceptance: tried and written down here: a running AppImage moved to the Bin (in the AppImage's container or by hand on the owner's computer: the app keeps running, the file is in the Bin); a Mac test app that hands its bundle to a helper and quits (in the `mac` workflow: the bundle ends in the Bin, Launch Services forgets it); `appstream:<id>` in GNOME Software for a Flatpak installed from a file (a Fedora VM or the owner's check; Bazaar already shows the button). SPEC's open question 4 closed with the results; a failed one changes the scope as the plan's risks say, asked first.
   - Dependencies: none
 
@@ -1153,8 +1153,8 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Dependencies: 155 · Files: `src/stickler_gtk/`, `packaging/linux/container-test.sh`, `po/`
 
 - [ ] **Task 157: Uninstall in the Mac app** (M)
-  - Acceptance: the Stickler menu's entry with the same dialog; the core removes its data over the bridge; the app clears its preferences, saved state and WebKit data, starts the helper of task 150 and quits; a translocated app shows the steps instead.
-  - Verify: tests in the `mac` workflow (the helper with a test bundle); the owner on the Mac
+  - Acceptance: the Stickler menu's entry with the same dialog; the core removes its data over the bridge; the app clears its preferences, saved state and WebKit data, moves its own bundle to the Bin (`FileManager.trashItem`, task 150) and quits; a translocated app shows the steps instead.
+  - Verify: tests in the `mac` workflow (the trash step with a test bundle, as `mac/probes/trash-self.sh`); the owner on the Mac
   - Dependencies: 150, 155 · Files: `mac/`, `src/stickler_app/bridge.py`, `docs/bridge.md`
 
 - [ ] **Task 158: The texts around it** (S)
