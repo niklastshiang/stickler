@@ -21,6 +21,9 @@ from pathlib import Path
 from stickler_app import APP_ID, paths, removal
 
 PACKAGE = "stickler"  # the `.deb`'s and the `.rpm`'s name (packaging/nfpm.yaml)
+# PackageKit's numbers (its D-Bus API): the filter for installed packages, a successful exit
+INSTALLED = 1 << 2  # PK_FILTER_ENUM_INSTALLED as a bitfield
+SUCCESS = 1  # PK_EXIT_ENUM_SUCCESS
 
 
 @dataclass(frozen=True)
@@ -41,6 +44,14 @@ def plan(env: Mapping[str, str] = os.environ, *, keep_settings: bool = True) -> 
     program = {"appimage": env.get("APPIMAGE", ""), "system": PACKAGE, "flatpak": APP_ID}
     size = removal.size(folders) + sum(f.stat().st_size for f in files if f.is_file())
     return Plan(kind, folders, files, program.get(kind, ""), size)
+
+
+def terminal_command(fedora_marker: str = "/etc/fedora-release") -> str:
+    """For a `.deb`/`.rpm` PackageKit could not remove (found 2026-11-22 in a Fedora 45
+    container: after an install through dnf5daemon, PackageKit's dnf5 backend listed no
+    installed package at all): the line to run instead; nothing of Stickler's is removed then."""
+    tool = "dnf" if Path(fedora_marker).exists() else "apt"
+    return f"sudo {tool} remove {PACKAGE}"
 
 
 def flatpak_command() -> str:
@@ -86,6 +97,19 @@ def _integration(env: Mapping[str, str]) -> list[Path]:
         elif icon.startswith(f"appimagekit_{md5}"):
             found.extend(sorted((data / "icons").glob(f"*/*/apps/{icon}.*")))
     return found
+
+
+def chosen_package(name: str, package_ids: list[str]) -> str | None:
+    """The installed package `name` among PackageKit's ids ("name;version;arch;data")."""
+    return next((p for p in package_ids if p.split(";")[0] == name), None)
+
+
+def transaction_failed(exit_code: int, error: str) -> str | None:
+    """None when a PackageKit transaction succeeded, else why not (a cancelled password
+    prompt included: then nothing changed)."""
+    if error:
+        return error
+    return None if exit_code == SUCCESS else "the package was not removed"
 
 
 def remove(chosen: Plan) -> None:

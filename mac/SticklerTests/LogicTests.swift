@@ -178,55 +178,6 @@ final class LogicTests: XCTestCase {
         XCTAssertNil(model.notice?.opens)
     }
 
-    // MARK: Backups
-
-    static let summary = #""ok": true, "created": "2026-11-22", "songs": 2, "size": 9, "#
-        + #""text": "Made on 2026-11-22.""#
-
-    func testABackupIsSavedUnderItsDatedName() async throws {
-        let (model, core) = try await model()
-        asking.save = URL(fileURLWithPath: "/Users/me/b.zip")
-        let day = try XCTUnwrap(
-            Calendar(identifier: .gregorian).date(from: DateComponents(
-                year: 2026, month: 11, day: 22, hour: 12)))
-        Backups.backUp(model, on: day)
-        XCTAssertEqual(asking.offered.last, "Stickler Backup 2026-11-22.zip")
-        XCTAssertEqual(asking.endings.last, ["zip"])
-        try await until { core.sent.contains(.backUp(dest: "/Users/me/b.zip")) }
-    }
-
-    func testACancelledBackupSendsNothing() async throws {
-        let (model, core) = try await model()
-        asking.save = nil
-        Backups.backUp(model)
-        try await Task.sleep(for: .milliseconds(100))
-        XCTAssertFalse(core.sent.contains { $0.name == "back_up" })
-    }
-
-    func testARestoreAsksWithWhatTheBackupHolds() async throws {
-        for answer in [true, false] {
-            let (model, core) = try await model(replies: ["backup_summary": Self.summary])
-            asking.chosenBackup = URL(fileURLWithPath: "/Users/me/b.zip")
-            asking.restoreIt = answer
-            await Backups.restore(model)
-            XCTAssertEqual(asking.questions.last, "Made on 2026-11-22.")
-            if answer {
-                try await until { core.sent.contains(.restore(src: "/Users/me/b.zip")) }
-            } else {
-                try await Task.sleep(for: .milliseconds(100))
-                XCTAssertFalse(core.sent.contains { $0.name == "restore" })
-            }
-        }
-    }
-
-    func testNoFileChosenAsksNothing() async throws {
-        let (model, core) = try await model(replies: ["backup_summary": Self.summary])
-        asking.chosenBackup = nil
-        await Backups.restore(model)
-        XCTAssertTrue(asking.questions.isEmpty)
-        XCTAssertFalse(core.sent.contains { $0.name == "backup_summary" })
-    }
-
     // MARK: Removal
 
     static let sizes = #""ok": true, "models": 2213000000, "everything": 2213400000, "#
@@ -331,56 +282,6 @@ final class LogicTests: XCTestCase {
     }
 }
 
-/// The reader's answers, fixed by each test; what was asked is kept.
-@MainActor
-final class FakeAsking: Asking {
-    var save: URL?
-    var chosenSong: URL?
-    var program: URL?
-    var goOn = true
-    var remove: Bool?
-    private(set) var offered: [String] = []
-    private(set) var costs: [String] = []
-    private(set) var sizes: [RemovalSizes] = []
-    private(set) var opened: [(URL, URL)] = []
-
-    private(set) var endings: [[String]] = []
-
-    func saveLocation(named name: String, endings: [String]) -> URL? {
-        offered.append(name)
-        self.endings.append(endings)
-        return save
-    }
-
-    func song() -> URL? { chosenSong }
-
-    func application() -> URL? { program }
-
-    func drumTrack(cost: String) -> Bool {
-        costs.append(cost)
-        return goOn
-    }
-
-    func removal(_ sizes: RemovalSizes) -> Bool? {
-        self.sizes.append(sizes)
-        return remove
-    }
-
-    var chosenBackup: URL?
-    var restoreIt = true
-    private(set) var questions: [String] = []
-
-    func backup() -> URL? { chosenBackup }
-
-    func restore(_ text: String) -> Bool {
-        questions.append(text)
-        return restoreIt
-    }
-
-    func open(_ file: URL, with application: URL) {
-        opened.append((file, application))
-    }
-}
 
 /// What "Remove Downloaded Models…" with everything removes besides Stickler's own folders.
 @MainActor
@@ -418,5 +319,56 @@ final class LeftoversTests: XCTestCase {
         let real = try XCTUnwrap(
             FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first)
         Leftovers.remove(identifier: suite, library: real, defaults: defaults)
+    }
+}
+
+// MARK: Backups (an extension, so the class body stays within SwiftLint's length)
+
+extension LogicTests {
+    static let summary = #""ok": true, "created": "2026-11-22", "songs": 2, "size": 9, "#
+        + #""text": "Made on 2026-11-22.""#
+
+    func testABackupIsSavedUnderItsDatedName() async throws {
+        let (model, core) = try await model()
+        asking.save = URL(fileURLWithPath: "/Users/me/b.zip")
+        let day = try XCTUnwrap(
+            Calendar(identifier: .gregorian).date(from: DateComponents(
+                year: 2026, month: 11, day: 22, hour: 12)))
+        Backups.backUp(model, on: day)
+        XCTAssertEqual(asking.offered.last, "Stickler Backup 2026-11-22.zip")
+        XCTAssertEqual(asking.endings.last, ["zip"])
+        try await until { core.sent.contains(.backUp(dest: "/Users/me/b.zip")) }
+    }
+
+    func testACancelledBackupSendsNothing() async throws {
+        let (model, core) = try await model()
+        asking.save = nil
+        Backups.backUp(model)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertFalse(core.sent.contains { $0.name == "back_up" })
+    }
+
+    func testARestoreAsksWithWhatTheBackupHolds() async throws {
+        for answer in [true, false] {
+            let (model, core) = try await model(replies: ["backup_summary": Self.summary])
+            asking.chosenBackup = URL(fileURLWithPath: "/Users/me/b.zip")
+            asking.restoreIt = answer
+            await Backups.restore(model)
+            XCTAssertEqual(asking.questions.last, "Made on 2026-11-22.")
+            if answer {
+                try await until { core.sent.contains(.restore(src: "/Users/me/b.zip")) }
+            } else {
+                try await Task.sleep(for: .milliseconds(100))
+                XCTAssertFalse(core.sent.contains { $0.name == "restore" })
+            }
+        }
+    }
+
+    func testNoFileChosenAsksNothing() async throws {
+        let (model, core) = try await model(replies: ["backup_summary": Self.summary])
+        asking.chosenBackup = nil
+        await Backups.restore(model)
+        XCTAssertTrue(asking.questions.isEmpty)
+        XCTAssertFalse(core.sent.contains { $0.name == "backup_summary" })
     }
 }

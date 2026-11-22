@@ -107,3 +107,25 @@ def test_the_package_name_is_the_packages():
     root = Path(__file__).resolve().parents[2]
     nfpm = yaml.safe_load((root / "packaging" / "nfpm.yaml").read_text(encoding="utf-8"))
     assert nfpm["name"] == uninstall.PACKAGE
+
+
+# The decisions around PackageKit (the D-Bus calls are in stickler_gtk/ui/packagekit.py and run
+# against the real PackageKit in packaging/linux/container-test.sh)
+
+
+def test_only_the_package_of_that_name_is_chosen():
+    ids = ["stickler-doc;9;all;installed", "stickler;9;amd64;installed:/tmp/x.deb"]
+    assert uninstall.chosen_package("stickler", ids) == "stickler;9;amd64;installed:/tmp/x.deb"
+    assert uninstall.chosen_package("stickler", ["other;1;all;installed"]) is None
+
+
+def test_a_transaction_that_did_not_succeed_says_why():
+    assert uninstall.transaction_failed(1, "") is None
+    assert uninstall.transaction_failed(1, "") is None and uninstall.SUCCESS == 1
+    assert uninstall.transaction_failed(3, "") == "the package was not removed"
+    assert uninstall.transaction_failed(1, "Not authorized") == "Not authorized"
+
+
+def test_where_packagekit_cannot_remove_it_the_terminal_line_for_the_system():
+    assert uninstall.terminal_command("/etc/fedora-release") == "sudo dnf remove stickler"
+    assert uninstall.terminal_command("/nonexistent") == "sudo apt remove stickler"

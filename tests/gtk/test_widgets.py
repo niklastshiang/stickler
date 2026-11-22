@@ -1014,6 +1014,45 @@ def test_a_restore_brings_back_the_recent_songs_and_waits_while_work_runs(monkey
         window.close()
 
 
+def test_an_appimage_uninstalls_itself_its_entries_and_its_models(monkeypatch, tmp_path):
+    """SPEC.md "Release 10 (proposed): keep and remove", scope B2: the AppImage to the Bin
+    (the tests' private XDG data folder holds the Bin), its menu entry and its folders gone,
+    the settings kept (the box not ticked)."""
+    import hashlib
+    import os
+    from pathlib import Path
+
+    from gi.repository import Gtk
+
+    from stickler_app import paths, settings, uninstall
+    from stickler_gtk.ui import menu
+    from stickler_gtk.ui.window import Window
+
+    assert "win.uninstall" in _menu_actions(menu.main_menu(Gtk.Label(), removable=True))
+    home = Path(os.environ["XDG_DATA_HOME"]).parent
+    image = home / "AppImages" / "Stickler.AppImage"
+    image.parent.mkdir(parents=True)
+    image.write_bytes(b"ELF")
+    monkeypatch.setenv("APPIMAGE", str(image))
+    monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
+    md5 = hashlib.md5(f"file://{image}".encode()).hexdigest()
+    entry = Path(os.environ["XDG_DATA_HOME"]) / "applications" / f"appimagekit_{md5}-S.desktop"
+    entry.parent.mkdir(parents=True, exist_ok=True)
+    entry.write_text(f"[Desktop Entry]\nExec={image}\nX-AppImage-Identifier={md5}\n")
+    weights = paths.adapters_root() / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    (weights / "m.ckpt").write_bytes(b"x")
+    settings.update(settings.store_path(), zoom=1.25)
+    window = Window()
+    try:
+        assert window.actions["uninstall"].get_enabled()
+        window.uninstall_now(uninstall.plan(keep_settings=True))
+        assert not image.exists() and not entry.exists() and not weights.exists()
+        assert settings.load(settings.store_path()).zoom == 1.25
+    finally:
+        window.close()
+
+
 def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
     monkeypatch, tmp_path
 ):

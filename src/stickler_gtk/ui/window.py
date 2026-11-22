@@ -14,6 +14,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from stickler import api
 from stickler_app import (
+    APP_ID,
     APP_NAME,
     backup,
     controller,
@@ -25,12 +26,13 @@ from stickler_app import (
     session,
     settings,
     setup,
+    uninstall,
     zoom,
 )
 from stickler_app.i18n import _
 from stickler_app.steps import StepRow
 from stickler_gtk.ui import corrections as corrections_ui
-from stickler_gtk.ui import menu, pdf, worker
+from stickler_gtk.ui import menu, packagekit, pdf, worker
 from stickler_gtk.ui import setup as setup_ui
 from stickler_gtk.ui.playbar import PlayBar
 from stickler_gtk.ui.sheet import Sheet
@@ -258,6 +260,7 @@ class Window(Adw.ApplicationWindow):
             ("remove-models", self.ask_to_remove_models),
             ("back-up", self.ask_where_to_back_up),
             ("restore", self.ask_which_backup),
+            ("uninstall", self.ask_to_uninstall),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())
@@ -648,6 +651,111 @@ class Window(Adw.ApplicationWindow):
         if not self.controller.restore(src):
             self.toast(_("The backup can be restored once the current work is done"))
 
+    # Uninstall Stickler… (SPEC.md "Release 10 (proposed): keep and remove", scope B)
+
+    def ask_to_uninstall(self) -> None:
+        """Measures what would go (in the worker), then asks."""
+        worker.run(
+            lambda: (uninstall.plan(keep_settings=True), uninstall.plan(keep_settings=False)),
+            lambda plans: self._ask_to_uninstall(*plans),
+            lambda exc: self.toast(_("Could not check the models: {reason}").format(reason=exc)),
+        )
+
+    def _ask_to_uninstall(self, keeping: uninstall.Plan, everything: uninstall.Plan) -> None:
+        def body(all_of_it: bool) -> str:
+            freed = GLib.format_size((everything if all_of_it else keeping).size)
+            return _("This removes Stickler and frees {size}. Your songs and exports stay.").format(
+                size=freed
+            )
+
+        also = Gtk.CheckButton(label=_("Also remove my settings, recent songs and corrections"))
+        alert = Adw.AlertDialog(
+            heading=_("Uninstall Stickler?"), body=body(False), extra_child=also
+        )
+        also.connect("toggled", lambda b: alert.set_body(body(b.get_active())))
+        alert.add_response("cancel", _("Cancel"))
+        alert.add_response("uninstall", _("Uninstall"))
+        alert.set_response_appearance("uninstall", Adw.ResponseAppearance.DESTRUCTIVE)
+        alert.set_default_response("cancel")
+        alert.set_close_response("cancel")
+        alert.connect(
+            "response",
+            lambda _a, answer: (
+                answer == "uninstall"
+                and self.uninstall_now(everything if also.get_active() else keeping)
+            ),
+        )
+        alert.present(self)
+
+    def uninstall_now(self, chosen: uninstall.Plan) -> None:
+        """Per package (scope B2). The `.deb`/`.rpm`: PackageKit first, Stickler's folders only
+        after it removed the package (a cancelled password prompt changes nothing)."""
+        if not self.controller.can_remove_models:
+            self.toast(_("Stickler can be uninstalled once the current work is done"))
+            return
+        self.playbar.stop()
+        if chosen.kind == "system":
+            packagekit.remove(uninstall.PACKAGE, lambda reason: self._removed(chosen, reason))
+        elif chosen.kind == "appimage":
+            uninstall.remove(chosen)
+            self._trash(Path(chosen.program))
+            self._finish()
+        elif chosen.kind == "flatpak":
+            uninstall.remove(chosen)
+            Gio.AppInfo.launch_default_for_uri_async(
+                f"appstream:{APP_ID}", None, None, self._software_opened
+            )
+
+    def _removed(self, chosen: uninstall.Plan, reason: str | None) -> None:
+        """A refused or cancelled password prompt changes nothing; a package PackageKit cannot
+        find or remove gets the terminal line, and Stickler's folders stay until it is gone."""
+        if reason is None:
+            uninstall.remove(chosen)
+            self._finish()
+            return
+        alert = Adw.AlertDialog(
+            heading=_("Stickler could not be uninstalled: {reason}").format(reason=reason),
+            body=_("To remove it, run in a terminal:") + f"\n\n{uninstall.terminal_command()}",
+        )
+        alert.set_body_use_markup(False)
+        alert.add_response("close", _("Close"))
+        alert.present(self)
+
+    @staticmethod
+    def _trash(image: Path) -> None:
+        """The AppImage to the Bin; where there is none (another file system), deleted: the
+        user asked for it to go. It keeps running until the app quits."""
+        try:
+            Gio.File.new_for_path(str(image)).trash(None)
+        except GLib.Error:
+            image.unlink(missing_ok=True)
+
+    def _software_opened(self, _source, result: Gio.AsyncResult) -> None:
+        """The Flatpak: the Software app shows Stickler's page with its uninstall button; where
+        no app opens `appstream:` links, the command to copy."""
+        try:
+            Gio.AppInfo.launch_default_for_uri_finish(result)
+        except GLib.Error:
+            command = uninstall.flatpak_command()
+            alert = Adw.AlertDialog(
+                heading=_("Remove the Flatpak"),
+                body=_("Stickler’s data is removed. To remove the app, run in a terminal:")
+                + f"\n\n{command}",
+            )
+            alert.set_body_use_markup(False)
+            alert.add_response("close", _("Close"))
+            alert.connect("response", lambda *_a: self._finish())
+            alert.present(self)
+            return
+        self._finish()
+
+    def _finish(self) -> None:
+        application = self.get_application()
+        if application is not None:
+            application.quit()
+        else:
+            self.close()
+
     # the setup assistant (SPEC.md, module `setup-assistant`)
 
     def _setup_rows(self, state: session.SettingUp):
@@ -687,6 +795,7 @@ class Window(Adw.ApplicationWindow):
         self.actions["close-song"].set_enabled(can.close)
         self.actions["remove-models"].set_enabled(can.remove_models)
         self.actions["restore"].set_enabled(can.remove_models)  # the same folders
+        self.actions["uninstall"].set_enabled(can.remove_models)
         self.analysing.set_description("")
         if isinstance(state, session.Consent):
             self.heading.set_title(APP_NAME)
