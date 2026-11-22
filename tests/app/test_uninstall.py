@@ -11,6 +11,9 @@ def _appimage(home: Path, where: Path) -> dict[str, str]:
     return {"HOME": str(home), "APPIMAGE": str(where), "SHARUN_DIR": "/tmp/.mount_x"}
 
 
+APPIMAGE_HEAD = b"\x7fELF" + b"\x00" * 4 + b"AI\x02"  # what an AppImage of type 2 starts with
+
+
 def _stored(env) -> None:
     for path in (settings.store_path(env), recent.store_path(env), corrections.store_path(env)):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -42,6 +45,8 @@ def test_with_the_box_ticked_all_of_stickler_goes(tmp_path):
 
 def test_an_appimage_removes_the_menu_entries_and_icons_made_for_this_file_only(tmp_path):
     image = tmp_path / "AppImages" / "Stickler-9-x86_64.AppImage"
+    image.parent.mkdir(parents=True)
+    image.write_bytes(APPIMAGE_HEAD)
     env = _appimage(tmp_path, image)
     apps = tmp_path / ".local" / "share" / "applications"
     apps.mkdir(parents=True)
@@ -54,7 +59,7 @@ def test_an_appimage_removes_the_menu_entries_and_icons_made_for_this_file_only(
         f"Icon=appimagekit_{md5}_ng.tshia.Stickler\nX-AppImage-Identifier={md5}\n"
     )
     gear_icon = tmp_path / "AppImages" / ".icons" / "stickler"
-    gear_icon.parent.mkdir(parents=True)
+    gear_icon.parent.mkdir()
     gear_icon.write_bytes(b"icon")
     (apps / "stickler.desktop").write_text(
         f"[Desktop Entry]\nName=Stickler\nExec={image} %F\nTryExec={image}\nIcon={gear_icon}\n"
@@ -166,3 +171,33 @@ def test_quoted_exec_lines_and_escaped_uris_are_this_files_too(tmp_path):
     md5 = hashlib.md5(f"file://{quote(str(image))}".encode()).hexdigest()
     (apps / "escaped.desktop").write_text(f"[Desktop Entry]\nX-AppImage-Identifier={md5}\n")
     assert {apps / "quoted.desktop", apps / "escaped.desktop"} <= set(uninstall.plan(env).files)
+
+
+# Security (2026-11-22): a destructive path needs its root after resolving, and its proof
+
+
+def test_an_icon_path_that_climbs_out_of_the_icon_folder_is_never_deleted(tmp_path):
+    image = tmp_path / "AppImages" / "Stickler.AppImage"
+    env = _appimage(tmp_path, image)
+    apps = tmp_path / ".local" / "share" / "applications"
+    apps.mkdir(parents=True)
+    picture = tmp_path / "Pictures" / "drums.png"
+    picture.parent.mkdir()
+    picture.write_bytes(b"mine")
+    (tmp_path / ".local" / "share" / "icons").mkdir()  # the climb needs a folder that exists
+    climbing = (
+        tmp_path / ".local" / "share" / "icons" / ".." / ".." / ".." / "Pictures" / "drums.png"
+    )
+    (apps / "s.desktop").write_text(f"[Desktop Entry]\nExec={image}\nIcon={climbing}\n")
+    files = uninstall.plan(env).files
+    assert apps / "s.desktop" in files
+    assert not any(f.resolve() == picture.resolve() for f in files)
+
+
+def test_only_a_real_appimage_is_named_as_the_program_to_remove(tmp_path):
+    fake = tmp_path / "notes.txt"
+    fake.write_text("my notes")
+    assert uninstall.plan(_appimage(tmp_path, fake)).program == ""
+    real = tmp_path / "Stickler.AppImage"
+    real.write_bytes(APPIMAGE_HEAD + b"\x00" * 100)
+    assert uninstall.plan(_appimage(tmp_path, real)).program == str(real)

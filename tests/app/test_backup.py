@@ -162,3 +162,15 @@ def test_an_mp3s_decoded_copy_is_left_out_and_does_not_stop_a_restore(tmp_path):
         z.writestr("results/_decoded/abc.flac", "f")
     with pytest.raises(backup.NotABackup):
         backup.read(tmp_path / "b.zip")
+
+
+def test_a_backup_that_would_unpack_to_more_than_the_limit_is_refused(tmp_path, monkeypatch):
+    """Security (2026-11-22): the size is read from the zip's directory before anything is
+    unpacked, so a zip bomb cannot fill the temporary folder (tmpfs on Fedora)."""
+    monkeypatch.setattr(backup, "MAX_UNPACKED", 1000)
+    big = tmp_path / "big.zip"
+    with zipfile.ZipFile(big, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("backup.json", json.dumps({"format": 1, "created": "2026-11-22"}))
+        z.writestr("results/adtof/k1/drums.mid", "0" * 5000)  # compresses to a few bytes
+    with pytest.raises(backup.NotABackup, match="too large"):
+        backup.read(big)

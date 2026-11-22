@@ -22,6 +22,10 @@ from stickler_app import corrections, paths, recent, settings
 from stickler_app.i18n import _
 
 FORMAT = 1  # raised when a backup's layout changes; a newer one is refused
+# A restore unpacks into a temporary folder (tmpfs on Fedora): a backup that would unpack to
+# more is refused before anything is written. Results take well under a megabyte per song.
+MAX_UNPACKED = 2 * 1024**3
+MAX_FILES = 200_000
 SEPARATORS = ("demucs", "roformer")  # their results are whole drum tracks: left out
 META = "backup.json"
 STORES = ("settings.json", "recent.json", "corrections.json")
@@ -121,6 +125,10 @@ def _checked(src: Path) -> tuple[zipfile.ZipFile, dict]:
     if not isinstance(fmt, int) or fmt > FORMAT:
         z.close()
         raise NotABackup("made by a newer Stickler")
+    infos = z.infolist()
+    if len(infos) > MAX_FILES or sum(i.file_size for i in infos) > MAX_UNPACKED:
+        z.close()
+        raise NotABackup("too large to be a Stickler backup")
     for name in z.namelist():
         parts = PurePosixPath(name).parts
         result = len(parts) >= 4 and parts[0] == RESULTS and not parts[1].startswith("_")

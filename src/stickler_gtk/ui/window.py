@@ -702,7 +702,8 @@ class Window(Adw.ApplicationWindow):
 
             def remove_all() -> None:
                 uninstall.remove(chosen)
-                self._trash(Path(chosen.program))
+                if chosen.program:  # empty when $APPIMAGE is no AppImage: then it stays
+                    self._trash(Path(chosen.program))
 
             worker.run(remove_all, lambda _r: self._finish(), self._uninstall_failed)
         elif chosen.kind == "flatpak":

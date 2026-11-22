@@ -1032,7 +1032,7 @@ def test_an_appimage_uninstalls_itself_its_entries_and_its_models(monkeypatch, t
     home = Path(os.environ["XDG_DATA_HOME"]).parent
     image = home / "AppImages" / "Stickler.AppImage"
     image.parent.mkdir(parents=True)
-    image.write_bytes(b"ELF")
+    image.write_bytes(b"\x7fELF" + b"\x00" * 4 + b"AI\x02")  # an AppImage's head
     monkeypatch.setenv("APPIMAGE", str(image))
     monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
     md5 = hashlib.md5(f"file://{image}".encode()).hexdigest()

@@ -44,7 +44,13 @@ def plan(env: Mapping[str, str] = os.environ, *, keep_settings: bool = True) -> 
         return Plan(None, [], [], "", 0)
     folders = removal.targets(env, everything=not keep_settings)
     files = _integration(env) if kind == "appimage" else []
-    program = {"appimage": env.get("APPIMAGE", ""), "system": PACKAGE, "flatpak": APP_ID}
+    image = env.get("APPIMAGE", "")
+    program = {
+        # only a real AppImage goes to the Bin: the variable alone proves nothing
+        "appimage": image if is_appimage(Path(image)) else "",
+        "system": PACKAGE,
+        "flatpak": APP_ID,
+    }
     size = removal.size(folders) + sum(f.stat().st_size for f in files if f.is_file())
     return Plan(kind, folders, files, program.get(kind, ""), size, keep_settings)
 
@@ -55,6 +61,19 @@ def terminal_command(fedora_marker: str = "/etc/fedora-release") -> str:
     installed package at all): the line to run instead; nothing of Stickler's is removed then."""
     tool = "dnf" if Path(fedora_marker).exists() else "apt"
     return f"sudo {tool} remove {PACKAGE}"
+
+
+def is_appimage(path: Path) -> bool:
+    """An AppImage of type 2 (ELF with "AI" and 2 at byte 8, the AppImage specification), as a
+    regular file: the proof read before the file is moved to the Bin."""
+    try:
+        if path.is_symlink() or not path.is_file():
+            return False
+        with path.open("rb") as f:
+            head = f.read(11)
+    except OSError:
+        return False
+    return head[:4] == b"\x7fELF" and head[8:11] == b"AI\x02"
 
 
 def flatpak_command() -> str:
@@ -87,7 +106,7 @@ def _integration(env: Mapping[str, str]) -> list[Path]:
     md5s = {hashlib.md5(f"file://{form}".encode()).hexdigest() for form in (image, quote(image))}
     data = Path(env.get("XDG_DATA_HOME") or Path(env.get("HOME") or Path.home()) / ".local/share")
     # an icon is deleted only from where the tools put them: never a picture of the user's own
-    icon_folders = (data / "icons", Path(image).parent / ".icons")
+    icon_folders = [f.resolve() for f in (data / "icons", Path(image).parent / ".icons")]
     found: list[Path] = []
     for desktop in sorted((data / "applications").glob("*.desktop")):
         values = _entries(desktop)
@@ -99,8 +118,10 @@ def _integration(env: Mapping[str, str]) -> list[Path]:
         icon = values.get("Icon", "")
         if icon.startswith("/"):
             path = Path(icon)
-            if path.is_file() and any(path.is_relative_to(f) for f in icon_folders):
-                found.append(path)
+            # resolved first: ".." or a link must not lead out of the tools' folders
+            real = path.resolve()
+            if real.is_file() and any(real.is_relative_to(f) for f in icon_folders):
+                found.append(real)
         elif any(icon.startswith(f"appimagekit_{md5}") for md5 in md5s):
             found.extend(sorted((data / "icons").glob(f"*/*/apps/{icon}.*")))
     return found
