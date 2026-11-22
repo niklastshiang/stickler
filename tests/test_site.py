@@ -320,13 +320,39 @@ def test_search_engines_find_every_page_in_both_languages():
 
 
 @pytest.mark.parametrize("folder", ["", "de/"])
-def test_the_mac_card_leads_to_the_guide(folder):
-    """SPEC "Website", content 9 (owner, 2026-11-19): the card keeps one sentence and the
-    link; the steps have a page of their own."""
+def test_get_stickler_is_one_row_per_download_with_its_line_to_copy(folder):
+    """SPEC "Website", content 9 (owner, 2026-11-22, after TuxTalk's page): one row per file,
+    in this order; each Linux row has its terminal line with a copy button beside its
+    download, and each download names its file for a screen reader."""
+    html = (SITE / folder / "index.html").read_text(encoding="utf-8")
+    section = html[html.index('<section id="get"') :]
+    section = section[: section.index("</section>")]
+    rows = section.split('<li class="get-row')[1:]
+    assert [re.search(r'data-asset="(\w+)"', row)[1] for row in rows] == [
+        "dmg",
+        "deb",
+        "rpm",
+        "flatpak",
+        "appimage",
+    ]
+    for row in rows[1:]:
+        kind = re.search(r'data-asset="(\w+)"', row)[1]
+        assert f'<code id="{kind}-command">' in row and f'data-copy="{kind}-command"' in row
+        assert f'<span data-name="{kind}">' in row
+    for row in rows:
+        assert re.search(r'<span class="visually-hidden">[^<]+: </span>', row)
+
+
+@pytest.mark.parametrize("folder", ["", "de/"])
+def test_the_mac_row_leads_to_the_guide(folder):
+    """SPEC "Website", content 9 (owner, 2026-11-19): the Mac's download keeps one sentence and
+    the link; the steps have a page of their own."""
     start = SITE / folder / "index.html"
     html = start.read_text(encoding="utf-8")
-    card = html[html.index('data-size="dmg"') : html.index('data-size="flatpak"')]
-    assert 'href="install-mac.html"' in card and "<ol>" not in card
+    row = html[html.index('<li class="get-row first">') :]
+    row = row[: row.index("</li>")]
+    assert 'data-asset="dmg"' in row
+    assert 'href="install-mac.html"' in row and "<ol>" not in row
     guide = _page(SITE / folder / "install-mac.html")
     assert "xattr-command" in guide.ids, "the Terminal line for a Mac without Open Anyway"
     assert [a for _t, a in guide.tags if a.get("data-copy") == "xattr-command"]
