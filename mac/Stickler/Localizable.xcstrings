@@ -3559,6 +3559,23 @@
         }
       }
     },
+    "the system’s package service (PackageKit) does not answer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "der Paketdienst des Systems (PackageKit) antwortet nicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el servicio de paquetes del sistema (PackageKit) no responde"
+          }
+        }
+      }
+    },
     "“%1$@” cannot be read. Is it a complete sound file?" : {
       "extractionState" : "manual",
       "localizations" : {

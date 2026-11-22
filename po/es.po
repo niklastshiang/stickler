@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-22 16:50+0100\n"
+"POT-Creation-Date: 2026-11-22 17:36+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/stickler_app/backup.py:45
+#: src/stickler_app/backup.py:49
 #, python-brace-format
 msgid ""
 "Made on {date}, analysed songs: {songs}, {size}. Songs and corrections "
@@ -460,6 +460,10 @@ msgstr "Descargar el modelo {model}"
 msgid "Once; later songs use it too"
 msgstr "Una sola vez; las próximas canciones también lo usan"
 
+#: src/stickler_app/uninstall.py:70
+msgid "the system’s package service (PackageKit) does not answer"
+msgstr "el servicio de paquetes del sistema (PackageKit) no responde"
+
 #. Translators: a percentage; German puts a no-break space before the sign
 #: src/stickler_app/zoom.py:36
 #, python-brace-format
@@ -782,7 +786,7 @@ msgstr "Abrir…"
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/stickler_gtk/ui/window.py:156 src/stickler_gtk/ui/window.py:850
+#: src/stickler_gtk/ui/window.py:156 src/stickler_gtk/ui/window.py:851
 msgid "Writing the Drum Part"
 msgstr "Escribiendo la parte de batería"
 
@@ -909,34 +913,34 @@ msgstr "Desinstalar"
 msgid "Stickler can be uninstalled once the current work is done"
 msgstr "Stickler se puede desinstalar cuando termine el trabajo en curso"
 
-#: src/stickler_gtk/ui/window.py:721 src/stickler_gtk/ui/window.py:733
+#: src/stickler_gtk/ui/window.py:722 src/stickler_gtk/ui/window.py:734
 #, python-brace-format
 msgid "Stickler could not be uninstalled: {reason}"
 msgstr "No se pudo desinstalar Stickler: {reason}"
 
-#: src/stickler_gtk/ui/window.py:734
+#: src/stickler_gtk/ui/window.py:735
 msgid "To remove it, run in a terminal:"
 msgstr "Para quitarlo, ejecuta en una terminal:"
 
-#: src/stickler_gtk/ui/window.py:737 src/stickler_gtk/ui/window.py:762
+#: src/stickler_gtk/ui/window.py:738 src/stickler_gtk/ui/window.py:763
 msgid "Close"
 msgstr "Cerrar"
 
-#: src/stickler_gtk/ui/window.py:757
+#: src/stickler_gtk/ui/window.py:758
 msgid "Remove the Flatpak"
 msgstr "Quitar el Flatpak"
 
-#: src/stickler_gtk/ui/window.py:758
+#: src/stickler_gtk/ui/window.py:759
 msgid "Stickler’s data is removed. To remove the app, run in a terminal:"
 msgstr ""
 "Los datos de Stickler se quitaron. Para quitar la app, ejecuta en una "
 "terminal:"
 
-#: src/stickler_gtk/ui/window.py:834
+#: src/stickler_gtk/ui/window.py:835
 msgid "Downloading the Models"
 msgstr "Descargando los modelos"
 
-#: src/stickler_gtk/ui/window.py:837
+#: src/stickler_gtk/ui/window.py:838
 msgid ""
 "If this is interrupted, Stickler picks up where it stopped the next time you "
 "open it."
@@ -944,6 +948,6 @@ msgstr ""
 "Si esto se interrumpe, Stickler continúa donde se quedó la próxima vez que "
 "lo abras."
 
-#: src/stickler_gtk/ui/window.py:845
+#: src/stickler_gtk/ui/window.py:846
 msgid "Saving the Drum Track"
 msgstr "Guardando la pista de batería"

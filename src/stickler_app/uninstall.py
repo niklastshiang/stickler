@@ -21,6 +21,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from stickler_app import APP_ID, paths, removal, settings
+from stickler_app.i18n import _
 
 PACKAGE = "stickler"  # the `.deb`'s and the `.rpm`'s name (packaging/nfpm.yaml)
 # PackageKit's numbers (its D-Bus API): the filter for installed packages, a successful exit
@@ -61,6 +62,12 @@ def terminal_command(fedora_marker: str = "/etc/fedora-release") -> str:
     installed package at all): the line to run instead; nothing of Stickler's is removed then."""
     tool = "dnf" if Path(fedora_marker).exists() else "apt"
     return f"sudo {tool} remove {PACKAGE}"
+
+
+def unreachable() -> str:
+    """Why the package cannot be removed from the app when the system's package service does
+    not answer (no system bus, as in a Distrobox or a container, or no PackageKit)."""
+    return _("the system’s package service (PackageKit) does not answer")
 
 
 def is_appimage(path: Path) -> bool:

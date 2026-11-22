@@ -201,3 +201,10 @@ def test_only_a_real_appimage_is_named_as_the_program_to_remove(tmp_path):
     real = tmp_path / "Stickler.AppImage"
     real.write_bytes(APPIMAGE_HEAD + b"\x00" * 100)
     assert uninstall.plan(_appimage(tmp_path, real)).program == str(real)
+
+
+def test_an_unreachable_package_service_is_named_in_words():
+    """Owner, 2026-11-22, in a Distrobox (no system bus): the dialog showed D-Bus's own
+    "Could not connect: No such file or directory"."""
+    reason = uninstall.unreachable()
+    assert "PackageKit" in reason and "connect" not in reason

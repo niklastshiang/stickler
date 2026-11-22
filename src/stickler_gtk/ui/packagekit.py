@@ -37,8 +37,8 @@ class _Transaction:
         def created(bus: Gio.DBusConnection, result: Gio.AsyncResult) -> None:
             try:
                 (self.path,) = bus.call_finish(result).unpack()
-            except GLib.Error as exc:
-                self.error = exc.message
+            except GLib.Error:  # PackageKit is not there or does not start
+                self.error = uninstall.unreachable()
                 self.finished(self)
                 return
             self._signal = bus.signal_subscribe(
@@ -97,8 +97,8 @@ def remove(name: str, done: Callable[[str | None], None]) -> None:
     """Removes the installed package `name`; `done(None)` once it is gone, else `done(reason)`."""
     try:
         bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
-    except GLib.Error as exc:
-        done(exc.message)
+    except GLib.Error:  # no system bus (a Distrobox, a container)
+        done(uninstall.unreachable())
         return
 
     def resolved(found: _Transaction) -> None:
