@@ -1161,7 +1161,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: tests in the `mac` workflow (the trash step with a test bundle, as `mac/probes/trash-self.sh`); the owner on the Mac
   - Dependencies: 150, 155 · Files: `mac/`, `src/stickler_app/bridge.py`, `docs/bridge.md`
 
-- [ ] **Task 158: The texts around it** (S)
+- [x] **Task 158: The texts around it** (S): done 2026-11-22. README: a new "Moving to another computer" (Back Up… / Restore Backup…) and "Removing it" leading with Uninstall Stickler… (the terminal lines under "Without the app"); the website's uninstall section and `install-mac.html` in both languages name the menu entry first, with the apps' own words for it. The MetaInfo's `<release>` is written at the release, from the draft `tasks/release-10-notes.md`. `docs/requirements.md` says nothing about removing: unchanged.
   - Acceptance: README (`> INSTALL THE APP`, removing), `docs/requirements.md`, the website's uninstall section in both languages and `install-mac.html` name the menu entries first and keep the terminal lines; the MetaInfo's release notes for 10.
   - Verify: `uv run pytest -q tests/test_site.py`; axe
   - Dependencies: 153, 156, 157
