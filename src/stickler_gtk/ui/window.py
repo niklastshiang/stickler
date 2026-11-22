@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import replace
+from datetime import date
 from pathlib import Path
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
@@ -14,6 +15,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 from stickler import api
 from stickler_app import (
     APP_NAME,
+    backup,
     controller,
     engraving,
     exports,
@@ -254,6 +256,8 @@ class Window(Adw.ApplicationWindow):
             ("setup-later", self.controller.not_now),
             ("setup-retry", self.controller.retry_setup),
             ("remove-models", self.ask_to_remove_models),
+            ("back-up", self.ask_where_to_back_up),
+            ("restore", self.ask_which_backup),
         ):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _action, _param, run=handler: run())
@@ -600,6 +604,57 @@ class Window(Adw.ApplicationWindow):
             return
         self.playbar.stop()
 
+    # Back Up… and Restore Backup… (SPEC.md "Release 10 (proposed): keep and remove")
+
+    def ask_where_to_back_up(self) -> None:
+        self._save_dialog(backup.file_name(date.today()), self.controller.back_up)
+
+    def ask_which_backup(self) -> None:
+        zips = Gtk.FileFilter(name=_("Backups"))
+        zips.add_suffix("zip")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(zips)
+        dialog = Gtk.FileDialog(title=_("Restore Backup"), filters=filters, default_filter=zips)
+
+        def chosen(dialog: Gtk.FileDialog, result: Gio.AsyncResult) -> None:
+            try:
+                picked = dialog.open_finish(result)
+            except Exception:  # dismissed: GLib reports it as an error
+                return
+            if picked is not None and picked.get_path():
+                self._ask_to_restore(Path(picked.get_path()))
+
+        dialog.open(self, None, chosen)
+
+    def _ask_to_restore(self, src: Path) -> None:
+        """Reads what the backup holds (in the worker), then asks."""
+        worker.run(
+            lambda: self.controller.backup_summary(src),
+            lambda summary: self._restore_question(src, summary),
+            lambda exc: self.toast(_("This is no Stickler backup: {reason}").format(reason=exc)),
+        )
+
+    def _restore_question(self, src: Path, summary: backup.Summary) -> None:
+        body = _(
+            "Made on {date}, analysed songs: {songs}, {size}. Songs and corrections already on"
+            " this computer stay; the settings are replaced."
+        ).format(
+            date=summary.created.isoformat(),
+            songs=summary.songs,
+            size=GLib.format_size(summary.size),
+        )
+        alert = Adw.AlertDialog(heading=_("Restore Backup?"), body=body)
+        alert.add_response("cancel", _("Cancel"))
+        alert.add_response("restore", _("Restore"))
+        alert.set_default_response("restore")
+        alert.set_close_response("cancel")
+        alert.connect("response", lambda _a, answer: answer == "restore" and self.restore_now(src))
+        alert.present(self)
+
+    def restore_now(self, src: Path) -> None:
+        if not self.controller.restore(src):
+            self.toast(_("The backup can be restored once the current work is done"))
+
     # the setup assistant (SPEC.md, module `setup-assistant`)
 
     def _setup_rows(self, state: session.SettingUp):
@@ -638,6 +693,7 @@ class Window(Adw.ApplicationWindow):
         self.actions["cancel"].set_enabled(can.cancel)
         self.actions["close-song"].set_enabled(can.close)
         self.actions["remove-models"].set_enabled(can.remove_models)
+        self.actions["restore"].set_enabled(can.remove_models)  # the same folders
         self.analysing.set_description("")
         if isinstance(state, session.Consent):
             self.heading.set_title(APP_NAME)

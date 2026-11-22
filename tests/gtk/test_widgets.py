@@ -978,6 +978,42 @@ def test_the_remove_entry_shows_only_in_the_installed_app():
     assert "win.remove-models" not in _menu_actions(menu.main_menu(Gtk.Label(), removable=False))
 
 
+def test_the_backup_entries_show_only_in_the_installed_app():
+    """SPEC.md "Release 10 (proposed): keep and remove", scope A1."""
+    from gi.repository import Gtk
+
+    from stickler_gtk.ui import menu
+
+    installed = _menu_actions(menu.main_menu(Gtk.Label(), removable=True))
+    assert {"win.back-up", "win.restore"} <= set(installed)
+    checkout = _menu_actions(menu.main_menu(Gtk.Label(), removable=False))
+    assert not {"win.back-up", "win.restore"} & set(checkout)
+
+
+def test_a_restore_brings_back_the_recent_songs_and_waits_while_work_runs(monkeypatch, tmp_path):
+    from pathlib import Path
+
+    from stickler_app import backup, recent, session
+    from stickler_gtk.ui.window import Window
+
+    monkeypatch.setenv("APPIMAGE", "/x/Stickler.AppImage")
+    monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
+    recent.save(recent.store_path(), [recent.opened_now(Path("/m/a.flac"), "A", "", "abc")])
+    made = tmp_path / "b.zip"
+    backup.write(made)
+    recent.store_path().unlink()
+    window = Window()
+    try:
+        window.show(session.start_setup(("environment:adtof",), None, ("adtof",)))
+        assert not window.actions["restore"].get_enabled()  # not while downloading
+        window.show(session.Empty())
+        assert window.actions["restore"].get_enabled()
+        window.restore_now(made)
+        assert _wait(lambda: [r.path for r in window.recent] == [Path("/m/a.flac")])
+    finally:
+        window.close()
+
+
 def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
     monkeypatch, tmp_path
 ):

@@ -106,6 +106,8 @@ def main_menu(zoom_label: Gtk.Label, *, removable: bool = False) -> Gtk.MenuButt
     menu.append_section(None, items)
     if removable:
         models = Gio.Menu()
+        models.append(_("Back Up…"), "win.back-up")
+        models.append(_("Restore Backup…"), "win.restore")
         models.append(_("Remove Downloaded Models…"), "win.remove-models")
         menu.append_section(None, models)
     popover = Gtk.PopoverMenu.new_from_model(menu)

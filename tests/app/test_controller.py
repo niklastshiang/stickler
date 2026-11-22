@@ -8,7 +8,7 @@ import pytest
 from fakes import FakeApi, FakeSetup, wait
 
 from stickler import api
-from stickler_app import controller, corrections, recent, session
+from stickler_app import backup, controller, corrections, recent, session
 
 
 class Host:
@@ -734,3 +734,52 @@ def test_models_are_not_removed_while_something_runs(monkeypatch, tmp_path, host
     ctl.open(tmp_path / "eye.flac")
     assert not ctl.can_remove_models and not ctl.remove_models(False)
     ctl.shutdown()
+
+
+# Back Up… and Restore Backup… (SPEC.md "Release 10 (proposed): keep and remove", scope A)
+
+
+def test_a_backup_is_saved_in_the_background_and_says_so(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    recent.save(recent.store_path(), [recent.opened_now(tmp_path / "a.flac", "A", "", "abc")])
+    ctl = _made(host)
+    dest = tmp_path / "out" / "b.zip"
+    dest.parent.mkdir()
+    ctl.back_up(dest)
+    assert wait(lambda: host.notices())
+    assert host.notices() == ["Backup saved"]
+    assert backup.read(dest).created is not None
+
+
+def test_a_restore_brings_the_recent_songs_back_at_once(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    recent.save(recent.store_path(), [recent.opened_now(tmp_path / "a.flac", "A", "", "abc")])
+    made = tmp_path / "b.zip"
+    backup.write(made)
+    recent.store_path().unlink()
+    ctl = _made(host)
+    assert ctl.recent == ()
+    assert ctl.restore(made)
+    assert wait(lambda: host.notices())
+    assert host.notices() == ["Backup restored"]
+    assert [r.path for r in ctl.recent] == [tmp_path / "a.flac"]
+    assert host.recents()[-1] == ctl.recent
+
+
+def test_a_file_that_is_no_backup_is_refused_with_its_reason(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    bad = tmp_path / "bad.zip"
+    bad.write_text("hello")
+    ctl = _made(host)
+    assert ctl.restore(bad)
+    assert wait(lambda: host.notices())
+    assert host.notices()[0].startswith("This is no Stickler backup:")
+
+
+def test_no_restore_while_a_song_is_analysed(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    FakeApi(monkeypatch, hold=True)
+    ctl = _made(host)
+    ctl.open(tmp_path / "eye.flac")
+    assert wait(lambda: isinstance(ctl.state, session.Analysing))
+    assert not ctl.restore(tmp_path / "b.zip")

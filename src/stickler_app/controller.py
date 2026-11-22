@@ -21,6 +21,7 @@ from typing import Any
 from stickler import adapters, api
 from stickler_app import (
     analysis,
+    backup,
     corrections,
     exports,
     paths,
@@ -324,6 +325,52 @@ class Controller:
                 self._notice(_("Could not remove everything: {reason}").format(reason=exc))
 
             self._run(remove, done, failed)
+            return True
+
+    # Back Up… and Restore Backup… (SPEC.md "Release 10 (proposed): keep and remove", scope A)
+
+    def back_up(self, dest: Path) -> None:
+        """Writes the backup in a thread and says when it is saved or why it is not."""
+
+        def done(_summary: backup.Summary) -> None:
+            self._notice(_("Backup saved"), dest)
+
+        def failed(exc: BaseException) -> None:
+            self._notice(_("The backup could not be saved: {reason}").format(reason=exc))
+
+        self._run(lambda: backup.write(dest), done, failed, job=False)
+
+    @staticmethod
+    def backup_summary(src: Path) -> backup.Summary:
+        """What a backup holds, for the question before the restore; raises
+        backup.NotABackup. Reads the file: call it off the interface's thread."""
+        return backup.read(src)
+
+    def restore(self, src: Path) -> bool:
+        """Restores a backup in a thread; the recent songs show at once. False while something
+        runs (as for the removal: an analysis writes the same folders)."""
+        with self._lock:
+            if not self.can_remove_models:
+                return False
+            self._removing = True
+
+            def done(_result: None) -> None:
+                self._removing = False
+                self._recent = recent.load(self._recent_store)
+                self._post(RecentChanged(tuple(self._recent)))
+                self._set(self._state)
+                self._notice(_("Backup restored"))
+
+            def failed(exc: BaseException) -> None:
+                self._removing = False
+                self._set(self._state)
+                if isinstance(exc, backup.NotABackup):
+                    text = _("This is no Stickler backup: {reason}")
+                else:
+                    text = _("The backup could not be restored: {reason}")
+                self._notice(text.format(reason=exc))
+
+            self._run(lambda: backup.restore(src), done, failed)
             return True
 
     def shutdown(self, seconds: float = 2.0) -> None:
