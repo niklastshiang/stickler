@@ -587,3 +587,24 @@ Design decisions:
 | Fedora's `ffmpeg-free` or its GStreamer libav plugin cannot decode MP3 or AAC | Medium | measured in 141; the owner decides (RPM Fusion as a recommendation, or fewer formats promised) |
 | A software centre refuses an unsigned local file | Low | the install texts give the terminal line first |
 | GitHub has no Ubuntu 26.04 runner image yet | Low | the containers run on the existing runner, as the AppImage's Arch container does |
+
+
+## Website: How it works as a story (approved 2026-11-22, SPEC.md "Website", "Change 2026-11-22")
+
+The four cards of "How it works" become four steps that scroll by next to a picture that moves
+with them, in CSS only, with pictures drawn from Stickler's real output instead of screenshots.
+Tasks 145–149.
+
+Design decisions:
+- **Data first, kept in the repository** (145): the analysis needs the models, so it runs once by
+  hand; the SVGs are made from the stored data, so CI and the test need no models.
+- **Static before motion** (146, 147): the page must be complete without scroll-driven
+  animations; the motion is added on top and switched off by `prefers-reduced-motion`.
+- **One timeline per step**: each picture lives in its own step and animates on its own `view()`
+  timeline; no `timeline-scope`, whose support is not confirmed.
+
+| Risk | Likelihood | What then |
+|---|---|---|
+| A sticky picture inside its step jumps when the next step starts | Medium | the step's height and the picture's `top` are tuned at 390, 900 and 1280 px; else the picture stays still and only fades |
+| The engraved notes are too small to read on a phone | Medium | one system only on a phone, two on a wide screen |
+| Safari or Firefox animate a property differently | Low | only `opacity` and `transform` are animated |

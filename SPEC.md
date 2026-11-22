@@ -2662,8 +2662,9 @@ the Mac App Store, Quality, the GPU.
    a subline, the animated overview (`docs/screenshots/overview.gif`, later a Mac recording
    next to it), Download and "See it work" buttons, four short facts (runs on your computer,
    free and open source, about 15 s per song on a laptop, English/German/Spanish app).
-3. **How it works:** four numbered steps: open or drop a song, wait about 15 seconds, read the
-   sheet music, export PDF or MusicXML.
+3. **How it works:** a story that follows the scroll (owner, 2026-11-22; before: four numbered
+   cards): the four steps scroll by next to a picture that changes with the step in view; see
+   "Change 2026-11-22: How it works as a story" below.
 4. **An example:** a few seconds of a song (CC BY 4.0, "Fluffing a Duck", as the screenshots)
    next to its sheet music; plain `<audio controls>` (no script), the song with a click on
    every detected hit as the app's "Both" plays it (owner, 2026-11-18), so a visitor hears what
@@ -2708,6 +2709,71 @@ the Mac App Store, Quality, the GPU.
     is built with Claude writing the code and the owner deciding; a link to the repository.
     The words and the photo come from the owner.
 12. **Footer:** GitHub, the release notes, privacy, about the author, licence (GPL-3.0-or-later).
+
+
+### Change 2026-11-22: How it works as a story
+
+> Status: **approved** by the owner on 2026-11-22 (the plan in chat: replace the four cards, no
+> hint at any operating system, CSS only). Plan: `tasks/plan.md` ("Website: How it works as a
+> story"), tasks 145–149. Seen at tuxtalk.app, whose story switches its picture by script.
+
+**Objective.** A visitor scrolls through four steps and sees each one happen: a song goes in,
+Stickler hears the hits, the sheet music follows the song, the files come out. The pictures look
+like Stickler's work, not like any desktop: no screenshots, so no title bar, window buttons or
+widgets of GNOME or macOS.
+
+**Scope.**
+1. **The steps** (English; German alongside, same meaning):
+   1. *Open a song*: "Drop an MP3, M4A, FLAC or WAV on Stickler, or choose one." Picture: a file
+      card `fluffing-a-duck.mp3` over a dashed drop area; it slides in and settles.
+   2. *Stickler listens*: "It finds every hit, then the beat and the bars. About 15 seconds."
+      Picture: the clip's waveform with the detected hits as dots by drum (kick, snare, hi-hat,
+      others), the three stages (hits, beat and bars, notes) below; the dots appear from left to
+      right, the stages tick off one after the other.
+   3. *Read and play along*: "The sheet music follows the song, bar by bar." Picture: the first
+      two systems of Stickler's sheet music of the clip and a plain bar with play and time; the
+      current bar's mark moves from bar to bar.
+   4. *Keep it*: "PDF to print, MusicXML for MuseScore, the drum track to practise with."
+      Picture: three file cards, PDF, MusicXML and FLAC; they fan out.
+2. **The pictures are made of HTML, CSS and inline SVG** in the site's own look (its colours,
+   cards and type, light and dark), from real data: the waveform from
+   `site/media/fluffing-a-duck.ogg`, the hits from Stickler's Fast analysis of that clip (the
+   same as `scripts/site_clip.py` clicks), the notes from Stickler's engraving of it.
+   `scripts/site_story.py` analyses once and keeps the data it needs in the repository
+   (`site/story/*.json`), then writes the SVGs from that data; a test fails when the stored SVGs
+   differ from what the script makes of the stored data.
+3. **Layout:** on a wide screen the text on one side and the picture on the other, the picture
+   staying in view (`position: sticky`) while its step's text passes; on a phone the picture
+   above its text. Each step carries its own picture, so no picture depends on another step's
+   timeline.
+4. **Motion in CSS only** (SPEC "Website": JavaScript only where HTML and CSS cannot):
+   scroll-driven animations, each picture on its own step's `view()` timeline (Baseline since
+   October 2026 per web.dev: Chrome and Edge 115, Safari 26, Firefox 159). No `timeline-scope`
+   (its support was not confirmed on 2026-11-22).
+5. **Without support or with `prefers-reduced-motion`:** no motion; every picture shows its end
+   state (the file in place, all dots and ticks, bar 1 marked, the cards fanned) and the steps
+   stand one under the other, complete.
+6. **Accessibility:** the pictures are decoration (`aria-hidden="true"`), the text says
+   everything; a numbered list (`<ol>`) of the four steps; contrast and focus as every page.
+7. **The section's place, anchor and heading stay** (`#how`, "How it works", "So funktioniert’s"),
+   so links and the navigation keep working; the four cards and their icons go.
+
+**Boundaries.**
+- Always: both languages with the same structure (`tests/test_site.py`), light and dark, no
+  horizontal scroll from 320 px up.
+- Ask first: sound on the stage, a second song, any JavaScript for it.
+- Never: screenshots of an operating system's window in the story; a library for the motion.
+
+**Success criteria.**
+1. The four steps with their pictures in English and German, in the order above.
+2. In a browser with scroll-driven animations each picture moves with its step's scroll; with
+   reduced motion and in a browser without them every end state shows and nothing is cut off.
+3. The SVGs come from the stored data by `scripts/site_story.py`, checked by a test.
+4. axe 0 violations in light and dark; no overflow at 320, 390, 900 and 1280 px in both
+   languages; the owner has seen a scroll recording and the live page.
+5. `scripts/check.sh task` green; the site's workflow green.
+
+**Open questions.** None (the owner, 2026-11-22: it replaces the cards; no sound on the stage, as "Hear it, read it" follows right after it, proposed and agreed).
 
 ### Decisions (owner, 2026-11-18)
 - **Plain HTML and CSS, no generator.** Two languages are two hand-kept files per page; a test
