@@ -2954,7 +2954,13 @@ src/stickler_app/paths.py            # + packaged() == "system"
 
 - Answered 2026-11-20 (task 141): Fedora's `ffmpeg-free` (8.1 on 44, 9.0 on 45) and its
   GStreamer libav plugin decode MP3 and AAC; the dependencies stay as they are.
-- Left for the owner's check: whether both software centres open an unsigned local file.
+- Answered 2026-11-22 (task 144): both Software apps open the files and install them through
+  the backend the container test now uses for every release. Ubuntu 26.04's App Center (stable
+  channel) claims `.deb` files and installs them through PackageKit: an unsigned file is refused
+  while only trusted packages are allowed (`need-untrusted`), then installed. GNOME Software 51
+  on Fedora 44 and 45 claims `.rpm` files and installs through dnf5daemon, which takes the
+  unsigned file. Not checked: the clicks in either window and how the warning about an unsigned
+  package looks (that would need a desktop VM; the owner, 2026-11-22: fine without).
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
