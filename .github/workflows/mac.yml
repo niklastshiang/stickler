@@ -70,6 +70,16 @@ jobs:
   # ffmpeg and ffprobe for the packaged app (SPEC.md, module `mac-package`, decision 2): built
   # from the pinned source and tried on a clip of every format, once per version of the build
   # script; the cache then holds a build that passed. release.yml builds its own, from no cache.
+  # Release 10 (SPEC.md "keep and remove", task 150): does a running app move its own bundle to
+  # the Bin? A bare app built from mac/probes/TrashSelf.swift, started from a folder in the home.
+  probe-trash-self:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: sh mac/probes/trash-self.sh
+
   ffmpeg:
     runs-on: macos-26
     steps:
