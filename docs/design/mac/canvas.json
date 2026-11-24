@@ -19,16 +19,22 @@
     "Menu-App.dc.html": {"x": 0, "y": 4020, "w": 1000, "h": 520, "title": "M8 · Menu bar: Stickler"},
     "Menu-File.dc.html": {"x": 1080, "y": 4020, "w": 1000, "h": 520, "title": "M8 · Menu bar: File"},
     "Menu-View.dc.html": {"x": 2160, "y": 4020, "w": 1000, "h": 520, "title": "M8 · Menu bar: View"},
-    "Icon.dc.html": {"x": 0, "y": 4920, "w": 1240, "h": 640, "title": "App icon for macOS"}
+    "Icon.dc.html": {"x": 0, "y": 4920, "w": 1240, "h": 640, "title": "App icon for macOS"},
+    "Playing.dc.html": {"x": 0, "y": 5900, "w": 1000, "h": 700, "title": "M10 · Playing (light)", "radius": 16},
+    "Playing-Dark.dc.html": {"x": 1080, "y": 5900, "w": 1000, "h": 700, "title": "M10 · Playing, only the hits (dark)", "radius": 16},
+    "Playing-Volume.dc.html": {"x": 2160, "y": 5900, "w": 1000, "h": 700, "title": "M10 · Volume", "radius": 16},
+    "Menu-Controls.dc.html": {"x": 3240, "y": 5900, "w": 1000, "h": 520, "title": "M10 · Menu bar: Controls"}
   },
-  "order": ["Main.dc.html", "Sheet.dc.html", "Main-Dark.dc.html", "Sheet-Dark.dc.html", "SheetPage.dc.html", "Setup-Consent.dc.html", "Setup-Download.dc.html", "Setup-Error.dc.html", "Analysing.dc.html", "Export-Menu.dc.html", "Export-Saved.dc.html", "Menu-App.dc.html", "Menu-File.dc.html", "Menu-View.dc.html", "Icon.dc.html"],
+  "order": ["Main.dc.html", "Sheet.dc.html", "Main-Dark.dc.html", "Sheet-Dark.dc.html", "SheetPage.dc.html", "Setup-Consent.dc.html", "Setup-Download.dc.html", "Setup-Error.dc.html", "Analysing.dc.html", "Export-Menu.dc.html", "Export-Saved.dc.html", "Menu-App.dc.html", "Menu-File.dc.html", "Menu-View.dc.html", "Icon.dc.html", "Playing.dc.html", "Playing-Dark.dc.html", "Playing-Volume.dc.html", "Menu-Controls.dc.html"],
   "notes": {
     "row1": {"x": 0, "y": -300, "text": "Stickler for macOS · first screens", "kind": "title1", "maxW": 2080},
     "assume": {"x": 2160, "y": 660, "w": 420, "size": "m", "fill": "orange", "text": "Draft 1 (2026-11-17). macOS 26, SwiftUI defaults: unified toolbar, menu bar for the commands, system accent. No playback in the first Mac version, so no bar marker yet. Inter stands in for SF Pro on the canvas."},
     "row3": {"x": 0, "y": 1640, "text": "First start", "kind": "title1", "maxW": 3160},
     "row4": {"x": 0, "y": 2700, "text": "Analysis and export", "kind": "title1", "maxW": 3160},
     "row5": {"x": 0, "y": 3760, "text": "Menu bar", "kind": "title1", "maxW": 3160},
-    "row6": {"x": 0, "y": 4660, "text": "App icon", "kind": "title1", "maxW": 1240}
+    "row6": {"x": 0, "y": 4660, "text": "App icon", "kind": "title1", "maxW": 1240},
+    "row7": {"x": 0, "y": 5640, "text": "Playback (a later release)", "kind": "title1", "maxW": 4240},
+    "playback": {"x": 4320, "y": 5900, "w": 480, "size": "m", "fill": "blue", "text": "Approved by the owner on 2026-11-24 (draft 1). Playback comes to the Mac in a later release; the GTK app's behaviour (SPEC.md, module playback), drawn the macOS 26 way.\n1. The controls float as a glass capsule over the desk at the window's bottom, the sheet scrolling under it: Previous Bar, Play/Pause, Next Bar (plain glyphs, as in Apple's Music), time, position slider, length, \"Bar 2 of 110\", Volume, Song · Hits · Both.\n2. Song · Hits · Both is the native segmented picker.\n3. Volume: a popover above the button with two sliders, Song and Detected hits (70 % and 100 % at first, remembered per song).\n4. A Controls menu between View and Window, named as in Apple's Music (its guide: Choose Controls > Shuffle): Play or Pause (Space, as in Music), Previous Bar (←), Next Bar (→) (Music steps songs with the same arrows), Go to the Start (⌥←, QuickTime Player's key for the beginning of a movie; MacBooks have no Home key, Stickler also takes Home as on Linux), then Song, Hits, Both with a checkmark.\n5. The bar marker in the accent blue; a click on a bar jumps there.\n6. The \"saved\" note (M7) moves up above the capsule while a song is open.\nNew text for po/: \"Controls\". Menu name and keys checked against Apple's support guides for Music and QuickTime Player (2026-11-24)."}
   },
   "designSystems": []
 }
