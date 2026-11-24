@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · analysing a song</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1000px; height: 700px; box-sizing: border-box; display: flex; flex-direction: column; background: #f3f3f3; color: #1b1b1b; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.22);">
+  <header style="height: 32px; flex-shrink: 0; display: flex; align-items: center;">
+    <svg width="16" height="16" viewBox="0 0 16 16" style="margin-left: 16px;" aria-hidden="true"><rect x="2" y="1" width="10" height="13" rx="1" fill="#ffffff" stroke="#9a9996" stroke-width="0.8"></rect><path d="M4 4.5h6M4 6.5h6M4 8.5h6" stroke="#9a9996" stroke-width="0.7"></path><path d="M5 15L14 6M15 15L8 7" stroke="#b5835a" stroke-width="1.5" stroke-linecap="round"></path></svg>
+    <h1 style="margin: 0 0 0 12px; font-size: 12px; font-weight: 400; flex-grow: 1;">Stickler</h1>
+    <div style="display: flex;">
+      <button type="button" aria-label="Minimize" style="width: 46px; height: 32px; border: 0; background: transparent; color: #1b1b1b; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M3 8.5h10"></path></svg>
+      </button>
+      <button type="button" aria-label="Maximize" style="width: 46px; height: 32px; border: 0; background: transparent; color: #1b1b1b; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3.5" y="3.5" width="9" height="9" rx="1"></rect></svg>
+      </button>
+      <button type="button" aria-label="Close" style="width: 46px; height: 32px; border: 0; background: transparent; color: #1b1b1b; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"></path></svg>
+      </button>
+    </div>
+  </header>
+  <nav aria-label="Menu bar" style="height: 40px; flex-shrink: 0; display: flex; align-items: center; padding: 0 8px; font-size: 14px;">
+    <button type="button" style="width: 48px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: #1b1b1b; font: inherit;">File</button>
+    <button type="button" style="width: 54px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: #1b1b1b; font: inherit;">View</button>
+    <button type="button" style="width: 54px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: #1b1b1b; font: inherit;">Help</button>
+  </nav>
+  <div style="height: 64px; flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 24px; background: #fafafa; border-top: 1px solid rgba(0,0,0,0.09);">
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+      <h2 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600;">Eye of the Tiger</h2>
+      <p style="margin: 0; font-size: 12px; line-height: 16px; color: #5c5c5c;">Survivor</p>
+    </div>
+    <button type="button" style="width: 88px; height: 32px; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.16); border-radius: 4px; background: #ffffff; color: #1b1b1b; display: flex; align-items: center; justify-content: center; gap: 8px; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+      Open
+    </button>
+    <button type="button" aria-haspopup="menu" disabled style="width: 112px; height: 32px; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.06); border-radius: 4px; background: #f9f9f9; color: #9b9b9b; display: flex; align-items: center; justify-content: center; gap: 8px; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg>
+      Export
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+  </div>
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 32px; background: #fafafa; border-top: 1px solid rgba(0,0,0,0.09);">
+    <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 600;">Writing the Drum Part</h2>
+    <p style="margin: -12px 0 0; font-size: 14px; line-height: 20px; color: #5c5c5c;">Takes about 15 seconds</p>
+    <ul style="list-style: none; margin: 4px 0 0; padding: 0; width: 460px; border-radius: 8px; background: #ffffff; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.09);">
+      <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 16px; border-bottom: 1px solid rgba(0,0,0,0.09);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f7b0f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; line-height: 20px; font-weight: 600;">Detect the hits</span>
+          <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Kick, snare, toms, hi-hat, cymbals</span>
+        </div>
+        <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Done</span>
+      </li>
+      <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 16px; border-bottom: 1px solid rgba(0,0,0,0.09);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#005fb8" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; line-height: 20px; font-weight: 600;">Find the beat and the bars</span>
+          <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Tempo, time signature, the first “one”</span>
+        </div>
+        <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Running</span>
+      </li>
+      <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 16px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#767676" aria-hidden="true"><circle cx="6" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18" cy="12" r="1.6"></circle></svg>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; line-height: 20px; font-weight: 600;">Write the notes</span>
+          <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Bars, repeats, beams</span>
+        </div>
+        <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Waiting</span>
+      </li>
+    </ul>
+    <button type="button" style="height: 32px; padding: 0 16px; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.16); border-radius: 4px; background: #ffffff; color: #1b1b1b; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">Cancel</button>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · file menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; color: #1b1b1b;">
+  <dc-import name="Sheet" menu="file" hint-size="1000px,700px"></dc-import>
+  <ul role="menu" aria-label="File" style="position: absolute; top: 72px; left: 8px; width: 280px; list-style: none; margin: 0; padding: 4px; box-sizing: border-box; background: #f9f9f9; border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,0.10), 0 8px 16px rgba(0,0,0,0.14); font-size: 14px; line-height: 20px; color: #1b1b1b;">
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Open…</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Ctrl+O</span>
+    </li>
+    <li role="menuitem" aria-haspopup="menu" aria-expanded="true" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px; background: rgba(0,0,0,0.05);">
+      <span style="flex-grow: 1;">Open Recent</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+    </li>
+    <li role="menuitem" aria-haspopup="menu" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Export</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+    </li>
+    <li role="separator" style="height: 1px; margin: 4px 0; background: rgba(0,0,0,0.09);"></li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Remove Downloaded Models…</span>
+    </li>
+    <li role="separator" style="height: 1px; margin: 4px 0; background: rgba(0,0,0,0.09);"></li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Exit</span>
+    </li>
+  </ul>
+  <ul role="menu" aria-label="Open Recent" style="position: absolute; top: 104px; left: 286px; width: 230px; list-style: none; margin: 0; padding: 4px; box-sizing: border-box; background: #f9f9f9; border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,0.10), 0 8px 16px rgba(0,0,0,0.14); font-size: 14px; line-height: 20px; color: #1b1b1b;">
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Eye of the Tiger</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Fluffing a Duck</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Highway to Hell</span>
+    </li>
+    <li role="separator" style="height: 1px; margin: 4px 0; background: rgba(0,0,0,0.09);"></li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Clear Menu</span>
+    </li>
+  </ul>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

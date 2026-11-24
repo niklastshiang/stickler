@@ -1,0 +1,33 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-24T14:00:00Z"},
+  "title": "Stickler Windows screens",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1000, "h": 700, "title": "W4 · Empty window (light)", "radius": 8},
+    "Sheet.dc.html": {"x": 1080, "y": 0, "w": 1000, "h": 700, "title": "W6 · Sheet music (light)", "radius": 8},
+    "Main-Dark.dc.html": {"x": 0, "y": 820, "w": 1000, "h": 700, "title": "W4 · Empty window (dark)", "radius": 8},
+    "Sheet-Dark.dc.html": {"x": 1080, "y": 820, "w": 1000, "h": 700, "title": "W6 · Sheet music (dark)", "radius": 8},
+    "SheetPage.dc.html": {"x": 2160, "y": 0, "w": 640, "h": 560, "title": "Engraved page (shared with the GTK and Mac mockups)"},
+    "Setup-Consent.dc.html": {"x": 0, "y": 1900, "w": 1000, "h": 700, "title": "W1 · First start: consent", "radius": 8},
+    "Setup-Download.dc.html": {"x": 1080, "y": 1900, "w": 1000, "h": 700, "title": "W2 · First start: download", "radius": 8},
+    "Setup-Error.dc.html": {"x": 2160, "y": 1900, "w": 1000, "h": 700, "title": "W3 · First start: a server is not answering", "radius": 8},
+    "Analysing.dc.html": {"x": 0, "y": 2960, "w": 1000, "h": 700, "title": "W5 · Analysis", "radius": 8},
+    "Export-Menu.dc.html": {"x": 1080, "y": 2960, "w": 1000, "h": 700, "title": "W7 · Export menu", "radius": 8},
+    "Export-Saved.dc.html": {"x": 2160, "y": 2960, "w": 1000, "h": 700, "title": "W7 · Saved", "radius": 8},
+    "Menu-File.dc.html": {"x": 0, "y": 4020, "w": 1000, "h": 700, "title": "W8 · Menu: File", "radius": 8},
+    "Menu-View.dc.html": {"x": 1080, "y": 4020, "w": 1000, "h": 700, "title": "W8 · Menu: View", "radius": 8},
+    "Menu-Help.dc.html": {"x": 2160, "y": 4020, "w": 1000, "h": 700, "title": "W8 · Menu: Help", "radius": 8},
+    "About.dc.html": {"x": 3240, "y": 4020, "w": 1000, "h": 700, "title": "W8 · About Stickler", "radius": 8}
+  },
+  "order": ["Main.dc.html", "Sheet.dc.html", "Main-Dark.dc.html", "Sheet-Dark.dc.html", "SheetPage.dc.html", "Setup-Consent.dc.html", "Setup-Download.dc.html", "Setup-Error.dc.html", "Analysing.dc.html", "Export-Menu.dc.html", "Export-Saved.dc.html", "Menu-File.dc.html", "Menu-View.dc.html", "Menu-Help.dc.html", "About.dc.html"],
+  "notes": {
+    "row1": {"x": 0, "y": -300, "text": "Stickler for Windows · first screens", "kind": "title1", "maxW": 2080},
+    "assume": {"x": 2160, "y": 660, "w": 520, "size": "m", "fill": "orange", "text": "Approved by the owner on 2026-11-24 (draft 2). Checked against Microsoft's Windows 11 guidance. WinUI 3 defaults: Mica behind the title bar and the menu row, 8 px window, dialog and flyout corners, 4 px controls, the system's accent colour (shown: the default blue).\n1. A menu bar (File, View, Help) under the 32 px title bar; no hamburger, no Settings page.\n2. Open and Export sit beside the song's title.\n3. First start as dialogs in the middle of the window; the main button on the left, as Windows dialogs have it.\n4. Export menu with one line per entry (Windows menus have no second line); the Mac's second lines are the tooltips.\n5. After saving: a flyout under Export with \"Show in Folder\" (changed: Windows' status bar is not meant for confirming a save and may not float).\n6. \"Remove Downloaded Models…\" in File; \"About Stickler\" as a dialog, because there is no Settings page.\n7. View holds the three zoom entries only; no Full Screen.\n8. The app icon: the free-standing GNOME icon; Windows has no fixed shape.\nNo playback in the first Windows version, so no bar marker. Inter stands in for Segoe UI Variable where it is missing."},
+    "row3": {"x": 0, "y": 1640, "text": "First start", "kind": "title1", "maxW": 3160},
+    "row4": {"x": 0, "y": 2700, "text": "Analysis and export", "kind": "title1", "maxW": 3160},
+    "row5": {"x": 0, "y": 3760, "text": "Menus and About", "kind": "title1", "maxW": 4240}
+  },
+  "designSystems": []
+}

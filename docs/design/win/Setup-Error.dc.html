@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · first start, a server is down</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; color: #1b1b1b;">
+  <dc-import name="Main" hint-size="1000px,700px"></dc-import>
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.30); border-radius: 8px;"></div>
+  <section role="dialog" aria-label="A Download Server Is Not Answering" style="position: absolute; top: 172px; left: 240px; width: 520px; box-sizing: border-box; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 32px 64px rgba(0,0,0,0.19), 0 2px 21px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.12);">
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l10 18h-20z" fill="#9d5d00" stroke="#9d5d00" stroke-width="1.5" stroke-linejoin="round"></path><path d="M12 9v5.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path><circle cx="12" cy="17.6" r="1.2" fill="#ffffff"></circle></svg>
+        <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 600;">A Download Server Is Not Answering</h2>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 20px;">The Beat This! model is hosted by JKU Linz at cloud.cp.jku.at, and that server is not answering right now. Everything else is ready and stays downloaded.</p>
+      <ul style="list-style: none; margin: 0; padding: 0; border-radius: 4px; background: #f6f6f6; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.09);">
+        <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.09);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f7b0f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+          <span style="flex-grow: 1; font-size: 14px; line-height: 20px;">ADTOF and the Beat This! programs</span>
+          <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Ready</span>
+        </li>
+        <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#c42b1c"></circle><path d="M12 6.5v7" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"></path><circle cx="12" cy="17.2" r="1.3" fill="#ffffff"></circle></svg>
+          <span style="flex-grow: 1; font-size: 14px; line-height: 20px;">Beat This! model, 78 MB</span>
+          <span style="font-size: 12px; line-height: 16px; color: #c42b1c;">Not reached</span>
+        </li>
+      </ul>
+      <details style="font-size: 12px; line-height: 16px; color: #5c5c5c;">
+        <summary style="cursor: pointer;">Technical details</summary>
+        <p style="margin: 6px 0 0 14px; font-family: 'Cascadia Mono', Consolas, monospace;">HTTP 500</p>
+      </details>
+    </div>
+    <div style="display: flex; gap: 8px; padding: 24px; background: #f3f3f3; border-top: 1px solid rgba(0,0,0,0.09);">
+      <button type="button" style="flex: 1; height: 32px; box-sizing: border-box; border: 0; border-radius: 4px; background: #005fb8; color: #ffffff; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">Try Again</button>
+      <button type="button" style="flex: 1; height: 32px; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.16); border-radius: 4px; background: #ffffff; color: #1b1b1b; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">Later</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · view menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; color: #1b1b1b;">
+  <dc-import name="Sheet" menu="view" hint-size="1000px,700px"></dc-import>
+  <ul role="menu" aria-label="View" style="position: absolute; top: 72px; left: 56px; width: 260px; list-style: none; margin: 0; padding: 4px; box-sizing: border-box; background: #f9f9f9; border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,0.10), 0 8px 16px rgba(0,0,0,0.14); font-size: 14px; line-height: 20px; color: #1b1b1b;">
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Zoom In</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Ctrl+Plus</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Zoom Out</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Ctrl+Minus</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px; background: rgba(0,0,0,0.05);">
+      <span style="flex-grow: 1;">Actual Size</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Ctrl+0</span>
+    </li>
+  </ul>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

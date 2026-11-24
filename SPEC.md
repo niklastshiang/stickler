@@ -3335,6 +3335,114 @@ SmartScreen reputation and Smart App Control; GitHub `actions/runner-images` (Wi
 image 20261116); jrsoftware.org (Inno Setup 7.1.1); signpath.org and its terms; uv storage
 docs and PRs 16894 and 17241; gyan.dev and BtbN/FFmpeg-Builds; StatCounter (October 2026).
 
+### Module `win-design`
+
+> Status: **done** 2026-11-24: every screen approved by the owner on the private design canvas
+> "Stickler Windows screens" (a canvas of its own, as for the Mac), as draft 2; sources in
+> [docs/design/win/](docs/design/win/README.md). Draft 1 was checked against Windows' standards
+> at the owner's request; the check changed four points (below).
+
+**Objective.** Mockups of every screen of the Windows app's first version, made with the owner
+on the design canvas, following Microsoft's design guidance for Windows 11 (WinUI 3). No code.
+`win-shell` and `win-sheet` build what is drawn here, as the Mac modules built the `mac-design`
+screens.
+
+**Screens** (the minimum of release 11; playback and corrections come later):
+
+| # | Screen | Module |
+|---|---|---|
+| W1 | First start: consent (what is downloaded, sizes, ADTOF's non-commercial licence) | `win-shell` |
+| W2 | First start: download with the setup steps | `win-shell` |
+| W3 | First start: a server is not answering (names it, keeps what is done, retry) | `win-shell` |
+| W4 | Empty window: drop area, "Open a Song…", recent songs | `win-shell` |
+| W5 | Analysis: the steps, cancel | `win-shell` |
+| W6 | Sheet music: title, artist, tempo and time signature in the window; zoom | `win-sheet` |
+| W7 | Export: the button's menu, the "saved" note | `win-shell` |
+| W8 | The menu bar: File, View, Help; "About Stickler" | `win-shell` |
+| W9 | Light and dark: W4 and W6 in both | all |
+
+**Carried over from `design` and `mac-design` (same app, same words):** one step list for setup
+and analysis (done, running, waiting, a short line each; model names only in setup); the copy
+written for drummers, every language through `po/`; the sheet music inverted in dark mode; tempo
+and time signature in the window, not on the page; the cost of the drum track export announced
+before it starts; no Settings window (appearance follows the system, zoom is in View).
+
+**Decisions from the mockups (owner, 2026-11-24):**
+- **Window:** the standard 32 px title bar (the app's icon at 16 px, "Stickler", the system's
+  caption buttons) on Mica; under it a menu bar with File, View and Help, also on Mica. The
+  content lies on a layer above. Window, dialog and flyout corners 8 px, controls 4 px, the type
+  ramp's Caption, Body and Subtitle; the accent colour and light or dark come from the system
+  (the mockups show the default blue; the app uses the theme's brushes, no fixed colours).
+- **Open and Export beside the song's title:** once a song is open, a header shows its title,
+  and under it artist, tempo and time signature; at its right "Open" and "Export" (a button
+  with a menu). The empty window has no header: "Open a Song…" in the drop area and File › Open…
+  are enough, and there is nothing to export. The sheet music sits on a grey desk, the page as
+  in the other apps.
+- **First start as dialogs** (ContentDialog) in the middle of the window over the dimmed empty
+  window, with the other apps' texts and step list. Windows' order of buttons: the main one on
+  the left in the accent colour, the one that closes on the right, each as wide as the other
+  ("Download 2.2 GB" · "Not Now"; "Try Again" · "Later"); a single button ("Cancel") on the
+  right. The download shows a determinate progress bar, a running step a progress ring.
+- **Export menu** with one line per entry: Sheet Music (PDF)…, MusicXML…, Drum Track…, then Open
+  With…. Windows' menu entries have a text, an icon and a key, no second line; the Mac's
+  second lines ("To print or to read on a tablet" and the others) are the entries' tooltips
+  (owner, 2026-11-24; not drawn on the canvas).
+- **After saving:** a flyout under the Export button, "Saved “<file>”" with "Show in Folder"
+  (owner, 2026-11-24: this wording, not Explorer's "Open file location");
+  it closes on the next click. Not an InfoBar: Microsoft's guidance keeps that for lasting,
+  app-wide status, not for confirming what the user just did, and it may not float over the
+  content (draft 1 had one at the window's bottom).
+- **Menu bar:** File (Open… Ctrl+O, Open Recent, Export, Remove Downloaded Models…, Exit), View
+  (Zoom In Ctrl+Plus, Zoom Out Ctrl+Minus, Actual Size Ctrl+0), Help (Stickler Help, Licences,
+  About Stickler). No Full Screen (draft 1 had it with F11; the window can be maximised, and the
+  Mac's entry is the system's). "Exit" has no key shown (Alt+F4 is the system's).
+- **About Stickler** as a dialog: icon, name, release, the GTK app's sentence ("Writes the drums
+  of a song as sheet music, so you can play along."), the licence and the website, "Close".
+  Microsoft recommends an About section on a Settings page; Stickler has no Settings page, and
+  Microsoft's own menu bar example has Help › About.
+- **App icon:** the free-standing GNOME icon (`packaging/icons/ng.tshia.Stickler.svg`), not the
+  Mac's orange square: Windows icons have no fixed shape and look best on a transparent
+  background. The `.ico` holds 16, 24, 32, 48 and 256 px (`win-package` builds it). The mockups
+  show a simplified stand-in.
+
+**Checked against Microsoft's guidance (2026-11-24, a research sub-agent, its findings read):**
+confirmed: Mica as the base layer with the title bar on it; the 32 px title bar with a 16 px
+icon and Caption text; 8 px and 4 px corners; the type ramp's sizes; a menu bar at the window's
+top; ContentDialog's smoke layer, its buttons' order and equal widths, the default button in the
+accent colour and a footer of its own; one-line menu entries; Ctrl+Plus, Ctrl+Minus and Ctrl+0
+for zoom; a determinate ProgressBar for a download; following the system's theme and accent.
+Changed after the check: the "saved" note (InfoBar → flyout), Full Screen and the Alt+F4 label
+removed, the Help menu and the About text taken from the Mac and GTK apps. Not in Microsoft's
+pages, so Stickler's own choice: the wording "Show in Folder" (Explorer says "Open file
+location", browsers "Show in folder"), the name "Exit" (Microsoft's writing guide avoids the
+word, its menu bar example and Notepad use it), Ctrl+O, and the caption buttons' and buttons'
+exact sizes (the system's and the controls' own; the mockups' 46 px and 32 px are drawn by eye).
+
+**Success criteria.**
+1. Every screen W1–W9 is on the canvas, in light and dark where W9 says so, and approved by the
+   owner.
+2. The canvas sources are copied to `docs/design/win/` with a README (the live canvas stays
+   private, as for the other mockups), and the decisions are written here.
+3. Every text on the screens exists in `po/` or is listed here for `win-shell` to add.
+
+**New texts for `po/`** (added by `win-shell` in `win_texts.py`): "Show in Folder", "Exit".
+Already there and reused: "Open Recent", "Clear Menu", "Stickler Help", "Licences", "Takes about
+15 seconds", "Running", "Actual Size", "About Stickler", "Close", the About sentence.
+
+**Out of scope.** Playback and corrections screens; the question before "Remove Downloaded
+Models…" and the drum track's cost (the other apps' texts in a ContentDialog, `win-shell`, as
+the Mac mockups left them to `mac-shell`); the page when the core has stopped ("Stickler
+Stopped Unexpectedly", `win-shell`, as on the Mac); narrow windows (a minimum size, decided in
+`win-shell`); dark variants of the dialogs and menus (the controls' own); the install guide's
+SmartScreen pictures (`win-package`); high contrast (the controls follow it; checked by the
+owner in `win-shell`).
+
+Sources (read 2026-11-24): Microsoft Learn, Windows apps: title bar design and customization,
+Mica, geometry, typography, menus and menu flyouts, command bar, dialogs, buttons, InfoBar,
+progress controls, keyboard accelerators, theming and colour, app icon construction, guidelines
+for app settings; Microsoft Writing Style Guide ("exit"); `microsoft-ui-xaml` on GitHub
+(ContentDialog, Button, MenuFlyout and common theme resources).
+
 ### Module `win-core`
 
 > Status: **built** (2026-11-24, tasks 161–168 done; Checkpoint AC is the owner's). Approved by

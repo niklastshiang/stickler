@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · first start, download</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; color: #1b1b1b;">
+  <dc-import name="Main" hint-size="1000px,700px"></dc-import>
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.30); border-radius: 8px;"></div>
+  <section role="dialog" aria-label="Downloading the Models" style="position: absolute; top: 158px; left: 240px; width: 520px; box-sizing: border-box; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 32px 64px rgba(0,0,0,0.19), 0 2px 21px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.12);">
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+      <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 600;">Downloading the Models</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 20px;">If this is interrupted, Stickler picks up where it stopped the next time you open it.</p>
+      <ul style="list-style: none; margin: 0; padding: 0; border-radius: 4px; background: #f6f6f6; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.09);">
+        <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.09);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f7b0f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 14px; line-height: 20px; font-weight: 600;">ADTOF</span>
+            <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Programs and model</span>
+          </div>
+          <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Done</span>
+        </li>
+        <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.09);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#005fb8" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 14px; line-height: 20px; font-weight: 600;">Beat This!</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div role="progressbar" aria-label="Beat This! programs" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" style="flex-grow: 1; height: 3px; border-radius: 1.5px; background: rgba(0,0,0,0.12); overflow: hidden;">
+                <div style="width: 62%; height: 100%; border-radius: 1.5px; background: #005fb8;"></div>
+              </div>
+              <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Programs · 410 of 660 MB</span>
+            </div>
+          </div>
+        </li>
+        <li style="display: flex; gap: 12px; align-items: center; box-sizing: border-box; min-height: 40px; padding: 8px 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#767676" aria-hidden="true"><circle cx="6" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18" cy="12" r="1.6"></circle></svg>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 14px; line-height: 20px; font-weight: 600;">Beat This!</span>
+            <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Model, 78 MB</span>
+          </div>
+          <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Waiting</span>
+        </li>
+      </ul>
+    </div>
+    <div style="display: flex; gap: 8px; padding: 24px; background: #f3f3f3; border-top: 1px solid rgba(0,0,0,0.09);">
+      <span style="flex: 1"></span>
+      <button type="button" style="flex: 1; height: 32px; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.16); border-radius: 4px; background: #ffffff; color: #1b1b1b; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">Cancel</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
