@@ -166,7 +166,7 @@ def test_corrected_csv_is_read_back(tmp_path):
     import csv
 
     path = tmp_path / "corrected.csv"
-    with path.open("w", newline="") as f:
+    with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(crow()))
         writer.writeheader()
         writer.writerow(crow())

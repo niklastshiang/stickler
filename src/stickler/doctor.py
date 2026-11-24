@@ -24,7 +24,14 @@ class Check:
 def _nvidia_name() -> str | None:
     """First line of `nvidia-smi -L`, e.g. "GPU 0: NVIDIA GeForce RTX 4090 (UUID: …)"."""
     try:
-        proc = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, timeout=30)
+        proc = subprocess.run(
+            ["nvidia-smi", "-L"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=30,
+        )
     except (OSError, subprocess.TimeoutExpired):
         return None
     lines = proc.stdout.strip().splitlines() if proc.returncode == 0 else []
@@ -40,7 +47,11 @@ def check_gpu(
     with vendor 0x1002."""
     if name := nvidia():
         return Check("gpu", True, f"{name} (CUDA)")
-    amd = [v for v in drm.glob("card*/device/vendor") if v.read_text().strip() == "0x1002"]
+    amd = [
+        v
+        for v in drm.glob("card*/device/vendor")
+        if v.read_text(encoding="utf-8").strip() == "0x1002"
+    ]
     if kfd.exists() and amd:
         return Check("gpu", True, f"AMD GPU ({amd[0].parent.parent.name}), /dev/kfd present")
     return Check("gpu", False, "no NVIDIA GPU (nvidia-smi) and no AMD GPU with /dev/kfd found")
@@ -50,7 +61,14 @@ def _rocm_device_name(spec: adapters.AdapterSpec) -> str | None:
     python = spec.path / adapters.ROCM_ENV / "bin" / "python"
     code = "import torch; print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else '')"
     try:
-        proc = subprocess.run([str(python), "-c", code], capture_output=True, text=True, timeout=60)
+        proc = subprocess.run(
+            [str(python), "-c", code],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=60,
+        )
     except (OSError, subprocess.TimeoutExpired):
         return None
     name = proc.stdout.strip().splitlines()[-1:] if proc.returncode == 0 else []

@@ -115,19 +115,23 @@ def test_a_packaged_app_keeps_models_and_results_in_its_own_folders(tmp_path):
 def test_the_shipped_adapter_sources_are_copied_without_touching_environments(tmp_path):
     shipped, models = tmp_path / "app" / "adapters", tmp_path / "data" / "adapters"
     (shipped / "beats" / "beat_this" / "__pycache__").mkdir(parents=True)
-    (shipped / "beats" / "beat_this" / "run.py").write_text("print(1)")
-    (shipped / "beats" / "beat_this" / "uv.lock").write_text("lock 1")
+    (shipped / "beats" / "beat_this" / "run.py").write_text("print(1)", encoding="utf-8")
+    (shipped / "beats" / "beat_this" / "uv.lock").write_text("lock 1", encoding="utf-8")
     (shipped / "beats" / "beat_this" / "__pycache__" / "x.pyc").write_bytes(b"x")
     assert setup.sync_adapters(shipped, models) == 2
     target = models / "beats" / "beat_this"
-    assert (target / "run.py").read_text() == "print(1)" and not (target / "__pycache__").exists()
+    assert (target / "run.py").read_text(encoding="utf-8") == "print(1)" and not (
+        target / "__pycache__"
+    ).exists()
     (target / ".venv").mkdir()
     (target / "weights").mkdir()
     (target / "weights" / "model.ckpt").write_bytes(b"w")
     assert setup.sync_adapters(shipped, models) == 0  # nothing changed
-    (shipped / "beats" / "beat_this" / "uv.lock").write_text("lock 2")  # a new app version
+    (shipped / "beats" / "beat_this" / "uv.lock").write_text(
+        "lock 2", encoding="utf-8"
+    )  # a new app version
     assert setup.sync_adapters(shipped, models) == 1
-    assert (target / "uv.lock").read_text() == "lock 2"
+    assert (target / "uv.lock").read_text(encoding="utf-8") == "lock 2"
     assert (target / ".venv").is_dir() and (target / "weights" / "model.ckpt").read_bytes() == b"w"
 
 
@@ -190,13 +194,13 @@ def test_new_weight_downloads_drop_the_finished_mark_so_setup_runs_again(tmp_pat
     code = shipped / "beats" / "beat_this"
     code.mkdir(parents=True)
     for name, text in (("run.py", "run 1"), ("download.py", "sha 1"), ("setup.py", "setup")):
-        (code / name).write_text(text)
+        (code / name).write_text(text, encoding="utf-8")
     setup.sync_adapters(shipped, models)
     marker = models / "beats" / "beat_this" / "weights" / ".setup-complete"
     marker.parent.mkdir(parents=True)
-    marker.write_text("")
-    (code / "run.py").write_text("run 2")  # code only: the weights stay valid
+    marker.write_text("", encoding="utf-8")
+    (code / "run.py").write_text("run 2", encoding="utf-8")  # code only: the weights stay valid
     assert setup.sync_adapters(shipped, models) == 1 and marker.exists()
-    (code / "download.py").write_text("sha 2")  # another checkpoint
+    (code / "download.py").write_text("sha 2", encoding="utf-8")  # another checkpoint
     assert setup.sync_adapters(shipped, models) == 1 and not marker.exists()
     assert not list(models.rglob("*.part"))

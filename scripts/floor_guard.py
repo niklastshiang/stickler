@@ -20,7 +20,9 @@ from dataclasses import dataclass
 
 def git(args: list[str], *, diff_exit: bool = False) -> str | None:
     """Call git; None on error. `diff --no-index` exits with 1 when there are differences."""
-    proc = subprocess.run(["git", *args], capture_output=True, text=True)
+    proc = subprocess.run(
+        ["git", *args], capture_output=True, text=True, encoding="utf-8", errors="replace"
+    )
     if proc.returncode == 0 or (diff_exit and proc.returncode == 1):
         return proc.stdout
     return None

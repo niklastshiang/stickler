@@ -96,6 +96,8 @@ def test_the_digest_is_kept_and_old_lists_load_without_one(tmp_path):
     song = recent.Recent(Path("/a/song.mp3"), "Song", "Band", date(2026, 11, 22), "abc")
     recent.save(store, [song])
     assert recent.load(store) == [song]
-    store.write_text('[{"path": "/b.mp3", "title": "B", "artist": "", "opened": "2026-11-01"}]')
+    store.write_text(
+        '[{"path": "/b.mp3", "title": "B", "artist": "", "opened": "2026-11-01"}]', encoding="utf-8"
+    )
     (loaded,) = recent.load(store)
     assert loaded.path == Path("/b.mp3") and loaded.digest == ""

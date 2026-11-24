@@ -114,7 +114,7 @@ def test_a_fork_keeps_the_linux_version_apart_from_the_mac_one():
 def test_main_exits_non_zero_on_a_difference(tmp_path):
     root = _root('{ name = "torch" }')
     a, b = tmp_path / "a.lock", tmp_path / "b.lock"
-    a.write_text(HEAD + root + _package("torch", "2.15.0", [LINUX]))
-    b.write_text(HEAD + root + _package("torch", "2.15.1", [LINUX]))
+    a.write_text(HEAD + root + _package("torch", "2.15.0", [LINUX]), encoding="utf-8")
+    b.write_text(HEAD + root + _package("torch", "2.15.1", [LINUX]), encoding="utf-8")
     assert lp.main([str(a), str(a)]) == 0
     assert lp.main([str(a), str(b)]) == 1

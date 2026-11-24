@@ -19,7 +19,11 @@ def flatpak_ids() -> set[str]:
     if not shutil.which("flatpak"):
         return set()
     proc = subprocess.run(
-        ["flatpak", "list", "--app", "--columns=application"], capture_output=True, text=True
+        ["flatpak", "list", "--app", "--columns=application"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     return set(proc.stdout.split())
 
@@ -44,7 +48,13 @@ def export_pdf(musicxml: Path, pdf: Path, command: list[str]) -> Path:
     if cmd[:2] == ["flatpak", "run"]:
         folders = sorted({str(musicxml.parent.resolve()), str(pdf.parent.resolve())})
         cmd = ["flatpak", "run", *(f"--filesystem={f}" for f in folders), *cmd[2:]]
-    proc = subprocess.run([*cmd, "-o", str(pdf), str(musicxml)], capture_output=True, text=True)
+    proc = subprocess.run(
+        [*cmd, "-o", str(pdf), str(musicxml)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     if proc.returncode != 0 or not pdf.exists():
         detail = (proc.stderr or proc.stdout).strip()[-300:] or f"exit code {proc.returncode}"
         raise RuntimeError(f"MuseScore: PDF export failed: {detail}")

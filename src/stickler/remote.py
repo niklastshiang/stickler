@@ -99,7 +99,14 @@ def adapters_for(config: Path) -> list[str]:
 
 
 def tracked_files(root: Path) -> list[str]:
-    proc = subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=root)
+    proc = subprocess.run(
+        ["git", "ls-files"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=root,
+    )
     return [line for line in proc.stdout.splitlines() if line]
 
 
@@ -265,7 +272,17 @@ def run_remote(
 
     def run(cmd: list[str], step: str, stdin: str | None = None, live: bool = False) -> None:
         # live: show the long benchmark run in the terminal instead of buffering it
-        _ok(execute(cmd, input=stdin, capture_output=not live, text=True), step)
+        _ok(
+            execute(
+                cmd,
+                input=stdin,
+                capture_output=not live,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            ),
+            step,
+        )
 
     def upload(files: list[str], base: Path, dest: str, step: str) -> None:
         if files:
@@ -323,7 +340,14 @@ def run_remote(
         try:
             if wipe:
                 if not downloaded:  # keep what the failed run computed, if anything
-                    execute(cache_down, input=None, capture_output=True, text=True)
+                    execute(
+                        cache_down,
+                        input=None,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                    )
                 run([*ssh_command(host), wipe_command(plan)], "wipe")
         finally:
             if stop is not None:

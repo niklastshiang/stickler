@@ -38,7 +38,9 @@ def readable(path: Path, cache: Path) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_suffix(".part.flac")
     cmd = ["ffmpeg", "-v", "error", "-y", "-i", str(path), "-map", "0:a:0", "-c:a", "flac"]
-    proc = media_tool([*cmd, str(tmp)], capture_output=True, text=True)
+    proc = media_tool(
+        [*cmd, str(tmp)], capture_output=True, text=True, encoding="utf-8", errors="replace"
+    )
     if proc.returncode != 0:
         tmp.unlink(missing_ok=True)
         raise RuntimeError(f"ffmpeg cannot decode {path.name}: {proc.stderr.strip()[-200:]}")
@@ -49,7 +51,9 @@ def readable(path: Path, cache: Path) -> Path:
 def duration(path: Path) -> float:
     """Duration in seconds; RuntimeError if ffprobe cannot read the file."""
     cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0"]
-    proc = media_tool([*cmd, str(path)], capture_output=True, text=True)
+    proc = media_tool(
+        [*cmd, str(path)], capture_output=True, text=True, encoding="utf-8", errors="replace"
+    )
     try:
         return float(proc.stdout.strip())
     except ValueError:
@@ -65,6 +69,8 @@ def load_mono(path: Path, sr: int = 22050) -> np.ndarray:
         [*probe, "stream=channels", "-of", "default=nw=1:nk=1", str(path)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     cmd = ["ffmpeg", "-v", "error", "-i", str(path), "-ar", str(sr), "-f", "f32le", "-"]
     proc = media_tool(cmd, capture_output=True)
@@ -158,6 +164,8 @@ def tags(path: Path) -> dict[str, str]:
         ["ffprobe", "-v", "error", "-show_entries", "format_tags", "-of", "json", str(path)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     try:
         raw = json.loads(proc.stdout).get("format", {}).get("tags", {})

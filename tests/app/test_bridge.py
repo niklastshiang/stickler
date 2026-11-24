@@ -704,7 +704,7 @@ def test_a_backup_is_made_summed_up_and_restored_over_the_bridge(monkeypatch, tm
 
 def test_a_file_that_is_no_backup_is_refused_with_its_reason(running, tmp_path):
     bad = tmp_path / "bad.zip"
-    bad.write_text("hello")
+    bad.write_text("hello", encoding="utf-8")
     reply = running.send("backup_summary", src=str(bad))
     assert reply["error"]["code"] == "not_a_backup"
     assert reply["error"]["message"].startswith("This is no Stickler backup:")

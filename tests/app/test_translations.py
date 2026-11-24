@@ -122,7 +122,11 @@ def test_the_template_holds_every_marked_string():
     assert marked - template == set(), "po/stickler.pot is out of date: run scripts/i18n.sh"
 
 
-LANGUAGES = [line for line in (PO / "LINGUAS").read_text().split() if not line.startswith("#")]
+LANGUAGES = [
+    line
+    for line in (PO / "LINGUAS").read_text(encoding="utf-8").split()
+    if not line.startswith("#")
+]
 PLACEHOLDER = re.compile(r"\{[^{}]*\}|%-?[a-zA-Z]")
 
 

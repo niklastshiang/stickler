@@ -179,7 +179,12 @@ def test_everything_the_site_uses_is_in_git():
     import subprocess
 
     tracked = subprocess.run(
-        ["git", "ls-files", "site"], cwd=SITE.parent, capture_output=True, text=True, check=True
+        ["git", "ls-files", "site"],
+        cwd=SITE.parent,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
     ).stdout.split()
     on_disk = sorted(str(p.relative_to(SITE.parent)) for p in SITE.rglob("*") if p.is_file())
     assert [f for f in on_disk if f not in tracked] == []

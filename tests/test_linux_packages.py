@@ -39,7 +39,7 @@ def _wheel(path: Path, package: str) -> Path:
 
 def test_the_staged_tree_has_everything_the_app_needs_and_nothing_else(tmp_path):
     uv = tmp_path / "uv"
-    uv.write_text("uv")
+    uv.write_text("uv", encoding="utf-8")
     wheels = {
         "3.14": [_wheel(tmp_path / "numpy314.whl", "numpy")],
         "3.15": [_wheel(tmp_path / "numpy315.whl", "numpy")],
@@ -81,7 +81,12 @@ def test_the_staged_tree_has_everything_the_app_needs_and_nothing_else(tmp_path)
 
 def test_the_adapters_are_exactly_the_tracked_files():
     tracked = subprocess.run(
-        ["git", "ls-files", "adapters"], cwd=ROOT, capture_output=True, text=True, check=True
+        ["git", "ls-files", "adapters"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
     ).stdout.split()
     assert lp.adapter_files(ROOT) == sorted(Path(p) for p in tracked)
 
@@ -123,7 +128,7 @@ def test_the_packages_own_only_sticklers_folders_and_every_staged_file(tmp_path)
         if entry.get("type") == "tree":
             assert entry["dst"] in own
     uv = tmp_path / "uv"
-    uv.write_text("uv")
+    uv.write_text("uv", encoding="utf-8")
     lp.stage(ROOT, tmp_path / "tree", {}, uv)
     staged = {f"/{p.relative_to(tmp_path / 'tree')}" for p in (tmp_path / "tree").rglob("*")}
     staged = {p for p in staged if (tmp_path / "tree" / p.lstrip("/")).is_file()}

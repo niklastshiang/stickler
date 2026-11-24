@@ -82,7 +82,7 @@ def test_setup_cuda_installs_locked_versions_with_cuda_torch(spec, monkeypatch):
     install = next(c for c in calls if c[:3] == ["uv", "pip", "install"])
     assert install[install.index("--index") + 1] == adapters.CUDA_INDEXES[0]
     assert "torch==2.8.0" in install and "torchaudio==2.8.0" in install
-    req = Path(install[install.index("-r") + 1]).read_text()
+    req = Path(install[install.index("-r") + 1]).read_text(encoding="utf-8")
     assert "numpy==2.1.0" in req and "torch==2.8.0+cpu" not in req
 
 

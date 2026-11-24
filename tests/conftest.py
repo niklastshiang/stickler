@@ -20,7 +20,11 @@ def _states() -> list[tuple[int, str, int]]:
     there is none (macOS, 2026-11-17)."""
     if not os.path.isdir("/proc"):
         out = subprocess.run(
-            ["ps", "-A", "-o", "pid=,stat=,pgid="], capture_output=True, text=True, check=True
+            ["ps", "-A", "-o", "pid=,stat=,pgid="],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
         ).stdout
         rows = (line.split() for line in out.splitlines() if line.strip())
         return [(int(pid), stat[0], int(pgid)) for pid, stat, pgid in rows]
@@ -29,7 +33,7 @@ def _states() -> list[tuple[int, str, int]]:
         if not entry.name.isdigit():
             continue
         try:
-            with open(f"/proc/{entry.name}/stat") as f:
+            with open(f"/proc/{entry.name}/stat", encoding="utf-8") as f:
                 stat = f.read()
         except OSError:
             continue

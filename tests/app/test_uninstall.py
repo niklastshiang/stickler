@@ -17,7 +17,7 @@ APPIMAGE_HEAD = b"\x7fELF" + b"\x00" * 4 + b"AI\x02"  # what an AppImage of type
 def _stored(env) -> None:
     for path in (settings.store_path(env), recent.store_path(env), corrections.store_path(env)):
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("{}")
+        path.write_text("{}", encoding="utf-8")
     weights = paths.data_home(env) / "adapters" / "beats" / "beat_this" / "weights"
     weights.mkdir(parents=True)
     (weights / "m.ckpt").write_bytes(b"x" * 100)
@@ -56,18 +56,20 @@ def test_an_appimage_removes_the_menu_entries_and_icons_made_for_this_file_only(
     (hicolor / f"appimagekit_{md5}_ng.tshia.Stickler.png").write_bytes(b"icon")
     (apps / f"appimagekit_{md5}-Stickler.desktop").write_text(
         "[Desktop Entry]\nName=Stickler\nExec=/elsewhere/AppRun %F\n"
-        f"Icon=appimagekit_{md5}_ng.tshia.Stickler\nX-AppImage-Identifier={md5}\n"
+        f"Icon=appimagekit_{md5}_ng.tshia.Stickler\nX-AppImage-Identifier={md5}\n",
+        encoding="utf-8",
     )
     gear_icon = tmp_path / "AppImages" / ".icons" / "stickler"
     gear_icon.parent.mkdir()
     gear_icon.write_bytes(b"icon")
     (apps / "stickler.desktop").write_text(
-        f"[Desktop Entry]\nName=Stickler\nExec={image} %F\nTryExec={image}\nIcon={gear_icon}\n"
+        f"[Desktop Entry]\nName=Stickler\nExec={image} %F\nTryExec={image}\nIcon={gear_icon}\n",
+        encoding="utf-8",
     )
     other = apps / "other.desktop"
-    other.write_text("[Desktop Entry]\nName=Other\nExec=/opt/other\nIcon=other\n")
+    other.write_text("[Desktop Entry]\nName=Other\nExec=/opt/other\nIcon=other\n", encoding="utf-8")
     elsewhere = apps / "older-stickler.desktop"  # another copy of Stickler: not this file
-    elsewhere.write_text("[Desktop Entry]\nExec=/old/Stickler-8.AppImage\n")
+    elsewhere.write_text("[Desktop Entry]\nExec=/old/Stickler-8.AppImage\n", encoding="utf-8")
 
     plan = uninstall.plan(env, keep_settings=True)
 
@@ -101,7 +103,7 @@ def test_removing_deletes_folders_and_files_and_tolerates_what_is_gone(tmp_path)
     folder = tmp_path / "f"
     (folder / "x").mkdir(parents=True)
     file = tmp_path / "a.desktop"
-    file.write_text("x")
+    file.write_text("x", encoding="utf-8")
     uninstall.remove(uninstall.Plan("appimage", [folder, tmp_path / "gone"], [file], "", 0))
     assert not folder.exists() and not file.exists()
 
@@ -133,7 +135,7 @@ def test_a_transaction_that_did_not_succeed_says_why():
 
 def test_where_packagekit_cannot_remove_it_the_terminal_line_for_the_system(tmp_path):
     fedora = tmp_path / "fedora-release"  # not the host's: the test runs on a Mac too
-    fedora.write_text("Fedora release 45\n")
+    fedora.write_text("Fedora release 45\n", encoding="utf-8")
     assert uninstall.terminal_command(str(fedora)) == "sudo dnf remove stickler"
     assert uninstall.terminal_command(str(tmp_path / "none")) == "sudo apt remove stickler"
 
@@ -157,7 +159,9 @@ def test_an_icon_outside_the_integrations_folders_is_never_deleted(tmp_path):
     picture = tmp_path / "Pictures" / "drums.png"
     picture.parent.mkdir()
     picture.write_bytes(b"mine")
-    (apps / "my-launcher.desktop").write_text(f"[Desktop Entry]\nExec={image}\nIcon={picture}\n")
+    (apps / "my-launcher.desktop").write_text(
+        f"[Desktop Entry]\nExec={image}\nIcon={picture}\n", encoding="utf-8"
+    )
     plan = uninstall.plan(env)
     assert apps / "my-launcher.desktop" in plan.files and picture not in plan.files
 
@@ -167,11 +171,13 @@ def test_quoted_exec_lines_and_escaped_uris_are_this_files_too(tmp_path):
     env = _appimage(tmp_path, image)
     apps = tmp_path / ".local" / "share" / "applications"
     apps.mkdir(parents=True)
-    (apps / "quoted.desktop").write_text(f'[Desktop Entry]\nExec="{image}" %U\n')
+    (apps / "quoted.desktop").write_text(f'[Desktop Entry]\nExec="{image}" %U\n', encoding="utf-8")
     from urllib.parse import quote
 
     md5 = hashlib.md5(f"file://{quote(str(image))}".encode()).hexdigest()
-    (apps / "escaped.desktop").write_text(f"[Desktop Entry]\nX-AppImage-Identifier={md5}\n")
+    (apps / "escaped.desktop").write_text(
+        f"[Desktop Entry]\nX-AppImage-Identifier={md5}\n", encoding="utf-8"
+    )
     assert {apps / "quoted.desktop", apps / "escaped.desktop"} <= set(uninstall.plan(env).files)
 
 
@@ -190,7 +196,9 @@ def test_an_icon_path_that_climbs_out_of_the_icon_folder_is_never_deleted(tmp_pa
     climbing = (
         tmp_path / ".local" / "share" / "icons" / ".." / ".." / ".." / "Pictures" / "drums.png"
     )
-    (apps / "s.desktop").write_text(f"[Desktop Entry]\nExec={image}\nIcon={climbing}\n")
+    (apps / "s.desktop").write_text(
+        f"[Desktop Entry]\nExec={image}\nIcon={climbing}\n", encoding="utf-8"
+    )
     files = uninstall.plan(env).files
     assert apps / "s.desktop" in files
     assert not any(f.resolve() == picture.resolve() for f in files)
@@ -198,7 +206,7 @@ def test_an_icon_path_that_climbs_out_of_the_icon_folder_is_never_deleted(tmp_pa
 
 def test_only_a_real_appimage_is_named_as_the_program_to_remove(tmp_path):
     fake = tmp_path / "notes.txt"
-    fake.write_text("my notes")
+    fake.write_text("my notes", encoding="utf-8")
     assert uninstall.plan(_appimage(tmp_path, fake)).program == ""
     real = tmp_path / "Stickler.AppImage"
     real.write_bytes(APPIMAGE_HEAD + b"\x00" * 100)

@@ -127,7 +127,9 @@ def test_check_reports_a_stale_catalog_and_writing_fixes_it(tmp_path):
 def test_the_projects_po_files_convert_with_every_text_and_language():
     po = ROOT / "po"
     pot = (po / "stickler.pot").read_text(encoding="utf-8")
-    languages = [x for x in (po / "LINGUAS").read_text().split() if not x.startswith("#")]
+    languages = [
+        x for x in (po / "LINGUAS").read_text(encoding="utf-8").split() if not x.startswith("#")
+    ]
     c = xcstrings.catalog(
         pot, {lang: (po / f"{lang}.po").read_text(encoding="utf-8") for lang in languages}
     )

@@ -80,7 +80,10 @@ def test_transcriber_produces_midi(adapter_id, drum_clip, tmp_path):
     notes = read_drum_notes(result.output)
     assert notes, "no notes detected"
     assert all(35 <= pitch <= 81 for _, pitch in notes), "pitches outside the GM drum range"
-    assert json.loads((tmp_path / adapter_id / "meta.json").read_text())["device"] == "cpu"
+    assert (
+        json.loads((tmp_path / adapter_id / "meta.json").read_text(encoding="utf-8"))["device"]
+        == "cpu"
+    )
     _report(adapter_id, result)
 
 
@@ -123,7 +126,7 @@ def test_beat_tracker_finds_120_bpm(drum_clip, tmp_path):
     spec = adapters.discover(ROOT / "adapters")["beat_this"]
     result = adapters.run_adapter(spec, drum_clip, tmp_path / "beat_this", device="cpu")
     assert result.ok, result.error
-    data = json.loads(result.output.read_text())
+    data = json.loads(result.output.read_text(encoding="utf-8"))
     gaps = [b - a for a, b in zip(data["beats"], data["beats"][1:], strict=False)]
     assert len(data["beats"]) >= 15
     assert sorted(gaps)[len(gaps) // 2] == pytest.approx(0.5, abs=0.03)

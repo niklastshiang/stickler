@@ -81,7 +81,7 @@ def test_size_and_removal_of_real_folders(tmp_path):
     (tmp_path / "c" / "stickler" / "scores").mkdir(parents=True)
     (tmp_path / "c" / "stickler" / "scores" / "a.musicxml").write_bytes(b"x" * 24)
     recent = tmp_path / "d" / "stickler" / "recent.json"
-    recent.write_text("[]")
+    recent.write_text("[]", encoding="utf-8")
     chosen = removal.targets(env, everything=False)
     assert removal.size(chosen) == 1024
     removal.remove(chosen)

@@ -104,6 +104,36 @@ def test_tags_reads_title_and_artist(tmp_path):
     assert audio.tags(src) == {}
 
 
+def test_tags_come_back_intact_when_the_default_encoding_is_not_utf8(tmp_path):
+    """ffprobe writes UTF-8; Windows' default is cp1252. A fresh interpreter with the ASCII
+    default (C locale, no UTF-8 mode, no coercion) stands in for it: real bytes from a real
+    ffprobe, decoded in a real child process."""
+    import json
+    import os
+    import subprocess
+    import sys
+
+    src = write_wav(tmp_path / "a.wav", 0.2)
+    flac = tmp_path / "a.flac"
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(src), "-metadata", "ARTIST=Die Ärzte", str(flac)],
+        check=True,
+        encoding="utf-8",
+    )
+    code = (
+        "import json, sys; from stickler import audio; print(json.dumps(audio.tags(sys.argv[1])))"
+    )
+    env = {**os.environ, "LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"}
+    out = subprocess.run(
+        [sys.executable, "-c", code, str(flac)],
+        capture_output=True,
+        encoding="utf-8",
+        env=env,
+        check=True,
+    )
+    assert json.loads(out.stdout) == {"artist": "Die Ärzte"}
+
+
 def test_tags_of_unreadable_file_are_empty(tmp_path):
     bad = tmp_path / "kaputt.mp3"
     bad.write_bytes(b"x")
@@ -208,7 +238,7 @@ def test_ffprobe_and_ffmpeg_run_with_c_numbers(monkeypatch, tmp_path):
     direct = [
         f"{path.name}:{n}"
         for path in src.rglob("*.py")
-        for n, line in enumerate(path.read_text().splitlines(), 1)
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
         if re.search(r"subprocess\.run\(\s*\[\s*\"ff(mpeg|probe)\"", line)
     ]
     assert direct == [], "call ffmpeg/ffprobe through audio.media_tool"

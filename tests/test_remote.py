@@ -64,7 +64,9 @@ def test_enst_is_uploaded_when_prepared_here(tmp_path, monkeypatch):
     """The host's own ffmpeg writes other bytes into the mixes (its version tag), so their
     cache keys would differ and the host would recompute what is cached (2026-11-17)."""
     cfg = tmp_path / "c.yaml"
-    cfg.write_text("datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n")
+    cfg.write_text(
+        "datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n", encoding="utf-8"
+    )
     (tmp_path / "data" / "enst" / "mix").mkdir(parents=True)
     (tmp_path / "data" / "enst" / "mix" / "t.wav").write_bytes(b"RIFF")
     monkeypatch.setattr(remote, "tracked_files", lambda root: [])
@@ -76,7 +78,9 @@ def test_enst_is_uploaded_when_prepared_here(tmp_path, monkeypatch):
 
 def test_enst_is_downloaded_on_the_host_when_missing_here(tmp_path, monkeypatch):
     cfg = tmp_path / "c.yaml"
-    cfg.write_text("datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n")
+    cfg.write_text(
+        "datasets: [mdb, enst]\nseparators: [none]\ntranscribers: [adtof]\n", encoding="utf-8"
+    )
     monkeypatch.setattr(remote, "tracked_files", lambda root: [])
     plan = remote.sync_plan(
         cfg,
@@ -221,7 +225,9 @@ def test_sync_plan_for_own_songs(tmp_path, monkeypatch):
     (song,) = own.songs(refs, data)
     own.save_alignment(song, notes=[], excluded=[], quality={}, reasons=[], shift=0.0)
     cfg = tmp_path / "c.yaml"
-    cfg.write_text("datasets: [own]\nseparators: [demucs]\ntranscribers: [adtof]\n")
+    cfg.write_text(
+        "datasets: [own]\nseparators: [demucs]\ntranscribers: [adtof]\n", encoding="utf-8"
+    )
     monkeypatch.setattr(remote, "tracked_files", lambda root: ["pyproject.toml"])
     plan = remote.sync_plan(cfg, project_root=tmp_path, references_dir=refs, data_dir=data)
     assert plan.code == ["pyproject.toml"]
@@ -295,7 +301,7 @@ def test_songs_from_anywhere_go_into_their_own_song_folders(tmp_path, monkeypatc
         (song,) = [s for s in own.songs(refs, data) if s.id == sid]
         own.save_alignment(song, notes=[], excluded=[], quality={}, reasons=[], shift=0.0)
     cfg = tmp_path / "c.yaml"
-    cfg.write_text("datasets: [own]\nseparators: [none]\ntranscribers: [adtof]\n")
+    cfg.write_text("datasets: [own]\nseparators: [none]\ntranscribers: [adtof]\n", encoding="utf-8")
     monkeypatch.setattr(remote, "tracked_files", lambda root: [])
     plan = remote.sync_plan(cfg, project_root=tmp_path, references_dir=refs, data_dir=data)
     assert [d for _, d in plan.audio] == ["data/own/a", "data/own/b"]
@@ -320,7 +326,10 @@ def test_weights_from_github_releases_are_uploaded(tmp_path, monkeypatch):
     w.mkdir(parents=True)
     (w / "model.ckpt").write_bytes(b"x")
     cfg = tmp_path / "c.yaml"
-    cfg.write_text("datasets: [mdb]\nseparators: [none, roformer, demucs]\ntranscribers: [adtof]\n")
+    cfg.write_text(
+        "datasets: [mdb]\nseparators: [none, roformer, demucs]\ntranscribers: [adtof]\n",
+        encoding="utf-8",
+    )
     monkeypatch.setattr(remote, "tracked_files", lambda r: [])
     plan = remote.sync_plan(cfg, project_root=root, references_dir=root, data_dir=root / "data")
     assert plan.data_dirs == ["data/mdb"]
@@ -368,6 +377,10 @@ def test_track_ids_reach_the_host_unchanged_by_its_shell():
     for line in (s for s in script.splitlines() if "--only" in s):
         words = line.split("--only", 1)[1]
         out = subprocess.run(
-            ["bash", "-c", f"printf '%s\\n' {words}"], capture_output=True, text=True, check=True
+            ["bash", "-c", f"printf '%s\\n' {words}"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
         ).stdout.splitlines()
         assert out[0] == ",".join(only)

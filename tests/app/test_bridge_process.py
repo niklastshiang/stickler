@@ -120,9 +120,12 @@ def test_closing_stdin_during_an_analysis_ends_the_model_and_leaves_no_cache_ent
         bridge.send("open", path=str(song))
         bridge.state("analysing")
         end = time.monotonic() + 60
-        while not (pid_file.exists() and pid_file.read_text()) and time.monotonic() < end:
+        while (
+            not (pid_file.exists() and pid_file.read_text(encoding="utf-8"))
+            and time.monotonic() < end
+        ):
             time.sleep(0.05)
-        model = int(pid_file.read_text())
+        model = int(pid_file.read_text(encoding="utf-8"))
         start = time.monotonic()
         bridge.proc.stdin.close()
         assert bridge.proc.wait(3) == 0
@@ -173,6 +176,7 @@ def test_stray_output_cannot_break_a_line(tmp_path):
         input='{"id": 1, "cmd": "quit"}\n',
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=30,
     )
     assert proc.returncode == 0, proc.stderr
@@ -210,6 +214,7 @@ def test_the_demo_finds_the_same_musicxml_as_the_gtk_app(models, song, tmp_path)
         [sys.executable, str(demo), str(song), "--out", str(out), "--width", "600"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=120,
         env=environment,
     )

@@ -30,10 +30,10 @@ def by_name(checks):
 
 
 def test_gpu_detected_from_sysfs(tmp_path):
-    (tmp_path / "kfd").write_text("")
+    (tmp_path / "kfd").write_text("", encoding="utf-8")
     card = tmp_path / "drm" / "card1" / "device"
     card.mkdir(parents=True)
-    (card / "vendor").write_text("0x1002\n")
+    (card / "vendor").write_text("0x1002\n", encoding="utf-8")
     check = doctor.check_gpu(kfd=tmp_path / "kfd", drm=tmp_path / "drm")
     assert check.ok and "AMD" in check.detail
 
@@ -59,7 +59,7 @@ def test_adapter_checks(tmp_path):
 def test_hf_login_via_env_or_token_file(tmp_path, monkeypatch):
     monkeypatch.delenv("HF_TOKEN", raising=False)
     assert not doctor.check_hf_login(token_file=tmp_path / "token").ok
-    (tmp_path / "token").write_text("x")
+    (tmp_path / "token").write_text("x", encoding="utf-8")
     assert doctor.check_hf_login(token_file=tmp_path / "token").ok
     monkeypatch.setenv("HF_TOKEN", "x")
     assert doctor.check_hf_login(token_file=tmp_path / "fehlt").ok

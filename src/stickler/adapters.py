@@ -157,9 +157,14 @@ def discover(root: Path) -> dict[str, AdapterSpec]:
 HARNESS_ONLY_ENV = ("UV_PYTHON", "UV_PROJECT_ENVIRONMENT", "UV_PROJECT", "VIRTUAL_ENV")
 
 
-def adapter_env() -> dict[str, str]:
-    """The environment for adapter processes: the harness's, without HARNESS_ONLY_ENV."""
-    return {k: v for k, v in os.environ.items() if k not in HARNESS_ONLY_ENV}
+def adapter_env(platform: str = sys.platform) -> dict[str, str]:
+    """The environment for adapter processes: the harness's, without HARNESS_ONLY_ENV. On
+    Windows (default text encoding cp1252) with PYTHONUTF8=1, so the models' Python reads and
+    writes UTF-8."""
+    env = {k: v for k, v in os.environ.items() if k not in HARNESS_ONLY_ENV}
+    if platform == "win32":
+        env["PYTHONUTF8"] = "1"
+    return env
 
 
 class CancelToken(threading.Event):
@@ -205,6 +210,8 @@ def _run_group(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         start_new_session=True,
         env=adapter_env(),
     ) as proc:
@@ -292,7 +299,15 @@ def run_adapter(
 
 
 def _check(cmd: list[str], spec: AdapterSpec, **kw) -> str:
-    proc = subprocess.run(cmd, capture_output=True, text=True, env=adapter_env(), **kw)
+    proc = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=adapter_env(),
+        **kw,
+    )
     if proc.returncode != 0:
         tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
         raise RuntimeError(f"Setup of {spec.id} failed ({cmd[0]} {cmd[1]}):\n{tail}")
@@ -310,7 +325,7 @@ def _setup_rocm(spec: AdapterSpec) -> Path:
             spec,
             cwd=spec.path,
         )
-    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write("\n".join(rocm_requirements(spec, cfg.replace)) + "\n")
     _check(
         [
@@ -380,7 +395,7 @@ def _setup_cuda(spec: AdapterSpec) -> Path:
         spec,
     )
     replace = {p.split("==")[0] for p in pins}
-    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write("\n".join(cuda_requirements(export, replace)) + "\n")
     errors = []
     for index in CUDA_INDEXES:
@@ -399,7 +414,15 @@ def _setup_cuda(spec: AdapterSpec) -> Path:
             f.name,
             *pins,
         ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=spec.path, env=adapter_env())
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=spec.path,
+            env=adapter_env(),
+        )
         if proc.returncode == 0:
             return python
         errors.append(f"{index}: {proc.stderr.strip().splitlines()[-1:] or proc.returncode}")

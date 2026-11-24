@@ -52,7 +52,7 @@ def test_a_catalogue_translates_plurals_too_and_keeps_guesses_out():
     assert de.gettext("Not translated") == "Not translated"
 
 
-@pytest.mark.parametrize("language", (ROOT / "po" / "LINGUAS").read_text().split())
+@pytest.mark.parametrize("language", (ROOT / "po" / "LINGUAS").read_text(encoding="utf-8").split())
 def test_every_translation_of_the_app_survives(language):
     import xcstrings
 
@@ -114,10 +114,10 @@ def test_the_licences_of_everything_shipped_are_collected(tmp_path):
     core = _core(tmp_path)
     _licensed(core, tmp_path)
     licences = core / "licenses"
-    assert (licences / "numpy" / "LICENSE.txt").read_text() == "BSD"
-    assert (licences / "verovio" / "COPYING.LESSER").read_text() == "LGPL"
-    assert (licences / "python" / "LICENSE.txt").read_text() == "PSF"
-    assert (licences / "uv" / "uv-LICENSE").read_text() == "uv"
+    assert (licences / "numpy" / "LICENSE.txt").read_text(encoding="utf-8") == "BSD"
+    assert (licences / "verovio" / "COPYING.LESSER").read_text(encoding="utf-8") == "LGPL"
+    assert (licences / "python" / "LICENSE.txt").read_text(encoding="utf-8") == "PSF"
+    assert (licences / "uv" / "uv-LICENSE").read_text(encoding="utf-8") == "uv"
     assert not (licences / "stickler" / "METADATA").exists()  # only what was handed over
     index = (licences / "README.txt").read_text(encoding="utf-8")
     for name in ("ffmpeg", "numpy 2.5.4", "python", "stickler", "uv", "verovio 6.4.1"):
@@ -135,10 +135,12 @@ def test_licence_files_of_the_same_name_do_not_replace_each_other(tmp_path):
     _file(inside / "numpy" / "ma" / "LICENSE", "ma")
     _licensed(core, tmp_path)
     numpy = core / "licenses" / "numpy"
-    assert (numpy / "LICENSE.txt").read_text() == "BSD"
-    assert (numpy / "numpy" / "linalg" / "lapack_lite" / "LICENSE.txt").read_text() == "lapack_lite"
-    assert (numpy / "numpy" / "random" / "LICENSE.md").read_text() == "random"
-    assert (numpy / "numpy" / "ma" / "LICENSE").read_text() == "ma"
+    assert (numpy / "LICENSE.txt").read_text(encoding="utf-8") == "BSD"
+    assert (numpy / "numpy" / "linalg" / "lapack_lite" / "LICENSE.txt").read_text(
+        encoding="utf-8"
+    ) == "lapack_lite"
+    assert (numpy / "numpy" / "random" / "LICENSE.md").read_text(encoding="utf-8") == "random"
+    assert (numpy / "numpy" / "ma" / "LICENSE").read_text(encoding="utf-8") == "ma"
     assert sum(1 for p in numpy.rglob("*") if p.is_file()) == 4
 
 

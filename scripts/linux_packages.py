@@ -59,7 +59,13 @@ def file_name(kind: str, version: str) -> str:
 def adapter_files(root: Path) -> list[Path]:
     """The adapters' tracked files: never a local environment, weights or a scratch file."""
     listed = subprocess.run(
-        ["git", "ls-files", "adapters"], cwd=root, capture_output=True, text=True, check=True
+        ["git", "ls-files", "adapters"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=True,
     ).stdout.split()
     return sorted(Path(p) for p in listed)
 

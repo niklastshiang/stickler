@@ -58,7 +58,7 @@ def test_alignment_file_is_readable_json(layout):
     path = own.save_alignment(
         song, notes=[], excluded=[(5.0, float("inf"))], quality={}, reasons=[], shift=0.0
     )
-    saved = json.loads(path.read_text())
+    saved = json.loads(path.read_text(encoding="utf-8"))
     assert saved["excluded"] == [[5.0, None]] and saved["passed"] is True
     assert own.load_alignment(song)["excluded"] == [(5.0, float("inf"))]
 

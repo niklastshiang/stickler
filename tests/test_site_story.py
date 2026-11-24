@@ -185,15 +185,16 @@ def test_sheet_music_without_bars_is_refused_with_a_reason():
 def test_a_failing_page_leaves_every_file_as_it_was(tmp_path, monkeypatch):
     good, bad = tmp_path / "good.html", tmp_path / "bad.html"
     good.write_text(
-        "<!-- story:wave --><!-- /story:wave --><!-- story:marks --><!-- /story:marks -->"
+        "<!-- story:wave --><!-- /story:wave --><!-- story:marks --><!-- /story:marks -->",
+        encoding="utf-8",
     )
-    bad.write_text("<p>no places</p>")
+    bad.write_text("<p>no places</p>", encoding="utf-8")
     ranges = tmp_path / "story.css"
     monkeypatch.setattr(site_story, "PAGES", (good, bad))
     monkeypatch.setattr(site_story, "RANGES", ranges)
     with pytest.raises(ValueError):
         site_story.draw()
-    assert not ranges.exists() and "<svg" not in good.read_text()
+    assert not ranges.exists() and "<svg" not in good.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("page", site_story.PAGES, ids=["en", "de"])

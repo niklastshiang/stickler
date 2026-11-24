@@ -1305,7 +1305,11 @@ def export_drum_track(stem: Path, dest: Path) -> Path:
         shutil.copyfile(stem, dest)
         return dest
     proc = audio.media_tool(
-        ["ffmpeg", "-v", "error", "-y", "-i", str(stem), str(dest)], capture_output=True, text=True
+        ["ffmpeg", "-v", "error", "-y", "-i", str(stem), str(dest)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg: {dest.name}: {proc.stderr.strip()}")

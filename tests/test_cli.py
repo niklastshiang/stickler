@@ -484,9 +484,9 @@ def _ctrl_c_when(pid_file: Path, seen: dict) -> None:
     import time
 
     def press() -> None:
-        while not (pid_file.exists() and pid_file.read_text()):
+        while not (pid_file.exists() and pid_file.read_text(encoding="utf-8")):
             time.sleep(0.01)
-        seen["group"] = os.getpgid(int(pid_file.read_text()))
+        seen["group"] = os.getpgid(int(pid_file.read_text(encoding="utf-8")))
         os.kill(os.getpid(), signal.SIGINT)
 
     threading.Thread(target=press, daemon=True).start()

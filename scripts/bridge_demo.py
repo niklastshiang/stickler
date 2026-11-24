@@ -31,6 +31,7 @@ class Bridge:
             stdout=subprocess.PIPE,
             text=True,
             encoding="utf-8",
+            errors="replace",
         )
         self.lines: queue.Queue[str] = queue.Queue()
         threading.Thread(target=self._read, daemon=True).start()

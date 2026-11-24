@@ -54,7 +54,7 @@ def test_only_the_logic_types_count(tmp_path):
                 "SystemAsking.saveLocation(named:)": (0, 6),  # AppKit only
                 "RemovalQuestion.init(sizes:)": (0, 12),
             },
-        ).read_text()
+        ).read_text(encoding="utf-8")
     )
     covered, total, rows = xccov_gate.coverage(report, xccov_gate.LOGIC)
     assert (covered, total) == (35, 37)

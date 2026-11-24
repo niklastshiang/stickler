@@ -15,35 +15,42 @@ def adapter(tmp_path) -> adapters.AdapterSpec:
     """An adapter with a helper module, pointing at its own copy of _common."""
     common = tmp_path / "_common"
     (common / "src" / "stickler_adapter").mkdir(parents=True)
-    (common / "pyproject.toml").write_text('[project]\nname = "stickler-adapter"\n')
-    (common / "src" / "stickler_adapter" / "__init__.py").write_text("def f():\n    return 1\n")
+    (common / "pyproject.toml").write_text(
+        '[project]\nname = "stickler-adapter"\n', encoding="utf-8"
+    )
+    (common / "src" / "stickler_adapter" / "__init__.py").write_text(
+        "def f():\n    return 1\n", encoding="utf-8"
+    )
     path = tmp_path / "transcribers" / "x"
     path.mkdir(parents=True)
-    (path / "run.py").write_text("from helper import g\nimport os\n")
-    (path / "helper.py").write_text("def g():\n    return 1\n")
+    (path / "run.py").write_text("from helper import g\nimport os\n", encoding="utf-8")
+    (path / "helper.py").write_text("def g():\n    return 1\n", encoding="utf-8")
     (path / "pyproject.toml").write_text(
         '[project]\nname = "x"\n\n[tool.uv.sources]\n'
-        'stickler-adapter = { path = "../../_common", editable = true }\n'
+        'stickler-adapter = { path = "../../_common", editable = true }\n',
+        encoding="utf-8",
     )
     return adapters.AdapterSpec(id="x", stage="transcribers", path=path)
 
 
 def test_a_helper_module_is_part_of_the_key(adapter):
     before = runner.code_digest(adapter)
-    (adapter.path / "helper.py").write_text("def g():\n    return 2\n")
+    (adapter.path / "helper.py").write_text("def g():\n    return 2\n", encoding="utf-8")
     assert runner.code_digest(adapter) != before
 
 
 def test_the_shared_adapter_package_is_part_of_the_key(adapter):
     before = runner.code_digest(adapter)
     init = adapter.path.parents[1] / "_common" / "src" / "stickler_adapter" / "__init__.py"
-    init.write_text("def f():\n    return 2\n")
+    init.write_text("def f():\n    return 2\n", encoding="utf-8")
     assert runner.code_digest(adapter) != before
 
 
 def test_comments_and_docstrings_in_helpers_do_not_change_the_key(adapter):
     before = runner.code_digest(adapter)
-    (adapter.path / "helper.py").write_text('"""Doc."""\n\n\ndef g():  # note\n    return 1\n')
+    (adapter.path / "helper.py").write_text(
+        '"""Doc."""\n\n\ndef g():  # note\n    return 1\n', encoding="utf-8"
+    )
     assert runner.code_digest(adapter) == before
 
 
@@ -133,29 +140,35 @@ def test_only_a_chain_that_ends_at_the_current_digest_counts(adapter, monkeypatc
     pairs = {"x": (("a" * 40, "b" * 40), ("b" * 40, current), ("c" * 40, "d" * 40))}
     monkeypatch.setattr(runner, "load_equivalents", lambda: pairs)
     assert set(runner.equivalent_digests(adapter)) == {"a" * 40, "b" * 40}
-    (adapter.path / "helper.py").write_text("def g():\n    return 3\n")  # a real change
+    (adapter.path / "helper.py").write_text(
+        "def g():\n    return 3\n", encoding="utf-8"
+    )  # a real change
     assert runner.equivalent_digests(adapter) == ()
 
 
 def test_a_file_nothing_imports_is_not_part_of_the_key(adapter):
     before = runner.code_digest(adapter)
-    (adapter.path / "scratch.py").write_text("x = 1\n")
+    (adapter.path / "scratch.py").write_text("x = 1\n", encoding="utf-8")
     assert runner.code_digest(adapter) == before
 
 
 def test_a_helper_imported_by_a_helper_is_part_of_the_key(adapter):
-    (adapter.path / "helper.py").write_text("import deeper\n\n\ndef g():\n    return 1\n")
-    (adapter.path / "deeper.py").write_text("X = 1\n")
+    (adapter.path / "helper.py").write_text(
+        "import deeper\n\n\ndef g():\n    return 1\n", encoding="utf-8"
+    )
+    (adapter.path / "deeper.py").write_text("X = 1\n", encoding="utf-8")
     before = runner.code_digest(adapter)
-    (adapter.path / "deeper.py").write_text("X = 2\n")
+    (adapter.path / "deeper.py").write_text("X = 2\n", encoding="utf-8")
     assert runner.code_digest(adapter) != before
 
 
 def test_lock_file_and_python_version_are_part_of_the_key(adapter):
     before = runner.code_digest(adapter)
-    (adapter.path / "uv.lock").write_text('version = 1\n\n[[package]]\nname = "torch"\n')
+    (adapter.path / "uv.lock").write_text(
+        'version = 1\n\n[[package]]\nname = "torch"\n', encoding="utf-8"
+    )
     with_lock = runner.code_digest(adapter)
-    (adapter.path / ".python-version").write_text("3.14\n")
+    (adapter.path / ".python-version").write_text("3.14\n", encoding="utf-8")
     assert len({before, with_lock, runner.code_digest(adapter)}) == 3
 
 
@@ -173,7 +186,8 @@ def test_a_list_valued_source_still_finds_the_shared_package(adapter):
     pyproject = adapter.path / "pyproject.toml"
     pyproject.write_text(
         '[project]\nname = "x"\n\n[tool.uv.sources]\n'
-        'stickler-adapter = [{ path = "../../_common", editable = true }]\n'
+        'stickler-adapter = [{ path = "../../_common", editable = true }]\n',
+        encoding="utf-8",
     )
     assert runner._common_dir(adapter) == adapter.path.parents[1] / "_common"
     assert runner.code_digest(adapter) != before  # the pyproject changed, _common still counted
