@@ -1,0 +1,433 @@
+# Throwaway (SPEC.md, module `win-spike`, tasks 169-171): the Windows app's installer built and
+# measured on the runner. Lives on the branch claude/win-spike only; nothing here is merged.
+name: win-spike
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/win-spike]
+
+permissions:
+  contents: read
+
+jobs:
+  spike:
+    runs-on: windows-2025
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      MSYS_NO_PATHCONV: "1" # Git's bash must not turn /VERYSILENT into a path
+      PYTHONUTF8: "1"
+      UV_VERSION: "0.13.9" # as scripts/mac_bundle.sh
+      # the SHA-256 is the release's own (uv-x86_64-pc-windows-msvc.zip.sha256 next to the asset)
+      UV_SHA256: edd61f7f5728a56cc62455386661860bdfc7bab65872f39b0c25bdcc1d8e1beb
+      UV_MIT_SHA256: 860e3d7a86b84e6a7012c7a635fc64df475cebc6cce34dfeb73a5982ec58176c
+      UV_APACHE_SHA256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+      # gyan.dev's essentials build 9.1 as GyanD/codexffmpeg's release 9.1 carries it; the SHA-256
+      # is the digest GitHub computed for that release asset (API field `digest`, 2026-11-24)
+      FFMPEG_VERSION: "9.1"
+      FFMPEG_SHA256: b9bbbb3acece000cbeec994f856649354e52c773807841e78908374b24d658fd
+      PYTHON_MINOR: "3.14"
+      LONG_NAME: spike_user_name_0123 # 20 characters, like a long Windows profile name
+    steps:
+      - name: Files as they are in the repository (no CRLF on checkout)
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: The layout folder
+        run: |
+          T=$(cygpath -m "$RUNNER_TEMP"); L="$T/layout"; W="$T/work"
+          mkdir -p "$L/bin" "$L/licenses" "$W"
+          fetch() { # url, file, sha256
+            curl -fsSL --retry 3 -o "$2" "$1"
+            actual=$(sha256sum "$2" | cut -d' ' -f1)
+            if [ "$actual" != "$3" ]; then
+              echo "::error::SHA-256 of $2 is $actual, expected $3"; exit 1
+            fi
+            echo "ok  $actual  $2"
+          }
+          echo "== uv $UV_VERSION"
+          fetch "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-pc-windows-msvc.zip" \
+            "$W/uv.zip" "$UV_SHA256"
+          7z x -y "-o$W/uv" "$W/uv.zip" >/dev/null
+          cp "$W/uv/uv.exe" "$L/bin/uv.exe"
+          fetch "https://raw.githubusercontent.com/astral-sh/uv/$UV_VERSION/LICENSE-MIT" \
+            "$L/licenses/uv-LICENSE-MIT.txt" "$UV_MIT_SHA256"
+          fetch "https://raw.githubusercontent.com/astral-sh/uv/$UV_VERSION/LICENSE-APACHE" \
+            "$L/licenses/uv-LICENSE-APACHE.txt" "$UV_APACHE_SHA256"
+          UV="$L/bin/uv.exe"
+          "$UV" --version
+
+          echo "== ffmpeg $FFMPEG_VERSION"
+          fetch "https://github.com/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip" \
+            "$W/ffmpeg.zip" "$FFMPEG_SHA256"
+          7z x -y "-o$W/ffmpeg" "$W/ffmpeg.zip" >/dev/null
+          F="$W/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build"
+          cp "$F/bin/ffmpeg.exe" "$F/bin/ffprobe.exe" "$L/bin/"
+          cp "$F/LICENSE" "$L/licenses/ffmpeg-LICENSE.txt"
+          cp "$F/README.txt" "$L/licenses/ffmpeg-README.txt"
+          "$L/bin/ffmpeg.exe" -version | head -n 1
+
+          echo "== Python $PYTHON_MINOR, fetched by uv into a folder of the job"
+          export UV_PYTHON_INSTALL_DIR="$W/pyinstall"
+          "$UV" python install "$PYTHON_MINOR"
+          ls -la "$W/pyinstall"
+          PYDIR=$(ls -d "$W"/pyinstall/cpython-"$PYTHON_MINOR".[0-9]*-windows-x86_64-none | head -n 1)
+          echo "installation folder: $PYDIR"
+          cp -r "$PYDIR" "$L/python"
+          "$L/python/python.exe" -VV
+          ls "$L/python" | head -n 30
+          if [ -f "$L/python/LICENSE.txt" ]; then cp "$L/python/LICENSE.txt" "$L/licenses/python-LICENSE.txt"; fi
+
+          echo "== the core's packages, as uv.lock pins them"
+          "$UV" export --frozen --no-dev --no-emit-project --prune mir-eval \
+            --format requirements-txt --output-file "$W/requirements.txt" >/dev/null
+          grep -c '==' "$W/requirements.txt"
+          "$UV" pip install --python "$L/python/python.exe" --break-system-packages --no-deps \
+            --require-hashes --only-binary :all: --no-compile -r "$W/requirements.txt"
+          echo "== the core itself (not editable, no dependencies)"
+          "$UV" pip install --python "$L/python/python.exe" --break-system-packages --no-deps \
+            --no-compile .
+          echo "entry-point programs pip left (they hold the build path; not used, removed):"
+          ls "$L/python/Scripts" | grep -i stickler || true
+          rm -f "$L"/python/Scripts/stickler*.exe
+
+          echo "== the adapters' sources (tracked files only, as scripts/linux_packages.py)"
+          mkdir -p "$L/python/share/stickler"
+          git ls-files -z adapters/_common adapters/transcribers/adtof adapters/beats/beat_this \
+            adapters/separators/demucs | xargs -0 cp --parents -t "$L/python/share/stickler"
+          find "$L/python/share/stickler" -type f | sed "s|$L/||"
+
+          echo "== licences and the launcher"
+          cp LICENSE "$L/licenses/Stickler-LICENSE.txt"
+          printf 'Licences of what this folder ships: Stickler (GPL-3.0-or-later), uv (MIT or Apache-2.0), ffmpeg (GPL, gyan.dev essentials build %s), Python (PSF), and the packages below python\\Lib\\site-packages (each has its licence in its dist-info folder).\r\n' "$FFMPEG_VERSION" > "$L/licenses/README.txt"
+          cp win/spike/Stickler-Spike.cmd win/spike/spike_driver.py "$L/"
+          du -sm "$L" "$L/python" "$L/bin"
+          echo "LAYOUT=$L" >> "$GITHUB_ENV"
+          echo "WORK=$W" >> "$GITHUB_ENV"
+
+      - name: The core starts after the folder is moved (relocation)
+        run: |
+          T=$(cygpath -m "$RUNNER_TEMP")
+          mkdir -p "$T/moved dir"
+          mv "$LAYOUT" "$T/moved dir/layout 2"
+          M="$T/moved dir/layout 2"
+          # nothing of the runner's Python or PYTHONPATH: the moved folder alone
+          env -i SYSTEMROOT="$SYSTEMROOT" STICKLER_PACKAGED=windows \
+            "$M/python/python.exe" -c "
+          import stickler, stickler_app, sys
+          from stickler_app import paths
+          print('stickler', stickler.__version__, stickler.__file__)
+          print('sys.prefix', sys.prefix)
+          print('prefix()', stickler_app.prefix())
+          print('packaged_env', paths.packaged_env())
+          print('adapters found', (stickler_app.prefix() / 'share/stickler/adapters/transcribers/adtof/run.py').is_file())
+          "
+          mv "$M" "$LAYOUT"
+          test -f "$LAYOUT/python/python.exe"
+
+      - name: The installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) {
+            $iscc = @('C:\Program Files (x86)\Inno Setup 6\ISCC.exe', 'C:\Program Files\Inno Setup 6\ISCC.exe') |
+              Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+          Write-Host "ISCC: $iscc"
+          & $iscc '/?' 2>&1 | Select-Object -First 3
+          $version = (Select-String -Path pyproject.toml -Pattern '^version = "(\d+)"').Matches[0].Groups[1].Value
+          $out = Join-Path $env:RUNNER_TEMP 'installer'
+          New-Item -ItemType Directory -Force $out | Out-Null
+          & $iscc "/DLayout=$env:LAYOUT" "/DAppVersion=$version" "/DOutDir=$out" win\spike\Stickler-Spike.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed: $LASTEXITCODE" }
+          $f = Get-Item (Join-Path $out 'Stickler-spike-setup.exe')
+          $mb = [math]::Round($f.Length / 1MB, 1)
+          "### Installer`n`n- ``$($f.Name)``: $($f.Length) bytes ($mb MB), version $version`n- ISCC: ``$iscc```n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: stickler-spike-setup
+          path: ${{ runner.temp }}/installer/Stickler-spike-setup.exe
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Clips and the registry as found
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'out'
+          New-Item -ItemType Directory -Force "$out\plain", "$out\long", "$out\clips" | Out-Null
+          python win\spike\make_clip.py "$out\clips\clip-a.wav" --bpm 120
+          python win\spike\make_clip.py "$out\clips\clip-b.wav" --bpm 100
+          $key = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+          $found = (Get-ItemProperty $key -Name LongPathsEnabled -ErrorAction SilentlyContinue).LongPathsEnabled
+          Write-Host "LongPathsEnabled as found: $found"
+          "LONGPATHS_FOUND=$found" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "### Registry`n`n| Value | As found |`n|---|---|`n| ``$key\LongPathsEnabled`` | $found |`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          "OUT=$out" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      # ---------------------------------------------------------------- run A, plain
+      - name: "Run A: install silently"
+        shell: pwsh
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          $uninstall = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{54BBD3E4-8455-4D60-9CE6-7498C3FF2077}_is1'
+          $before = Test-Path $uninstall
+          $p = Start-Process -FilePath (Join-Path $env:RUNNER_TEMP 'installer\Stickler-spike-setup.exe') `
+            -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/CURRENTUSER', '/NORESTART', "/LOG=$env:OUT\plain\install.log" `
+            -Wait -PassThru
+          Write-Host "installer exit code $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) { throw "installer failed" }
+          $missing = @('bin\uv.exe', 'bin\ffmpeg.exe', 'bin\ffprobe.exe', 'python\python.exe', 'Stickler-Spike.cmd',
+            'spike_driver.py', 'unins000.exe', 'licenses\Stickler-LICENSE.txt',
+            'python\share\stickler\adapters\transcribers\adtof\run.py',
+            'python\share\stickler\adapters\beats\beat_this\run.py',
+            'python\share\stickler\adapters\separators\demucs\run.py',
+            'python\share\stickler\adapters\_common\pyproject.toml') |
+            Where-Object { -not (Test-Path (Join-Path $app $_)) }
+          $lnk = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Stickler (spike).lnk'
+          $after = Test-Path $uninstall
+          $entry = if ($after) { (Get-ItemProperty $uninstall).DisplayName } else { '(none)' }
+          "### Install (run A)`n`n- install folder: ``$app```n- missing files: $(if ($missing) { $missing -join ', ' } else { 'none' })`n- Start menu entry present: $(Test-Path $lnk)`n- uninstall key before: $before, after: $after (DisplayName: $entry)`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($missing) { throw "missing: $missing" }
+
+      - name: "Run A: the launcher on clip A"
+        shell: pwsh
+        env:
+          STICKLER_SPIKE_NO_PAUSE: "1"
+          STICKLER_SPIKE_LOG: ${{ runner.temp }}\out\plain\spike-log.txt
+          STICKLER_SPIKE_OUT: ${{ runner.temp }}\out\plain\musicxml
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          $watch = [Diagnostics.Stopwatch]::StartNew()
+          & (Join-Path $app 'Stickler-Spike.cmd') "$env:OUT\clips\clip-a.wav"
+          $code = $LASTEXITCODE
+          Write-Host "launcher exit code $code after $($watch.Elapsed.TotalSeconds) s"
+          "### Launcher on clip A (run A)`n`n- exit code $code, $([int]$watch.Elapsed.TotalSeconds) s wall`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($code -ne 0) { throw "launcher exit code $code" }
+          if (-not (Get-ChildItem "$env:OUT\plain\musicxml\*.musicxml" | Where-Object Length -gt 0)) { throw "no MusicXML" }
+
+      - name: "Run A: second analysis (clip B), network refused"
+        shell: pwsh
+        env:
+          STICKLER_SPIKE_NO_PAUSE: "1"
+          STICKLER_SPIKE_LOG: ${{ runner.temp }}\out\plain\spike-log-offline.txt
+          STICKLER_SPIKE_OUT: ${{ runner.temp }}\out\plain\musicxml-offline
+          UV_OFFLINE: "1"
+          HF_HUB_OFFLINE: "1"
+          UV_HTTP_RETRIES: "0"
+          HTTPS_PROXY: http://127.0.0.1:9
+          HTTP_PROXY: http://127.0.0.1:9
+          ALL_PROXY: http://127.0.0.1:9
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          & (Join-Path $app 'Stickler-Spike.cmd') "$env:OUT\clips\clip-b.wav"
+          $code = $LASTEXITCODE
+          "### Second analysis with the network refused (run A)`n`n- UV_OFFLINE=1, HF_HUB_OFFLINE=1, HTTPS_PROXY=http://127.0.0.1:9: launcher exit code $code`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($code -ne 0) { throw "offline launcher exit code $code" }
+
+      - name: "Run A: Demucs setup, timed"
+        shell: pwsh
+        env:
+          STICKLER_PACKAGED: windows
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          $env:PATH = "$app\bin;$env:PATH"
+          $log = "$env:OUT\plain\setup-demucs.txt"
+          & "$app\python\python.exe" "$env:GITHUB_WORKSPACE\win\spike\setup_one.py" demucs 2>&1 | Tee-Object $log
+          if ($LASTEXITCODE -ne 0) { throw "demucs setup failed" }
+          $line = Select-String -Path $log -Pattern 'seconds:' | Select-Object -Last 1
+          "### Demucs setup (installed Python, STICKLER_PACKAGED=windows)`n`n- ``$($line.Line)```n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: "Run A: measurements"
+        if: always()
+        run: |
+          D="$LOCALAPPDATA\\Stickler"
+          APP="$LOCALAPPDATA\\Programs\\Stickler"
+          {
+            python win/spike/measure.py seconds "$OUT/plain/spike-log.txt" "$OUT/plain/spike-log-offline.txt"
+            echo
+            python win/spike/measure.py sizes "$D"
+            echo
+            python win/spike/measure.py paths "$D\\data\\adapters"
+            echo
+            python win/spike/measure.py exes "install=$APP" "data=$D"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Installer"
+            echo
+            echo "- $(stat -c %s "$RUNNER_TEMP/installer/Stickler-spike-setup.exe") bytes"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: "Run A: a screenshot of the desktop"
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          try {
+            Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+            $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+            $png = "$env:OUT\screenshot.png"
+            $bmp.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)
+            "### Screenshot`n`n- taken: $($b.Width) x $($b.Height) px, $((Get-Item $png).Length) bytes`n" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          } catch {
+            "### Screenshot`n`n- failed: $($_.Exception.Message)`n" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          }
+
+      - name: "Run A: no launcher (the downloaded Python runs a model directly)"
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $data = Join-Path $env:LOCALAPPDATA 'Stickler\data'
+          $adtof = Join-Path $data 'adapters\transcribers\adtof'
+          $base = Get-ChildItem "$data\python" -Directory | Where-Object Name -Like 'cpython-3.14.*' |
+            ForEach-Object { Join-Path $_.FullName 'python.exe' } | Where-Object { Test-Path $_ } | Select-Object -First 1
+          $site = Join-Path $adtof '.venv\Lib\site-packages'
+          Write-Host "base python: $base"; Write-Host "site-packages: $site"
+          Get-ChildItem $site -Filter '*.pth' | ForEach-Object { Write-Host "pth: $($_.Name): $(Get-Content $_.FullName -Raw)" }
+          $out = "$env:OUT\no-launcher"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $env:PYTHONPATH = "$site;$data\adapters\_common\src"
+          $env:PYTHONUTF8 = '1'
+          $log = "$env:OUT\no-launcher.txt"
+          & $base "$adtof\run.py" --in "$env:OUT\clips\clip-a.wav" --out $out --device cpu 2>&1 | Tee-Object $log | Select-Object -Last 25
+          $code = $LASTEXITCODE
+          $mid = Test-Path "$out\drums.mid"; $meta = Test-Path "$out\meta.json"
+          "### No launcher: the downloaded Python runs ADTOF's run.py directly`n`n- python: ``$base```n- PYTHONPATH: site-packages of the environment + _common\src`n- exit code $code; drums.mid: $mid; meta.json: $meta`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($code -ne 0) { "- last lines:`n``````n$((Get-Content $log | Select-Object -Last 15) -join "`n")`n```````n" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY }
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: spike-log-plain
+          path: |
+            ${{ runner.temp }}/out/plain
+            ${{ runner.temp }}/out/no-launcher.txt
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: spike-screenshot
+          path: ${{ runner.temp }}/out/screenshot.png
+          if-no-files-found: ignore
+
+      - name: "Run A: uninstall"
+        if: always()
+        shell: pwsh
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          $uninstall = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{54BBD3E4-8455-4D60-9CE6-7498C3FF2077}_is1'
+          $existed = Test-Path $uninstall
+          $p = Start-Process -FilePath "$app\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/LOG=$env:OUT\plain\uninstall.log" -Wait -PassThru
+          for ($i = 0; $i -lt 60 -and (Test-Path $app); $i++) { Start-Sleep 2 }
+          $left = if (Test-Path $app) { (Get-ChildItem $app -Recurse -Force | Select-Object -First 50 | ForEach-Object FullName) -join "`n" } else { '' }
+          $data = Join-Path $env:LOCALAPPDATA 'Stickler'
+          "### Uninstall (run A)`n`n- uninstaller exit code $($p.ExitCode)`n- program folder exists afterwards: $(Test-Path $app)`n- left below it: $(if ($left) { "`n``````n$left`n``````" } else { 'nothing' })`n- data folder ``$data`` still there: $(Test-Path $data)`n- uninstall key existed before: $existed, exists after: $(Test-Path $uninstall)`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      # ---------------------------------------------------------------- run B, long path, long paths off
+      - name: "Run B: LongPathsEnabled=0, a deep LOCALAPPDATA, install"
+        id: longprep
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $key = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+          Set-ItemProperty -Path $key -Name LongPathsEnabled -Value 0 -Type DWord
+          $now = (Get-ItemProperty $key).LongPathsEnabled
+          $local = "C:\Users\$env:LONG_NAME\AppData\Local"
+          $how = 'C:\Users\<20 characters>\AppData\Local itself'
+          try { New-Item -ItemType Directory -Force $local -ErrorAction Stop | Out-Null }
+          catch {
+            $local = "C:\spike\$('x' * ($env:LONG_NAME.Length - 5))\AppData\Local".Substring(0)
+            New-Item -ItemType Directory -Force $local | Out-Null
+            $how = 'an equally long path on C: (C:\Users was not writable)'
+          }
+          Write-Host "LOCALAPPDATA for run B: $local ($($local.Length) characters)"
+          # earlier data of run A goes
+          Remove-Item -Recurse -Force (Join-Path $env:LOCALAPPDATA 'Stickler') -ErrorAction SilentlyContinue
+          $app = Join-Path $local 'Programs\Stickler'
+          $p = Start-Process -FilePath (Join-Path $env:RUNNER_TEMP 'installer\Stickler-spike-setup.exe') `
+            -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/CURRENTUSER', '/NORESTART', "/DIR=$app", "/LOG=$env:OUT\long\install.log" `
+            -Wait -PassThru
+          "LONG_LOCAL=$local" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "### Run B (long path, LongPathsEnabled=0)`n`n- LongPathsEnabled now: $now (was $env:LONGPATHS_FOUND)`n- LOCALAPPDATA: ``$local`` ($($local.Length) characters; $how)`n- Inno ignores the LOCALAPPDATA variable, so the installer got ``/DIR=$app```n- installer exit code $($p.ExitCode); program folder present: $(Test-Path "$app\python\python.exe")`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($p.ExitCode -ne 0) { throw "installer failed in run B" }
+
+      - name: "Run B: the launcher on clip A (a failure is a finding)"
+        id: longrun
+        continue-on-error: true
+        shell: pwsh
+        env:
+          LOCALAPPDATA: C:\Users\${{ env.LONG_NAME }}\AppData\Local
+          STICKLER_SPIKE_NO_PAUSE: "1"
+          STICKLER_SPIKE_LOG: ${{ runner.temp }}\out\long\spike-log.txt
+          STICKLER_SPIKE_OUT: ${{ runner.temp }}\out\long\musicxml
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          Write-Host "LOCALAPPDATA = $env:LOCALAPPDATA; LongPathsEnabled = $((Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem').LongPathsEnabled)"
+          $watch = [Diagnostics.Stopwatch]::StartNew()
+          & (Join-Path $app 'Stickler-Spike.cmd') "$env:OUT\clips\clip-a.wav"
+          $code = $LASTEXITCODE
+          $ok = ($code -eq 0)
+          "### Run B result: $(if ($ok) { 'WORKED' } else { 'FAILED (FINDING)' })`n`n- launcher exit code $code after $([int]$watch.Elapsed.TotalSeconds) s`n" |
+            Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if (-not $ok) { throw "run B: launcher exit code $code" }
+
+      - name: "Run B: what happened"
+        if: always()
+        continue-on-error: true
+        env:
+          LOCALAPPDATA: C:\Users\${{ env.LONG_NAME }}\AppData\Local
+        run: |
+          D="$LOCALAPPDATA\\Stickler"
+          {
+            echo "### Run B: details"
+            echo
+            echo '```'
+            grep -E "FAILED|error|Error|too long|WinError|path|setup seconds|analysis seconds|MusicXML written" "$OUT/long/spike-log.txt" | tail -n 40 || true
+            echo '```'
+            python win/spike/measure.py sizes "$D"
+            echo
+            python win/spike/measure.py paths "$D\\data\\adapters" || true
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: spike-log-long
+          path: ${{ runner.temp }}/out/long
+          if-no-files-found: warn
+
+      - name: "Run B: uninstall"
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $app = Join-Path "C:\Users\$env:LONG_NAME\AppData\Local" 'Programs\Stickler'
+          if (Test-Path "$app\unins000.exe") {
+            Start-Process -FilePath "$app\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
+          }
+
+      - name: LongPathsEnabled back to what it was
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:LONGPATHS_FOUND -ne '') {
+            Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -Value ([int]$env:LONGPATHS_FOUND) -Type DWord
+          }
+          (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem').LongPathsEnabled
