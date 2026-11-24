@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · playing</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; box-sizing: border-box; display: flex; flex-direction: column; background: {{c.mica}}; color: {{c.text}}; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 0 1px {{c.edge}};">
+  <header style="height: 32px; flex-shrink: 0; display: flex; align-items: center;">
+    <svg width="16" height="16" viewBox="0 0 16 16" style="margin-left: 16px;" aria-hidden="true"><rect x="2" y="1" width="10" height="13" rx="1" fill="#ffffff" stroke="#9a9996" stroke-width="0.8"></rect><path d="M4 4.5h6M4 6.5h6M4 8.5h6" stroke="#9a9996" stroke-width="0.7"></path><path d="M5 15L14 6M15 15L8 7" stroke="#b5835a" stroke-width="1.5" stroke-linecap="round"></path></svg>
+    <h1 style="margin: 0 0 0 12px; font-size: 12px; font-weight: 400; flex-grow: 1;">Stickler</h1>
+    <div style="display: flex;">
+      <button type="button" aria-label="Minimize" style="width: 46px; height: 32px; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M3 8.5h10"></path></svg>
+      </button>
+      <button type="button" aria-label="Maximize" style="width: 46px; height: 32px; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3.5" y="3.5" width="9" height="9" rx="1"></rect></svg>
+      </button>
+      <button type="button" aria-label="Close" style="width: 46px; height: 32px; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"></path></svg>
+      </button>
+    </div>
+  </header>
+  <nav aria-label="Menu bar" style="height: 40px; flex-shrink: 0; display: flex; align-items: center; padding: 0 8px; font-size: 14px;">
+    <button type="button" style="width: 48px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: {{c.text}}; font: inherit;">File</button>
+    <button type="button" style="width: 54px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: {{c.text}}; font: inherit;">View</button>
+    <button type="button" style="width: 80px; height: 32px; border: 0; border-radius: 4px; background: {{bgPlayback}}; color: {{c.text}}; font: inherit;">Playback</button>
+    <button type="button" style="width: 54px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: {{c.text}}; font: inherit;">Help</button>
+  </nav>
+  <div style="height: 64px; flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 24px; background: {{c.layer}}; border-top: 1px solid {{c.stroke}};">
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+      <h2 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600;">Eye of the Tiger</h2>
+      <p style="margin: 0; font-size: 12px; line-height: 16px; color: {{c.secondary}};">Survivor · ♩ = 109 · 4/4</p>
+    </div>
+    <button type="button" style="width: 88px; height: 32px; box-sizing: border-box; border: 1px solid {{c.controlStroke}}; border-radius: 4px; background: {{c.control}}; color: {{c.text}}; display: flex; align-items: center; justify-content: center; gap: 8px; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+      Open
+    </button>
+    <button type="button" aria-haspopup="menu" style="width: 112px; height: 32px; box-sizing: border-box; border: 1px solid {{c.controlStroke}}; border-radius: 4px; background: {{c.control}}; color: {{c.text}}; display: flex; align-items: center; justify-content: center; gap: 8px; font: 400 14px 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg>
+      Export
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+  </div>
+  <main style="flex-grow: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-start; padding: 28px 0 0; background: {{c.desk}}; border-top: 1px solid {{c.stroke}}; overflow: hidden;">
+    <dc-import name="SheetPage" width="640" marked="2" inverted="{{dark}}" hint-size="640px,560px"></dc-import>
+  </main>
+  <footer aria-label="Playback" style="height: 64px; flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 24px; background: {{c.layer}}; border-top: 1px solid {{c.stroke}}; font-size: 14px; line-height: 20px;">
+    <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+      <button type="button" aria-label="Previous Bar" title="Previous Bar (Left)" style="width: 32px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="2.5" y="3" width="1.6" height="10" rx="0.8"></rect><path d="M13 3.6v8.8a.6.6 0 0 1-.92.5L5.6 8.5a.6.6 0 0 1 0-1l6.48-4.4a.6.6 0 0 1 .92.5z"></path></svg>
+      </button>
+      <button type="button" aria-label="Pause" title="Pause (Space)" style="width: 40px; height: 40px; border: 0; border-radius: 20px; background: {{c.accent}}; color: {{c.onAccent}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1"></rect><rect x="9.5" y="2.5" width="3" height="11" rx="1"></rect></svg>
+      </button>
+      <button type="button" aria-label="Next Bar" title="Next Bar (Right)" style="width: 32px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="11.9" y="3" width="1.6" height="10" rx="0.8"></rect><path d="M3 3.6v8.8a.6.6 0 0 0 .92.5l6.48-4.4a.6.6 0 0 0 0-1L3.92 3.1a.6.6 0 0 0-.92.5z"></path></svg>
+      </button>
+    </div>
+    <span style="width: 36px; flex-shrink: 0; text-align: right; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; color: {{c.secondary}};">0:06</span>
+    <div role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="246" aria-valuenow="6" aria-valuetext="0:06, Bar 2 of 110" style="flex-grow: 1; min-width: 120px; height: 32px; position: relative; display: flex; align-items: center;">
+      <div style="width: 100%; height: 4px; border-radius: 2px; background: {{c.track}};"></div>
+      <div style="position: absolute; left: 0; width: 2.4%; height: 4px; border-radius: 2px; background: {{c.accent}};"></div>
+      <div style="position: absolute; left: calc(2.4% - 10px); width: 20px; height: 20px; border-radius: 10px; background: {{c.thumb}}; box-shadow: 0 0 0 1px {{c.thumbEdge}}, 0 1px 2px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: center;">
+        <div style="width: 12px; height: 12px; border-radius: 6px; background: {{c.accent}};"></div>
+      </div>
+    </div>
+    <span style="width: 36px; flex-shrink: 0; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; color: {{c.secondary}};">4:06</span>
+    <span style="width: 96px; flex-shrink: 0; white-space: nowrap;">Bar 2 of 110</span>
+    <button type="button" aria-label="Volume" title="Volume" aria-haspopup="dialog" aria-expanded="{{volumeExpanded}}" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 4px; background: {{volumeBg}}; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.5l3.5-3v10l-3.5-3H2.5z"></path><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.5a6 6 0 0 1 0 9"></path></svg>
+    </button>
+    <div role="group" aria-label="What to Hear" style="display: flex; flex-shrink: 0;">
+      <sc-for list="{{hearOptions}}" as="opt" hint-placeholder-count="3">
+        <button type="button" aria-pressed="{{opt.pressed}}" style="{{opt.style}}">{{opt.label}}</button>
+      </sc-for>
+    </div>
+  </footer>
+  <sc-if value="{{volumeOpen}}" hint-placeholder-val="{{false}}">
+    <div role="dialog" aria-label="Volume" style="position: absolute; right: 94px; bottom: 72px; width: 300px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; background: {{c.flyout}}; border-radius: 8px; box-shadow: 0 0 0 1px {{c.flyoutEdge}}, 0 8px 16px rgba(0,0,0,0.14); font-size: 14px; line-height: 20px; color: {{c.text}};">
+      <div style="display: flex; align-items: center; gap: 12px; height: 32px;">
+        <span style="width: 96px; flex-shrink: 0;">Song</span>
+        <div role="slider" tabindex="0" aria-label="Song" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70" style="flex-grow: 1; height: 32px; position: relative; display: flex; align-items: center;">
+          <div style="width: 100%; height: 4px; border-radius: 2px; background: {{c.track}};"></div>
+          <div style="position: absolute; left: 0; width: 70%; height: 4px; border-radius: 2px; background: {{c.accent}};"></div>
+          <div style="position: absolute; left: calc(70% - 10px); width: 20px; height: 20px; border-radius: 10px; background: {{c.thumb}}; box-shadow: 0 0 0 1px {{c.thumbEdge}}, 0 1px 2px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: center;">
+            <div style="width: 12px; height: 12px; border-radius: 6px; background: {{c.accent}};"></div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; height: 32px;">
+        <span style="width: 96px; flex-shrink: 0;">Detected hits</span>
+        <div role="slider" tabindex="0" aria-label="Detected hits" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" style="flex-grow: 1; height: 32px; position: relative; display: flex; align-items: center;">
+          <div style="width: 100%; height: 4px; border-radius: 2px; background: {{c.accent}};"></div>
+          <div style="position: absolute; left: calc(100% - 10px); width: 20px; height: 20px; border-radius: 10px; background: {{c.thumb}}; box-shadow: 0 0 0 1px {{c.thumbEdge}}, 0 1px 2px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: center;">
+            <div style="width: 12px; height: 12px; border-radius: 6px; background: {{c.accent}};"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"volume":{"editor":"boolean","default":false},"hear":{"editor":"enum","options":["Song","Hits","Both"],"default":"Both"},"menu":{"editor":"enum","options":["none","playback"],"default":"none"},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const volumeOpen = this.props.volume === true || this.props.volume === 'true';
+    const hear = this.props.hear ?? 'Both';
+    const menu = this.props.menu ?? 'none';
+    const light = {mica: '#f3f3f3', layer: '#fafafa', desk: '#e8e8e8', stroke: 'rgba(0,0,0,0.09)', edge: 'rgba(0,0,0,0.22)', text: '#1b1b1b', secondary: '#5c5c5c', control: '#ffffff', controlStroke: 'rgba(0,0,0,0.16)', pressed: 'rgba(0,0,0,0.06)', accent: '#005fb8', onAccent: '#ffffff', track: 'rgba(0,0,0,0.45)', thumb: '#ffffff', thumbEdge: 'rgba(0,0,0,0.10)', flyout: '#f9f9f9', flyoutEdge: 'rgba(0,0,0,0.10)'};
+    const darkC = {mica: '#202020', layer: '#272727', desk: '#161616', stroke: 'rgba(255,255,255,0.09)', edge: 'rgba(255,255,255,0.18)', text: '#ffffff', secondary: '#c8c8c8', control: 'rgba(255,255,255,0.06)', controlStroke: 'rgba(255,255,255,0.10)', pressed: 'rgba(255,255,255,0.08)', accent: '#60cdff', onAccent: '#000000', track: 'rgba(255,255,255,0.54)', thumb: '#454545', thumbEdge: 'rgba(255,255,255,0.09)', flyout: '#2c2c2c', flyoutEdge: 'rgba(255,255,255,0.10)'};
+    const c = dark ? darkC : light;
+    const labels = ['Song', 'Hits', 'Both'];
+    const hearOptions = labels.map((label, i) => {
+      const on = label === hear;
+      const left = i === 0 ? '4px' : '0';
+      const right = i === labels.length - 1 ? '4px' : '0';
+      const style = 'width: 64px; height: 32px; box-sizing: border-box; margin-left: ' + (i === 0 ? '0' : '-1px') + '; border: 1px solid ' + (on ? c.accent : c.controlStroke) + '; border-radius: ' + left + ' ' + right + ' ' + right + ' ' + left + '; background: ' + (on ? c.accent : c.control) + '; color: ' + (on ? c.onAccent : c.text) + '; position: relative; z-index: ' + (on ? '1' : '0') + '; font: 400 14px \'Segoe UI Variable Text\', \'Segoe UI\', Inter, system-ui, sans-serif;';
+      return { label, pressed: on ? 'true' : 'false', style };
+    });
+    return {
+      dark, c, volumeOpen, hearOptions,
+      volumeExpanded: volumeOpen ? 'true' : 'false',
+      volumeBg: volumeOpen ? c.pressed : 'transparent',
+      bgPlayback: menu === 'playback' ? c.pressed : 'transparent'
+    };
+  }
+}
+</script>
+</body>
+</html>

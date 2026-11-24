@@ -3340,14 +3340,16 @@ docs and PRs 16894 and 17241; gyan.dev and BtbN/FFmpeg-Builds; StatCounter (Octo
 > Status: **done** 2026-11-24: every screen approved by the owner on the private design canvas
 > "Stickler Windows screens" (a canvas of its own, as for the Mac), as draft 2; sources in
 > [docs/design/win/](docs/design/win/README.md). Draft 1 was checked against Windows' standards
-> at the owner's request; the check changed four points (below).
+> at the owner's request; the check changed four points (below). The playback screens (W10, for a
+> later release) approved on 2026-11-24.
 
 **Objective.** Mockups of every screen of the Windows app's first version, made with the owner
 on the design canvas, following Microsoft's design guidance for Windows 11 (WinUI 3). No code.
 `win-shell` and `win-sheet` build what is drawn here, as the Mac modules built the `mac-design`
 screens.
 
-**Screens** (the minimum of release 11; playback and corrections come later):
+**Screens** (the minimum of release 11, and W10 for the playback of a later release; corrections
+come later):
 
 | # | Screen | Module |
 |---|---|---|
@@ -3360,6 +3362,7 @@ screens.
 | W7 | Export: the button's menu, the "saved" note | `win-shell` |
 | W8 | The menu bar: File, View, Help; "About Stickler" | `win-shell` |
 | W9 | Light and dark: W4 and W6 in both | all |
+| W10 | Playback (a later release): the playback bar, the volume flyout, the Playback menu; light and dark | the Windows playback module |
 
 **Carried over from `design` and `mac-design` (same app, same words):** one step list for setup
 and analysis (done, running, waiting, a short line each; model names only in setup); the copy
@@ -3429,13 +3432,33 @@ exact sizes (the system's and the controls' own; the mockups' 46 px and 32 px ar
 Already there and reused: "Open Recent", "Clear Menu", "Stickler Help", "Licences", "Takes about
 15 seconds", "Running", "Actual Size", "About Stickler", "Close", the About sentence.
 
-**Out of scope.** Playback and corrections screens; the question before "Remove Downloaded
+**Out of scope.** Corrections screens (playback: W10, added on 2026-11-24, below); the question before "Remove Downloaded
 Models…" and the drum track's cost (the other apps' texts in a ContentDialog, `win-shell`, as
 the Mac mockups left them to `mac-shell`); the page when the core has stopped ("Stickler
 Stopped Unexpectedly", `win-shell`, as on the Mac); narrow windows (a minimum size, decided in
 `win-shell`); dark variants of the dialogs and menus (the controls' own); the install guide's
 SmartScreen pictures (`win-package`); high contrast (the controls follow it; checked by the
 owner in `win-shell`).
+
+**Playback screens W10 (owner, 2026-11-24).** The GTK app's behaviour (module `playback`), drawn
+the Windows way, for the Windows playback module of a later release:
+- **The playback bar** at the window's bottom, on the same layer as the song's header, in one
+  row as in the GTK app: Previous Bar, Play/Pause, Next Bar (the step buttons at the owner's
+  wish, as in Windows' Media Player; the GTK app has only the keys), the time, a position slider,
+  the length, "Bar 2 of 110", Volume, Song · Hits · Both.
+- **Play/Pause** is a round button in the accent colour, as in Media Player; the sliders are
+  WinUI's (accent track, a thumb with an accent dot).
+- **Song · Hits · Both** as three joined toggle buttons, the chosen one in the accent colour.
+  WinUI has no segmented control of its own; the Community Toolkit's `Segmented` is a NuGet
+  package, to be asked for before it is used.
+- **Volume:** a flyout above the button with two sliders, Song and Detected hits (70 % and
+  100 % at first, remembered per song, as in the GTK app).
+- **A Playback menu** between View and Help: Play or Pause (Space; the entry says what Space
+  does now), Previous Bar (Left), Next Bar (Right), Go to the Start (Home), then Song, Hits and
+  Both as radio items. Windows shows keys in menus, and the app has no Keyboard Shortcuts window.
+- **The bar marker** in the accent colour; a click on a bar jumps there.
+- **New text for `po/`:** "Playback". Previous Bar, Next Bar, Go to the Start, Song, Hits, Both,
+  Volume and Detected hits exist.
 
 Sources (read 2026-11-24): Microsoft Learn, Windows apps: title bar design and customization,
 Mica, geometry, typography, menus and menu flyouts, command bar, dialogs, buttons, InfoBar,

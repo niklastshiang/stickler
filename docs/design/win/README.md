@@ -1,6 +1,7 @@
 # Design of the Windows app
 
-Mockups of every screen of the Windows app's first version, approved by the owner on 2026-11-24
+Mockups of every screen of the Windows app's first version, and of its playback for a later
+release (W10), approved by the owner on 2026-11-24
 (module `win-design` in [SPEC.md](../../../SPEC.md#module-win-design), which lists the screens
 and the decisions).
 
@@ -22,8 +23,11 @@ export.
 | `Export-Saved.dc.html` | W7 · Saved, with "Show in Folder" |
 | `Menu-File.dc.html`, `Menu-View.dc.html`, `Menu-Help.dc.html` | W8 · Menu bar: File, View, Help |
 | `About.dc.html` | W8 · About Stickler |
+| `Playing.dc.html`, `Playing-Dark.dc.html` | W10 · Playing (light; dark with only the hits; a later release) |
+| `Playing-Volume.dc.html` | W10 · The volume flyout |
+| `Menu-Playback.dc.html` | W10 · Menu: Playback |
 | `SheetPage.dc.html` | The engraved page, shared with the GTK and Mac mockups (Windows accent, marker off) |
 
 The dark boards import the light ones with `dark` on; the menu boards import `Sheet` with one
-menu's title marked. Inter stands in for Segoe UI Variable on the canvas where it is missing, and
+menu's title marked, and the W10 boards import `Playing`. Inter stands in for Segoe UI Variable on the canvas where it is missing, and
 the icon in the title bar and in About is a simplified stand-in for the app icon.
