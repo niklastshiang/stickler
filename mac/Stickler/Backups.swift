@@ -8,11 +8,8 @@ import SticklerCore
 enum Backups {
     /// The file name the save panel proposes, as the GTK app's (`backup.file_name`).
     static func name(on day: Date) -> String {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .current
-        let parts = calendar.dateComponents([.year, .month, .day], from: day)
-        let year = parts.year ?? 0, month = parts.month ?? 0, date = parts.day ?? 0
-        return String(format: "Stickler Backup %04d-%02d-%02d.zip", year, month, date)
+        let date = day.formatted(Date.ISO8601FormatStyle(timeZone: .current).year().month().day())
+        return "Stickler Backup \(date).zip"
     }
 
     static func backUp(_ model: AppModel, on day: Date = Date()) {
