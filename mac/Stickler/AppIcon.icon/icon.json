@@ -1,0 +1,49 @@
+{
+  "fill-specializations" : [
+    {
+      "value" : {
+        "solid" : "srgb:0.90980,0.53725,0.29020,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : {
+        "solid" : "srgb:0.90980,0.53725,0.29020,1.00000"
+      }
+    }
+  ],
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name-specializations" : [
+            {
+              "value" : "drawing.svg"
+            },
+            {
+              "appearance" : "dark",
+              "value" : "drawing-dark.svg"
+            }
+          ],
+          "name" : "Drawing"
+        }
+      ],
+      "name" : "Drawing",
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}

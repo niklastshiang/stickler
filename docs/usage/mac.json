@@ -33,14 +33,26 @@
       }
     },
     "2026-11-22": {
-      "active_minutes": 12,
+      "active_minutes": 20,
       "models": {
         "claude-opus-5-5": {
-          "responses": 28,
-          "input": 60,
-          "output": 12795,
-          "cache_read": 2621040,
-          "cache_write": 62874
+          "responses": 61,
+          "input": 140,
+          "output": 28532,
+          "cache_read": 6850444,
+          "cache_write": 95554
+        }
+      }
+    },
+    "2026-11-24": {
+      "active_minutes": 17,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 45,
+          "input": 108,
+          "output": 18755,
+          "cache_read": 4371064,
+          "cache_write": 77350
         }
       }
     }

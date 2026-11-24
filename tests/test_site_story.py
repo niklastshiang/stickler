@@ -136,7 +136,7 @@ def test_filling_twice_gives_the_same_page():
 
 def test_the_stored_data_is_the_example_songs_first_seconds():
     data = json.loads(site_story.DATA.read_text(encoding="utf-8"))
-    assert data["song"] == "Fluffing a Duck.mp3" and data["seconds"] == 20
+    assert data["song"] == "Eyesplit.mp3" and data["seconds"] == 20
     assert len(data["loudness"]) == site_story.COLUMNS and max(data["loudness"]) == 1.0
     times = [t for t, _group in data["hits"]]
     assert times == sorted(times) and times[0] >= 0 and times[-1] < 20

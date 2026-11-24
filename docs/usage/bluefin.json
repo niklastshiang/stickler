@@ -1,5 +1,5 @@
 {
-  "device": "linux",
+  "device": "bluefin",
   "days": {
     "2026-11-13": {
       "active_minutes": 21,
@@ -105,21 +105,47 @@
       }
     },
     "2026-11-22": {
-      "active_minutes": 33,
+      "active_minutes": 391,
       "models": {
         "claude-haiku-5-5": {
-          "responses": 2,
-          "input": 4,
-          "output": 2291,
-          "cache_read": 4236,
-          "cache_write": 18263
+          "responses": 6,
+          "input": 12,
+          "output": 7146,
+          "cache_read": 12728,
+          "cache_write": 43522
         },
         "claude-opus-5-5": {
-          "responses": 55,
-          "input": 122,
-          "output": 32906,
-          "cache_read": 5256471,
-          "cache_write": 102937
+          "responses": 808,
+          "input": 1826,
+          "output": 691114,
+          "cache_read": 343517364,
+          "cache_write": 1947708
+        }
+      }
+    },
+    "2026-11-24": {
+      "active_minutes": 68,
+      "models": {
+        "claude-haiku-5-5": {
+          "responses": 10,
+          "input": 20,
+          "output": 14421,
+          "cache_read": 61838,
+          "cache_write": 122388
+        },
+        "claude-opus-5-5": {
+          "responses": 167,
+          "input": 366,
+          "output": 137035,
+          "cache_read": 23101323,
+          "cache_write": 542609
+        },
+        "claude-sonnet-5-5": {
+          "responses": 7,
+          "input": 14,
+          "output": 3706,
+          "cache_read": 280334,
+          "cache_write": 51648
         }
       }
     }

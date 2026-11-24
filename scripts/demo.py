@@ -139,7 +139,8 @@ class Recorder:
     def still(self, path: Path) -> None:
         """The window as it is now, as a PNG and a WebP next to it."""
         self.frame()
-        (self.folder / f"frame{self.count - 1:05d}.png").replace(path)
+        # move, not rename: the frames' temporary folder may be on another file system
+        shutil.move(self.folder / f"frame{self.count - 1:05d}.png", path)
         self.count -= 1
         _run(webp_command(path))
 

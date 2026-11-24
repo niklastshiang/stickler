@@ -74,7 +74,7 @@ Stickler only uses open-source models from actively maintained projects.
 
 <p align="center"><sub><b>Play along</b>: the bar that sounds is marked &nbsp;·&nbsp; <b>Correct</b>: tempo, meter and the first beat, without analysing again &nbsp;·&nbsp; <b>Dark</b>: follows the system</sub></p>
 
-<p align="center"><sub>The song is "Fluffing a Duck" by Kevin MacLeod (<a href="https://incompetech.com">incompetech.com</a>), <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; the notes are Stickler's transcription of its drums.</sub></p>
+<p align="center"><sub>The song is "Eyesplit" by Shane Ivers (<a href="https://www.silvermansound.com">silvermansound.com</a>), <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; the notes are Stickler's transcription of its drums.</sub></p>
 
 **How it goes**
 

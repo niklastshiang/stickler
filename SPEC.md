@@ -2028,12 +2028,14 @@ runner and runs on the owner's Mac at the checkpoint (if Quality is in the first
 
 > Status: **done** 2026-11-17: every screen approved by the owner on the private design canvas
 > "Stickler Mac screens" (a canvas of its own); sources in [docs/design/mac/](docs/design/mac/README.md).
+> The playback screens (M10, for `mac-playback` in a later release) approved on 2026-11-24.
 
 **Objective.** Mockups of every screen of the Mac app's first version, made with the owner on
 the design canvas, following Apple's Human Interface Guidelines for macOS 26. No code. The Mac
 modules build what is drawn here, as the GTK modules built the `design` screens.
 
-**Screens** (the minimum of release 8; playback and corrections come later):
+**Screens** (the minimum of release 8, and M10 for the playback of a later release; corrections
+come later):
 
 | # | Screen | Module |
 |---|---|---|
@@ -2046,6 +2048,7 @@ modules build what is drawn here, as the GTK modules built the `design` screens.
 | M7 | Export: menu or toolbar button, the save panel's start, the "saved" note | `mac-shell` |
 | M8 | The menu bar: Stickler, File (Open, Open Recent, Export), View (zoom, appearance follows the system), Window, Help | `mac-shell` |
 | M9 | Light and dark: M4 and M6 in both | all |
+| M10 | Playback (a later release): the controls, the volume popover, the Controls menu; light and dark | `mac-playback` |
 
 **Carried over from the GTK `design` (same app, same words):** one step list for setup and
 analysis (done, running, waiting, a short line each; model names only in setup); English copy
@@ -2074,8 +2077,8 @@ drum track export announced before it starts.
    the GTK mockups), and the decisions are written here.
 3. Every text on the screens exists in `po/` or is listed for `mac-shell` to add.
 
-**Out of scope.** Playback and corrections screens; narrow windows (macOS windows have a minimum
-size; decided in `mac-shell`); the install guide's "Open Anyway" pictures (`mac-package`).
+**Out of scope.** Corrections screens (playback: M10, added on 2026-11-24, below); narrow windows
+(macOS windows have a minimum size; decided in `mac-shell`); the install guide's "Open Anyway" pictures (`mac-package`).
 
 **Decided (owner, 2026-11-17):** a design canvas of its own for the Mac screens (the GTK canvas
 stays as it is); the macOS app icon is part of this module.
@@ -2099,6 +2102,27 @@ stays as it is); the macOS app icon is part of this module.
   `#1c1c1e`.
 - **New texts for `po/`** (added by `mac-shell`): "Show in Finder", "Takes about 15 seconds",
   "Open Recent", "Clear Menu" (the last two may come from the system).
+
+**Playback screens M10 (owner, 2026-11-24).** The GTK app's behaviour (module `playback`), drawn
+the macOS 26 way, for `mac-playback`:
+- **Controls:** a glass capsule floating over the desk at the window's bottom, the sheet
+  scrolling under it: Previous Bar, Play/Pause, Next Bar (plain glyphs, as in Apple's Music; the
+  step buttons at the owner's wish, the GTK app has only the keys), the time, a position slider,
+  the length, "Bar 2 of 110", Volume, and Song · Hits · Both as the native segmented picker.
+- **Volume:** a popover above the button with two sliders, Song and Detected hits (70 % and
+  100 % at first, remembered per song, as in the GTK app).
+- **A Controls menu** between View and Window, named as in Apple's Music: Play or Pause (Space;
+  the entry says what Space does now), Previous Bar (←), Next Bar (→), Go to the Start (⌥←, as
+  in QuickTime Player; Stickler also takes Home, as on Linux), then Song, Hits and Both with a
+  checkmark.
+- **The bar marker** in the accent colour; a click on a bar jumps there. The "saved" note (M7)
+  moves up above the capsule while a song is open.
+- **Checked against Apple's support guides (2026-11-24):** Music names the menu ("Choose
+  Controls > Shuffle") and uses Space and the arrows for play and the previous or next song;
+  QuickTime Player goes to the beginning of a movie with Option-Left Arrow and does not name
+  Home. Not checked: the TV app.
+- **New text for `po/`** (added by `mac-playback`): "Controls". Previous Bar, Next Bar, Go to
+  the Start, Song, Hits, Both, Volume and Detected hits exist.
 
 ### Module `core-bridge`
 
@@ -2665,7 +2689,7 @@ the Mac App Store, Quality, the GPU.
 3. **How it works:** a story that follows the scroll (owner, 2026-11-22; before: four numbered
    cards): the four steps scroll by next to a picture that changes with the step in view; see
    "Change 2026-11-22: How it works as a story" below.
-4. **An example:** a few seconds of a song (CC BY 4.0, "Fluffing a Duck", as the screenshots)
+4. **An example:** a few seconds of a song (CC BY 4.0, "Eyesplit", as the screenshots)
    next to its sheet music; plain `<audio controls>` (no script), the song with a click on
    every detected hit as the app's "Both" plays it (owner, 2026-11-18), so a visitor hears what
    was written down (`scripts/site_clip.py`).
@@ -2725,7 +2749,7 @@ widgets of GNOME or macOS.
 **Scope.**
 1. **The steps** (English; German alongside, same meaning):
    1. *Open a song*: "Drop an MP3, M4A, FLAC or WAV on Stickler, or choose one." Picture: a file
-      card `fluffing-a-duck.mp3` over a dashed drop area; it slides in and settles.
+      card `eyesplit.mp3` over a dashed drop area; it slides in and settles.
    2. *Stickler listens*: "It finds every hit, then the beat and the bars. About 15 seconds."
       Picture: the song's first 20 seconds as a waveform with the detected hits as dots in the
       three groups the clicks have (kick, snare and toms, cymbals), the three stages (hits, beat
@@ -2846,7 +2870,7 @@ Target: **WCAG 2.2, level AA**, for both languages and both colour schemes.
   Chromium and some Linux Firefox builds have no H.264) and H.264 MP4 (Safari), with a link
   as fallback; about 80–100 KB each.
   `scripts/demo.py` learns to record in the dark style and to write the screenshots, so both
-  sets come from the same run of the app ("Fluffing a Duck", Fast).
+  sets come from the same run of the app ("Eyesplit", Fast).
 - Typeface: Figtree (SIL Open Font License 1.1), weights 400, 500 and 700 as WOFF2 subsets
   (Latin with German), served from `site/fonts/` with its licence; source and version checked
   on the web when it is added.
@@ -2917,8 +2941,10 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
    Jakarta Sans, DM Sans, Instrument Sans, Outfit, Bricolage Grotesque, Atkinson Hyperlegible
    Next); the accent Apricot instead of the icon's brown.
 2. **The hero's line** and the four facts, in English and German: shown in the mockup (owner).
-3. **The example song** (decided, owner 2026-11-18): "Fluffing a Duck" by Kevin MacLeod,
-   CC BY 4.0, as the screenshots.
+3. **The example song** (decided, owner 2026-11-24; before: "Fluffing a Duck" by Kevin MacLeod,
+   2026-11-18): "Eyesplit" by Shane Ivers (silvermansound.com), CC BY 4.0, a metal song in the
+   owner's genres, as the screenshots. Credit as the site asks: "Music: Eyesplit by Shane Ivers -
+   https://www.silvermansound.com"; licence checked on the track's page 2026-11-24.
 4. **An imprint (Impressum)** (decided, owner 2026-11-18): yes, `imprint.html` in both
    languages ("Legal notice" / "Impressum", under § 18 Abs. 1 MStV: the site is free and has no
    ads, so § 5 DDG likely does not apply, but it is not purely personal; checked on the web

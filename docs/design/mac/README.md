@@ -1,6 +1,7 @@
 # Design of the Mac app
 
-Mockups of every screen of the Mac app's first version, approved by the owner on 2026-11-17
+Mockups of every screen of the Mac app's first version, approved by the owner on 2026-11-17, and
+of its playback for a later release (M10), approved on 2026-11-24
 (module `mac-design` in [SPEC.md](../../../SPEC.md#module-mac-design), which lists the screens
 and the decisions).
 
@@ -21,7 +22,10 @@ live copy; when a screen changes there, the files here are replaced with the new
 | `Export-Saved.dc.html` | M7 · Saved, with "Show in Finder" |
 | `Menu-App.dc.html`, `Menu-File.dc.html`, `Menu-View.dc.html` | M8 · Menu bar: Stickler, File, View |
 | `Icon.dc.html` | The macOS app icon (default, dark, small sizes) |
+| `Playing.dc.html`, `Playing-Dark.dc.html` | M10 · Playing (light; dark with only the hits; a later release) |
+| `Playing-Volume.dc.html` | M10 · The volume popover |
+| `Menu-Controls.dc.html` | M10 · Menu bar: Controls |
 | `SheetPage.dc.html` | The engraved page, shared with the GTK mockups (Mac accent, marker off) |
 
 The dark boards import the light ones with `dark` on; `Menu-File` and `Menu-View` import
-`Menu-App` with another menu open. Inter stands in for SF Pro on the canvas.
+`Menu-App` with another menu open; the M10 boards import `Playing`. Inter stands in for SF Pro on the canvas.
