@@ -24,6 +24,9 @@ equivalent:
   # 2026-11-24 (Task 162): stickler_adapter imports `resource` only where it exists and reads
   # the peak working set on Windows; on Linux and macOS the same code runs as before, so
   # every adapter's results stay valid.
+  # 2026-11-24 (Task 163): demucs, muscriptor_m and muscriptor_l resolve for Windows x64 too;
+  # scripts/lock_platforms.py shows Linux unchanged (0 differences), and the locks only gained
+  # entries (colorama and win_amd64 wheels), so macOS keeps its packages as well.
   adt_str:
     - {from: a6e42d04761802db0916ae4029de8712578a80a4, to: 578c45d3efe50f008b7cb0fe165d9f42bf0f9e70}
     - {from: 578c45d3efe50f008b7cb0fe165d9f42bf0f9e70, to: 3d0efac430f0061229d6ab6874ec48a3c9b15b50}
@@ -45,18 +48,21 @@ equivalent:
     - {from: e0926c4a2a212f61ea927ce31829b52876768a6f, to: d23446d5508f2b0d1b13dc819d21fe3fd8e9159d}
     - {from: d23446d5508f2b0d1b13dc819d21fe3fd8e9159d, to: 652c5f2e97d3a8439c07e82a5fb1a8c8e0ea5d7a}
     - {from: 652c5f2e97d3a8439c07e82a5fb1a8c8e0ea5d7a, to: 0ba16318d529a94cc8a563be2f888286103c8739}
+    - {from: 0ba16318d529a94cc8a563be2f888286103c8739, to: 2d5b0b50cff8c0466b20a128c6aec9e6b7293a35}
   muscriptor_l:
     - {from: 7dc00814b64f14a51892c18f463fe56f7fe0349f, to: 16924518469de5995e5be4ccc02c874761061337}
     - {from: 16924518469de5995e5be4ccc02c874761061337, to: f720fc1b301857161e2d8ea0c8477efa91be5506}
     - {from: f720fc1b301857161e2d8ea0c8477efa91be5506, to: 60e86f618b49301e8994139699f7c47568e74917}
     - {from: 60e86f618b49301e8994139699f7c47568e74917, to: 843885fe13453484f3ee582736a9881711f134e2}
     - {from: 843885fe13453484f3ee582736a9881711f134e2, to: 03162e4afa947874fa50c41f79c1ff6b5a11ce2c}
+    - {from: 03162e4afa947874fa50c41f79c1ff6b5a11ce2c, to: 4079768212b2d34e7dac373f5e5edea4353f20a6}
   muscriptor_m:
     - {from: c8af6164e49783c9eec15eb3d54f325a7201816e, to: b0f5b04ebf93f6701783d513e084a9c2c7eb6049}
     - {from: b0f5b04ebf93f6701783d513e084a9c2c7eb6049, to: a9710eaa279c5277aef3b737545b53f8a39562aa}
     - {from: a9710eaa279c5277aef3b737545b53f8a39562aa, to: ba5e6932ef65d03a7b663c970053f5ed7218233a}
     - {from: ba5e6932ef65d03a7b663c970053f5ed7218233a, to: bc0473eef301206e4de2e4a6b2d541901112282a}
     - {from: bc0473eef301206e4de2e4a6b2d541901112282a, to: 44d74d620da99befed6a1076a74c5a25640025d5}
+    - {from: 44d74d620da99befed6a1076a74c5a25640025d5, to: 3283b70441c45948a47269063c96d0ae43413e99}
   muscriptor_s:
     - {from: fa7abcc22fd7231e9348c9061c27bcfce23dcb36, to: 32824e78d92adc327478206d76a151e2c45bf1f7}
     - {from: 32824e78d92adc327478206d76a151e2c45bf1f7, to: e07b2a2c69c569bc89b06aeefdb2808466e068b1}
