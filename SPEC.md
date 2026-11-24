@@ -3572,6 +3572,71 @@ on the runner only; it is the largest download of the three); CUDA; a Windows PC
 3. **Demucs on the owner's PC** is left out of the spike (as proposed); its setup is measured
    on the runner.
 
+**Findings on the runner** (2026-11-24, `windows-2025`, workflow `win-spike` on the branch
+`claude/win-spike`, run 45389618481, read from its log by the main session; the owner's PC,
+question 2, is still open, task 172). The runner has no SmartScreen prompt, no Smart App
+Control and no third-party antivirus, so nothing below says what a user's PC does.
+
+1. **Question 1, answered for the runner: yes.** Installed under
+   `%LOCALAPPDATA%\Programs\Stickler`, the shipped Python reports `packaged = 'windows'`,
+   `prefix()` equal to `sys.prefix` (`...\Programs\Stickler\python`) and its folders under
+   `%LOCALAPPDATA%\Stickler\{data,cache,config}`. `STICKLER_ADAPTER_SOURCES` is **not**
+   needed: the launcher leaves it unset and `packaged_env()` finds
+   `python\share\stickler\adapters`. The folder also works after being moved to a path with
+   spaces. Through the bridge: Fast setup 62.5 s, analysis of a ten-second clip 11.1 s,
+   MusicXML written. A second song with the network refused (`UV_OFFLINE=1`,
+   `HF_HUB_OFFLINE=1`, the proxies at `127.0.0.1:9`) is analysed in 5.0 s. Demucs' setup
+   took 32.4 s, 158.4 s and 27.1 s in the job's three installs (it is mostly a download). The data after all three models: 4.2 GB, of which `data\adapters` 3.2 GB,
+   `cache\uv` 0.9 GB and `data\python` 0.13 GB. The installer is 98 MB.
+2. **Question 3, the signatures: only `uv.exe` is signed** (valid, signer "OpenAI OpCo, LLC",
+   uv 0.13.9). Not signed: `ffmpeg.exe` and `ffprobe.exe` (gyan.dev essentials 9.1),
+   `python.exe` and `pythonw.exe` (python-build-standalone 3.14.10, the shipped one and the
+   one `uv` downloads are the same file), every environment's `Scripts\python.exe`, the
+   other `.exe` files inside the environments (setuptools, pip, torch's `protoc.exe`), the
+   installer and its uninstaller. **The environments' launchers are one file:** the three
+   `Scripts\python.exe` are byte-identical (46,592 bytes, SHA-256 `f50e21b4…415b9`), and
+   differ from the base `python.exe` (`df5ddcdd…d6a6`). The entry-point `.exe` files in
+   `Scripts` differ per environment (they hold paths); the models do not start through them.
+   **Without the launcher:** the downloaded base `python.exe` ran ADTOF's `run.py` with
+   `PYTHONPATH` set to the environment's `site-packages` and `_common\src`, exit code 0,
+   `drums.mid` and `meta.json` written. `_common\src` had to be named by hand, because a
+   `.pth` file is not read from `PYTHONPATH`. So that way of starting a model exists if the
+   owner's PC holds back the launcher only; whether it does is task 172's.
+3. **Question 4, answered for the runner: yes, it works without `LongPathsEnabled`.** The
+   runner has `LongPathsEnabled=1` as found; the job set it to 0. With a profile name of 20
+   characters (the longest full path 240) and of 50 characters (the longest 270, so beyond
+   260) setup, analysis and Demucs' setup all worked. A control in the same job shows the
+   setting took effect: `cmd.exe` and both Pythons failed to make a 326-character folder
+   (`WinError 206`). What this does and does not show: the longest paths in every environment
+   are licence files inside torch's `dist-info` (173 characters below `adapters\`), which
+   `uv` writes and no model opens; `uv` evidently writes beyond 260 on its own. The longest
+   path a model **opens** at run time was not measured, and neither was a profile name longer
+   than 50. Inno's `{localappdata}` does not follow the `LOCALAPPDATA` variable, so the
+   installer got `/DIR=` in these runs; only the data folder was moved.
+4. **Question 5, answered for the runner: yes.** After the silent uninstall the program
+   folder is gone with nothing left, `%LOCALAPPDATA%\Stickler` is untouched, and the key
+   `HKCU\...\Uninstall\{...}_is1` (what Settings › Apps lists) existed after the install and
+   is gone afterwards. The script has `[UninstallDelete]` for the program folder, because
+   Python writes `__pycache__` there; without it was not tried. Settings › Apps itself is
+   looked at on the owner's PC.
+5. **A screenshot of the runner's desktop can be taken** (1024 × 768, `CopyFromScreen`).
+
+**Notes for `win-shell` and `win-package`** (from the spike, not decided):
+- The bridge has no event for "the models are set up, nothing to ask": the driver waits 20 s
+  for a `consent` and takes silence as ready. `win-shell`'s setup assistant should not need
+  such a wait; if it does, that is a change to the bridge with its own task.
+- `stickler.doctor` calls `Path.home()` at import, so the core needs `USERPROFILE` or `HOME`.
+  Every Windows session has one; a service or a stripped environment would not.
+- The spike ships the whole Python (headers, test modules, pip, entry-point `.exe` files that
+  hold the build's paths). `win-package` prunes it as `scripts/mac_bundle_tools.py prune`
+  does for the Mac, adds the translations, and pins Python by SHA-256 (the spike lets `uv`
+  download 3.14 and check it itself).
+- `cache\uv` holds 0.9 GB of wheels next to 3.2 GB of environments after setup. Whether it
+  can go after setup without a second download later: untried.
+- ffmpeg's SHA-256 in the spike is the digest GitHub shows for the release asset of
+  `GyanD/codexffmpeg` 9.1, not a checksum published by gyan.dev. The final source of ffmpeg
+  is `win-package`'s decision.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
