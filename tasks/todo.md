@@ -1231,6 +1231,34 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 - [ ] All success criteria of SPEC.md "Module `win-core`" met (owner, from the CI results); then `win-spike`'s spec (and `win-design` with the owner)
   - Evidence 2026-11-24: (1) the `windows` job green, 1180 tests, coverage 97.63 %; (2) the three models' smoke tests green with plausible RAM, cancel and time limit with real processes green; (3) Linux and macOS: lock comparison 0 differences, CI green on 3.12, 3.15 and macOS; **open: `stickler eval` for `config/benchmark.yaml` and `config/own.yaml` on the owner's Linux computer** (this computer holds no benchmark results; here every adapter's earlier digest chains to today's); (4) the 18 skipped cases are listed under task 167.
 
+## Phase 29: Release 11 (Windows app), module `win-spike` (approved 2026-11-24, SPEC.md "Module `win-spike`")
+
+- [ ] **Task 169: The installed layout and the installer on the runner** (M)
+  - Acceptance: on the branch `claude/win-spike`, `win-spike.yml` (windows-2025, by hand and on pushes to that branch) builds a folder with `bin\\uv.exe`, `bin\\ffmpeg.exe`, `bin\\ffprobe.exe` (each downloaded from a versioned URL and compared with a SHA-256 written in the workflow), `python\\` (a relocatable Python 3.14 with the core and its locked dependencies, no environment of its own), `python\\share\\stickler\\adapters\\` (ADTOF, Beat This!, Demucs, `_common`, with their locks; no weights, no environments) and the licences; `iscc` makes a per-user installer of it (`PrivilegesRequired=lowest`, `%LOCALAPPDATA%\\Programs\\Stickler`, a Start menu entry, an uninstaller with an entry in Settings › Apps); the installer is an artifact of the run; its size is in the summary.
+  - Verify: the workflow run; the artifact downloads
+  - Dependencies: `win-core` built · Files (branch only): `.github/workflows/win-spike.yml`, `win/spike/Stickler-Spike.iss`
+
+- [ ] **Task 170: The launcher and its driver** (M)
+  - Acceptance: `Stickler-Spike.cmd` sets `STICKLER_PACKAGED=windows` and the installed `bin` first in `PATH`, takes a song as its argument (dropped on it) or asks for a path, and runs the driver with the shipped Python; the driver (from `scripts/bridge_demo.py`) starts `stickler_app.bridge`, agrees to the download, sets the Fast models up through the bridge's commands, opens the song, waits for the result and saves the MusicXML next to the log; `%LOCALAPPDATA%\\Stickler\\spike-log.txt` holds every step with its time, every state of the bridge, the bridge's stderr, the folders in use, and ends with "MusicXML written: <path>" or the first error in words; the window stays open at the end; nothing is sent anywhere.
+  - Verify: in 171
+  - Dependencies: 169 · Files (branch only): `win/spike/Stickler-Spike.cmd`, `win/spike/spike_driver.py`
+
+- [ ] **Task 171: The runner's two runs and what they measure** (L)
+  - Acceptance: the job installs the installer silently for the runner's user, runs the launcher on a synthetic ten-second clip and uninstalls, twice: plain, and with `LongPathsEnabled=0` and `LOCALAPPDATA` at a folder as deep as a 20-character profile name's; both logs are artifacts. The summary lists: `LongPathsEnabled` as found; for every `.exe` shipped or created (the environments' `Scripts\\python.exe` included) its SHA-256 and its signer or "not signed"; whether the launchers of two environments are the same file; the longest path per model with the real prefix; seconds of setup and of the analysis; that a second analysis works with the network refused (offline); what the uninstaller left; whether a screenshot of the desktop could be taken. One more step tries a model started with the downloaded Python directly instead of its environment's launcher and says whether it ran. Demucs' setup is timed in the plain run.
+  - Verify: the workflow run, read by the main session; green, or each failing step understood
+  - Dependencies: 170 · Files (branch only): the workflow
+
+- [ ] **Task 172: The owner's PC** (S, the owner's)
+  - Acceptance: the installer downloaded with a browser from the run's artifacts; noted: what the browser, SmartScreen and the antivirus say at the download and the start; installed without administrator rights; the launcher with a song of the owner's; `spike-log.txt` back to Claude. If a program is held back: which (the log's last step), the antivirus's own message, and the same try after an hour and the next day. Then uninstall through Settings › Apps and what is left.
+  - Dependencies: 171
+
+- [ ] **Task 173: The findings written down, the branch deleted** (S)
+  - Acceptance: SPEC.md "Module `win-spike`" has an "Answered" paragraph for each of its five questions with the evidence (run numbers, log lines, dates); open questions 3 and 4 of "Release 11" closed or restated; notes for `win-shell` and `win-package`; `claude/win-spike` deleted on GitHub after the owner agreed; `claude/win-core` holds no file of the spike.
+  - Dependencies: 172
+
+### Checkpoint AD
+- [ ] The spike's five questions answered (owner); then `win-shell`'s spec (after `win-design` with the owner)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.

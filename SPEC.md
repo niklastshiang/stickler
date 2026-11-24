@@ -3436,8 +3436,9 @@ cannot hold there is skipped with that reason); ARM64.
 
 ### Module `win-spike`
 
-> Status: **proposed** (2026-11-24), waiting for the owner's approval. Nothing of the spike's
-> code is merged: its workflow, installer script and launcher live on a throwaway branch
+> Status: **approved** by the owner on 2026-11-24 (the company laptop is the only Windows PC
+> and counts: "wenn er hier läuft, passt das so"; decisions 2 and 3 as proposed). Plan:
+> `tasks/plan.md` ("`win-spike`"), tasks 169–173. Nothing of the spike's code is merged: its workflow, installer script and launcher live on a throwaway branch
 > (`claude/win-spike`); what stays are its findings, written into this spec and `tasks/todo.md`.
 
 **Objective.** Before any C#: find out whether the way the Windows app is meant to bring its
@@ -3557,20 +3558,19 @@ from there the Fast models are set up and a song becomes MusicXML, driven throug
 release job (`win-package`); SignPath (applied for in `win-package`; the spike shows how much
 depends on it); Demucs and the drum track's export on the owner's PC (its setup is measured
 on the runner only; it is the largest download of the three); CUDA; a Windows PC with Defender and SmartScreen
-unless the owner has one at hand (decision 1).
+(the owner has none, decision 1).
 
-**To decide (owner):**
-1. **Which PC counts.** The company laptop is what is at hand, but its antivirus is stricter
-   than what most drummers have, and its verdict may depend on the company's settings.
-   Proposed: the spike runs there and its result is written down as "a managed company PC";
-   if the owner can also use a private Windows 11 PC (or a fresh Windows 11 VM), the same
-   installer is tried there as the case the website's guide is written for. Without a second
-   PC, SmartScreen's behaviour stays unconfirmed until `win-package`.
-2. **If the antivirus holds the programs back for good:** the Windows app is still built and
-   checked on the runner (and on a second PC if there is one), and the owner's checks on this
-   laptop wait for the signed release or for the company's IT. Or the owner asks IT now.
-   Proposed: the first, and the question to IT only after the spike shows what is blocked.
-3. **Demucs on the owner's PC** left out of the spike (proposed), as above.
+**Decided (owner, 2026-11-24):**
+1. **Which PC counts:** the company laptop. The owner has no private Windows PC; if Stickler
+   runs on this one, that is enough ("wenn er hier läuft, passt das so"). Its result is
+   written down as that of a managed company PC with Panda Adaptive Defense 360. How Windows
+   Defender and SmartScreen treat the installer on a PC without such software stays
+   unconfirmed until someone has one (noted for `win-package` and the website's guide).
+2. **If the antivirus holds the programs back for good** (as proposed): the Windows app is
+   still built and checked on the runner; the owner's checks on the laptop wait for the signed
+   release or for the company's IT, who are asked only after the spike shows what is blocked.
+3. **Demucs on the owner's PC** is left out of the spike (as proposed); its setup is measured
+   on the runner.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

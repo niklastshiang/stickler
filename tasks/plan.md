@@ -668,3 +668,39 @@ Order: encodings (161) → peak RAM (162) → wider platforms (163) → the kill
 | Many tests assume POSIX; the first Windows run is very red | Medium | 161 and the process helper take the known ones first; the rest one by one from the log, each fixed or skipped with its reason |
 | An adapter's package does not install or import on Windows (adtof-pytorch, Demucs) | Medium | Seen in 168; a platform note in the adapter only with `digests.yaml` pairs if behaviour-neutral, else stop and ask |
 | Windows runner minutes, slow model downloads | Low | Free for a public repository; smoke tests only on relevant pushes and weekly |
+
+## Release 11 (Windows app): `win-spike` (approved 2026-11-24, SPEC.md "Module `win-spike`")
+
+A throwaway installer that proves the way the app brings its core along, on the runner and
+then on the owner's company laptop. Tasks 169–173. Nothing but findings reaches
+`claude/win-core` or `main`.
+
+Design decisions:
+- **A branch of its own** (`claude/win-spike`, from `claude/win-core`): the workflow
+  `win-spike.yml`, the Inno Setup script, the launcher and the driver live only there. The
+  findings are written into SPEC.md and `tasks/todo.md` on `claude/win-core`; the branch is
+  deleted on GitHub at the end (its last run's number stays in the notes).
+- **The runner answers first** (169–171): layout, installer, a silent install, the launcher on
+  a synthetic clip, signatures, hashes, path lengths, the uninstaller. The owner is asked to
+  install only something that already ran once on Windows.
+- **The log is the spike's result:** the launcher writes one text file with every step, every
+  program started and its exit code. On the owner's PC a held-back program shows as the last
+  line; no guessing from a window that closed.
+- **No tests of the usual kind:** the spike's code is deleted with its branch. What proves it
+  is the workflow's run; `scripts/check.sh task` still gates every commit of the branch (lint,
+  floor guard, the existing suite), and the driver stays small enough to read.
+- **Sub-agents:** a cheaper model builds the workflow and iterates on the runner (each try is
+  a push and a wait); the main session reads every run's summary itself before a finding is
+  written down.
+
+Order: layout and installer (169) → launcher and driver (170) → the runner's two runs and the
+summary (171) → the owner's PC (172) → findings, branch deleted (173).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The antivirus holds a program back for good | High for the owner's checks | A valid result (decision 2); the log names the program; tried again after an hour and a day |
+| An environment's launcher differs per user, so no reputation can grow | Medium | Measured on the runner; starting the models with the downloaded Python directly is tried there |
+| Paths over 260 characters without `LongPathsEnabled` | Medium | The runner's second run; a shorter folder is `win-package`'s change if needed |
+| The relocated Python does not find its own files or the adapters' sources | Medium | Seen in the runner's first install; `STICKLER_ADAPTER_SOURCES` from the launcher |
+| The installer is too large for an artifact or slow to build | Low | Sizes in the summary; ffmpeg's essentials build |
+
