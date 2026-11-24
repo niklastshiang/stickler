@@ -452,7 +452,7 @@ jobs:
 
       # ---------------------------------------------------------------- run C, a 50-character profile name
       - name: "Run C: LongPathsEnabled=0, a deep LOCALAPPDATA, install"
-        id: longprep
+        id: longprepc
         if: always()
         continue-on-error: true
         shell: pwsh
@@ -482,7 +482,7 @@ jobs:
           if ($p.ExitCode -ne 0) { throw "installer failed in run C" }
 
       - name: "Run C: the launcher on clip A (a failure is a finding)"
-        id: longrun
+        id: longrunc
         continue-on-error: true
         shell: pwsh
         env:
