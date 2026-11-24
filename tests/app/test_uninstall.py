@@ -229,3 +229,16 @@ def test_the_flatpak_removes_nothing_itself_the_software_app_asks_about_the_data
 def test_packagekit_is_told_that_a_person_may_be_asked_for_the_password():
     """Owner, 2026-11-22, Ubuntu 26.04: without the hint polkit may not ask."""
     assert "interactive=true" in uninstall.HINTS
+
+
+def test_the_windows_app_gets_its_folders_and_no_program_to_remove(tmp_path):
+    """The first Windows version has no "Uninstall Stickler…" (SPEC.md "Release 11"): Windows'
+    own Settings remove the program. The plan still names Stickler's folders, as for the Mac
+    app, for the release in which Windows catches up."""
+    env = {"STICKLER_PACKAGED": "windows", "LOCALAPPDATA": str(tmp_path / "AppData" / "Local")}
+    _stored(env)
+    plan = uninstall.plan(env, keep_settings=True)
+    local = tmp_path / "AppData" / "Local" / "Stickler"
+    assert plan.kind == "windows" and plan.program == "" and plan.files == []
+    assert plan.folders == [local / "data" / "adapters", local / "data" / "python", local / "cache"]
+    assert plan.size >= 100
