@@ -1,5 +1,5 @@
 {
-  "device": "linux",
+  "device": "bluefin",
   "days": {
     "2026-11-13": {
       "active_minutes": 21,
@@ -105,7 +105,7 @@
       }
     },
     "2026-11-22": {
-      "active_minutes": 388,
+      "active_minutes": 391,
       "models": {
         "claude-haiku-5-5": {
           "responses": 6,
@@ -115,11 +115,37 @@
           "cache_write": 43522
         },
         "claude-opus-5-5": {
-          "responses": 805,
-          "input": 1816,
-          "output": 689173,
-          "cache_read": 340629632,
-          "cache_write": 1946418
+          "responses": 808,
+          "input": 1826,
+          "output": 691114,
+          "cache_read": 343517364,
+          "cache_write": 1947708
+        }
+      }
+    },
+    "2026-11-24": {
+      "active_minutes": 23,
+      "models": {
+        "claude-haiku-5-5": {
+          "responses": 7,
+          "input": 14,
+          "output": 12421,
+          "cache_read": 34103,
+          "cache_write": 92317
+        },
+        "claude-opus-5-5": {
+          "responses": 87,
+          "input": 186,
+          "output": 58417,
+          "cache_read": 11330727,
+          "cache_write": 164948
+        },
+        "claude-sonnet-5-5": {
+          "responses": 7,
+          "input": 14,
+          "output": 3706,
+          "cache_read": 280334,
+          "cache_write": 51648
         }
       }
     }
