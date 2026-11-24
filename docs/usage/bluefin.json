@@ -124,7 +124,7 @@
       }
     },
     "2026-11-24": {
-      "active_minutes": 68,
+      "active_minutes": 92,
       "models": {
         "claude-haiku-5-5": {
           "responses": 10,
@@ -134,11 +134,11 @@
           "cache_write": 122388
         },
         "claude-opus-5-5": {
-          "responses": 167,
-          "input": 366,
-          "output": 137035,
-          "cache_read": 23101323,
-          "cache_write": 542609
+          "responses": 206,
+          "input": 466,
+          "output": 154373,
+          "cache_read": 30583856,
+          "cache_write": 574363
         },
         "claude-sonnet-5-5": {
           "responses": 7,
