@@ -1179,6 +1179,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Dependencies: 159
   - Found 2026-11-22 (owner, the Mac's uninstall from run 45051383716): the app moved itself to the Bin but did not quit, and Quit was dimmed. `Uninstalling.quit` called `NSApp.terminate` inside the main-queue job of `ask`; the delegate's `.terminateLater` reply comes from another main-queue job, which cannot run until that one ends. A probe built with `swiftc` reproduced it (the direct call hung, `perform(_:with:afterDelay: 0)` quit at once); the app now quits that way. To check again with the next image.
   - Found 2026-11-24: the `mac` workflow of a0d7af4 (run 45063021055) was red on the Swift coverage, 220 of 232 lines (94.83 %, minimum 95 %): the quit hook grew to three lines that tests replace. `Backups.name(on:)` had three `?? 0` fallbacks no date can reach; it now formats the day with `Date.ISO8601FormatStyle` in the local time zone (same name, checked with `swiftc` against SDK 26.5, also at 23:30 and in another time zone), so nothing is left uncovered there.
+  - Checked 2026-11-24 (owner, the image from run 45063053595, a0d7af4): on the Mac "Restore Backup…" restored the backup and "Uninstall Stickler…" worked (owner: both tested successfully). Left: the way back, a backup made on the Mac restored on Linux.
 
 ### Checkpoint AB
 - [ ] All success criteria of SPEC.md "Release 10 (proposed): keep and remove" met (owner)
