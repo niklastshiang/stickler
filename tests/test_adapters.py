@@ -192,7 +192,8 @@ def _local_adapter(root: Path, name: str = "t", weights: bool = True) -> adapter
     (d / "pyproject.toml").write_text(
         f'[project]\nname = "{name}"\nversion = "0"\nrequires-python = ">=3.12,<3.13"\n'
         'dependencies = ["stickler-adapter"]\n'
-        f'[tool.uv.sources]\nstickler-adapter = {{ path = "{COMMON}", editable = true }}\n',
+        "[tool.uv.sources]\n"
+        f'stickler-adapter = {{ path = "{COMMON.as_posix()}", editable = true }}\n',
         encoding="utf-8",
     )
     if weights:

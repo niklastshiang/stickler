@@ -6,8 +6,10 @@ during an analysis must end the model too and leave no half-written cache entry.
 import importlib.util
 import json
 import os
+import queue
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -56,10 +58,28 @@ class Process:
         )
         self.lines: list[dict] = []
         self._id = 0
+        # Both pipes are read all the time: a full stderr pipe would stop the bridge (Windows'
+        # pipes hold a few kilobytes), and a silent bridge must fail a test, not hold it.
+        self._out: queue.Queue[str] = queue.Queue()
+        self._err: list[str] = []
+        threading.Thread(target=self._pump_out, daemon=True).start()
+        threading.Thread(target=lambda: self._err.extend(self.proc.stderr), daemon=True).start()
 
-    def read(self) -> dict:
-        line = self.proc.stdout.readline()
-        assert line, f"the bridge ended: {self.proc.stderr.read()}"
+    def _pump_out(self) -> None:
+        for line in self.proc.stdout:
+            self._out.put(line)
+        self._out.put("")  # the bridge closed its stdout
+
+    def read(self, seconds: float = 60.0) -> dict:
+        try:
+            line = self._out.get(timeout=seconds)
+        except queue.Empty:
+            said = "".join(self._err)[-3000:]
+            raise AssertionError(
+                f"no line from the bridge in {seconds} s; last lines: {self.lines[-3:]}; "
+                f"its stderr ends: {said}"
+            ) from None
+        assert line, f"the bridge ended: {''.join(self._err)}"
         self.lines.append(json.loads(line))
         return self.lines[-1]
 
