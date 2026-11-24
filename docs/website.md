@@ -22,23 +22,41 @@ own page instead of `404.html`. GitHub Pages does both.
   the setup texts (`src/stickler_app/setup.py`), times from `docs/requirements.md`.
 - **No script but `site/site.js`**, nothing from other servers, no inline styles: the Content
   Security Policy in every page allows only the site itself. The tests check it.
-- **Pictures and video** come from the app, recorded with "Fluffing a Duck" (in
-  `data/own/fluffing_a_duck/`, not in git), once light and once dark:
+- **Pictures and video** come from the app, recorded with "Eyesplit" by Shane Ivers (CC BY 4.0,
+  the free MP3 from [silvermansound.com](https://www.silvermansound.com/free-music/eyesplit), in
+  `data/own/eyesplit/`, not in git), once light and once dark. The light run also writes the
+  README's `docs/screenshots/overview.gif`:
 
   ```bash
-  scripts/gtk.sh demo "data/own/fluffing_a_duck/Fluffing a Duck.mp3" --no-gif --video site/images --stills site/images
-  scripts/gtk.sh demo "data/own/fluffing_a_duck/Fluffing a Duck.mp3" --dark --no-gif --video site/images --stills site/images
+  scripts/gtk.sh demo data/own/eyesplit/Eyesplit.mp3 --video site/images --stills site/images
+  scripts/gtk.sh demo data/own/eyesplit/Eyesplit.mp3 --dark --no-gif --video site/images --stills site/images
+  ```
+
+  The README's and AppStream's stills and the share picture are taken from those:
+
+  ```bash
+  cp site/images/sheet.png site/images/corrections.png docs/screenshots/
+  cp site/images/sheet-dark.png docs/screenshots/dark.png
+  magick site/images/sheet.png -resize 1200x -crop 1200x630+0+0 +repage -strip site/images/share.png
   ```
 
   The example clip (the first 20 seconds with a click on every detected hit, as the app's
-  "Both"):
+  "Both") and the pictures of "How it works" (`scripts/site_story.py`):
 
   ```bash
-  uv run python scripts/site_clip.py "data/own/fluffing_a_duck/Fluffing a Duck.mp3" site/media
+  uv run python scripts/site_clip.py data/own/eyesplit/Eyesplit.mp3 site/media
+  uv run python scripts/site_story.py analyse data/own/eyesplit/Eyesplit.mp3
+  uv run python scripts/site_story.py draw
   ```
 
+  After a new song, the pages' file card, clip names, credit and the sheet's alt text (its
+  marked bar) change by hand, and the `<img>` of `story/notes.svg` takes the SVG's height.
+
   Close Stickler first. The recording runs the app on an invisible screen with private
-  settings; only that screen's compositor gets a D-Bus session of its own.
+  settings; only that screen's compositor gets a D-Bus session of its own (from
+  `dbus-run-session`, or where that is missing, as on Fedora 45, from `dbus-broker` as a
+  transient user service that can start nothing). Without either, the window would show on the
+  desktop, where it is not redrawn reliably: the pictures come out stale.
 - **Check before a commit:** `scripts/check.sh task` runs the site's tests. The accessibility
   check runs in CI; locally:
 

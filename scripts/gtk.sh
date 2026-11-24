@@ -62,30 +62,68 @@ if [[ "${1:-}" == "test" || "${1:-}" == "demo" ]]; then
   mode="$1"
   shift
   # The widget tests and the demo recording open real windows. They run on an invisible screen of
-  # their own (a headless mutter on its own D-Bus session), so they never pop up on the desktop;
-  # STICKLER_TEST_VISIBLE=1 shows them, which is also the fallback when mutter is missing.
-  if command -v mutter >/dev/null && command -v dbus-run-session >/dev/null \
-      && [[ -z "${STICKLER_TEST_VISIBLE:-}" ]]; then
+  # their own (a headless mutter on a D-Bus session of its own), so they never pop up on the
+  # desktop; STICKLER_TEST_VISIBLE=1 shows them, which is also the fallback when mutter or a way
+  # to start that bus is missing. The bus comes from dbus-run-session or, where that is gone
+  # (Fedora 45 ships no dbus-daemon), from dbus-broker as a transient user service whose config
+  # names no service folders, so nothing (no portal) can be started on it.
+  runtime="${XDG_RUNTIME_DIR:-/run/user/$UID}"
+  pidfile="" compositor="" unit="" private=""
+  cleanup() {
+    [[ -n "$pidfile" ]] && kill "$(cat "$pidfile")" 2>/dev/null
+    [[ -n "$compositor" ]] && wait "$compositor" 2>/dev/null
+    [[ -n "$unit" ]] && systemctl --user stop "$unit.service" "$unit.socket" 2>/dev/null
+    [[ -n "$unit" ]] && rm -f "$runtime/$unit.conf" "$runtime/$unit.sock"
+    [[ -n "$pidfile" ]] && rm -f "$pidfile"
+    [[ -n "$private" ]] && rm -rf "$private"
+    return 0
+  }
+  trap cleanup EXIT
+  bus=""
+  if command -v dbus-run-session >/dev/null; then
+    bus=dbus-run-session
+  elif command -v dbus-broker-launch >/dev/null && command -v systemd-run >/dev/null; then
+    bus=dbus-broker
+  fi
+  if command -v mutter >/dev/null && [[ -n "$bus" && -z "${STICKLER_TEST_VISIBLE:-}" ]]; then
     screen="stickler-test-$$"
+    headless=(mutter --headless --wayland --no-x11 --virtual-monitor 1280x800 --wayland-display "$screen")
     pidfile=$(mktemp)
-    # mutter writes its own PID: ending dbus-run-session alone would leave it running
-    dbus-run-session -- sh -c 'echo $$ > "$1"; shift; exec "$@"' sh "$pidfile" \
-      mutter --headless --wayland --no-x11 --virtual-monitor 1280x800 \
-      --wayland-display "$screen" >/dev/null 2>&1 &
-    compositor=$!
-    trap 'kill "$(cat "$pidfile")" 2>/dev/null; wait "$compositor" 2>/dev/null; rm -f "$pidfile"' EXIT
+    if [[ "$bus" == dbus-run-session ]]; then
+      # mutter writes its own PID: ending dbus-run-session alone would leave it running
+      dbus-run-session -- sh -c 'echo $$ > "$1"; shift; exec "$@"' sh "$pidfile" \
+        "${headless[@]}" >/dev/null 2>&1 &
+      compositor=$!
+    else
+      unit="$screen-bus"
+      cat > "$runtime/$unit.conf" <<'CONF'
+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <type>session</type>
+  <policy context="default">
+    <allow send_destination="*"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+CONF
+      systemd-run --user --quiet --unit="$unit" --socket-property=ListenStream="$runtime/$unit.sock" \
+        -p Type=notify dbus-broker-launch --scope user --config-file "$runtime/$unit.conf"
+      DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/$unit.sock" "${headless[@]}" >/dev/null 2>&1 &
+      compositor=$!
+      echo "$compositor" > "$pidfile"
+    fi
     for _ in $(seq 200); do
-      [[ -S "${XDG_RUNTIME_DIR:-/run/user/$UID}/$screen" ]] && break
+      [[ -S "$runtime/$screen" ]] && break
       sleep 0.05
     done
-    [[ -S "${XDG_RUNTIME_DIR:-/run/user/$UID}/$screen" ]] || { echo "headless mutter did not start" >&2; exit 1; }
+    [[ -S "$runtime/$screen" ]] || { echo "headless mutter did not start" >&2; exit 1; }
     export WAYLAND_DISPLAY="$screen" GDK_BACKEND=wayland
     unset DISPLAY
   fi
   if [[ "$mode" == "demo" ]]; then
     # private settings, cache and recent songs, in English, as for the screenshots
     private=$(mktemp -d)
-    trap 'kill "$(cat "${pidfile:-/dev/null}")" 2>/dev/null; rm -rf "$private"' EXIT
     # an empty results cache too, so the analysis really runs and is seen in the recording
     XDG_CONFIG_HOME="$private/config" XDG_CACHE_HOME="$private/cache" \
       XDG_DATA_HOME="$private/data" STICKLER_RESULTS_CACHE="$private/results" LANGUAGE=en \

@@ -20,8 +20,8 @@ final class ScreenshotTests: XCTestCase {
     static let recent = #"{"event": "recent", "seq": 2, "rows": ["#
         + #"{"path": "/Users/me/Music/Eye of the Tiger.flac", "title": "Eye of the Tiger", "#
         + #""detail": "Survivor · opened today", "missing": false}, "#
-        + #"{"path": "/Users/me/Music/Fluffing a Duck.mp3", "title": "Fluffing a Duck", "#
-        + #""detail": "Kevin MacLeod · opened yesterday", "missing": false}, "#
+        + #"{"path": "/Users/me/Music/Eyesplit.mp3", "title": "Eyesplit", "#
+        + #""detail": "Shane Ivers · opened yesterday", "missing": false}, "#
         + #"{"path": "/Users/me/Music/Gone.flac", "title": "Highway to Hell", "#
         + #""detail": "AC/DC · 15 November", "missing": true}]}"#
 

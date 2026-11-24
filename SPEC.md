@@ -2665,7 +2665,7 @@ the Mac App Store, Quality, the GPU.
 3. **How it works:** a story that follows the scroll (owner, 2026-11-22; before: four numbered
    cards): the four steps scroll by next to a picture that changes with the step in view; see
    "Change 2026-11-22: How it works as a story" below.
-4. **An example:** a few seconds of a song (CC BY 4.0, "Fluffing a Duck", as the screenshots)
+4. **An example:** a few seconds of a song (CC BY 4.0, "Eyesplit", as the screenshots)
    next to its sheet music; plain `<audio controls>` (no script), the song with a click on
    every detected hit as the app's "Both" plays it (owner, 2026-11-18), so a visitor hears what
    was written down (`scripts/site_clip.py`).
@@ -2725,7 +2725,7 @@ widgets of GNOME or macOS.
 **Scope.**
 1. **The steps** (English; German alongside, same meaning):
    1. *Open a song*: "Drop an MP3, M4A, FLAC or WAV on Stickler, or choose one." Picture: a file
-      card `fluffing-a-duck.mp3` over a dashed drop area; it slides in and settles.
+      card `eyesplit.mp3` over a dashed drop area; it slides in and settles.
    2. *Stickler listens*: "It finds every hit, then the beat and the bars. About 15 seconds."
       Picture: the song's first 20 seconds as a waveform with the detected hits as dots in the
       three groups the clicks have (kick, snare and toms, cymbals), the three stages (hits, beat
@@ -2846,7 +2846,7 @@ Target: **WCAG 2.2, level AA**, for both languages and both colour schemes.
   Chromium and some Linux Firefox builds have no H.264) and H.264 MP4 (Safari), with a link
   as fallback; about 80–100 KB each.
   `scripts/demo.py` learns to record in the dark style and to write the screenshots, so both
-  sets come from the same run of the app ("Fluffing a Duck", Fast).
+  sets come from the same run of the app ("Eyesplit", Fast).
 - Typeface: Figtree (SIL Open Font License 1.1), weights 400, 500 and 700 as WOFF2 subsets
   (Latin with German), served from `site/fonts/` with its licence; source and version checked
   on the web when it is added.
@@ -2917,8 +2917,10 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
    Jakarta Sans, DM Sans, Instrument Sans, Outfit, Bricolage Grotesque, Atkinson Hyperlegible
    Next); the accent Apricot instead of the icon's brown.
 2. **The hero's line** and the four facts, in English and German: shown in the mockup (owner).
-3. **The example song** (decided, owner 2026-11-18): "Fluffing a Duck" by Kevin MacLeod,
-   CC BY 4.0, as the screenshots.
+3. **The example song** (decided, owner 2026-11-24; before: "Fluffing a Duck" by Kevin MacLeod,
+   2026-11-18): "Eyesplit" by Shane Ivers (silvermansound.com), CC BY 4.0, a metal song in the
+   owner's genres, as the screenshots. Credit as the site asks: "Music: Eyesplit by Shane Ivers -
+   https://www.silvermansound.com"; licence checked on the track's page 2026-11-24.
 4. **An imprint (Impressum)** (decided, owner 2026-11-18): yes, `imprint.html` in both
    languages ("Legal notice" / "Impressum", under § 18 Abs. 1 MStV: the site is free and has no
    ads, so § 5 DDG likely does not apply, but it is not purely personal; checked on the web
