@@ -18,6 +18,14 @@ protocol Asking {
     func drumTrack(cost: String) -> Bool
     /// nil: keep everything; false: remove the models; true: remove everything else too.
     func removal(_ sizes: RemovalSizes) -> Bool?
+    /// nil: keep Stickler; false: uninstall, keeping the settings; true: uninstall everything.
+    func uninstall(_ sizes: UninstallSizes) -> Bool?
+    /// A message with only an OK button.
+    func tell(_ text: String)
+    /// A backup to restore; nil when cancelled.
+    func backup() -> URL?
+    /// Whether to restore after reading what the backup holds (`text`, the core's question).
+    func restore(_ text: String) -> Bool
     /// Opens `file` with `application`.
     func open(_ file: URL, with application: URL)
 }
@@ -59,6 +67,36 @@ struct SystemAsking: Asking {
         return panel.runModal() == .OK ? panel.url : nil
     }
 
+    func uninstall(_ sizes: UninstallSizes) -> Bool? {
+        let question = RemovalQuestion(
+            heading: localized("Uninstall Stickler?"), action: localized("Uninstall"),
+            box: localized("Also remove my settings, recent songs and corrections"),
+            texts: (sizes.keepText, sizes.everythingText))
+        return question.run() ? question.everything : nil
+    }
+
+    func tell(_ text: String) {
+        let alert = NSAlert()
+        alert.messageText = text
+        alert.runModal()
+    }
+
+    func backup() -> URL? {
+        let panel = NSOpenPanel()
+        panel.title = localized("Restore Backup")
+        panel.allowedContentTypes = [.zip]
+        return panel.runModal() == .OK ? panel.url : nil
+    }
+
+    func restore(_ text: String) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = localized("Restore Backup?")
+        alert.informativeText = text
+        alert.addButton(withTitle: localized("Restore"))
+        alert.addButton(withTitle: localized("Cancel"))
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
     func drumTrack(cost: String) -> Bool {
         let alert = NSAlert()
         alert.messageText = localized("Save the Drum Track?")
@@ -79,26 +117,32 @@ struct SystemAsking: Asking {
     }
 }
 
-/// Stickler › "Remove Downloaded Models…": the question with the checkbox for everything else;
-/// the body says what each choice frees.
+/// Stickler › "Remove Downloaded Models…" and "Uninstall Stickler…": the question with the
+/// checkbox for everything else; the body says what each choice frees.
 @MainActor
 final class RemovalQuestion: NSObject {
-    let sizes: RemovalSizes
+    let texts: (keep: String, all: String)
     let alert = NSAlert()
     let checkbox: NSButton
 
-    init(sizes: RemovalSizes) {
-        self.sizes = sizes
-        checkbox = NSButton(
-            checkboxWithTitle: localized("Also remove settings, recent songs and corrections"),
-            target: nil, action: nil)
+    convenience init(sizes: RemovalSizes) {
+        self.init(
+            heading: localized("Remove Downloaded Models?"), action: localized("Remove"),
+            box: localized("Also remove settings, recent songs and corrections"),
+            texts: (sizes.modelsText, sizes.everythingText))
+    }
+
+    /// The same question for "Uninstall Stickler…": its own heading, button and box.
+    init(heading: String, action: String, box: String, texts: (keep: String, all: String)) {
+        self.texts = texts
+        checkbox = NSButton(checkboxWithTitle: box, target: nil, action: nil)
         super.init()
-        alert.messageText = localized("Remove Downloaded Models?")
-        alert.informativeText = sizes.modelsText
+        alert.messageText = heading
+        alert.informativeText = texts.keep
         alert.alertStyle = .warning
         alert.accessoryView = checkbox
-        let remove = alert.addButton(withTitle: localized("Remove"))
-        remove.hasDestructiveAction = true
+        let button = alert.addButton(withTitle: action)
+        button.hasDestructiveAction = true
         alert.addButton(withTitle: localized("Cancel"))
         checkbox.target = self
         checkbox.action = #selector(toggled)
@@ -107,7 +151,7 @@ final class RemovalQuestion: NSObject {
     var everything: Bool { checkbox.state == .on }
 
     /// The body for the choice as it stands.
-    var body: String { everything ? sizes.everythingText : sizes.modelsText }
+    var body: String { everything ? texts.all : texts.keep }
 
     @objc func toggled() {
         alert.informativeText = body

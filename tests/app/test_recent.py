@@ -79,3 +79,23 @@ def test_a_finished_song_is_noted_with_todays_date():
     assert song == recent.Recent(
         Path("/music/eye.flac"), "Eye of the Tiger", "Survivor", date.today()
     )
+
+
+# Release 10 (SPEC.md "keep and remove", scope A3): songs found again by their content
+
+
+def test_a_moved_song_replaces_its_old_entry(tmp_path):
+    old = recent.Recent(Path("/old/song.mp3"), "Song", "Band", date(2026, 11, 1), "abc")
+    other = recent.Recent(Path("/x/other.mp3"), "Other", "Band", date(2026, 11, 2), "def")
+    moved = recent.Recent(Path("/new/song.mp3"), "Song", "Band", date(2026, 11, 22), "abc")
+    assert recent.add([other, old], moved) == [moved, other]
+
+
+def test_the_digest_is_kept_and_old_lists_load_without_one(tmp_path):
+    store = tmp_path / "recent.json"
+    song = recent.Recent(Path("/a/song.mp3"), "Song", "Band", date(2026, 11, 22), "abc")
+    recent.save(store, [song])
+    assert recent.load(store) == [song]
+    store.write_text('[{"path": "/b.mp3", "title": "B", "artist": "", "opened": "2026-11-01"}]')
+    (loaded,) = recent.load(store)
+    assert loaded.path == Path("/b.mp3") and loaded.digest == ""

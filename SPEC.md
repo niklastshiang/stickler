@@ -3096,7 +3096,10 @@ src/stickler_app/paths.py            # + packaged() == "system"
      `corrections.json`);
    - the models' results for the analysed songs (`results/`, keyed by the song's content and
      the model's code, so they are found again wherever the song now lies), without Demucs's
-     separated drum tracks (tens of MB per song; the next drum-track export makes them again).
+     separated drum tracks (tens of MB per song; the next drum-track export makes them again)
+     and the analysis's own copies of mp3 and m4a songs (`_decoded`, the songs themselves).
+     The apps analyse in Fast; a song analysed in Quality (the command line's mode, on
+     Demucs's track) needs its analysis again after a restore.
    - Not in it: the models, uv and its Python (downloaded again by the setup assistant), the
      engraved scores and clicks (made again from the results in seconds), the songs themselves
      and the user's exports (they are the user's own files).
@@ -3107,7 +3110,8 @@ src/stickler_app/paths.py            # + packaged() == "system"
    Older entries without a digest get one the next time their song is opened.
 4. **Restore:** the app shows what the file holds (date, songs, size) and asks; it then adds
    the results, adds the recent songs and corrections the computer does not have yet (an
-   entry already here stays), and takes the backup's settings. A file of a newer format
+   entry already here stays), and takes the backup's settings, except the consent to download
+   the models, which stays this computer's (a new computer asks again). A file of a newer format
    version, or not a Stickler backup, is refused with a reason; nothing is changed then.
 5. **Across systems:** a backup made by any of the packages or the Mac app restores in any of
    them (only relative paths inside the file; each app puts the parts into its own folders).
@@ -3127,8 +3131,8 @@ src/stickler_app/paths.py            # + packaged() == "system"
    |---|---|
    | AppImage | Removes its data, the menu entries and icons that an integration tool made for this file (Gear Lever, AppImageLauncher, appimaged: found by `Exec`/`TryExec` pointing at `$APPIMAGE` or by `X-AppImage-Identifier`), moves the AppImage file to the Bin, quits. The running file stays mounted until the app exits (follows from unlink(2); to be checked by a test). |
    | `.deb` / `.rpm` | Asks PackageKit over D-Bus to remove the package (`RemovePackages`; the system asks for the password, polkit `package-remove` is `auth_admin_keep`). The same call on Ubuntu 26.04 and Fedora 44/45, where PackageKit is installed by default; not dnf5daemon, which removes without a password for an administrator. Only after the removal succeeded the app deletes its data, with code it loaded before (the package's files are gone by then), and quits. A cancelled password prompt changes nothing. |
-   | Mac | Deletes its folders under `~/Library` (Application Support, Caches, its preferences through `UserDefaults`, saved state, WebKit data), starts a small helper that moves the `.app` to the Bin once the app has quit (as Apple's developer support recommends, so Launch Services forgets it), quits. An app running from a translocated path (started from the download without moving it) cannot move itself: it says so and shows the steps. |
-   | Flatpak | Removes its data in its own folder (`~/.var/app/ng.tshia.Stickler`), then opens the Software app on Stickler's page (`appstream:ng.tshia.Stickler` through the open-URI portal; GNOME Software and KDE Discover claim it), where the user presses Uninstall; where no app claims it (Ubuntu's App Center does not), the dialog shows `flatpak uninstall --user ng.tshia.Stickler` to copy. A Flatpak cannot remove itself without the permission to run commands outside its sandbox (`org.freedesktop.Flatpak`), which turns the sandbox off: Stickler does not ask for it. |
+   | Mac | Deletes its folders under `~/Library` (Application Support, Caches, its preferences through `UserDefaults`, saved state, WebKit data), moves its own `.app` to the Bin with `FileManager.trashItem` (a running app may: task 150; no helper needed) and quits. An app running from a translocated path (started from the download without moving it) cannot move itself: it says so and shows the steps. |
+   | Flatpak | Removes nothing itself and asks without the box (owner, 2026-11-22: the Software app asks whether the data goes when it uninstalls): it opens the Software app on Stickler's page (`appstream:ng.tshia.Stickler` through the open-URI portal; GNOME Software, KDE Discover and Bazaar claim it) and quits; the user presses Uninstall there and chooses whether the data goes. Where no app claims the link (Ubuntu's App Center does not), the dialog shows `flatpak uninstall --user --delete-data ng.tshia.Stickler` to copy, and that without `--delete-data` the models, settings and recent songs stay. A Flatpak cannot remove itself without the permission to run commands outside its sandbox (`org.freedesktop.Flatpak`), which turns the sandbox off: Stickler does not ask for it. |
 3. **The owner's condition** (2026-11-20: "only if it makes sense on every system, otherwise not
    at all"): on three packages the app removes itself; on the Flatpak it removes everything it
    can and hands the last step to the Software app; the owner finds that enough (2026-11-22).
@@ -3159,12 +3163,14 @@ src/stickler_app/paths.py            # + packaged() == "system"
 2. Answered (owner, 2026-11-22): no automatic history of earlier settings, not now.
 3. Answered (owner, 2026-11-22): the box "Also remove my settings…" is off by default.
 4. **Checked 2026-11-22:** the owner's Bluefin opens `appstream:` with Bazaar, which shows
-   Stickler's page with an uninstall button for the Flatpak installed from a file. **Left for
-   task 150** (not confirmed on 2026-11-22): whether GNOME Software shows an
-   Uninstall button for a Flatpak installed from a file (`appstream:<id>` with or without
-   `.desktop`), and which app opens `appstream:` on the owner's Bluefin; whether a running
-   AppImage may be moved to the Bin; whether a running Mac app may hand its bundle to the Bin
-   through a helper on macOS 26.
+   Stickler's page with an uninstall button for the Flatpak installed from a file. Task 150
+   (2026-11-22): a running AppImage moved to the Bin keeps running (its file stays open in the
+   Bin until it exits; tried with `Stickler-9-x86_64.AppImage` in a folder of the home; in
+   `/tmp`, another file system, the Bin refuses, so the app deletes the file there after the
+   user agreed); a running Mac app moves its own bundle to the Bin (`FileManager.trashItem`,
+   a probe in the `mac` workflow on macOS 26, run 45035344176; no helper needed). **Left for
+   the owner's check (task 160):** whether GNOME Software on Fedora Workstation shows an
+   Uninstall button for a Flatpak installed from a file (`appstream:<id>`).
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

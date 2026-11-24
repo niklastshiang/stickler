@@ -16,8 +16,18 @@ struct SticklerCommands: Commands {
     var body: some Commands {
         CommandGroup(after: .appInfo) {
             Divider()
+            Button("Back Up…") { Backups.backUp(model) }
+                .disabled(model.phase != .running)
+            Button("Restore Backup…") {
+                Task { await Backups.restore(model) }
+            }
+            .disabled(!(model.phase == .running && model.state.can.removeModels))
             Button("Remove Downloaded Models…") {
                 Task { await Removal.ask(model) }
+            }
+            .disabled(!(model.phase == .running && model.state.can.removeModels))
+            Button("Uninstall Stickler…") {
+                Task { await Uninstalling.ask(model) }
             }
             .disabled(!(model.phase == .running && model.state.can.removeModels))
         }

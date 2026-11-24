@@ -204,6 +204,8 @@ public final class AppModel {
     public func exportMusicXML(to path: String) { send(.exportMusicXML(dest: path)) }
     public func exportDrumTrack(to path: String) { send(.exportDrumTrack(dest: path)) }
     public func removeModels(everything: Bool) { send(.removeModels(everything: everything)) }
+    public func backUp(to path: String) { send(.backUp(dest: path)) }
+    public func restore(from path: String) { send(.restore(src: path)) }
 
     /// File › Open Recent › Clear Menu: every recent song forgotten.
     public func clearRecent() {
@@ -229,6 +231,23 @@ public final class AppModel {
     /// The PDF's pages and title.
     public func a4Pages() async -> A4Pages? {
         await ask(.a4Pages, A4Pages.self)
+    }
+
+    /// What a backup holds and the restore's question; nil (with the core's reason as the
+    /// notice) when the file is no backup.
+    public func backupSummary(of path: String) async -> BackupSummary? {
+        await ask(.backupSummary(src: path), BackupSummary.self)
+    }
+
+    /// What "Uninstall Stickler…" frees, for its dialog.
+    public func uninstallSizes() async -> UninstallSizes? {
+        await ask(.uninstallSizes, UninstallSizes.self)
+    }
+
+    /// Removes Stickler's folders through the core; true once they are gone (the core replies
+    /// after it removed them), false when it refused (with its reason as the notice).
+    public func uninstall(everything: Bool) async -> Bool {
+        await ask(.uninstall(everything: everything), Done.self) != nil
     }
 
     /// What "Remove Downloaded Models…" frees, for its dialog.

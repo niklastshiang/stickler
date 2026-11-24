@@ -8,7 +8,7 @@ import pytest
 from fakes import FakeApi, FakeSetup, wait
 
 from stickler import api
-from stickler_app import controller, corrections, recent, session
+from stickler_app import backup, controller, corrections, recent, session
 
 
 class Host:
@@ -228,6 +228,29 @@ def test_quick_corrections_make_one_run_and_the_newest_is_stored(monkeypatch, tm
     assert ctl.state.notation.tempo == 54
 
 
+def test_a_moved_song_opens_with_its_corrections_and_one_recent_entry(monkeypatch, tmp_path, host):
+    """SPEC.md "Release 10", scope A3: songs are found again by their content."""
+    fake = FakeApi(monkeypatch)
+    ctl = _made(host)
+    song = tmp_path / "old" / "eye.flac"
+    song.parent.mkdir()
+    song.write_bytes(b"the same song")
+    _result(ctl, song)
+    assert ctl.correct(api.Corrections(tempo="half"))
+    assert wait(lambda: ctl.state.pending is None)
+    moved = tmp_path / "new" / "eye.flac"
+    moved.parent.mkdir()
+    song.rename(moved)
+
+    ctl.open(moved)
+    assert wait(lambda: isinstance(ctl.state, session.Result) and ctl.state.song == moved)
+    assert fake.runs[-1] == (moved, api.Corrections(tempo="half"))
+    assert [r.path for r in recent.load(recent.store_path())] == [moved]
+    assert corrections.load(corrections.store_path()) == {
+        moved.absolute(): api.Corrections(tempo="half")
+    }
+
+
 def test_a_failed_correction_keeps_the_sheet_and_says_why(monkeypatch, tmp_path, host):
     fake = FakeApi(monkeypatch)
     ctl = _made(host)
@@ -242,7 +265,7 @@ def test_a_failed_correction_keeps_the_sheet_and_says_why(monkeypatch, tmp_path,
 
 
 def test_a_correction_that_cannot_be_stored_still_shows(monkeypatch, tmp_path, host):
-    def read_only(store, song, fix):
+    def read_only(store, song, fix, digest=""):
         raise OSError(30, "Read-only file system")
 
     monkeypatch.setattr(corrections, "remember", read_only)
@@ -711,3 +734,63 @@ def test_models_are_not_removed_while_something_runs(monkeypatch, tmp_path, host
     ctl.open(tmp_path / "eye.flac")
     assert not ctl.can_remove_models and not ctl.remove_models(False)
     ctl.shutdown()
+
+
+# Back Up… and Restore Backup… (SPEC.md "Release 10 (proposed): keep and remove", scope A)
+
+
+def test_a_backup_is_saved_in_the_background_and_says_so(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    recent.save(recent.store_path(), [recent.opened_now(tmp_path / "a.flac", "A", "", "abc")])
+    ctl = _made(host)
+    dest = tmp_path / "out" / "b.zip"
+    dest.parent.mkdir()
+    ctl.back_up(dest)
+    assert wait(lambda: host.notices())
+    assert host.notices() == ["Backup saved"]
+    assert backup.read(dest).created is not None
+
+
+def test_a_restore_brings_the_recent_songs_back_at_once(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    recent.save(recent.store_path(), [recent.opened_now(tmp_path / "a.flac", "A", "", "abc")])
+    made = tmp_path / "b.zip"
+    backup.write(made)
+    recent.store_path().unlink()
+    ctl = _made(host)
+    assert ctl.recent == ()
+    assert ctl.restore(made)
+    assert wait(lambda: host.notices())
+    assert host.notices() == ["Backup restored"]
+    assert [r.path for r in ctl.recent] == [tmp_path / "a.flac"]
+    assert host.recents()[-1] == ctl.recent
+
+
+def test_a_file_that_is_no_backup_is_refused_with_its_reason(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    bad = tmp_path / "bad.zip"
+    bad.write_text("hello")
+    ctl = _made(host)
+    assert ctl.restore(bad)
+    assert wait(lambda: host.notices())
+    assert host.notices()[0].startswith("This is no Stickler backup:")
+
+
+def test_no_restore_while_a_song_is_analysed(monkeypatch, tmp_path, host):
+    _installed(monkeypatch)
+    FakeApi(monkeypatch, hold=True)
+    ctl = _made(host)
+    ctl.open(tmp_path / "eye.flac")
+    assert wait(lambda: isinstance(ctl.state, session.Analysing))
+    assert not ctl.restore(tmp_path / "b.zip")
+
+
+def test_an_uninstall_holds_the_app_until_it_ends_or_fails(monkeypatch, tmp_path, host):
+    """Review of 2026-11-22: while the system asks for the password nothing may start."""
+    _installed(monkeypatch)
+    ctl = _made(host)
+    assert ctl.begin_uninstall()
+    assert not ctl.can_remove_models and not ctl.begin_uninstall()
+    assert not ctl.restore(tmp_path / "b.zip")
+    ctl.end_uninstall()  # the password prompt was cancelled: the app goes on
+    assert ctl.can_remove_models

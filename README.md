@@ -132,20 +132,35 @@ Applications. macOS blocks the first start of an app that is not from the App St
 once under **System Settings › Privacy & Security › Open Anyway**. The steps one by one, and
 what to do when that button is missing: [Installing Stickler on a Mac](docs/install-macos.md).
 
+### Moving to another computer
+
+**Back Up…** in the app's main menu (the Stickler menu on a Mac) saves your settings, recent
+songs, corrections and analyses in one file; **Restore Backup…** on the new computer brings
+them back, on Linux or a Mac. Songs open with their corrections without a new analysis, even
+from another folder. The models are downloaded again.
+
 ### Removing it
 
-To free the models' space but keep the app, choose **Remove Downloaded Models…** in its main
-menu (every Linux package); a check box there removes the settings, recent songs and
-corrections too.
+Choose **Uninstall Stickler…** in the app's main menu (the Stickler menu on a Mac). It removes
+the app with its models and analyses; a box removes your settings, recent songs and
+corrections too. The AppImage and the Mac app move themselves to the Bin, the `.deb` and the
+`.rpm` ask for your password; the Flatpak opens the Software app on Stickler's page, where you
+press Uninstall and choose whether its data goes too. To free the models' space but keep the app, choose
+**Remove Downloaded Models…** instead.
+
+Without the app:
 
 **Mac:** choose **Remove Downloaded Models…** in the Stickler menu with its box ticked, then
 drag Stickler from Applications to the Bin.
 
-**Flatpak:** one command removes the app with its models, results and settings:
+<details>
+<summary><b>Flatpak</b>: one command removes the app with its models, results and settings</summary>
 
 ```bash
 flatpak uninstall --delete-data ng.tshia.Stickler
 ```
+
+</details>
 
 <details>
 <summary><b>Ubuntu, Fedora</b>: remove the package and Stickler's folders</summary>

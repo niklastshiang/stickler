@@ -978,6 +978,126 @@ def test_the_remove_entry_shows_only_in_the_installed_app():
     assert "win.remove-models" not in _menu_actions(menu.main_menu(Gtk.Label(), removable=False))
 
 
+def test_the_backup_entries_show_only_in_the_installed_app():
+    """SPEC.md "Release 10 (proposed): keep and remove", scope A1."""
+    from gi.repository import Gtk
+
+    from stickler_gtk.ui import menu
+
+    installed = _menu_actions(menu.main_menu(Gtk.Label(), removable=True))
+    assert {"win.back-up", "win.restore"} <= set(installed)
+    checkout = _menu_actions(menu.main_menu(Gtk.Label(), removable=False))
+    assert not {"win.back-up", "win.restore"} & set(checkout)
+
+
+def test_a_restore_brings_back_the_recent_songs_and_waits_while_work_runs(monkeypatch, tmp_path):
+    from pathlib import Path
+
+    from stickler_app import backup, recent, session
+    from stickler_gtk.ui.window import Window
+
+    monkeypatch.setenv("APPIMAGE", "/x/Stickler.AppImage")
+    monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
+    recent.save(recent.store_path(), [recent.opened_now(Path("/m/a.flac"), "A", "", "abc")])
+    made = tmp_path / "b.zip"
+    backup.write(made)
+    recent.store_path().unlink()
+    window = Window()
+    try:
+        window.show(session.start_setup(("environment:adtof",), None, ("adtof",)))
+        assert not window.actions["restore"].get_enabled()  # not while downloading
+        window.show(session.Empty())
+        assert window.actions["restore"].get_enabled()
+        window.restore_now(made)
+        assert _wait(lambda: [r.path for r in window.recent] == [Path("/m/a.flac")])
+    finally:
+        window.close()
+
+
+def test_an_appimage_uninstalls_itself_its_entries_and_its_models(monkeypatch, tmp_path):
+    """SPEC.md "Release 10 (proposed): keep and remove", scope B2: the AppImage to the Bin
+    (the tests' private XDG data folder holds the Bin), its menu entry and its folders gone,
+    the settings kept (the box not ticked)."""
+    import hashlib
+    import os
+    from pathlib import Path
+
+    from gi.repository import Gtk
+
+    from stickler_app import paths, settings, uninstall
+    from stickler_gtk.ui import menu
+    from stickler_gtk.ui.window import Window
+
+    assert "win.uninstall" in _menu_actions(menu.main_menu(Gtk.Label(), removable=True))
+    home = Path(os.environ["XDG_DATA_HOME"]).parent
+    image = home / "AppImages" / "Stickler.AppImage"
+    image.parent.mkdir(parents=True)
+    image.write_bytes(b"\x7fELF" + b"\x00" * 4 + b"AI\x02")  # an AppImage's head
+    monkeypatch.setenv("APPIMAGE", str(image))
+    monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
+    md5 = hashlib.md5(f"file://{image}".encode()).hexdigest()
+    entry = Path(os.environ["XDG_DATA_HOME"]) / "applications" / f"appimagekit_{md5}-S.desktop"
+    entry.parent.mkdir(parents=True, exist_ok=True)
+    entry.write_text(f"[Desktop Entry]\nExec={image}\nX-AppImage-Identifier={md5}\n")
+    weights = paths.adapters_root() / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    (weights / "m.ckpt").write_bytes(b"x")
+    settings.update(settings.store_path(), zoom=1.25)
+    window = Window()
+    try:
+        assert window.actions["uninstall"].get_enabled()
+        window.uninstall_now(uninstall.plan(keep_settings=True))
+        assert _wait(lambda: not image.exists())
+        assert not entry.exists() and not weights.exists()
+        assert settings.load(settings.store_path()).zoom == 1.25
+    finally:
+        window.close()
+
+
+def test_a_package_keeps_its_folders_until_packagekit_removed_it(monkeypatch, tmp_path):
+    """SPEC.md "Release 10", scope B2 (review of 2026-11-22): a cancelled password prompt
+    removes nothing and the app goes on; a removed package takes Stickler's folders with it."""
+    from stickler_app import paths, uninstall
+    from stickler_gtk.ui import packagekit
+    from stickler_gtk.ui.window import Window
+
+    monkeypatch.setenv("STICKLER_PACKAGED", "system")
+    weights = paths.adapters_root() / "beats" / "beat_this" / "weights"
+    weights.mkdir(parents=True)
+    (weights / "m.ckpt").write_bytes(b"x")
+    answers = ["Not authorized"]
+    monkeypatch.setattr(packagekit, "remove", lambda name, done: done(answers.pop(0)))
+    window = Window()
+    try:
+        window.uninstall_now(uninstall.plan(keep_settings=True))
+        assert weights.exists() and window.controller.can_remove_models  # nothing removed
+        answers.append(None)
+        window.uninstall_now(uninstall.plan(keep_settings=True))
+        assert _wait(lambda: not weights.exists())
+    finally:
+        window.close()
+
+
+def test_the_flatpaks_question_has_no_box_and_the_others_have_one(monkeypatch, tmp_path):
+    """Owner, 2026-11-22: in the Flatpak the Software app asks whether the data goes."""
+    from stickler_app import uninstall
+    from stickler_gtk.ui.window import Window
+
+    window = Window()
+    try:
+        monkeypatch.setenv("FLATPAK_ID", "ng.tshia.Stickler")
+        flatpak = uninstall.plan(keep_settings=True)
+        question = window.uninstall_question(flatpak, uninstall.plan(keep_settings=False))
+        assert question.get_extra_child() is None and "Software app" in question.get_body()
+        monkeypatch.delenv("FLATPAK_ID")
+        monkeypatch.setenv("STICKLER_PACKAGED", "system")
+        system = uninstall.plan(keep_settings=True)
+        question = window.uninstall_question(system, uninstall.plan(keep_settings=False))
+        assert question.get_extra_child() is not None
+    finally:
+        window.close()
+
+
 def test_removing_the_models_frees_them_and_asks_again_before_the_next_download(
     monkeypatch, tmp_path
 ):

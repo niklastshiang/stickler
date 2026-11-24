@@ -98,23 +98,57 @@ def _types_fit(fix: api.Corrections) -> bool:
     return whole and isinstance(fix.simplify, bool) and isinstance(fix.repeats, bool)
 
 
-def save(store: Path, songs: dict[Path, api.Corrections]) -> None:
-    """Writes atomically (a half-written file would lose every song's corrections)."""
+def entries(store: Path) -> dict[str, dict]:
+    """The stored entries as written: {song path: {field: value, "digest": …}}."""
+    try:
+        raw = json.loads(store.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {k: v for k, v in raw.items() if isinstance(v, dict)} if isinstance(raw, dict) else {}
+
+
+def write_entries(store: Path, raw: dict[str, dict]) -> None:
     store.parent.mkdir(parents=True, exist_ok=True)
-    data = {
-        str(song): {k: v for k, v in dataclasses.asdict(fix).items() if v != getattr(DETECTED, k)}
-        for song, fix in songs.items()
-    }
     part = store.with_suffix(".json.part")
-    part.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    part.write_text(json.dumps(raw, ensure_ascii=False, indent=1), encoding="utf-8")
     part.replace(store)
 
 
-def remember(store: Path, song: Path, fix: api.Corrections) -> None:
-    """Stores a song's corrections; the detected ones remove its entry."""
-    songs = load(store)
+def remember(store: Path, song: Path, fix: api.Corrections, digest: str = "") -> None:
+    """Stores a song's corrections with its content's digest (paths.song_digest), so they are
+    found again after the song moved; the detected ones remove its entry."""
+    raw = entries(store)
+    key = str(song)
+    digest = digest or raw.get(key, {}).get("digest", "")
+    if digest:  # an entry of the same song at another path is this one, moved
+        raw = {k: v for k, v in raw.items() if k == key or v.get("digest") != digest}
     if corrected(fix):
-        songs[song] = fix
+        values = {k: v for k, v in dataclasses.asdict(fix).items() if v != getattr(DETECTED, k)}
+        raw[key] = values | ({"digest": digest} if digest else {})
     else:
-        songs.pop(song, None)
-    save(store, songs)
+        raw.pop(key, None)
+    write_entries(store, raw)
+
+
+def lookup(store: Path, song: Path, digest: str) -> api.Corrections:
+    """The song's corrections, found by its path or, when it moved (or came from a backup), by
+    its content; the entry then moves to the new path, and one without a digest gets it
+    (SPEC.md "Release 10", scope A3). An unknown song has the detected values."""
+    raw = entries(store)
+    key = str(song)
+    found = (
+        key
+        if key in raw
+        else next((k for k, v in raw.items() if digest and v.get("digest") == digest), None)
+    )
+    if found is None:
+        return DETECTED
+    fix = _parse(raw[found])
+    if fix is None:
+        return DETECTED
+    if digest and (found != key or raw[found].get("digest") != digest):
+        values = raw.pop(found)
+        raw[key] = values | {"digest": digest}
+        with contextlib.suppress(OSError):  # the corrections still apply this time
+            write_entries(store, raw)
+    return fix

@@ -216,6 +216,23 @@
         }
       }
     },
+    "Also remove my settings, recent songs and corrections" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch meine Einstellungen, zuletzt geöffneten Songs und Korrekturen entfernen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar también mis ajustes, canciones recientes y correcciones"
+          }
+        }
+      }
+    },
     "Also remove settings, recent songs and corrections" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -267,6 +284,23 @@
         }
       }
     },
+    "Back Up…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacer copia de seguridad…"
+          }
+        }
+      }
+    },
     "Back to Detected" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -280,6 +314,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Volver a lo detectado"
+          }
+        }
+      }
+    },
+    "Backup restored" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherung wiederhergestellt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia de seguridad restaurada"
+          }
+        }
+      }
+    },
+    "Backup saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherung gespeichert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copia de seguridad guardada"
+          }
+        }
+      }
+    },
+    "Backups" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copias de seguridad"
           }
         }
       }
@@ -553,6 +638,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar menú"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
           }
         }
       }
@@ -1290,6 +1392,23 @@
         }
       }
     },
+    "Made on %1$@, analysed songs: %2$@, %3$@. Songs and corrections already on this computer stay; the settings are replaced." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellt am %1$@, analysierte Songs: %2$@, %3$@. Songs und Korrekturen, die schon auf diesem Computer sind, bleiben; die Einstellungen werden ersetzt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hecha el %1$@, canciones analizadas: %2$@, %3$@. Las canciones y correcciones que ya están en esta computadora se quedan; los ajustes se reemplazan."
+          }
+        }
+      }
+    },
     "Main Menu" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1388,6 +1507,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Compás siguiente"
+          }
+        }
+      }
+    },
+    "No Software app opens Stickler’s page here. To remove Stickler, run in a terminal (without --delete-data its models, settings and recent songs stay):" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier öffnet keine Software-App die Seite von Stickler. Um Stickler zu entfernen, führe im Terminal aus (ohne --delete-data bleiben seine Modelle, Einstellungen und zuletzt geöffneten Songs):"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquí ninguna app de software abre la página de Stickler. Para quitar Stickler, ejecuta en una terminal (sin --delete-data se quedan sus modelos, ajustes y canciones recientes):"
           }
         }
       }
@@ -1886,6 +2022,23 @@
         }
       }
     },
+    "Remove the Flatpak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Flatpak entfernen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar el Flatpak"
+          }
+        }
+      }
+    },
     "Repeat signs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1899,6 +2052,74 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Signos de repetición"
+          }
+        }
+      }
+    },
+    "Restore" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiederherstellen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar"
+          }
+        }
+      }
+    },
+    "Restore Backup" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherung wiederherstellen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar copia de seguridad"
+          }
+        }
+      }
+    },
+    "Restore Backup?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherung wiederherstellen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Restaurar copia de seguridad?"
+          }
+        }
+      }
+    },
+    "Restore Backup…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherung wiederherstellen …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar copia de seguridad…"
           }
         }
       }
@@ -2358,6 +2579,40 @@
         }
       }
     },
+    "Stickler can be uninstalled once the current work is done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler lässt sich deinstallieren, sobald die laufende Arbeit fertig ist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler se puede desinstalar cuando termine el trabajo en curso"
+          }
+        }
+      }
+    },
+    "Stickler could not be uninstalled: %1$@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler konnte nicht deinstalliert werden: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo desinstalar Stickler: %1$@"
+          }
+        }
+      }
+    },
     "Stickler could not reach %1$@. Everything that is done stays downloaded." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2405,6 +2660,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stickler escucha la batería y la escribe como partitura. MP3, M4A, FLAC, WAV u OGG; una canción tarda unos 15 segundos."
+          }
+        }
+      }
+    },
+    "Stickler’s data is removed. To remove the app too, drag Stickler to the Bin." : {
+      "comment" : "Translators: Mac app, after \"Uninstall Stickler…\" when the app cannot move itself to the Bin (it was started from the download without being moved)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Daten von Stickler sind entfernt. Um auch die App zu entfernen, zieh Stickler in den Papierkorb."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los datos de Stickler se quitaron. Para quitar también la app, arrastra Stickler a la Papelera."
           }
         }
       }
@@ -2525,6 +2798,74 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "El MusicXML en otro programa"
+          }
+        }
+      }
+    },
+    "The Software app opens on Stickler’s page. Uninstall it there; it asks whether Stickler’s data goes too." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Software-App öffnet sich auf der Seite von Stickler. Deinstalliere es dort; sie fragt, ob auch die Daten von Stickler entfernt werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La app de software se abre en la página de Stickler. Desinstálalo ahí; te pregunta si también se quitan los datos de Stickler."
+          }
+        }
+      }
+    },
+    "The backup can be restored once the current work is done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Sicherung lässt sich wiederherstellen, sobald die laufende Arbeit fertig ist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La copia de seguridad se puede restaurar cuando termine el trabajo en curso"
+          }
+        }
+      }
+    },
+    "The backup could not be restored: %1$@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Sicherung konnte nicht wiederhergestellt werden: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo restaurar la copia de seguridad: %1$@"
+          }
+        }
+      }
+    },
+    "The backup could not be saved: %1$@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Sicherung konnte nicht gespeichert werden: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar la copia de seguridad: %1$@"
           }
         }
       }
@@ -2682,6 +3023,23 @@
         }
       }
     },
+    "This is no Stickler backup: %1$@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ist keine Stickler-Sicherung: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto no es una copia de seguridad de Stickler: %1$@"
+          }
+        }
+      }
+    },
     "This is not possible right now." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2695,6 +3053,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ahora mismo no es posible."
+          }
+        }
+      }
+    },
+    "This removes Stickler and frees %1$@. Your songs and exports stay." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das entfernt Stickler und gibt %1$@ frei. Deine Songs und Exporte bleiben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto quita Stickler y libera %1$@. Tus canciones y exportaciones se quedan."
           }
         }
       }
@@ -2792,6 +3167,23 @@
         }
       }
     },
+    "To remove it, run in a terminal:" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um es zu entfernen, führe im Terminal aus:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para quitarlo, ejecuta en una terminal:"
+          }
+        }
+      }
+    },
     "Together, on disk" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2822,6 +3214,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Intentar de nuevo"
+          }
+        }
+      }
+    },
+    "Uninstall" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinstallieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desinstalar"
+          }
+        }
+      }
+    },
+    "Uninstall Stickler?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler deinstallieren?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Desinstalar Stickler?"
+          }
+        }
+      }
+    },
+    "Uninstall Stickler…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler deinstallieren …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desinstalar Stickler…"
           }
         }
       }
@@ -3129,6 +3572,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "el servidor del modelo"
+          }
+        }
+      }
+    },
+    "the system’s package service (PackageKit) does not answer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "der Paketdienst des Systems (PackageKit) antwortet nicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el servicio de paquetes del sistema (PackageKit) no responde"
           }
         }
       }

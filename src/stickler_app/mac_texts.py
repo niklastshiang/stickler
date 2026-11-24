@@ -36,6 +36,9 @@ TEXTS = (
     # Translators: Mac app, View menu (⌘0): the note size back to 100 %, next to "Zoom In"
     # and "Zoom Out"; macOS calls it "Originalgröße" in German, "Tamaño real" in Spanish
     N_("Actual Size"),
+    # Translators: Mac app, after "Uninstall Stickler…" when the app cannot move itself to the
+    # Bin (it was started from the download without being moved)
+    N_("Stickler’s data is removed. To remove the app too, drag Stickler to the Bin."),
 )
 
 # Texts with a count: the String Catalog holds both forms under the plural one, and Swift

@@ -4,7 +4,7 @@
 # ffmpeg and with GStreamer (the analysis and the playback), checks the bundled uv, starts the
 # app as a user on an invisible screen until its window is there, removes the package and looks
 # for anything left of it; then installs it once more as the Software app does (PackageKit on
-# Ubuntu, dnf5daemon on Fedora) and removes it again.
+# Ubuntu, dnf5daemon on Fedora) and removes it as the app's "Uninstall Stickler…" does.
 #
 #   sh container-test.sh deb|rpm <package file> <clips folder>
 set -eu
@@ -22,9 +22,37 @@ deb)
 	;;
 rpm)
 	dnf install -y -q "$package" xorg-x11-server-Xvfb xorg-x11-xauth dbus-daemon util-linux xwininfo \
-		dnf5daemon-server dnf5daemon-client polkit >/dev/null
+		dnf5daemon-server dnf5daemon-client polkit PackageKit >/dev/null
 	;;
 esac
+
+echo "== the system bus and polkit, for PackageKit and dnf5daemon"
+mkdir -p /run/dbus
+dbus-daemon --system --fork
+/usr/lib/polkit-1/polkitd --no-debug >/dev/null 2>&1 &
+sleep 2
+
+# "Uninstall Stickler…" removes the package as the app does: its own PackageKit code
+# (stickler_gtk/ui/packagekit.py, SPEC.md "Release 10 (proposed): keep and remove", scope B2),
+# loaded from the installed package, which it then removes. Right after the first install: in
+# a Fedora container, PackageKit's dnf5 backend listed no installed package at all once the
+# package had been removed and installed again by dnf or dnf5daemon (2026-11-22, a todo); the
+# app then shows `sudo dnf remove` and removes nothing. Then it is installed again for the rest.
+echo "== uninstall as the app does"
+python3 -I -B -c '
+import sys
+lib = "/usr/lib/stickler"
+sys.path[:0] = [lib, f"{lib}/python{sys.version_info[0]}.{sys.version_info[1]}"]  # as the launcher
+from stickler_gtk.ui import packagekit
+reason = packagekit.remove_and_wait("stickler")
+sys.exit(f"PackageKit did not remove the package: {reason}" if reason else 0)
+'
+test -z "$(find /usr -xdev -iname '*stickler*' 2>/dev/null)"
+case $family in
+deb) apt-get install -y -qq "$package" >/dev/null ;;
+rpm) dnf install -y -q "$package" >/dev/null ;;
+esac
+
 
 if [ "$family" = deb ] && [ ! -f "$clips/clip.mp3" ]; then
 	echo "== clips (made here, used by every container)"
@@ -105,13 +133,10 @@ fi
 # file is not signed, so PackageKit refuses it while only trusted packages are allowed and the
 # App Center asks and tries again. The dependencies are still installed from the first install:
 # under PackageKit, x11-common's maintainer script fails in a container without an init system.
-echo "== install as the Software app does"
-mkdir -p /run/dbus
-dbus-daemon --system --fork
-/usr/lib/polkit-1/polkitd --no-debug >/dev/null 2>&1 &
-sleep 2
 cp "$package" /tmp/
 local_file=/tmp/$(basename "$package")
+
+echo "== install as the Software app does"
 case $family in
 deb)
 	python3 -I - "$local_file" <<'EOF'
@@ -136,14 +161,17 @@ EOF
 	;;
 rpm)
 	/usr/bin/dnf5daemon-server >/tmp/dnf5daemon.log 2>&1 &
+	daemon=$!
 	sleep 2
 	dnf5daemon-client --assumeyes install "$local_file" >/tmp/dnf5daemon-client.log 2>&1 || {
 		tail -20 /tmp/dnf5daemon-client.log /tmp/dnf5daemon.log >&2
 		exit 1
 	}
 	rpm -q stickler >/dev/null
+	kill "$daemon" 2>/dev/null || true
 	dnf remove -y -q stickler >/dev/null
 	;;
 esac
+
 test -z "$(find /usr -xdev -iname '*stickler*' 2>/dev/null)"
 echo "== ok"

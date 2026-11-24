@@ -69,6 +69,39 @@ public struct RemovalSizes: Codable, Equatable, Sendable {
     }
 }
 
+/// `uninstall_sizes`: what "Uninstall Stickler…" frees, and the dialog's text for both.
+public struct UninstallSizes: Codable, Equatable, Sendable {
+    public var keep: Int64
+    public var everything: Int64
+    public var keepText: String
+    public var everythingText: String
+
+    public init(keep: Int64, everything: Int64, keepText: String, everythingText: String) {
+        self.keep = keep
+        self.everything = everything
+        self.keepText = keepText
+        self.everythingText = everythingText
+    }
+}
+
+/// A reply that carries nothing but its `ok` (`uninstall`).
+public struct Done: Codable, Equatable, Sendable {}
+
+/// `backup_summary`: what a backup holds, and the restore's question.
+public struct BackupSummary: Codable, Equatable, Sendable {
+    public var created: String
+    public var songs: Int
+    public var size: Int64
+    public var text: String
+
+    public init(created: String, songs: Int, size: Int64, text: String) {
+        self.created = created
+        self.songs = songs
+        self.size = size
+        self.text = text
+    }
+}
+
 /// The names the save panels propose, as the GTK app's (`stickler_app.exports`).
 public enum ExportName {
     /// The song's file name without its suffix, or "Stickler" when that is blank.

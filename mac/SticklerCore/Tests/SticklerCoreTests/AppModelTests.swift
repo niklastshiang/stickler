@@ -202,11 +202,14 @@ func refusal(_ message: String) -> String {
         model.exportMusicXML(to: "/d/a.musicxml")
         model.exportDrumTrack(to: "/d/a.flac")
         model.removeModels(everything: true)
+        model.backUp(to: "/d/b.zip")
+        model.restore(from: "/d/b.zip")
         let expected: [Command] = [
             .start, .open(path: "/m/a.flac"), .cancel, .retry, .close, .agree, .notNow,
             .retrySetup, .forgetRecent(path: "/m/gone.flac"),
             .exportMusicXML(dest: "/d/a.musicxml"),
-            .exportDrumTrack(dest: "/d/a.flac"), .removeModels(everything: true)
+            .exportDrumTrack(dest: "/d/a.flac"), .removeModels(everything: true),
+            .backUp(dest: "/d/b.zip"), .restore(src: "/d/b.zip")
         ]
         #expect(await settled { harness.core.actions.count == expected.count })
         #expect(harness.core.actions == expected)  // in the order the reader gave them
@@ -240,6 +243,20 @@ func refusal(_ message: String) -> String {
         #expect(cost == DrumTrackCost(minutes: 8, text: "8 min", download: true))
         #expect(await model.a4Pages() == A4Pages(title: "A", pages: []))
         #expect(await model.removalSizes()?.everythingText == "3 B")
+        harness.core.answer(
+            "backup_summary",
+            with: #""ok": true, "created": "2026-11-22", "songs": 2, "size": 9, "text": "Made""#)
+        let summary = BackupSummary(created: "2026-11-22", songs: 2, size: 9, text: "Made")
+        #expect(await model.backupSummary(of: "/d/b.zip") == summary)
+        harness.core.answer(
+            "uninstall_sizes",
+            with: #""ok": true, "keep": 2, "everything": 3, "keep_text": "2 B", "#
+                + #""everything_text": "3 B""#)
+        #expect(await model.uninstallSizes()?.everythingText == "3 B")
+        harness.core.answer("uninstall", with: #""ok": true"#)
+        #expect(await model.uninstall(everything: true))
+        harness.core.answer("uninstall", with: refusal("Not now."))
+        #expect(await model.uninstall(everything: false) == false)
 
         harness.core.answer("a4_pages", with: refusal("No result."))
         #expect(await model.a4Pages() == nil)

@@ -21,6 +21,7 @@ from typing import Any
 from stickler import adapters, api
 from stickler_app import (
     analysis,
+    backup,
     corrections,
     exports,
     paths,
@@ -79,6 +80,7 @@ class Controller:
         self._state: session.State = session.Empty()
         self._recent_store = recent.store_path()
         self._recent = recent.load(self._recent_store)
+        self._digests: dict[Path, str] = {}  # each opened song's content (paths.song_digest)
         self._token: api.CancelToken | None = None
         self._threads: set[threading.Thread] = set()  # jobs still running, replaced ones too
         self._closed = False  # after `shutdown` no job starts
@@ -325,6 +327,72 @@ class Controller:
             self._run(remove, done, failed)
             return True
 
+    # Uninstall Stickler… (SPEC.md "Release 10 (proposed): keep and remove", scope B)
+
+    def begin_uninstall(self) -> bool:
+        """Holds the app for an uninstall: nothing starts until `end_uninstall` (the system may
+        ask for a password for minutes). False while something runs."""
+        with self._lock:
+            if not self.can_remove_models:
+                return False
+            self._stop_job()
+            self._removing = True
+            self._set(session.Empty())
+            return True
+
+    def end_uninstall(self) -> None:
+        """The uninstall did not happen (a cancelled password prompt, an error): the app goes
+        on."""
+        with self._lock:
+            self._removing = False
+            self._set(self._state)
+
+    # Back Up… and Restore Backup… (SPEC.md "Release 10 (proposed): keep and remove", scope A)
+
+    def back_up(self, dest: Path) -> None:
+        """Writes the backup in a thread and says when it is saved or why it is not."""
+
+        def done(_summary: backup.Summary) -> None:
+            self._notice(_("Backup saved"), dest)
+
+        def failed(exc: BaseException) -> None:
+            self._notice(_("The backup could not be saved: {reason}").format(reason=exc))
+
+        self._run(lambda: backup.write(dest), done, failed, job=False)
+
+    @staticmethod
+    def backup_summary(src: Path) -> backup.Summary:
+        """What a backup holds, for the question before the restore; raises
+        backup.NotABackup. Reads the file: call it off the interface's thread."""
+        return backup.read(src)
+
+    def restore(self, src: Path) -> bool:
+        """Restores a backup in a thread; the recent songs show at once. False while something
+        runs (as for the removal: an analysis writes the same folders)."""
+        with self._lock:
+            if not self.can_remove_models:
+                return False
+            self._removing = True
+
+            def done(_result: None) -> None:
+                self._removing = False
+                self._recent = recent.load(self._recent_store)
+                self._post(RecentChanged(tuple(self._recent)))
+                self._set(self._state)
+                self._notice(_("Backup restored"))
+
+            def failed(exc: BaseException) -> None:
+                self._removing = False
+                self._set(self._state)
+                if isinstance(exc, backup.NotABackup):
+                    text = _("This is no Stickler backup: {reason}")
+                else:
+                    text = _("The backup could not be restored: {reason}")
+                self._notice(text.format(reason=exc))
+
+            self._run(lambda: backup.restore(src), done, failed)
+            return True
+
     def shutdown(self, seconds: float = 2.0) -> None:
         """Cancels the running job and waits until every job, a replaced one too, has cleaned
         up (its half-written cache folder removed), at most `seconds` in all, so that quitting
@@ -342,11 +410,11 @@ class Controller:
 
     # the flows
 
-    @staticmethod
-    def _stored(song: Path) -> api.Corrections:
-        """The song's remembered corrections (SPEC.md, module `corrections`)."""
-        stored = corrections.load(corrections.store_path())
-        return stored.get(song.absolute(), corrections.DETECTED)
+    def _stored(self, song: Path) -> api.Corrections:
+        """The song's remembered corrections (SPEC.md, module `corrections`), by its path or, when
+        it moved, by its content (SPEC.md "Release 10", scope A3)."""
+        digest = self._digests[song] = paths.song_digest(song)
+        return corrections.lookup(corrections.store_path(), song.absolute(), digest)
 
     def _start(self, state: session.Analysing) -> None:
         if self._closed:
@@ -364,7 +432,8 @@ class Controller:
             info, notation = finished
             state = session.finished(self._state, job, info, notation)
             if isinstance(state, session.Result):
-                entry = recent.opened_now(state.song, info.title, info.artist)
+                digest = self._digests.get(state.song, "")
+                entry = recent.opened_now(state.song, info.title, info.artist, digest)
                 self._set_recent(recent.add(self._recent, entry))
             self._set(state)
 
@@ -415,7 +484,8 @@ class Controller:
 
     def _remember(self, song: Path, fix: api.Corrections) -> None:
         try:
-            corrections.remember(corrections.store_path(), song.absolute(), fix)
+            digest = self._digests.get(song, "")
+            corrections.remember(corrections.store_path(), song.absolute(), fix, digest)
         except OSError as exc:  # the correction still shows for this session
             self._notice(
                 _("The correction could not be saved: {reason}").format(reason=exc.strerror)

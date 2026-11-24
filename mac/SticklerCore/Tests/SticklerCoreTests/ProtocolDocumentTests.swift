@@ -121,7 +121,11 @@ let sampleCommands: [Command] = [
     .exportMusicXML(dest: "/Users/me/Desktop/Eye of the Tiger.musicxml"), .drumTrackCost,
     .exportDrumTrack(dest: "/Users/me/Desktop/Eye of the Tiger (drums).flac"),
     .forgetRecent(path: "/Users/me/Music/Gone.flac"), .settings, .setZoom(1.5), .zoomIn,
-    .zoomOut, .actualSize, .removalSizes, .removeModels(everything: false), .quit
+    .zoomOut, .actualSize, .removalSizes, .removeModels(everything: false),
+    .backUp(dest: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
+    .backupSummary(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
+    .restore(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"), .uninstallSizes,
+    .uninstall(everything: false), .quit
 ]
 
 @Test func everyCommandIsWrittenAsTheDocumentShowsIt() throws {
@@ -161,6 +165,8 @@ func payloadMatches(_ command: String, _ line: Data) throws -> NSDictionary? {
     case "set_zoom", "zoom_in", "zoom_out", "actual_size":
         return try object(encoding: reply.payload(Zoom.self))
     case "removal_sizes": return try object(encoding: reply.payload(RemovalSizes.self))
+    case "uninstall_sizes": return try object(encoding: reply.payload(UninstallSizes.self))
+    case "backup_summary": return try object(encoding: reply.payload(BackupSummary.self))
     default: return NSDictionary()
     }
 }
