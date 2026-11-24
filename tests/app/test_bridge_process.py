@@ -181,6 +181,22 @@ def test_stray_output_cannot_break_a_line(tmp_path):
     assert "stray print" in proc.stderr and "stray fd" in proc.stderr
 
 
+def test_every_line_ends_in_a_bare_newline_and_a_crlf_request_is_answered(tmp_path):
+    """Passes on Linux before and after the fix too; the Windows CI job is what proves it."""
+    proc = subprocess.run(
+        [sys.executable, "-m", "stickler_app.bridge"],
+        input=b'{"id": 1, "cmd": "quit"}\r\n',
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "STICKLER_RESULTS_CACHE": str(tmp_path / "results")},
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.endswith(b"\n") and b"\r" not in proc.stdout
+    lines = proc.stdout.split(b"\n")[:-1]
+    assert json.loads(lines[0])["event"] == "hello"
+    assert json.loads(lines[-1]) == {"id": 1, "ok": True}
+
+
 def test_the_demo_finds_the_same_musicxml_as_the_gtk_app(models, song, tmp_path):
     """scripts/bridge_demo.py with the stand-ins; on the laptop it runs the real Fast models."""
     demo = Path(__file__).resolve().parents[2] / "scripts" / "bridge_demo.py"

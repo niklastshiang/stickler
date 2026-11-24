@@ -1209,7 +1209,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/app/test_paths.py tests/app/test_removal.py tests/app/test_backup.py tests/app/test_uninstall.py`
   - Dependencies: none · Files: `src/stickler_app/{paths,removal,backup,uninstall}.py` as needed, their tests
 
-- [ ] **Task 166: The bridge writes `\n` on every system** (S)
+- [x] **Task 166: The bridge writes `\n` on every system** (S): done 2026-11-24 (a Sonnet sub-agent, the diff read). `newline="\n"` on the protocol stream; a process-level test reads the bridge's stdout as bytes and sends its request with `\r\n` (answered: stdin already reads both). No test is red on Linux before the fix: CPython decides the translation at compile time; the Windows job (167) is the proof. `scripts/bridge_demo.py` would send `\r\n` from Windows, which the bridge accepts; left as it is.
   - Acceptance: the protocol stream is opened with `newline="\n"`; a process-level test reads the bridge's stdout as bytes and finds no `\r` (passes on Linux before and after; it is the Windows job that proves it); the bridge's contract documentation (`docs/bridge.md`) says lines end in `\n` and that a reader should accept `\r\n` on input.
   - Verify: `uv run pytest -q tests/app/test_bridge_process.py`
   - Dependencies: none · Files: `src/stickler_app/bridge.py`, `tests/app/test_bridge_process.py`, `docs/bridge.md`
