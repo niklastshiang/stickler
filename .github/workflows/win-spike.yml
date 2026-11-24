@@ -31,6 +31,7 @@ jobs:
       FFMPEG_SHA256: b9bbbb3acece000cbeec994f856649354e52c773807841e78908374b24d658fd
       PYTHON_MINOR: "3.14"
       LONG_NAME: spike_user_name_0123 # 20 characters, like a long Windows profile name
+      LONG_NAME_C: spike_user_name_0123_spike_user_name_0123_abcdefgh # 50 characters
     steps:
       - name: Files as they are in the repository (no CRLF on checkout)
         run: git config --global core.autocrlf false
@@ -398,6 +399,22 @@ jobs:
             Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
           if (-not $ok) { throw "run B: launcher exit code $code" }
 
+      - name: "Run B: Demucs setup under the long path"
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        env:
+          LOCALAPPDATA: C:\Users\${{ env.LONG_NAME }}\AppData\Local
+          STICKLER_PACKAGED: windows
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          $env:PATH = "$app\bin;$env:PATH"
+          $log = "$env:OUT\long\setup-demucs.txt"
+          & "$app\python\python.exe" "$env:GITHUB_WORKSPACE\win\spike\setup_one.py" demucs 2>&1 | Tee-Object $log
+          $code = $LASTEXITCODE
+          "### Run B: Demucs setup`n`n- exit code $code; last line: ``$(Get-Content $log | Select-Object -Last 1)```n" | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          if ($code -ne 0) { throw "demucs setup failed under the long path" }
+
       - name: "Run B: what happened"
         if: always()
         continue-on-error: true
@@ -429,6 +446,108 @@ jobs:
         shell: pwsh
         run: |
           $app = Join-Path "C:\Users\$env:LONG_NAME\AppData\Local" 'Programs\Stickler'
+          if (Test-Path "$app\unins000.exe") {
+            Start-Process -FilePath "$app\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
+          }
+
+      # ---------------------------------------------------------------- run C, a 50-character profile name
+      - name: "Run C: LongPathsEnabled=0, a deep LOCALAPPDATA, install"
+        id: longprep
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $key = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+          Set-ItemProperty -Path $key -Name LongPathsEnabled -Value 0 -Type DWord
+          $now = (Get-ItemProperty $key).LongPathsEnabled
+          $local = "C:\Users\$env:LONG_NAME_C\AppData\Local"
+          $how = 'C:\Users\<20 characters>\AppData\Local itself'
+          try { New-Item -ItemType Directory -Force $local -ErrorAction Stop | Out-Null }
+          catch {
+            $local = "C:\spike\$('x' * ($env:LONG_NAME_C.Length - 5))\AppData\Local".Substring(0)
+            New-Item -ItemType Directory -Force $local | Out-Null
+            $how = 'an equally long path on C: (C:\Users was not writable)'
+          }
+          Write-Host "LOCALAPPDATA for run C: $local ($($local.Length) characters)"
+          # earlier data goes
+          Remove-Item -Recurse -Force (Join-Path $env:LOCALAPPDATA 'Stickler') -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force "C:\Users\$env:LONG_NAME" -ErrorAction SilentlyContinue
+          $app = Join-Path $local 'Programs\Stickler'
+          $p = Start-Process -FilePath (Join-Path $env:RUNNER_TEMP 'installer\Stickler-spike-setup.exe') `
+            -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/CURRENTUSER', '/NORESTART', "/DIR=$app", "/LOG=$env:OUT\long\install.log" `
+            -Wait -PassThru
+          "LONG_LOCAL_C=$local" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "### Run C (long path, LongPathsEnabled=0)`n`n- LongPathsEnabled now: $now (was $env:LONGPATHS_FOUND)`n- LOCALAPPDATA: ``$local`` ($($local.Length) characters; $how)`n- Inno ignores the LOCALAPPDATA variable, so the installer got ``/DIR=$app```n- installer exit code $($p.ExitCode); program folder present: $(Test-Path "$app\python\python.exe")`n" |
+            Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          if ($p.ExitCode -ne 0) { throw "installer failed in run C" }
+
+      - name: "Run C: the launcher on clip A (a failure is a finding)"
+        id: longrun
+        continue-on-error: true
+        shell: pwsh
+        env:
+          LOCALAPPDATA: C:\Users\${{ env.LONG_NAME_C }}\AppData\Local
+          STICKLER_SPIKE_NO_PAUSE: "1"
+          STICKLER_SPIKE_LOG: ${{ runner.temp }}\out\long50\spike-log.txt
+          STICKLER_SPIKE_OUT: ${{ runner.temp }}\out\long50\musicxml
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          Write-Host "LOCALAPPDATA = $env:LOCALAPPDATA; LongPathsEnabled = $((Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem').LongPathsEnabled)"
+          $watch = [Diagnostics.Stopwatch]::StartNew()
+          & (Join-Path $app 'Stickler-Spike.cmd') "$env:OUT\clips\clip-a.wav"
+          $code = $LASTEXITCODE
+          $ok = ($code -eq 0)
+          "### Run C result: $(if ($ok) { 'WORKED' } else { 'FAILED (FINDING)' })`n`n- launcher exit code $code after $([int]$watch.Elapsed.TotalSeconds) s`n" |
+            Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          if (-not $ok) { throw "run C: launcher exit code $code" }
+
+      - name: "Run C: Demucs setup under the long path"
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        env:
+          LOCALAPPDATA: C:\Users\${{ env.LONG_NAME_C }}\AppData\Local
+          STICKLER_PACKAGED: windows
+        run: |
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          $env:PATH = "$app\bin;$env:PATH"
+          $log = "$env:OUT\long\setup-demucs.txt"
+          & "$app\python\python.exe" "$env:GITHUB_WORKSPACE\win\spike\setup_one.py" demucs 2>&1 | Tee-Object $log
+          $code = $LASTEXITCODE
+          "### Run C: Demucs setup`n`n- exit code $code; last line: ``$(Get-Content $log | Select-Object -Last 1)```n" | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+          if ($code -ne 0) { throw "demucs setup failed under the long path" }
+
+      - name: "Run C: what happened"
+        if: always()
+        continue-on-error: true
+        env:
+          LOCALAPPDATA: C:\Users\${{ env.LONG_NAME_C }}\AppData\Local
+        run: |
+          D="$LOCALAPPDATA\\Stickler"
+          {
+            echo "### Run C: details"
+            echo
+            echo '```'
+            grep -E "FAILED|error|Error|too long|WinError|path|setup seconds|analysis seconds|MusicXML written" "$OUT/long/spike-log.txt" | tail -n 40 || true
+            echo '```'
+            python win/spike/measure.py sizes "$D"
+            echo
+            python win/spike/measure.py paths "$D\\data\\adapters" || true
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: spike-log-long50
+          path: ${{ runner.temp }}/out/long50
+          if-no-files-found: warn
+
+      - name: "Run C: uninstall"
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $app = Join-Path "C:\Users\$env:LONG_NAME_C\AppData\Local" 'Programs\Stickler'
           if (Test-Path "$app\unins000.exe") {
             Start-Process -FilePath "$app\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
           }
