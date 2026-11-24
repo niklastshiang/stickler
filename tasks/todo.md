@@ -1184,6 +1184,10 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AB
 - [ ] All success criteria of SPEC.md "Release 10 (proposed): keep and remove" met (owner)
 
+### Release 10
+- [x] Prepared and committed as "Release 10" (2026-11-24; ADR 0006): no open Dependabot alerts; `claude/mac-keep-and-remove` merged into `main` (fc3a9ce; the `mac` workflow green on 188da00, Swift coverage 96.02 %); version 10 in `pyproject.toml`, `src/stickler/__init__.py`, `mac/project.yml` and `uv.lock`; the MetaInfo's `<release version="10">` from `tasks/release-10-notes.md` and `CITATION.cff` dated 2026-11-24 (change both if the tag comes on another day); the notes' draft checked against v9..HEAD and given the dark Mac icon and the Flatpak's translations (2098eaf); README (download names, roadmap with release 10, the roadmap's misplaced "Release 8" line moved, key figures: 1182 tests, 155 Mac tests from run 45479956214, 56 GTK widget tests counted, not run on the Mac), the website's download names, `docs/bridge.md`; badges version 10, AI cost about 595 USD and 1,747 M tokens from `scripts/ai_usage.py --summary` (bluefin 474 USD, 33.8 h; mac 121 USD, 5.8 h). SPEC's release 10 status done.
+- [ ] Released (owner: push and tag when green, then "ja" to publishing)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.

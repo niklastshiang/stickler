@@ -1308,7 +1308,7 @@ wheels = [
 
 [[package]]
 name = "stickler"
-version = "9"
+version = "10"
 source = { editable = "." }
 default-groups = ["app", "dev"]
 dependencies = [

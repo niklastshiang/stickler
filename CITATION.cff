@@ -10,8 +10,8 @@ authors:
     family-names: Tshiang Tshiananga
 repository-code: "https://github.com/niklastshiang/stickler"
 license: GPL-3.0-or-later
-version: "9"
-date-released: "2026-11-22"
+version: "10"
+date-released: "2026-11-24"
 keywords:
   - automatic drum transcription
   - music source separation

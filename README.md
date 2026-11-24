@@ -109,22 +109,22 @@ terminal; the package manager brings what Stickler needs from the system. Use on
 Stickler, not the Flatpak as well: both would show up in the app menu.
 
 ```bash
-sudo apt install ./Stickler-9_amd64.deb      # Ubuntu
-sudo dnf install ./Stickler-9.x86_64.rpm     # Fedora
+sudo apt install ./Stickler-10_amd64.deb      # Ubuntu
+sudo dnf install ./Stickler-10.x86_64.rpm     # Fedora
 ```
 
 **Flatpak** (recommended on GNOME): download `Stickler-<version>.flatpak` and open it with GNOME
 Software, or install it in a terminal; the GNOME runtime comes from Flathub:
 
 ```bash
-flatpak install --user Stickler-9.flatpak
+flatpak install --user Stickler-10.flatpak
 ```
 
 **AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
 and start it.
 
 ```bash
-chmod +x Stickler-9-x86_64.AppImage && ./Stickler-9-x86_64.AppImage
+chmod +x Stickler-10-x86_64.AppImage && ./Stickler-10-x86_64.AppImage
 ```
 
 **Mac**: download `Stickler-<version>.dmg`, open it and drag Stickler to
@@ -302,7 +302,7 @@ Source, version and own measurements are in the README of the respective adapter
 - [ ] Ultrareview of the finished application
 
 <details>
-<summary><b>Done</b>: releases 1–9</summary>
+<summary><b>Done</b>: releases 1–10</summary>
 
 **Done**
 
@@ -358,11 +358,18 @@ Source, version and own measurements are in the README of the respective adapter
 
 - [x] A native macOS app (SwiftUI) over the same core: sheet music with zoom and pinch, exports, the setup assistant, English, German and Spanish
 - [x] A `.dmg` for Apple silicon that brings its own Python, `uv` and ffmpeg
+- [x] **Release 8:** the Mac app
 
 **Release 9**
 
 - [x] A `.deb` for Ubuntu and an `.rpm` for Fedora, tested in clean systems before every release
-- [x] **Release 8:** the Mac app
+- [x] **Release 9:** Linux packages
+
+**Release 10**
+
+- [x] Back Up… and Restore Backup…: settings, songs, corrections and analyses in one file, from Linux to the Mac and back
+- [x] Uninstall Stickler… in every package; a dark Mac icon
+- [x] **Release 10:** keep and remove
 
 </details>
 
@@ -460,7 +467,7 @@ To keep the code from quietly getting worse, the repository enforces four rules:
 </details>
 
 <details>
-<summary><b>What the AI cost</b>: about 478 USD at API prices for release 9</summary>
+<summary><b>What the AI cost</b>: about 595 USD at API prices for release 10</summary>
 
 Claude Code logs the tokens of every response;
 [`scripts/ai_usage.py`](scripts/ai_usage.py) sums them and prices them with Anthropic's
@@ -472,11 +479,11 @@ the API.
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–22 Nov 2026 | Claude Opus 5.5 (the work, reviews; Linux) | 3,100 | 2.8 M | 1,102 M | 332 USD |
-| 13–22 Nov 2026 | Claude Fable 5.2 (research subagents; Linux) | 135 | 0.31 M | 17 M | 33 USD |
-| 19–20 Nov 2026 | Claude Fable 5.2 (on the Mac) | 610 | 0.63 M | 153 M | 87 USD |
-| 19–20 Nov 2026 | Claude Opus 5.5 (on the Mac) | 196 | 0.11 M | 61 M | 26 USD |
-| | **Total, release 9** (1,348 M tokens, about 31 hours active) | | | | **about 478 USD** |
+| 13–24 Nov 2026 | Claude Opus 5.5 (the work, reviews; Linux) | 4,059 | 3.6 M | 1,470 M | 441 USD |
+| 14–19 Nov 2026 | Claude Fable 5.2 (research subagents; Linux) | 135 | 0.31 M | 17 M | 33 USD |
+| 19 Nov 2026 | Claude Fable 5.2 (on the Mac) | 610 | 0.63 M | 153 M | 86 USD |
+| 19–24 Nov 2026 | Claude Opus 5.5 (on the Mac) | 366 | 0.18 M | 87 M | 35 USD |
+| | **Total, release 10** (1,747 M tokens, about 40 hours active) | | | | **about 595 USD** |
 
 </details>
 
@@ -527,15 +534,15 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 1103,
-  "app_widget_tests": 51,
+  "tests": 1182,
+  "app_widget_tests": 56,
   "smoke_tests_with_models": 12,
-  "mac_tests": 146,
+  "mac_tests": 155,
   "coverage_percent": 98,
   "coverage_minimum": 95,
   "adrs": 8,
-  "version": 9,
-  "status": "release 9: Linux packages"
+  "version": 10,
+  "status": "release 10: keep and remove"
 }
 ```
 
@@ -543,7 +550,7 @@ scripts/check.sh task
 |---|---|
 | `app_widget_tests` | The GTK app's windows, on an invisible screen: `scripts/gtk.sh test` |
 | `smoke_tests_with_models` | Runs real models, therefore not part of the default run: `uv run pytest -m adapters` |
-| `mac_tests` | The Mac app's: `SticklerCore` (89, `swift test`, on Linux and macOS) and the app with its screenshots (57), run by the workflow `mac` |
+| `mac_tests` | The Mac app's: `SticklerCore` (89, `swift test`, on Linux and macOS) and the app with its screenshots (66), run by the workflow `mac` |
 | `coverage_minimum` | Below this, the pre-commit hook blocks. Limit and rules in [`CONSTRAINTS.md`](CONSTRAINTS.md) |
 | `own_songs` | Described in `references/own/`. Only songs that pass the quality criteria enter the scoring |
 

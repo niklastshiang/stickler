@@ -3066,7 +3066,7 @@ src/stickler_app/paths.py            # + packaged() == "system"
 
 ## Release 10 (proposed): keep and remove
 
-> Status: **approved** by the owner on 2026-11-22 (open questions 1–3 answered; on the owner's
+> Status: **done** (release 10, 2026-11-24; Checkpoint AB with the owner). Approved by the owner on 2026-11-22 (open questions 1–3 answered; on the owner's
 > Bluefin, `appstream:ng.tshia.Stickler` opens Bazaar on Stickler's page with its uninstall
 > button). Written at the owner's request from two ideas, "Back up settings and analysed
 > songs" and "Uninstall Stickler…", both seen at TuxTalk. Facts on uninstalling checked on the

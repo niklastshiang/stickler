@@ -14,5 +14,9 @@ Take Stickler to another computer, and remove it from the app ([how to install](
 
 ### Changed
 - A song you moved to another folder keeps its corrections.
+- The Mac icon has a dark appearance: the paper turns dark when the Mac shows its icons dark.
+
+### Fixed
+- The Flatpak shows its own texts in your language again; since release 5 they were English among GTK's translated ones.
 
 **Full changelog:** https://github.com/niklastshiang/stickler/compare/v9...v10

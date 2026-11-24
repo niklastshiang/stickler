@@ -82,6 +82,17 @@
   </keywords>
 
   <releases>
+    <release version="10" date="2026-11-24">
+      <description>
+        <p>Take Stickler to another computer, and remove it from the app.</p>
+        <ul>
+          <li>Back Up and Restore Backup in the menu: settings, recent songs, corrections and analyses in one file, restored on Linux or a Mac</li>
+          <li>Uninstall Stickler in the menu removes the app with its models and analyses</li>
+          <li>A song moved to another folder keeps its corrections</li>
+          <li>The Flatpak shows its own texts in your language again</li>
+        </ul>
+      </description>
+    </release>
     <release version="9" date="2026-11-22">
       <description>
         <p>Stickler now also comes as a package for Ubuntu and Fedora.</p>
