@@ -635,3 +635,36 @@ Design decisions:
 | The Mac helper cannot move the bundle (permissions, translocation) | Medium | the app shows the steps instead, as for a translocated app |
 | GNOME Software shows no uninstall button for a Flatpak from a file | Low | the dialog shows the `flatpak uninstall` line there too |
 | PackageKit asks no password on some system (a polkit rule) | Low | the app's own dialog has already asked; documented |
+
+## Release 11 (Windows app): `win-core` (approved 2026-11-24, SPEC.md "Module `win-core`")
+
+The Python core and the first version's models on Windows 11 x64 (CPU), checked by a Windows
+runner; Linux and macOS unchanged. Tasks 161–168.
+
+Design decisions:
+- **What Linux can show comes first** (161–166): encodings (Python's `EncodingWarning` finds
+  them here), peak RAM, the locks, the kill, the folders and the bridge's lines are each built
+  with a stand-in for the platform and a test on Linux, as `_peak_rss_mb(platform)` was for the
+  Mac. The runner then shows what is left (167), not everything at once.
+- **Digest edits one at a time** (162, then 163), as for `mac-core`: each takes `stickler
+  cache-digests` before and after and adds its own pairs.
+- **The runner is the only Windows:** the branch `claude/win-core` is pushed after each task
+  from 167 on; a red Windows job is read from its log (`gh run view --log-failed`), fixed and
+  pushed again. Linux' check stays the pre-commit hook.
+- **Sub-agents** (owner, 2026-11-24: cheaper models where sensible): mechanical or
+  self-contained tasks (161's encodings, 165's folders, the workflow files) go to a cheaper
+  model with the task's acceptance as its brief; every diff is read and `scripts/check.sh task`
+  run before its commit. The digest tasks (162, 163) and reading the runner's failures stay
+  with the main session.
+
+Order: encodings (161) → peak RAM (162) → wider platforms (163) → the kill (164) → folders
+(165) → bridge lines (166) → Windows job (167) → smoke tests on the runner (168).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The relock moves a Linux or macOS package | High | The comparison must show no difference; else stop, ask the owner |
+| A pair is added for an edit that changes results | High | Peak RAM: tests fix the Linux and macOS numbers; locks: the comparison; `stickler eval` reads every result |
+| `taskkill` leaves a model running (a process outside the tree) | Medium | The cancel tests run with real processes on the runner; a Job Object if they fail |
+| Many tests assume POSIX; the first Windows run is very red | Medium | 161 and the process helper take the known ones first; the rest one by one from the log, each fixed or skipped with its reason |
+| An adapter's package does not install or import on Windows (adtof-pytorch, Demucs) | Medium | Seen in 168; a platform note in the adapter only with `digests.yaml` pairs if behaviour-neutral, else stop and ask |
+| Windows runner minutes, slow model downloads | Low | Free for a public repository; smoke tests only on relevant pushes and weekly |

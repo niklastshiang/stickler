@@ -3335,6 +3335,103 @@ SmartScreen reputation and Smart App Control; GitHub `actions/runner-images` (Wi
 image 20261116); jrsoftware.org (Inno Setup 7.1.1); signpath.org and its terms; uv storage
 docs and PRs 16894 and 17241; gyan.dev and BtbN/FFmpeg-Builds; StatCounter (October 2026).
 
+### Module `win-core`
+
+> Status: **approved** by the owner on 2026-11-24 (three folders, `taskkill` first, the branch
+> `claude/win-core` pushed). Plan: `tasks/plan.md` ("`win-core`"), tasks 161–168.
+
+**Objective.** The Python core and the first version's models (ADTOF, Beat This!, Demucs) run on
+Windows 11 x64 (CPU), checked on every push by a Windows runner, before any C# exists. Linux
+and macOS behave exactly as before.
+
+**Assumptions** (from the code, read 2026-11-24; the Windows behaviour itself is only seen on
+the runner):
+1. The first version's models are ADTOF and Beat This! (Fast, what the setup assistant
+   downloads) and Demucs (the drum track's export). MuScriptor medium (Quality) is not in the
+   first version; its platforms are kept in step, as MuScriptor large's were for the Mac.
+2. ADTOF's and Beat This!'s locks already hold `win_amd64` wheels (torch 2.15.0+cpu,
+   torchaudio 2.11.1+cpu); Demucs', MuScriptor medium's and large's `environments` name Linux
+   and macOS arm64 only, and their locks hold no Windows wheel.
+3. `adapters/_common` imports `resource` at the top, which Windows does not have: today no
+   adapter starts there. Peak RAM is a benchmark number only; no app reads it.
+4. Cancel and the time limit kill the adapter's process group with `os.killpg` and `SIGKILL`
+   after `start_new_session=True`; Windows has neither, and `uv run` starts the model as a
+   grandchild there too.
+5. `stickler_app.paths` knows `STICKLER_PACKAGED` as `macos` and `system`; on Windows every
+   folder would fall to the Linux defaults under the user's profile.
+6. Output of other programs is decoded with the system's encoding in about 19 places
+   (`text=True` without `encoding`), which is UTF-8 on Linux and macOS and the ANSI code page
+   (cp1252) on Windows; ffprobe's tags (artist, title) are UTF-8. The bridge's protocol stream
+   is opened without `newline`, so Windows would write `\r\n`.
+7. The test suite has no platform skips today. It assumes POSIX in the tests' process helper
+   (`/proc`, `ps`), one fake `uv` written as a shell script, seven tests around process groups
+   and signals, and 158 file reads and writes without `encoding`.
+8. No Windows computer is available to Claude: everything Windows-specific is seen only in the
+   workflow's runs. What can be tested on Linux with a stand-in (as `_peak_rss_mb(platform)`
+   is) is tested there first.
+
+**Scope.**
+1. **Encodings spelled out:** every reading of another program's output and every text file
+   in `src/` names UTF-8 (output of other programs with `errors="replace"`, so a stray byte in
+   a model's log cannot crash the harness); the tests' file reads and writes name it too.
+   Found on Linux with Python's own `EncodingWarning` (`PYTHONWARNDEFAULTENCODING=1`). On
+   Windows the adapters' processes get `PYTHONUTF8=1`, so their tracebacks arrive as UTF-8;
+   their environment on Linux and macOS is unchanged. No adapter file is edited for this.
+2. **Peak RAM without `resource`:** on Windows `_peak_rss_mb` reads the process's
+   `PeakWorkingSetSize` (`GetProcessMemoryInfo` through `ctypes`; the package stays free of
+   dependencies); `resource` is imported only where it exists. Linux and macOS give the same
+   number as before, so each of the ten adapters gets a `digests.yaml` pair.
+3. **Wider platforms:** Demucs, MuScriptor medium and large add `sys_platform == 'win32' and
+   platform_machine == 'AMD64'` to `environments` and are relocked.
+   `scripts/lock_platforms.py` must show the Linux packages, versions and hashes identical
+   before and after (and the macOS ones: the script is widened to compare them too, or the
+   check is done by hand and written into the commit); only then a `digests.yaml` pair each.
+   If anything for Linux or macOS moves: stop and ask the owner.
+4. **Cancel and the time limit on Windows:** the adapter's whole process tree ends within a
+   second, as on Linux. Proposed: `taskkill /T /F /PID` on the `uv` process (it stays the
+   model's parent on Windows); a Job Object through `ctypes` only if the runner shows
+   processes left over. POSIX code path unchanged.
+5. **Folders:** `paths.packaged` knows `STICKLER_PACKAGED=windows`. Then data, cache and
+   settings are `%LOCALAPPDATA%\Stickler\data`, `\cache` and `\config` (three folders next to
+   each other, so "Remove Downloaded Models…" and a later uninstall remove one without the
+   others), and `packaged_env` gives uv its cache and Python there, as for the Mac app.
+   Without the variable (a checkout on Windows, the runner's tests) nothing changes.
+6. **The bridge's lines:** the protocol stream writes `\n` on every system.
+7. **Windows in CI:** a job on `windows-2025` with Python 3.14 and ffmpeg runs
+   `scripts/check.sh task` (in the runner's bash), on pushes to `main`, pull requests and
+   `claude/win-*` branches. The tests' process helper learns Windows. A test that cannot hold
+   on Windows is fixed, or marked `skipif(sys.platform == "win32", reason=...)` with its
+   reason and named in the commit message (CONSTRAINTS.md); tests of Linux' and the Mac's
+   packaging that only read files stay on.
+8. **The models on the runner's CPU:** `models-windows.yml`, as `models-macos.yml`: `stickler
+   setup` for ADTOF, Beat This! and Demucs, their smoke tests, MuScriptor medium's and large's
+   locks checked with `uv sync --locked`, seconds and peak RAM in the job summary; on pushes to
+   `main` touching `adapters/` or `src/stickler/`, on `claude/win-*`, weekly and by hand.
+
+**Success criteria.**
+1. The Windows job is green: lint, floor guard, all tests with ≥ 95 % coverage.
+2. ADTOF, Beat This! and Demucs pass their smoke tests on the runner's CPU with a plausible
+   peak RAM; the cancel and time-limit tests pass there with real processes.
+3. On Linux and macOS: every adapter's packages identical before and after (the comparison's
+   output in the commit), every cached result found under the new digests (`stickler eval` for
+   `config/benchmark.yaml` and `config/own.yaml` reads every result, nothing recomputed), CI
+   green on 3.12, 3.15 and the macOS job.
+4. No test skipped without a stated reason; the skips on Windows are listed at the checkpoint.
+
+**Out of scope.** CUDA and ROCm on Windows (the GPU environments' `bin/python` stays);
+MuseScore's place on Windows (the app's PDF comes from WebView2, `win-sheet`); the app's
+language from Windows' settings (`win-shell` hands it to the core, as the Mac app does); how
+the installer ships `uv`, Python and ffmpeg, long paths and SmartScreen (`win-spike`,
+`win-package`); `stickler fetch`, `remote` and the GTK app on Windows (a test of theirs that
+cannot hold there is skipped with that reason); ARM64.
+
+**Decided (owner, 2026-11-24), as proposed:**
+1. The three folders under `%LOCALAPPDATA%\Stickler` (scope 5), instead of one folder holding
+   everything.
+2. `taskkill` first, a Job Object only if needed (scope 4).
+3. The work happens on a branch `claude/win-core`, pushed to GitHub so the Windows runner sees
+   it (the only Windows there is); `main` gets it at the checkpoint.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)

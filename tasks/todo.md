@@ -1182,6 +1182,51 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AB
 - [ ] All success criteria of SPEC.md "Release 10 (proposed): keep and remove" met (owner)
 
+## Phase 28: Release 11 (Windows app), module `win-core` (approved 2026-11-24, SPEC.md "Module `win-core`")
+
+- [ ] **Task 161: Encodings spelled out** (M)
+  - Acceptance: with `PYTHONWARNDEFAULTENCODING=1` and `-W error::EncodingWarning` the default test run raises no `EncodingWarning` from `src/`, `scripts/` or `tests/`; reading another program's output names `encoding="utf-8", errors="replace"`; a test gives `audio.tags` an artist with an umlaut as UTF-8 bytes and gets it back, and gives `_run_group` output with a stray byte and gets a result, not an exception; on `win32` `adapter_env()` adds `PYTHONUTF8=1`, elsewhere it is unchanged (a test for both); no file under `adapters/` edited (no digest moves).
+  - Verify: `PYTHONWARNDEFAULTENCODING=1 uv run pytest -q -W error::EncodingWarning`; `scripts/check.sh task`; `stickler cache-digests` before and after identical
+  - Dependencies: none · Files: `src/stickler/{adapters,audio,doctor,musescore,api,runner}.py`, `scripts/`, tests
+
+- [ ] **Task 162: Peak RAM without `resource`** (S)
+  - Acceptance: `stickler_adapter` imports on a platform without `resource` (a test loads it with the import failing); `_peak_rss_mb("win32")` returns `PeakWorkingSetSize` in MB from an injected reader (the `ctypes` call itself runs only on Windows, first seen in 168); the Linux and macOS numbers unchanged (the existing tests); a `digests.yaml` pair for each of the ten adapters (taken with `stickler cache-digests` before and after); the fixture digest in `tests/test_runner.py` updated.
+  - Verify: `uv run pytest -q tests/test_adapter_common.py tests/test_cache_keys.py tests/test_runner.py`; `stickler eval` for `config/benchmark.yaml` and `config/own.yaml` reads every result
+  - Dependencies: 161 · Files: `adapters/_common/src/stickler_adapter/__init__.py`, its test, `src/stickler/digests.yaml`, `tests/test_runner.py`
+
+- [ ] **Task 163: Demucs and MuScriptor on Windows x64** (M)
+  - Acceptance: `environments` widened by `sys_platform == 'win32' and platform_machine == 'AMD64'` for Demucs, MuScriptor medium and large (the comment above it no longer says "only Linux"); new locks holding `win_amd64` wheels for torch; the Linux packages, versions and hashes identical before and after (`scripts/lock_platforms.py`, its output in the commit message), the macOS arm64 ones too; `uv sync --dry-run --locked` would change nothing in the three Linux environments; three `digests.yaml` pairs; anything moved for Linux or macOS: stop and ask.
+  - Verify: the comparison; `uv run pytest -q`; `stickler eval` as in 162
+  - Dependencies: 162 · Files: `adapters/separators/demucs/{pyproject.toml,uv.lock}`, `adapters/transcribers/muscriptor_{m,l}/{pyproject.toml,uv.lock}`, `scripts/lock_platforms.py` and its test if macOS is added to it, `src/stickler/digests.yaml`
+
+- [ ] **Task 164: Cancel and the time limit end the process tree on Windows** (M)
+  - Acceptance: on `win32` `_run_group` starts the adapter without `start_new_session` and `_kill_group` runs `taskkill /T /F /PID <pid>` and then reaps (tested on Linux with the platform and the command runner injected: the command, a process that is already gone, the reaping); no `os.killpg` or `signal.SIGKILL` is touched at import or on the Windows path; the POSIX path and its tests unchanged.
+  - Verify: `uv run pytest -q tests/test_adapters.py`; with real processes in 167
+  - Dependencies: none · Files: `src/stickler/adapters.py`, `tests/test_adapters.py`
+
+- [ ] **Task 165: Stickler's folders on Windows** (S)
+  - Acceptance: with `STICKLER_PACKAGED=windows`, `packaged()` is `"windows"`; `data_home`, `cache_home` and `config_home` are `%LOCALAPPDATA%\Stickler\data`, `\cache` and `\config` (`LOCALAPPDATA` from the environment, else `~/AppData/Local`); XDG variables still win; `adapters_root`, `results_cache` and `packaged_env` follow (uv's cache and Python inside them); `removal` and `backup` handle the kind (tests name what "Remove Downloaded Models…" removes there); without the variable nothing changes; `uninstall.plan` gives the kind nothing to do yet (release 10's features come later).
+  - Verify: `uv run pytest -q tests/app/test_paths.py tests/app/test_removal.py tests/app/test_backup.py tests/app/test_uninstall.py`
+  - Dependencies: none · Files: `src/stickler_app/{paths,removal,backup,uninstall}.py` as needed, their tests
+
+- [ ] **Task 166: The bridge writes `\n` on every system** (S)
+  - Acceptance: the protocol stream is opened with `newline="\n"`; a process-level test reads the bridge's stdout as bytes and finds no `\r` (passes on Linux before and after; it is the Windows job that proves it); the bridge's contract documentation (`docs/bridge.md`) says lines end in `\n` and that a reader should accept `\r\n` on input.
+  - Verify: `uv run pytest -q tests/app/test_bridge_process.py`
+  - Dependencies: none · Files: `src/stickler_app/bridge.py`, `tests/app/test_bridge_process.py`, `docs/bridge.md`
+
+- [ ] **Task 167: The test suite on a Windows runner** (L)
+  - Acceptance: job `windows` in `check.yml` on `windows-2025`, Python 3.14, ffmpeg installed with its version printed, `scripts/check.sh task` green in the runner's bash; the workflow also runs on pushes to `claude/win-*`; the tests' process helper (`tests/conftest.py`) knows Windows; the cancel, time-limit and Ctrl+C tests run there with real processes; every test that cannot hold on Windows is fixed or marked `skipif(sys.platform == "win32", reason=...)`, each named in its commit message; coverage ≥ 95 % there too; the Linux and macOS jobs unchanged and green.
+  - Verify: the workflow run on GitHub, all jobs green (`gh run watch`)
+  - Dependencies: 161–166 · Files: `.github/workflows/check.yml`, `tests/conftest.py`, tests and `src/` as the runner shows
+
+- [ ] **Task 168: The models' smoke tests on the Windows runner** (M)
+  - Acceptance: `models-windows.yml` as `models-macos.yml` (pushes to `main` touching `adapters/` or `src/stickler/`, `claude/win-*`, Mondays, by hand): `stickler setup` for ADTOF, Beat This! and Demucs and their smoke tests green on the runner's CPU; MuScriptor medium's and large's locks pass `uv sync --locked`; seconds and peak RAM per model in the job summary, peak RAM between 10 MB and 32 GB (the first real run of the `ctypes` reader).
+  - Verify: the workflow run on GitHub; the job summary
+  - Dependencies: 167 · Files: `.github/workflows/models-windows.yml`, `tests/test_adapter_smoke.py` only if a model needs a platform note
+
+### Checkpoint AC
+- [ ] All success criteria of SPEC.md "Module `win-core`" met (owner, from the CI results); then `win-spike`'s spec (and `win-design` with the owner)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
