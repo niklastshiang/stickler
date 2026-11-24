@@ -116,8 +116,8 @@ jobs:
           mkdir -p "$T/moved dir"
           mv "$LAYOUT" "$T/moved dir/layout 2"
           M="$T/moved dir/layout 2"
-          # nothing of the runner's Python or PYTHONPATH: the moved folder alone
-          env -i SYSTEMROOT="$SYSTEMROOT" STICKLER_PACKAGED=windows \
+          # the moved folder alone (a real user always has USERPROFILE: Path.home() needs it)
+          env -u PYTHONPATH -u PYTHONHOME STICKLER_PACKAGED=windows \
             "$M/python/python.exe" -c "
           import stickler, stickler_app, sys
           from stickler_app import paths
