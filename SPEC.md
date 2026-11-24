@@ -3434,6 +3434,144 @@ cannot hold there is skipped with that reason); ARM64.
 3. The work happens on a branch `claude/win-core`, pushed to GitHub so the Windows runner sees
    it (the only Windows there is); `main` gets it at the checkpoint.
 
+### Module `win-spike`
+
+> Status: **proposed** (2026-11-24), waiting for the owner's approval. Nothing of the spike's
+> code is merged: its workflow, installer script and launcher live on a throwaway branch
+> (`claude/win-spike`); what stays are its findings, written into this spec and `tasks/todo.md`.
+
+**Objective.** Before any C#: find out whether the way the Windows app is meant to bring its
+core along works on a real Windows 11 PC. An installer built on the runner puts `uv`, a Python
+with the core, ffmpeg and the adapters' sources on the owner's PC without administrator rights;
+from there the Fast models are set up and a song becomes MusicXML, driven through
+`stickler-bridge` exactly as the app will drive it. A failure changes `win-shell`'s setup and
+`win-package` before either is planned.
+
+**Assumptions** (from `win-core`, the code and the owner's PC, read 2026-11-24):
+1. The core runs on Windows x64 (module `win-core`, built): the suite and the three models'
+   smoke tests are green on `windows-2025`, from a checkout. Not yet seen: the core started
+   from an installed folder, with `STICKLER_PACKAGED=windows` and its folders under
+   `%LOCALAPPDATA%\Stickler`.
+2. **The owner's PC is a company laptop** (Windows 11 23H2, build 22631, in a domain) with
+   Panda Adaptive Defense 360 as its antivirus; Windows Defender is not running and Smart App
+   Control is off there. On 2026-11-24 it refused to start the `python.exe` of an environment
+   `uv` had just made ("Zugriff verweigert", in `%TEMP%` and under `Documents`), while the
+   Python `uv` itself had downloaded started. The owner: the antivirus blocked it, and it may
+   let the file run after some time. So on this PC the question is not SmartScreen alone but
+   which of Stickler's programs the antivirus holds back, and for how long. A drummer's own PC
+   more likely has Windows Defender with SmartScreen; that case is not covered by this PC.
+3. The programs in play, none of which Stickler can sign yet: the installer itself, `uv.exe`,
+   the shipped `python.exe`, ffmpeg and ffprobe, the Python `uv` downloads for the models
+   (3.14 for ADTOF, Beat This! and Demucs), and each environment's `Scripts\python.exe`,
+   which is a small launcher. Unconfirmed: which of them carry a signature of their makers,
+   and whether an environment's launcher is the same file for every user (the same hash, so
+   its reputation could grow) or differs per environment. The spike prints both on the runner.
+4. `stickler_app.prefix()` knows only `<prefix>/lib/pythonX.Y/site-packages`; on Windows it
+   falls back to `sys.prefix`. The shipped Python's own folder is `sys.prefix` there, so
+   `share\stickler\adapters` below it is found, or the launcher sets
+   `STICKLER_ADAPTER_SOURCES` (the spike shows which is needed).
+5. The longest path below the models' folders is 180 characters (measured on the runner,
+   MuScriptor; the Fast models' and Demucs' own longest paths are not yet measured). With
+   `C:\Users\<name>\AppData\Local\Stickler\data\adapters\` in front that is close to Windows'
+   260. GitHub's runners may have long paths switched on (unconfirmed; the spike reads
+   `LongPathsEnabled` and switches it off for its run, which a runner's administrator may).
+6. The runner has Inno Setup 6.7.1 (`iscc`); a per-user installer needs
+   `PrivilegesRequired=lowest` and installs under `%LOCALAPPDATA%\Programs\Stickler`.
+
+**Scope.**
+1. **The installed layout,** built by a throwaway workflow on `windows-2025`:
+   `bin\uv.exe`, `bin\ffmpeg.exe`, `bin\ffprobe.exe` (pinned by version and SHA-256; for the
+   spike gyan.dev's essentials build, the final choice stays `win-package`'s),
+   `python\` (a relocatable Python 3.14 with the core and its locked dependencies installed
+   into it, no environment and no launcher of its own), `python\share\stickler\adapters\`
+   (the sources of ADTOF, Beat This!, Demucs and `_common`, with their locks), and a
+   launcher script. The licences of what is shipped go along, as in the Mac app.
+2. **The launcher without an interface:** `Stickler-Spike.cmd` (a Start menu entry, and a
+   song can be dropped on it). It sets `STICKLER_PACKAGED=windows` and a `PATH` of the
+   installed `bin`, and runs a small driver of the spike's own with the shipped Python on the
+   song (made from `scripts/bridge_demo.py`: it first agrees to the download and sets the Fast
+   models up through the bridge's own commands, as the app's setup assistant will, then opens
+   the song and saves its MusicXML), and writes everything to
+   `%LOCALAPPDATA%\Stickler\spike-log.txt`: each step, each program started with its exit
+   code, the seconds, and at the end "MusicXML written" or the first error in words. The owner
+   sends that file back; nothing is uploaded by the script.
+3. **On the runner, before the owner sees anything:** the installer is built, installed
+   silently for the runner's user, the launcher run on a synthetic clip, the program removed
+   through its uninstaller. Twice: once as it is, once with `LongPathsEnabled=0` and
+   `LOCALAPPDATA` pointed at a folder whose path is as long as a long user name's (a profile
+   name of 20 characters). The job summary lists: the installer's size; for every `.exe`
+   shipped or created (the environments' launchers included) its SHA-256, its signer or
+   "not signed", and whether two environments' launchers are the same file; the longest path
+   per model; the seconds of setup and analysis; whether the uninstaller left Stickler's data
+   folders alone; whether a screenshot of the runner's desktop can be taken (for `win-shell`'s
+   tests).
+4. **On the owner's PC** (the installer downloaded with a browser from the run's artifacts,
+   so that it carries the mark of a download): what the browser, SmartScreen and the antivirus
+   say at the download and at the start; install without administrator rights; the launcher
+   with a song of the owner's. If a program is held back: which one (the log names the last
+   step), what the antivirus's own message or log says, and the same try again after an hour
+   and the next day (the owner's observation that it may be let through later). Then
+   uninstall through Settings › Apps and look at what is left.
+5. **The findings written down:** this section gets an "Answered" paragraph per question
+   below; open questions 3 and 4 of "Release 11" are closed or restated with what was seen;
+   `win-shell`'s and `win-package`'s specs start from them. The branch is deleted afterwards.
+
+**Questions the spike answers.**
+1. Does the core start from the installed folder and find its adapters' sources
+   (assumption 4), and do setup and analysis of the Fast models work there, offline after the
+   setup?
+2. Which programs does the owner's PC hold back, at which step, and does that pass with time
+   (assumption 2)? Does the installer itself run there, and what does the browser show?
+3. Are the programs signed by their makers, and is an environment's launcher one file for
+   everybody (assumption 3)? If the launcher is what gets held back: does starting the models
+   with the downloaded Python directly (no environment's launcher) avoid it? Tried on the
+   runner first; a change to how adapters are started is its own decision afterwards, not
+   part of the spike.
+4. Do the models install and run under a long user name without `LongPathsEnabled`
+   (assumption 5)? If not: how short must Stickler's folder be.
+5. Does the uninstaller remove the program and leave the data, and is there an entry in
+   Settings › Apps?
+
+**Success criteria.**
+1. The runner's job is green in both runs (plain, and long path without `LongPathsEnabled`),
+   or the failing step is understood and written down with what it means for the app.
+2. On the owner's PC the outcome is known for each program of assumption 3: runs, held back
+   and released after a known time, or held back for good. "Held back for good" is a valid
+   result of the spike, not a failure of it.
+3. Each of the five questions has its "Answered" paragraph with the evidence (the run's
+   number, the log's lines, the date).
+4. `main` and `claude/win-core` hold no file of the spike; Linux, macOS and Windows CI stay
+   green.
+
+**Boundaries.**
+- **Always:** only this PC's own messages and logs are read; nothing in its security software
+  is switched off, excluded or worked around (found 2026-11-24 and left alone). If the
+  antivirus blocks, the spike reports it and waits.
+- **Ask first:** asking the company's IT to allow Stickler's programs; installing anything
+  on the PC besides the spike's installer; publishing the installer anywhere but as a
+  workflow artifact.
+- **Never:** a release, a tag or a download link on the website from the spike; model weights
+  or a song of the owner's in the artifact or the repository.
+
+**Out of scope.** Any interface (`win-shell`); the final installer, its texts, icons and the
+release job (`win-package`); SignPath (applied for in `win-package`; the spike shows how much
+depends on it); Demucs and the drum track's export on the owner's PC (its setup is measured
+on the runner only; it is the largest download of the three); CUDA; a Windows PC with Defender and SmartScreen
+unless the owner has one at hand (decision 1).
+
+**To decide (owner):**
+1. **Which PC counts.** The company laptop is what is at hand, but its antivirus is stricter
+   than what most drummers have, and its verdict may depend on the company's settings.
+   Proposed: the spike runs there and its result is written down as "a managed company PC";
+   if the owner can also use a private Windows 11 PC (or a fresh Windows 11 VM), the same
+   installer is tried there as the case the website's guide is written for. Without a second
+   PC, SmartScreen's behaviour stays unconfirmed until `win-package`.
+2. **If the antivirus holds the programs back for good:** the Windows app is still built and
+   checked on the runner (and on a second PC if there is one), and the owner's checks on this
+   laptop wait for the signed release or for the company's IT. Or the owner asks IT now.
+   Proposed: the first, and the question to IT only after the spike shows what is blocked.
+3. **Demucs on the owner's PC** left out of the spike (proposed), as above.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
