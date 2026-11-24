@@ -492,7 +492,7 @@ jobs:
           $deep = 'C:\spike-probe\' + ((1..12 | ForEach-Object { 'd' * 25 }) -join '\')
           $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
           $rows = @()
-          $cmdOut = (cmd /c "mkdir `\"$deep`\" 2>&1") -join ' '
+          $cmdOut = (cmd /c ('mkdir "{0}" 2>&1' -f $deep)) -join ' '
           $rows += "| cmd.exe mkdir | $(if (Test-Path -LiteralPath $deep) { 'created' } else { "failed: $cmdOut" }) |"
           Remove-Item -Recurse -Force 'C:\spike-probe' -ErrorAction SilentlyContinue
           try { New-Item -ItemType Directory -Force $deep -ErrorAction Stop | Out-Null; $rows += '| PowerShell 7 New-Item | created |' }
