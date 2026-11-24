@@ -4,6 +4,7 @@ import ast
 from pathlib import Path
 
 import pytest
+from procs import Processes
 from typer.testing import CliRunner
 
 from stickler import api, cli
@@ -478,7 +479,6 @@ FIXTURE_ADAPTERS = Path(__file__).parent / "fixtures" / "adapters"
 
 def _ctrl_c_when(pid_file: Path, seen: dict) -> None:
     """Presses Ctrl+C (SIGINT to this process) once the process writing `pid_file` runs."""
-    import os
     import signal
     import threading
     import time
@@ -486,8 +486,10 @@ def _ctrl_c_when(pid_file: Path, seen: dict) -> None:
     def press() -> None:
         while not (pid_file.exists() and pid_file.read_text(encoding="utf-8")):
             time.sleep(0.01)
-        seen["group"] = os.getpgid(int(pid_file.read_text(encoding="utf-8")))
-        os.kill(os.getpid(), signal.SIGINT)
+        seen["pid"] = int(pid_file.read_text(encoding="utf-8"))
+        seen["group"] = Processes.group(seen["pid"])
+        # not os.kill(os.getpid(), SIGINT): on Windows that ends this process outright
+        signal.raise_signal(signal.SIGINT)
 
     threading.Thread(target=press, daemon=True).start()
 
@@ -510,6 +512,7 @@ def test_ctrl_c_cancels_notate_and_ends_the_model(monkeypatch, tmp_path, process
     assert result.exit_code == 130, result.output
     assert "Cancelled" in result.output
     assert processes.group_gone(seen["group"]), "the model keeps running after Ctrl+C"
+    assert not processes.running(seen["pid"]), "the model keeps running after Ctrl+C"
     assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
 
 
@@ -536,6 +539,7 @@ def test_ctrl_c_cancels_setup_and_ends_setup_py(monkeypatch, tmp_path, processes
     assert result.exit_code == 130, result.output
     assert "Cancelled" in result.output
     assert processes.group_gone(seen["group"]), "setup.py keeps running after Ctrl+C"
+    assert not processes.running(seen["pid"]), "setup.py keeps running after Ctrl+C"
 
 
 def test_a_second_ctrl_c_stops_at_once():

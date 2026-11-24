@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from procs import Processes
 
 from stickler import adapters
 from stickler.midi import read_drum_notes
@@ -134,7 +135,6 @@ def test_timeout_kills_model_process_under_uv(registry, tmp_path, processes):
 def _cancel_when_running(pid_file: Path, token, seen: dict) -> None:
     """Sets `token` once the model process has written its pid; records the pid, its process
     group and the moment of cancelling in `seen`."""
-    import os
     import threading
     import time
 
@@ -142,7 +142,7 @@ def _cancel_when_running(pid_file: Path, token, seen: dict) -> None:
         while not (pid_file.exists() and pid_file.read_text(encoding="utf-8")):
             time.sleep(0.01)
         seen["pid"] = int(pid_file.read_text(encoding="utf-8"))
-        seen["group"] = os.getpgid(seen["pid"])
+        seen["group"] = Processes.group(seen["pid"])
         seen["at"] = time.monotonic()
         token.cancel()
 
@@ -159,6 +159,7 @@ def test_cancel_ends_the_process_group_within_a_second(registry, tmp_path, proce
         adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=30, cancel=token)
     assert time.monotonic() - seen["at"] < 1
     assert processes.group_gone(seen["group"]), "a process of the adapter's group survived"
+    assert not processes.running(seen["pid"]), "the model process survived"
 
 
 def test_cancelled_run_leaves_no_output_behind(registry, tmp_path):
@@ -250,6 +251,10 @@ def test_cancelling_the_weights_download_keeps_them_not_set_up(tmp_path, process
     assert not list((spec.path / "weights").rglob("*.partial"))
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="the stand-in for uv is a shell script; Windows starts only a uv.exe by that name",
+)
 def test_cancelling_uv_sync_leaves_the_environment_not_set_up(tmp_path, processes, monkeypatch):
     """A stand-in for `uv` that hangs: cancel kills it; the next setup with the real uv builds
     the environment (uv resumes, Task 32)."""
