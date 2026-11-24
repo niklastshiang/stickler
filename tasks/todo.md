@@ -1286,6 +1286,14 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
   - Wish (2026-11-12): a button in the app that exports the separated drum stem ("can't hurt to have it").
   - Implementation: the stem already exists as an intermediate result. `transcribe_song` should return its path, and the GUI saves it as WAV or FLAC (FLAC via ffmpeg).
 
+- [ ] **Ghost notes from the onset level** (owner, 2026-11-23, from a reader's suggestion)
+  - Wish: ADTOF writes every hit at velocity 100 (`adapters/transcribers/adtof/run.py:36`), so ghost notes come out as normal snare hits or not at all. Estimate a level per detected hit from the audio at its onset and split the snare into two tiers: quiet hits as ghost notes in parentheses, loud ones (backbeats) as normal.
+  - Already there: `stickler_adapter.onsets.transcribe` derives velocity from the envelope height at the peak (used by `drumsep_onset` and `sad`); `notation.to_musicxml(..., ghost_velocity=...)` parenthesizes hits below the threshold (`tests/test_notation.py`), but the apps never pass a threshold.
+  - Open points:
+    - **Where to measure:** on the mix, guitars and bass distort the level; the Demucs stem is cleaner but costs time Fast does not spend today.
+    - **Threshold:** fixed, or relative per song (e.g. against the median backbeat level).
+    - **Measure before it goes in:** MDB labels ghost notes (`SDG`, `datasets/mdb.py:35`), so precision and recall of the ghost tier can be checked there; on the own songs the references' velocities are less reliable.
+
 - [x] **App icon in GNOME style** (done 2026-11-15, see Phase 10)
   - Wish: An icon in the style of the GNOME app icons by Daudix (https://daudix.one/design/).
   - Implementation: Create as SVG following the GNOME HIG, with a symbolic variant.
