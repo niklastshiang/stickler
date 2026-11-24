@@ -3,6 +3,7 @@
 import ctypes
 import importlib.util
 import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -59,7 +60,11 @@ class _Usage:
     [("linux", 2048 * 1024), ("darwin", 2048 * 1024 * 1024)],  # KiB on Linux, bytes on macOS
 )
 def test_peak_ram_is_in_megabytes_on_linux_and_macos(monkeypatch, platform, maxrss):
-    monkeypatch.setattr(sa.resource, "getrusage", lambda who: _Usage(maxrss))
+    # a stand-in for the whole module: Windows, where these tests run too, has no `resource`
+    posix = types.SimpleNamespace(
+        getrusage=lambda who: _Usage(maxrss), RUSAGE_SELF=0, RUSAGE_CHILDREN=-1
+    )
+    monkeypatch.setattr(sa, "resource", posix)
     assert sa._peak_rss_mb(platform) == 2048.0
 
 

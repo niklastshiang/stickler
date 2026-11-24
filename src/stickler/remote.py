@@ -117,21 +117,21 @@ def sync_plan(
     data_dirs, data_files, audio, fetch = [], [], [], []
     for name in raw.get("datasets", []):
         if name == "mdb":
-            data_dirs.append(str((data_dir / name).relative_to(project_root)))
+            data_dirs.append((data_dir / name).relative_to(project_root).as_posix())
         elif name == "enst":
             # uploaded when prepared here: the host's ffmpeg writes its own version tag into the
             # mixes, so their bytes, and with them every cache key built on them, would differ
             # (2026-11-17); downloaded on the host only when this machine has none
             prepared = data_dir / name / "mix"
             if prepared.is_dir() and any(prepared.iterdir()):
-                data_dirs.append(str((data_dir / name).relative_to(project_root)))
+                data_dirs.append((data_dir / name).relative_to(project_root).as_posix())
             else:
                 fetch.append(name)
         elif name == "own":
             for track in own.tracks(references_dir, data_dir):
                 aligned = data_dir / "own" / track.id / "aligned.json"
-                data_files.append(str(aligned.relative_to(project_root)))
-                song_dir = str((data_dir / "own" / track.id).relative_to(project_root))
+                data_files.append(aligned.relative_to(project_root).as_posix())
+                song_dir = (data_dir / "own" / track.id).relative_to(project_root).as_posix()
                 audio.append((str(track.mix), song_dir))
     setup_dirs = [
         UPLOAD_WEIGHTS[a]

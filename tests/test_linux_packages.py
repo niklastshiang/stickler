@@ -5,9 +5,11 @@ import importlib.util
 import re
 import stat
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,6 +39,10 @@ def _wheel(path: Path, package: str) -> Path:
     return path
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="stages the locale files with msgfmt (GNU gettext), which Windows lacks",
+)
 def test_the_staged_tree_has_everything_the_app_needs_and_nothing_else(tmp_path):
     uv = tmp_path / "uv"
     uv.write_text("uv", encoding="utf-8")
@@ -114,9 +120,13 @@ def test_both_formats_need_libadwaita_18_and_take_ffmpeg_from_the_system():
     assert "python3-yaml" in deb and "python3-pyyaml" in rpm
     assert config["name"] == "stickler" and config["arch"] == "amd64"
     assert config["version_schema"] == "none"  # nFPM would make 9 into 9.0.0
-    assert str(lp.STAGE) == "dist/linux-stage"
+    assert lp.STAGE.as_posix() == "dist/linux-stage"
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="stages the locale files with msgfmt (GNU gettext), which Windows lacks",
+)
 def test_the_packages_own_only_sticklers_folders_and_every_staged_file(tmp_path):
     """Trees only for Stickler's own folders; a tree of /usr would make the packages own
     /usr/share/fonts, the icon theme's folders and the locale folders."""
@@ -158,7 +168,8 @@ def test_every_promised_system_is_tested_and_ubuntu_makes_the_clips_first():
         "/test/Stickler-9.x86_64.rpm",
         "/test/clips",
     ]
-    assert "/x/Stickler-9.x86_64.rpm:/test/Stickler-9.x86_64.rpm:ro,Z" in command
+    rpm = Path("/x/Stickler-9.x86_64.rpm")  # the host's own spelling of the mounted path
+    assert f"{rpm}:/test/Stickler-9.x86_64.rpm:ro,Z" in command
 
 
 def test_a_release_attaches_both_packages_after_their_container_test():

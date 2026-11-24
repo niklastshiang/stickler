@@ -401,8 +401,8 @@ def test_on_windows_the_whole_tree_below_uv_is_ended_with_taskkill(monkeypatch):
     import os
     import signal
 
-    monkeypatch.delattr(os, "killpg")
-    monkeypatch.delattr(signal, "SIGKILL")
+    monkeypatch.delattr(os, "killpg", raising=False)  # Windows has neither
+    monkeypatch.delattr(signal, "SIGKILL", raising=False)
     commands = []
 
     def run(cmd, **kwargs):
@@ -444,5 +444,25 @@ def test_adapter_env_forces_utf8_on_windows_only():
     Python processes get UTF-8 mode there. Elsewhere the environment is left as it is."""
     plain = adapters.adapter_env(platform="linux")
     assert adapters.adapter_env(platform="darwin") == plain
-    assert adapters.adapter_env() == plain
+    assert adapters.adapter_env() == adapters.adapter_env(platform=sys.platform)
     assert adapters.adapter_env(platform="win32") == {**plain, "PYTHONUTF8": "1"}
+
+
+def test_an_adapter_does_not_get_the_callers_stdin():
+    """The bridge reads its stdin all the time. A model that inherited that pipe waits on it:
+    on Windows `uv` and Python already do so when they start, and the analysis never ended
+    (found on the Windows runner, 2026-11-24). Here: a caller whose stdin is an open pipe starts
+    a program that reads its stdin to the end; it must see the end at once."""
+    code = (
+        "import sys\n"
+        "from stickler import adapters\n"
+        "reader = [sys.executable, '-c', 'import sys; sys.stdin.read()']\n"
+        "done = adapters._run_group(reader, 5)\n"
+        "sys.exit(0 if done is not None and done.returncode == 0 else 1)\n"
+    )
+    caller = subprocess.Popen([sys.executable, "-c", code], stdin=subprocess.PIPE)
+    try:
+        assert caller.wait(30) == 0, "the program waited on the caller's stdin"
+    finally:
+        caller.stdin.close()
+        caller.wait()

@@ -2,7 +2,10 @@
 keep and remove", scope B)."""
 
 import hashlib
+import sys
 from pathlib import Path
+
+import pytest
 
 from stickler_app import corrections, paths, recent, settings, uninstall
 
@@ -43,6 +46,10 @@ def test_with_the_box_ticked_all_of_stickler_goes(tmp_path):
         assert any(gone.is_relative_to(f) for f in plan.folders)
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="an AppImage's desktop entries name their icons by absolute POSIX path (leading /)",
+)
 def test_an_appimage_removes_the_menu_entries_and_icons_made_for_this_file_only(tmp_path):
     image = tmp_path / "AppImages" / "Stickler-9-x86_64.AppImage"
     image.parent.mkdir(parents=True)

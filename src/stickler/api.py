@@ -1364,7 +1364,7 @@ def cache_entries(
                     folders.add(runner.cache_dir_for(cache_dir, registry["beat_this"], t.mix))
     root = cache_dir.resolve()
     return sorted(
-        str(f.resolve().relative_to(root))
+        f.resolve().relative_to(root).as_posix()
         for f in folders
         if f.is_dir() and f.resolve().is_relative_to(root)
     )
@@ -1412,7 +1412,7 @@ def run_remote(
     plan = dataclasses.replace(plan, cache=cache_entries(config, only=set(missing)))
     remote.run_remote(
         remote.Host(host, port),
-        str(config.relative_to(PROJECT_ROOT)),
+        config.relative_to(PROJECT_ROOT).as_posix(),
         remote.adapters_for(config),
         plan,
         project_root=PROJECT_ROOT,

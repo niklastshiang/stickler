@@ -74,7 +74,7 @@ def test_the_site_has_pages():
     assert (SITE / "index.html") in PAGES
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_every_local_link_and_anchor_resolves(path):
     page = _page(path)
     for _tag, attrs in page.tags:
@@ -90,7 +90,7 @@ def test_every_local_link_and_anchor_resolves(path):
                 assert fragment in ids, f"{url!r}: no id {fragment!r}"
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_nothing_is_loaded_from_another_server(path):
     page = _page(path)
     for tag, attrs in page.tags:
@@ -102,7 +102,7 @@ def test_nothing_is_loaded_from_another_server(path):
                 assert _local(one.split(" ")[0]), f"<{tag} {name}={url!r}>"
 
 
-@pytest.mark.parametrize("path", STYLES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", STYLES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_styles_load_nothing_from_another_server(path):
     css = path.read_text(encoding="utf-8")
     assert "@import" not in css
@@ -111,7 +111,7 @@ def test_styles_load_nothing_from_another_server(path):
         assert (path.parent / url).is_file(), url
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_only_the_allowed_script_runs(path):
     page = _page(path)
     assert page.inline_scripts == 0
@@ -121,7 +121,7 @@ def test_only_the_allowed_script_runs(path):
         assert not [k for k in attrs if k.startswith("on")], attrs  # no inline handlers
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_the_structure_a_screen_reader_needs(path):
     page = _page(path)
     (html,) = page.all("html")
@@ -139,7 +139,7 @@ def test_the_structure_a_screen_reader_needs(path):
     assert page.all("meta") and any(m.get("name") == "viewport" for m in page.all("meta"))
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_media_does_not_shift_the_page_and_can_be_stopped(path):
     page = _page(path)
     for attrs in page.all("img"):
@@ -150,7 +150,7 @@ def test_media_does_not_shift_the_page_and_can_be_stopped(path):
         assert "controls" in attrs and attrs.get("preload") == "none", attrs
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_every_picture_has_a_dark_twin(path):
     """Light and dark follow the browser, pictures and video too (SPEC "Website")."""
     page = _page(path)
@@ -165,7 +165,7 @@ def test_every_picture_has_a_dark_twin(path):
     assert len(darks) >= pictures, "each picture and video has a dark source"
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_the_first_view_stays_light(path):
     """HTML, CSS and the font under 300 KB; with the overview video under 2 MB."""
     shared = sum((SITE / f).stat().st_size for f in ("style.css", "site.js", "fonts/figtree.woff2"))
@@ -186,7 +186,7 @@ def test_everything_the_site_uses_is_in_git():
         encoding="utf-8",
         check=True,
     ).stdout.split()
-    on_disk = sorted(str(p.relative_to(SITE.parent)) for p in SITE.rglob("*") if p.is_file())
+    on_disk = sorted(p.relative_to(SITE.parent).as_posix() for p in SITE.rglob("*") if p.is_file())
     assert [f for f in on_disk if f not in tracked] == []
 
 
@@ -222,7 +222,7 @@ def _resolved(page: Page, path: Path, names=("src", "srcset", "poster")) -> list
             for url in re.split(r",\s*", attrs.get(name, "")):
                 url = url.split(" ")[0]
                 if url and _local(url):
-                    found.append(str(_resolve(path, url)[0].relative_to(SITE)))
+                    found.append(_resolve(path, url)[0].relative_to(SITE).as_posix())
     return found
 
 
@@ -278,11 +278,11 @@ def _meta(page: Page) -> dict[str, str]:
 
 
 def _url(path: Path) -> str:
-    rel = str(path.relative_to(SITE))
+    rel = path.relative_to(SITE).as_posix()
     return ORIGIN + rel.removesuffix("index.html")
 
 
-@pytest.mark.parametrize("path", PAGES, ids=lambda p: str(p.relative_to(SITE)))
+@pytest.mark.parametrize("path", PAGES, ids=lambda p: p.relative_to(SITE).as_posix())
 def test_every_page_is_safe_and_names_itself(path):
     page = _page(path)
     meta = _meta(page)

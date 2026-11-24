@@ -1,5 +1,7 @@
 """Tests for audio duration via ffprobe."""
 
+import subprocess
+import sys
 import wave
 
 import numpy as np
@@ -262,3 +264,20 @@ def test_the_click_gain_puts_the_clicks_the_same_distance_above_any_song():
         assert np.abs(clicks).max() < 1.0
     assert audio.click_gain(np.zeros(4 * sr), raw, times, sr, over_db=4.0) == 1.0  # silence
     assert audio.click_gain(_noise_song(0.3), raw, [], sr, over_db=4.0) == 1.0  # no hits
+
+
+def test_ffmpeg_and_ffprobe_do_not_get_the_callers_stdin():
+    """As for the models (the bridge's stdin carries its protocol): ffmpeg reads commands from
+    its stdin unless it has none."""
+    code = (
+        "import sys\n"
+        "from stickler import audio\n"
+        "reader = [sys.executable, '-c', 'import sys; sys.stdin.read()']\n"
+        "sys.exit(audio.media_tool(reader, timeout=5).returncode)\n"
+    )
+    caller = subprocess.Popen([sys.executable, "-c", code], stdin=subprocess.PIPE)
+    try:
+        assert caller.wait(30) == 0, "the program waited on the caller's stdin"
+    finally:
+        caller.stdin.close()
+        caller.wait()

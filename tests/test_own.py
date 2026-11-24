@@ -1,6 +1,7 @@
 """Tests for the own-songs dataset (references/own/*.yaml + data/own/<song>/)."""
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -10,6 +11,7 @@ from stickler.datasets import own
 @pytest.fixture
 def layout(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))  # Windows' Path.home()
     refs, data = tmp_path / "references", tmp_path / "data"
     refs.mkdir()
     (tmp_path / "home" / "Musik").mkdir(parents=True)
@@ -104,7 +106,9 @@ def library(tmp_path, monkeypatch):
 
 
 def _song(refs, data, sid, audio):
-    (refs / f"{sid}.yaml").write_text(f'title: "{sid}"\naudio: "{audio}"\n', encoding="utf-8")
+    (refs / f"{sid}.yaml").write_text(
+        f'title: "{sid}"\naudio: "{Path(audio).as_posix()}"\n', encoding="utf-8"
+    )
     return {s.id: s for s in own.songs(refs, data)}[sid]
 
 
@@ -137,4 +141,5 @@ def test_music_folder_defaults(monkeypatch, tmp_path):
     assert own.music_dir() == tmp_path / "Musik"
     monkeypatch.setattr(own, "_xdg_music", lambda: None)
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # Windows' Path.home()
     assert own.music_dir() == tmp_path / "Music"

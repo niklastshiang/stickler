@@ -152,12 +152,20 @@ def test_a_package_without_a_licence_file_stops_the_build(tmp_path):
         _licensed(core, tmp_path)
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="the bundle check reads the executable bit of its programs, which Windows files lack",
+)
 def test_a_complete_bundle_passes(tmp_path):
     core = _core(tmp_path)
     _licensed(core, tmp_path)
     assert tools.problems(core, languages=["de", "es"]) == []
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="the bundle check reads the executable bit of its programs, which Windows files lack",
+)
 @pytest.mark.parametrize(
     "extra",
     [
@@ -177,6 +185,10 @@ def test_environments_weights_caches_and_pip_are_found(tmp_path, extra):
     assert found[0].removeprefix("must not ship: ") in extra
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="the bundle check reads the executable bit of its programs, which Windows files lack",
+)
 @pytest.mark.parametrize(
     "missing",
     [

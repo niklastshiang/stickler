@@ -207,6 +207,9 @@ def _run_group(
     deadline = None if timeout is None else time.monotonic() + timeout
     with subprocess.Popen(
         cmd,
+        # not the caller's stdin: the bridge reads its own all the time, and on Windows a
+        # program that inherits that pipe (uv, Python) waits on it as soon as it starts
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -301,6 +304,7 @@ def run_adapter(
 def _check(cmd: list[str], spec: AdapterSpec, **kw) -> str:
     proc = subprocess.run(
         cmd,
+        stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -455,7 +459,7 @@ def _environment_ready(spec: AdapterSpec, device: str) -> bool:
         return False
     cmd = ["uv", "sync", "--check", "--offline", "--quiet", "--project", str(spec.path)]
     try:
-        proc = subprocess.run(cmd, capture_output=True, env=adapter_env())
+        proc = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, env=adapter_env())
     except OSError:  # no uv: nothing can run
         return False
     return proc.returncode == 0

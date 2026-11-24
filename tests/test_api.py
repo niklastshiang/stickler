@@ -426,7 +426,9 @@ def test_align_songs_end_to_end(tmp_path, monkeypatch):
     wav, mid, notes, beats = _synth_song(tmp_path)
     refs, data = tmp_path / "references", tmp_path / "data"
     refs.mkdir()
-    (refs / "synth.yaml").write_text(f'title: "Synth"\naudio: "{wav}"\n', encoding="utf-8")
+    (refs / "synth.yaml").write_text(
+        f'title: "Synth"\naudio: "{wav.as_posix()}"\n', encoding="utf-8"
+    )
     (data / "own" / "synth").mkdir(parents=True)
     mid.save(data / "own" / "synth" / "score.mid")
 

@@ -137,7 +137,8 @@ LINUX_HOME = "/home/me"
     ids=["checkout", "appimage", "flatpak", "deb-rpm"],
 )
 def test_linux_keeps_its_folders(env, expected):
-    assert {k: str(v) for k, v in _where(env).items()} == expected
+    # Compared as paths: Windows spells them with backslashes, the folders are the same
+    assert _where(env) == {k: Path(v) for k, v in expected.items()}
 
 
 def test_removing_the_mac_apps_models_takes_its_analyses_too():

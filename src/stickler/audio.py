@@ -21,7 +21,10 @@ DECODED_DIR = "_decoded"
 
 def media_tool(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Runs ffmpeg or ffprobe with C numbers: a localized build writes "245,640000" for 245.64
-    under a German locale (Arch's ffmpeg 9.0 in the AppImage did), which nothing could parse."""
+    under a German locale (Arch's ffmpeg 9.0 in the AppImage did), which nothing could parse.
+    Without the caller's stdin: ffmpeg reads commands from it, and the bridge's carries its
+    protocol."""
+    kwargs.setdefault("stdin", subprocess.DEVNULL)
     return subprocess.run(cmd, env={**os.environ, "LC_ALL": "C"}, **kwargs)
 
 

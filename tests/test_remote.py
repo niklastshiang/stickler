@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -139,7 +140,7 @@ def test_run_remote_order_and_secret_on_stdin(tmp_path, plan):
     assert cache_down and cache_down[0][-1].endswith("cache/")
     results_down = rsyncs[-1]
     assert results_down[-2].endswith(":stickler/results/own/")
-    assert results_down[-1].endswith("results/own/")
+    assert results_down[-1].replace("\\", "/").endswith("results/own/")
     script_call = next((c, i) for c, i in rec.calls if c[0] == "ssh" and i)
     assert script_call[1].startswith("secret-token\n")
     assert all("secret-token" not in part for c in cmds for part in c)
@@ -219,7 +220,7 @@ def test_sync_plan_for_own_songs(tmp_path, monkeypatch):
     audio.write_bytes(b"x")
     refs, data = tmp_path / "refs", tmp_path / "data"
     refs.mkdir()
-    (refs / "s.yaml").write_text(f'title: "S"\naudio: "{audio}"\n', encoding="utf-8")
+    (refs / "s.yaml").write_text(f'title: "S"\naudio: "{audio.as_posix()}"\n', encoding="utf-8")
     from stickler.datasets import own
 
     (song,) = own.songs(refs, data)
@@ -295,7 +296,9 @@ def test_songs_from_anywhere_go_into_their_own_song_folders(tmp_path, monkeypatc
         audio = tmp_path / "anywhere" / sid / f"{sid}.flac"
         audio.parent.mkdir(parents=True)
         audio.write_bytes(sid.encode())
-        (refs / f"{sid}.yaml").write_text(f'title: "{sid}"\naudio: "{audio}"\n', encoding="utf-8")
+        (refs / f"{sid}.yaml").write_text(
+            f'title: "{sid}"\naudio: "{audio.as_posix()}"\n', encoding="utf-8"
+        )
         from stickler.datasets import own
 
         (song,) = [s for s in own.songs(refs, data) if s.id == sid]
@@ -367,6 +370,10 @@ def test_setup_starts_after_the_code_and_before_the_big_uploads(tmp_path, plan):
     assert rec.calls[start][1] == "tok\n"  # the token goes over stdin here, too
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="runs the host's script under POSIX bash; Windows' bash is the WSL stub",
+)
 def test_track_ids_reach_the_host_unchanged_by_its_shell():
     """ENST has "rock'n'roll" in three ids; unquoted, the host's bash dropped the apostrophes,
     found no such track and skipped them silently (2026-11-17)."""
