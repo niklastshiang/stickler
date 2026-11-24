@@ -481,6 +481,31 @@ jobs:
             Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
           if ($p.ExitCode -ne 0) { throw "installer failed in run C" }
 
+      - name: "Run C: control, does LongPathsEnabled=0 take effect? (a 330-character folder)"
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        env:
+          LOCALAPPDATA: C:\Users\${{ env.LONG_NAME_C }}\AppData\Local
+        run: |
+          $key = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem').LongPathsEnabled
+          $deep = 'C:\spike-probe\' + ((1..12 | ForEach-Object { 'd' * 25 }) -join '\')
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Stickler'
+          $rows = @()
+          $cmdOut = (cmd /c "mkdir `\"$deep`\" 2>&1") -join ' '
+          $rows += "| cmd.exe mkdir | $(if (Test-Path -LiteralPath $deep) { 'created' } else { "failed: $cmdOut" }) |"
+          Remove-Item -Recurse -Force 'C:\spike-probe' -ErrorAction SilentlyContinue
+          try { New-Item -ItemType Directory -Force $deep -ErrorAction Stop | Out-Null; $rows += '| PowerShell 7 New-Item | created |' }
+          catch { $rows += "| PowerShell 7 New-Item | failed: $($_.Exception.Message) |" }
+          Remove-Item -Recurse -Force 'C:\spike-probe' -ErrorAction SilentlyContinue
+          foreach ($py in @(@('the shipped python.exe', "$app\python\python.exe"), @('the runner python.exe', (Get-Command python).Source))) {
+            $out = & $py[1] -c "import os,sys; os.makedirs(sys.argv[1]); print('created')" $deep 2>&1
+            $rows += "| $($py[0]) os.makedirs | $(($out | Select-Object -Last 1)) |"
+            Remove-Item -Recurse -Force 'C:\spike-probe' -ErrorAction SilentlyContinue
+          }
+          $text = "### Run C control: a $($deep.Length)-character path, LongPathsEnabled = $key`n`n| Program | Result |`n|---|---|`n" + ($rows -join "`n") + "`n"
+          $text | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+
       - name: "Run C: the launcher on clip A (a failure is a finding)"
         id: longrunc
         continue-on-error: true
@@ -528,7 +553,7 @@ jobs:
             echo "### Run C: details"
             echo
             echo '```'
-            grep -E "FAILED|error|Error|too long|WinError|path|setup seconds|analysis seconds|MusicXML written" "$OUT/long/spike-log.txt" | tail -n 40 || true
+            grep -E "FAILED|error|Error|too long|WinError|path|setup seconds|analysis seconds|MusicXML written" "$OUT/long50/spike-log.txt" | tail -n 40 || true
             echo '```'
             python win/spike/measure.py sizes "$D"
             echo
