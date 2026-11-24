@@ -1199,7 +1199,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: the comparison; `uv run pytest -q`; `stickler eval` as in 162
   - Dependencies: 162 · Files: `adapters/separators/demucs/{pyproject.toml,uv.lock}`, `adapters/transcribers/muscriptor_{m,l}/{pyproject.toml,uv.lock}`, `scripts/lock_platforms.py` and its test if macOS is added to it, `src/stickler/digests.yaml`
 
-- [ ] **Task 164: Cancel and the time limit end the process tree on Windows** (M)
+- [x] **Task 164: Cancel and the time limit end the process tree on Windows** (M): done 2026-11-24. `_kill_group(proc, platform, run)`: on `win32` `taskkill /T /F /PID <pid>` and then the reaping, whatever taskkill's exit code; two tests with a stand-in process, one with `os.killpg` and `signal.SIGKILL` removed. Different from the acceptance below: `start_new_session=True` stays in the call (Python ignores it on Windows; a platform switch there could only be tested by patching `sys.platform` under `subprocess`). Real processes: 167.
   - Acceptance: on `win32` `_run_group` starts the adapter without `start_new_session` and `_kill_group` runs `taskkill /T /F /PID <pid>` and then reaps (tested on Linux with the platform and the command runner injected: the command, a process that is already gone, the reaping); no `os.killpg` or `signal.SIGKILL` is touched at import or on the Windows path; the POSIX path and its tests unchanged.
   - Verify: `uv run pytest -q tests/test_adapters.py`; with real processes in 167
   - Dependencies: none · Files: `src/stickler/adapters.py`, `tests/test_adapters.py`

@@ -22,10 +22,12 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 import tomllib
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -175,18 +177,28 @@ class Cancelled(Exception):
 CANCEL_POLL = 0.05  # seconds between looks at the cancel token while an adapter runs
 
 
-def _kill_group(proc: subprocess.Popen) -> None:
-    with contextlib.suppress(ProcessLookupError):  # the whole group may have just exited
-        os.killpg(proc.pid, signal.SIGKILL)
+def _kill_group(
+    proc: subprocess.Popen,
+    platform: str = sys.platform,
+    run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+) -> None:
+    if platform == "win32":
+        # no process group to signal there: taskkill ends `uv` and the model below it (/T),
+        # by force (/F); a tree that has just ended is fine (its exit code is not looked at)
+        run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True, check=False)
+    else:
+        with contextlib.suppress(ProcessLookupError):  # the whole group may have just exited
+            os.killpg(proc.pid, signal.SIGKILL)
     proc.communicate()
 
 
 def _run_group(
     cmd: list[str], timeout: float | None, cancel: threading.Event | None = None
 ) -> subprocess.CompletedProcess | None:
-    """Starts the adapter in its own process group. On timeout or cancel the whole group is
-    killed: `uv run` starts the model as a grandchild process that would otherwise keep
-    running. Returns None on timeout, raises Cancelled on cancel."""
+    """Starts the adapter in its own process group (Windows has none: `start_new_session` does
+    nothing there, and the tree below `uv` is ended instead). On timeout or cancel the whole
+    group is killed: `uv run` starts the model as a grandchild process that would otherwise
+    keep running. Returns None on timeout, raises Cancelled on cancel."""
     deadline = None if timeout is None else time.monotonic() + timeout
     with subprocess.Popen(
         cmd,

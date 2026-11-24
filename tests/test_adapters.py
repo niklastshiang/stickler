@@ -371,3 +371,45 @@ def test_gpu_environments_use_the_adapters_own_python(tmp_path):
     real = Path(__file__).parents[1] / "adapters"
     assert adapters_mod.adapter_python(real / "separators" / "demucs") == "3.14"
     assert adapters_mod.adapter_python(real / "transcribers" / "muscriptor_m") == "3.12"
+
+
+class _Started:
+    """Stands in for a started adapter: a pid, and whether it was reaped."""
+
+    pid = 4711
+
+    def __init__(self):
+        self.reaped = False
+
+    def communicate(self):
+        self.reaped = True
+        return "", ""
+
+
+def test_on_windows_the_whole_tree_below_uv_is_ended_with_taskkill(monkeypatch):
+    """Windows has no process groups to signal and neither os.killpg nor SIGKILL: taskkill ends
+    `uv` and the model it started (/T), by force (/F). Real processes: the Windows job."""
+    import os
+    import signal
+
+    monkeypatch.delattr(os, "killpg")
+    monkeypatch.delattr(signal, "SIGKILL")
+    commands = []
+
+    def run(cmd, **kwargs):
+        commands.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, b"", b"")
+
+    proc = _Started()
+    adapters._kill_group(proc, platform="win32", run=run)
+    assert commands == [["taskkill", "/T", "/F", "/PID", "4711"]]
+    assert proc.reaped
+
+
+def test_on_windows_a_tree_that_has_just_ended_is_still_reaped():
+    def run(cmd, **kwargs):  # taskkill: "the process not found", exit code 128
+        return subprocess.CompletedProcess(cmd, 128, b"", b"ERROR: not found")
+
+    proc = _Started()
+    adapters._kill_group(proc, platform="win32", run=run)
+    assert proc.reaped
