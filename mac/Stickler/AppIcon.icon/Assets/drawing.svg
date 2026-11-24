@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <g transform="translate(-2.485 33.553) scale(6.99029)">
+  <g id="paper">
+    <rect x="28" y="14" width="76" height="96" rx="4" fill="#c0bfbc" transform="rotate(6 66 62)"/>
+    <rect x="22" y="16" width="80" height="100" rx="4" fill="#deddda"/>
+    <rect x="22" y="12" width="80" height="100" rx="4" fill="#ffffff"/>
+  </g>
+  <g id="staff">
+    <g stroke="#9a9996" stroke-width="2"><path d="M30 30h64M30 36h64M30 42h64M30 48h64M30 54h64"/>
+    <path d="M30 70h64M30 76h64M30 82h64M30 88h64M30 94h64"/></g>
+  </g>
+  <g id="notes">
+    <g stroke="#241f31" stroke-width="2.6" stroke-linecap="round">
+    <path d="M36 23l4 4M40 23l-4 4M52 23l4 4M56 23l-4 4M68 23l4 4M72 23l-4 4M84 23l4 4M88 23l-4 4"/>
+    <path d="M41 25v14M57 25v14M73 25v14M89 25v14M41 25h16M73 25h16"/></g>
+    <g fill="#241f31"><ellipse cx="38" cy="52" rx="3.8" ry="3"/><ellipse cx="70" cy="52" rx="3.8" ry="3"/>
+    <ellipse cx="54" cy="40" rx="3.8" ry="3"/><ellipse cx="86" cy="40" rx="3.8" ry="3"/></g>
+  </g>
+  <g id="sticks">
+    <path d="M59.1 124.7 L109.4 70.9 L106.7 68.2 L52.9 118.5Z" fill="#986a44"/>
+    <circle cx="56.0" cy="121.6" r="4.4" fill="#986a44"/>
+    <ellipse cx="113.7" cy="63.9" rx="5" ry="3.3" transform="rotate(-45.0 113.7 63.9)" fill="#986a44"/>
+    <path d="M59.1 123.1 L109.4 69.3 L106.7 66.6 L52.9 116.9Z" fill="#cdab8f"/>
+    <circle cx="56.0" cy="120.0" r="4.4" fill="#cdab8f"/>
+    <ellipse cx="113.7" cy="62.3" rx="5" ry="3.3" transform="rotate(-45.0 113.7 62.3)" fill="#deb98b"/>
+    <path d="M66.5 115.6 L60.4 109.5" stroke="#986a44" stroke-width="1.6" opacity="0.6"/>
+    <path d="M121.1 116.4 L72.3 72.9 L69.6 75.6 L114.9 122.8Z" fill="#986a44"/>
+    <circle cx="118.0" cy="119.6" r="4.4" fill="#986a44"/>
+    <ellipse cx="65.9" cy="69.4" rx="5" ry="3.3" transform="rotate(-136.0 65.9 69.4)" fill="#986a44"/>
+    <path d="M121.1 114.8 L72.3 71.3 L69.6 74.0 L114.9 121.2Z" fill="#cdab8f"/>
+    <circle cx="118.0" cy="118.0" r="4.4" fill="#cdab8f"/>
+    <ellipse cx="65.9" cy="67.8" rx="5" ry="3.3" transform="rotate(-136.0 65.9 67.8)" fill="#deb98b"/>
+    <path d="M114.3 108.4 L108.3 114.6" stroke="#986a44" stroke-width="1.6" opacity="0.6"/>
+  </g>
+  </g>
+</svg>

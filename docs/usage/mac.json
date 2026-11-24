@@ -21,14 +21,38 @@
       }
     },
     "2026-11-20": {
-      "active_minutes": 39,
+      "active_minutes": 43,
       "models": {
         "claude-opus-5-5": {
-          "responses": 101,
-          "input": 232,
-          "output": 58367,
-          "cache_read": 45468686,
-          "cache_write": 895963
+          "responses": 116,
+          "input": 266,
+          "output": 64325,
+          "cache_read": 53167994,
+          "cache_write": 905723
+        }
+      }
+    },
+    "2026-11-22": {
+      "active_minutes": 20,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 61,
+          "input": 140,
+          "output": 28532,
+          "cache_read": 6850444,
+          "cache_write": 95554
+        }
+      }
+    },
+    "2026-11-24": {
+      "active_minutes": 13,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 26,
+          "input": 66,
+          "output": 10832,
+          "cache_read": 2249433,
+          "cache_write": 54126
         }
       }
     }
