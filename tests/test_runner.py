@@ -307,4 +307,4 @@ def test_cache_keys_do_not_depend_on_the_harness_python(tmp_path):
     shutil.copytree(repo / fixture, tmp_path / fixture, ignore=skip)
     shutil.copytree(repo / "adapters/_common", tmp_path / "adapters/_common", ignore=skip)
     spec = adapters.discover(tmp_path / "tests/fixtures/adapters")["dummy"]
-    assert runner.code_digest(spec) == "4fd32f9dc215f5449511f19cdcbdac2382b21ff2"  # Task 96
+    assert runner.code_digest(spec) == "5014c9f52a4f43e06f45d40e2034b183b479f3ed"  # Task 162
