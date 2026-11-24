@@ -68,11 +68,14 @@ jobs:
   # The Windows app's core (SPEC.md, module `win-core`): the same checks on Windows x64.
   windows:
     runs-on: windows-2025
+    timeout-minutes: 30 # a test that hangs must not hold the runner for six hours
     defaults:
       run:
         shell: bash # scripts/check.sh; the runner's Git for Windows brings it
     env:
       UV_PYTHON: "3.14"
+      # where a test hangs: every thread's stack after three minutes in one test, and its name
+      PYTEST_ADDOPTS: "-v -o faulthandler_timeout=180"
     steps:
       - name: Files as they are in the repository (no CRLF on checkout)
         run: git config --global core.autocrlf false
