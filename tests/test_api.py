@@ -284,7 +284,8 @@ def test_cache_entries_are_the_results_a_config_uses(monkeypatch, tmp_path):
     (rec,) = api.run_benchmark(cfg, **kw)
     (tmp_path / "cache" / "other" / "unrelated").mkdir(parents=True)
     entries = api.cache_entries(cfg, **kw)
-    assert entries == [str(rec.midi.parent.relative_to(tmp_path / "cache"))]
+    # with forward slashes on every system: the list goes to rsync on the host
+    assert entries == [rec.midi.parent.relative_to(tmp_path / "cache").as_posix()]
 
 
 def test_only_restricts_run_and_eval_to_the_given_tracks(monkeypatch, tmp_path):

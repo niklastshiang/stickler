@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 import pytest
+from procs import Processes
 
 from stickler import adapters, runner
 
@@ -161,11 +162,7 @@ def test_closing_stdin_during_an_analysis_ends_the_model_and_leaves_no_cache_ent
 
 
 def _alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+    return Processes.running(pid)  # not os.kill(pid, 0): Windows has no signal 0
 
 
 STRAY = """import os
@@ -229,6 +226,7 @@ def test_the_demo_finds_the_same_musicxml_as_the_gtk_app(models, song, tmp_path)
         **os.environ,
         "STICKLER_ADAPTERS": str(models),
         "STICKLER_RESULTS_CACHE": str(tmp_path / "results"),
+        "PYTHONIOENCODING": "utf-8",  # what this test reads; Windows' pipes default to cp1252
     }
     proc = subprocess.run(
         [sys.executable, str(demo), str(song), "--out", str(out), "--width", "600"],

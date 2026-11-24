@@ -74,8 +74,9 @@ jobs:
         shell: bash # scripts/check.sh; the runner's Git for Windows brings it
     env:
       UV_PYTHON: "3.14"
-      # where a test hangs: every thread's stack after three minutes in one test, and its name
-      PYTEST_ADDOPTS: "-v -o faulthandler_timeout=180"
+      # the skipped tests with their reasons; where a test hangs: every thread's stack after
+      # three minutes in one test
+      PYTEST_ADDOPTS: "-rs -o faulthandler_timeout=180"
     steps:
       - name: Files as they are in the repository (no CRLF on checkout)
         run: git config --global core.autocrlf false
