@@ -3337,8 +3337,9 @@ docs and PRs 16894 and 17241; gyan.dev and BtbN/FFmpeg-Builds; StatCounter (Octo
 
 ### Module `win-core`
 
-> Status: **approved** by the owner on 2026-11-24 (three folders, `taskkill` first, the branch
-> `claude/win-core` pushed). Plan: `tasks/plan.md` ("`win-core`"), tasks 161–168.
+> Status: **built** (2026-11-24, tasks 161–168 done; Checkpoint AC is the owner's). Approved by
+> the owner on 2026-11-24 (three folders, `taskkill` first, the branch `claude/win-core`
+> pushed). Plan: `tasks/plan.md` ("`win-core`"), tasks 161–168.
 
 **Objective.** The Python core and the first version's models (ADTOF, Beat This!, Demucs) run on
 Windows 11 x64 (CPU), checked on every push by a Windows runner, before any C# exists. Linux
@@ -3366,8 +3367,9 @@ the runner):
 7. The test suite has no platform skips today. It assumes POSIX in the tests' process helper
    (`/proc`, `ps`), one fake `uv` written as a shell script, seven tests around process groups
    and signals, and 158 file reads and writes without `encoding`.
-8. No Windows computer is available to Claude: everything Windows-specific is seen only in the
-   workflow's runs. What can be tested on Linux with a stand-in (as `_peak_rss_mb(platform)`
+8. No Windows computer is available to Claude (the owner's PC refuses to start the
+   `python.exe` of an environment uv made, found 2026-11-24; `tasks/todo.md`, task 167):
+   everything Windows-specific is seen only in the workflow's runs. What can be tested on Linux with a stand-in (as `_peak_rss_mb(platform)`
    is) is tested there first.
 
 **Scope.**
