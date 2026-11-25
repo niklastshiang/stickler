@@ -1314,6 +1314,36 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AE
 - [ ] The spike's five questions answered (owner); then `win-shell`'s spec (after `win-design` with the owner)
 
+## Phase 32: Mac corrections, module `mac-corrections` (approved 2026-11-25, SPEC.md "Mac corrections"; release 11)
+
+- [ ] **Task 190: Corrections in the core and the bridge** (M)
+  - Acceptance: SPEC "Mac corrections" scope 1. `corrections.controls` decides the shown values (the GTK panel calls it, unchanged in behaviour); `result` has `controls` and `sheet` (`sheet` changes with a correction's new notation, not at its start); `correct` takes exactly one change, keeps it in range, answers `ok` without an event when nothing changes, `not_now` without a result or while exporting, `bad_argument` for none, two, an unknown tempo or a wrong type; `docs/bridge.md` documents all three.
+  - Verify: `uv run pytest -q tests/app tests/gtk` (bridge, doc and corrections tests), `scripts/gtk.sh test` for the panel, `scripts/check.sh task`, coverage ≥ 95 %
+  - Dependencies: none · Files: `src/stickler_app/corrections.py`, `src/stickler_app/bridge.py`, `src/stickler_app/session.py`, `src/stickler_gtk/ui/corrections.py`, `docs/bridge.md`, `tests/app/`, `tests/gtk/`
+
+- [ ] **Task 191: Corrections in SticklerCore** (M)
+  - Acceptance: SPEC scope 2. `SongResult` decodes `controls` (optional) and `sheet`; `Command.correct(Correction)`; `AppModel.correct(_:)` with the steppers' commands one after another from the newest state; refusals as the notice; `SheetModel` fetches pages per `song` and `sheet`, not per `corrections`.
+  - Verify: `swift test` in `mac/SticklerCore` (locally and in `mac`), coverage ≥ 95 %
+  - Dependencies: 190 · Files: `mac/SticklerCore/Sources/SticklerCore/`, its tests
+
+- [ ] **Task 192: The inspector and the spinner** (M)
+  - Acceptance: SPEC scopes 3 and 5: `CorrectionsInspector` as M11 (300 points, Beat and Easier to Read, Back to Detected), only with a result, open or closed kept across launches; the toolbar button at the far right with its help and pressed state; a small spinner after the subtitle while `correcting`; every control named for VoiceOver.
+  - Verify: screenshots M11 light (Simplify off) and dark (playing, correcting) from `ScreenshotTests`, compared with `docs/design/mac/Corrections*.dc.html`
+  - Dependencies: 191 · Files: `mac/Stickler/CorrectionsInspector.swift`, `mac/Stickler/ContentView.swift`, `mac/SticklerTests/`
+
+- [ ] **Task 193: View › Show Corrections, ⌃⌘I and the texts** (S)
+  - Acceptance: SPEC scopes 4 and 6: `CorrectionsMenu` (a logic type, gated: title "Show Corrections" or "Hide Corrections", enabled with a result, ⌃⌘I) between the zoom items and Enter Full Screen; the two texts in `mac_texts.py`, `po/` with German and Spanish, and the String Catalog.
+  - Verify: the menu's tests under `scripts/xccov_gate.py` (and CONSTRAINTS.md's list); `uv run pytest -q tests/test_xcstrings.py tests/app/test_mac_texts.py`
+  - Dependencies: 192 · Files: `mac/Stickler/Commands.swift`, `src/stickler_app/mac_texts.py`, `po/*`, `mac/Stickler/Localizable.xcstrings`, `scripts/xccov_gate.py`, `CONSTRAINTS.md`
+
+- [ ] **Task 194: Review and a build for the owner** (S)
+  - Acceptance: a fresh-context review of 190–193 against SPEC "Mac corrections", findings fixed with a test or answered; the `mac` workflow green; `release.yml` by hand on the branch for the image; `docs/mac-development.md` gains "What to check for corrections (Checkpoint AG)".
+  - Verify: the owner on the Mac: SPEC "Mac corrections" success criteria 1–5
+  - Dependencies: 190–193 · Files: `docs/mac-development.md`
+
+### Checkpoint AG
+- [ ] All success criteria of SPEC.md "Mac corrections" met (owner, on the Mac); merged into `main`; then `win-corrections` (release 11) builds on task 190
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
