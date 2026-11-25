@@ -50,10 +50,15 @@ public static class WindowView
         };
     }
 
-    public static SetupDialog Dialog(AppState state)
+    /// <summary>None once the core has stopped: its page and "Start Again" must stay reachable.</summary>
+    public static SetupDialog Dialog(AppModel model)
     {
-        ArgumentNullException.ThrowIfNull(state);
-        return state.Screen switch
+        ArgumentNullException.ThrowIfNull(model);
+        if (model.Phase != Phase.Running)
+        {
+            return SetupDialog.None;
+        }
+        return model.State.Screen switch
         {
             ConsentScreen => SetupDialog.Consent,
             SettingUpScreen => SetupDialog.Download,

@@ -14,8 +14,18 @@ public sealed class IncomingTests
     [DataRow("{\"event\": \"recent\", \"seq\": 1, \"rows\": 3}")]
     [DataRow("{\"event\": \"hello\", \"protocol\": \"one\", \"version\": \"11\", \"language\": \"en\"}")]
     [DataRow("{\"id\": 1, \"ok\": \"yes\"}")]
+    [DataRow("{\"event\": \"state\", \"seq\": 1, \"state\": {\"kind\": \"result\", \"song\": \"/a\", \"title\": \"\", \"subtitle\": \"\", \"artist\": \"\", \"seconds\": 1, \"tempo\": 9, \"meter\": [\"four\"], \"musicxml\": \"/m\"}}")]
     public void ALineTheClientCannotReadSaysSo(string line) =>
         Assert.ThrowsExactly<UnreadableLineException>(() => Incoming.Parse(line));
+
+    [TestMethod]
+    public void AStateWithAFieldOfAnotherKindIsUnreadableToo() =>
+        Assert.ThrowsExactly<UnreadableLineException>(() => AppState.Parse(
+            "{\"kind\": \"result\", \"song\": \"/a\", \"title\": \"\", \"subtitle\": \"\", \"artist\": \"\", \"seconds\": 1, \"tempo\": 9, \"meter\": [4.5], \"musicxml\": \"/m\"}"));
+
+    [TestMethod]
+    public void AHelloNeedsOnlyItsProtocol() =>
+        Assert.AreEqual(new HelloLine(new Hello(2, "", "")), Incoming.Parse("{\"event\": \"hello\", \"protocol\": 2}"));
 
     [TestMethod]
     public void AnUnknownEventAndAnUnknownKindAreKeptAsSuch()

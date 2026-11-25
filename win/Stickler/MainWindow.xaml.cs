@@ -30,6 +30,13 @@ public sealed partial class MainWindow : Window
     private ContentDialog? setup;
     private SetupDialog shownSetup = SetupDialog.None;
     private bool closingSetup;
+    private AppState? setupState;
+    private IReadOnlyList<RecentRow>? shownRecent;
+    private bool shownCanOpen;
+
+    /// <summary>A question of the File or Export menu or About is on screen: WinUI allows one
+    /// ContentDialog at a time, so a second flow waits, and the setup dialog comes after it.</summary>
+    private bool asking;
     private int shownNotice;
 
     public MainWindow()
@@ -49,6 +56,7 @@ public sealed partial class MainWindow : Window
         Words();
         model.PropertyChanged += OnModelChanged;
         Closed += OnClosed;
+        Activated += OnFirstActivated;
         model.Launch();
         Render();
     }
@@ -134,7 +142,12 @@ public sealed partial class MainWindow : Window
         CancelButton.IsEnabled = state.Can.Cancel;
         RetryButton.Visibility = Shown(state.Can.Retry);
 
-        RecentRowsAndMenu();
+        if (!ReferenceEquals(shownRecent, model.Recent) || shownCanOpen != state.Can.Open)
+        {
+            shownRecent = model.Recent;
+            shownCanOpen = state.Can.Open;
+            RecentRowsAndMenu(); // not twice a second while a download reports progress
+        }
         switch (state.Screen)
         {
             case AnalysingScreen analysing:
@@ -156,7 +169,7 @@ public sealed partial class MainWindow : Window
             StoppedDetails.Text = end.TechnicalDetails;
             StoppedDetailsExpander.IsExpanded = end.NeverStarted;
         }
-        Setup(WindowView.Dialog(state));
+        Setup(WindowView.Dialog(model));
         Notice();
     }
 
@@ -269,12 +282,13 @@ public sealed partial class MainWindow : Window
                 setup = null;
                 closingSetup = false;
             }
+            setupState = null;
             shownSetup = wanted;
             return;
         }
-        if (Root.XamlRoot is null)
+        if (Root.XamlRoot is null || asking)
         {
-            return; // the window is not shown yet; Activated renders again
+            return; // not shown yet, or a question is open: rendered again after it
         }
         if (setup is null)
         {
@@ -284,7 +298,12 @@ public sealed partial class MainWindow : Window
             setup.Closing += (_, args) => args.Cancel = !closingSetup;
             _ = setup.ShowAsync();
         }
+        if (wanted == shownSetup && ReferenceEquals(model.State, setupState))
+        {
+            return; // nothing new: an opened "Technical Details" stays open
+        }
         shownSetup = wanted;
+        setupState = model.State;
         switch (model.State.Screen)
         {
             case ConsentScreen consent:
@@ -447,19 +466,19 @@ public sealed partial class MainWindow : Window
 
     // what the reader does
 
-    private async void OnOpen(object sender, RoutedEventArgs e) => await flows.OpenSongAsync();
+    private async void OnOpen(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.OpenSongAsync());
 
-    private async void OnExportMusicXml(object sender, RoutedEventArgs e) => await flows.ExportMusicXmlAsync();
+    private async void OnExportMusicXml(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.ExportMusicXmlAsync());
 
-    private async void OnExportDrumTrack(object sender, RoutedEventArgs e) => await flows.ExportDrumTrackAsync();
+    private async void OnExportDrumTrack(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.ExportDrumTrackAsync());
 
-    private async void OnOpenWith(object sender, RoutedEventArgs e) => await flows.OpenWithAsync();
+    private async void OnOpenWith(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.OpenWithAsync());
 
-    private async void OnBackUp(object sender, RoutedEventArgs e) => await flows.BackUpAsync(DateOnly.FromDateTime(DateTime.Now));
+    private async void OnBackUp(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.BackUpAsync(DateOnly.FromDateTime(DateTime.Now)));
 
-    private async void OnRestore(object sender, RoutedEventArgs e) => await flows.RestoreAsync();
+    private async void OnRestore(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.RestoreAsync());
 
-    private async void OnRemoveModels(object sender, RoutedEventArgs e) => await flows.RemoveModelsAsync();
+    private async void OnRemoveModels(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.RemoveModelsAsync());
 
     private void OnCloseSong(object sender, RoutedEventArgs e) => model.Close();
 
@@ -475,7 +494,9 @@ public sealed partial class MainWindow : Window
 
     private async void OnLicences(object sender, RoutedEventArgs e) => await Windows.System.Launcher.LaunchUriAsync(new Uri(LicencePage));
 
-    private async void OnAbout(object sender, RoutedEventArgs e)
+    private async void OnAbout(object sender, RoutedEventArgs e) => await OneAtATime(AboutAsync);
+
+    private async Task AboutAsync()
     {
         var panel = new StackPanel { Spacing = 8 };
         panel.Children.Add(new TextBlock { Text = "Stickler", Style = (Style)Application.Current.Resources["SubtitleTextBlockStyle"] });
@@ -517,10 +538,38 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>Runs one flow of the menus at a time and never while the setup dialog is up: a
+    /// second click while a question or a reply is pending does nothing.</summary>
+    private async Task OneAtATime(Func<Task> flow)
+    {
+        if (asking || setup is not null)
+        {
+            return;
+        }
+        asking = true;
+        try
+        {
+            await flow();
+        }
+        finally
+        {
+            asking = false;
+            Render(); // a setup dialog that waited for the question
+        }
+    }
+
+    /// <summary>A setup state that came before the window was shown is drawn now.</summary>
+    private void OnFirstActivated(object sender, WindowActivatedEventArgs args)
+    {
+        Activated -= OnFirstActivated;
+        Render();
+    }
+
     /// <summary>Quitting: the core ends politely, at most a few seconds.</summary>
     private void OnClosed(object sender, WindowEventArgs args)
     {
         model.PropertyChanged -= OnModelChanged;
-        Task.Run(model.QuitAsync).Wait(TimeSpan.FromSeconds(5));
+        // QuitAsync: 3 s for the core to quit, then its tree ended and 2 s for that
+        Task.Run(model.QuitAsync).Wait(TimeSpan.FromSeconds(8));
     }
 }

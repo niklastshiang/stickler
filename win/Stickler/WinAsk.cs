@@ -19,7 +19,7 @@ internal sealed class WinAsk(Window window, Strings strings) : IAsk
     public async Task<string?> SaveFileAsync(string name, IReadOnlyList<string> endings)
     {
         var picker = new FileSavePicker { SuggestedFileName = Path.GetFileNameWithoutExtension(name) };
-        var wanted = endings.Count > 0 ? endings : [Path.GetExtension(name).TrimStart('.')];
+        string[] wanted = endings.Count > 0 ? [.. endings] : [Path.GetExtension(name).TrimStart('.')];
         foreach (var ending in wanted)
         {
             picker.FileTypeChoices.Add(ending.ToUpperInvariant(), ["." + ending]);

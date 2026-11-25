@@ -112,7 +112,17 @@ public sealed record AppState(Screen Screen, Abilities Can)
 {
     public static AppState Empty { get; } = new(new EmptyScreen(), new Abilities(Open: true));
 
-    public static AppState Parse(string json) => Read(Json.Parse(json));
+    public static AppState Parse(string json)
+    {
+        try
+        {
+            return Read(Json.Parse(json));
+        }
+        catch (Exception error) when (error is InvalidOperationException or FormatException or KeyNotFoundException)
+        {
+            throw new UnreadableLineException("a field of an unexpected kind", error);
+        }
+    }
 
     internal static AppState Read(JsonElement s)
     {

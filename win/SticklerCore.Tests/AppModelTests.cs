@@ -114,7 +114,7 @@ public sealed class AppModelTests
         Assert.IsTrue(await Settled(() => core.Sent.Count == 13));
         Assert.AreEqual(
             "start open cancel retry close agree not_now retry_setup export_musicxml export_drum_track remove_models back_up restore",
-            string.Join(" ", core.Sent.Select(line => System.Text.Json.JsonDocument.Parse(line).RootElement.GetProperty("cmd").GetString())));
+            string.Join(" ", core.Sent.Select(line => System.Text.Json.JsonElement.Parse(line).GetProperty("cmd").GetString())));
     }
 
     [TestMethod]

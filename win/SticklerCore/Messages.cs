@@ -31,7 +31,18 @@ public abstract record Incoming
     /// <see cref="UnreadableLineException"/>.</summary>
     public static Incoming Parse(string line)
     {
-        var root = Json.Parse(line);
+        try
+        {
+            return Read(Json.Parse(line));
+        }
+        catch (Exception error) when (error is InvalidOperationException or FormatException or KeyNotFoundException)
+        {
+            throw new UnreadableLineException("a field of an unexpected kind", error);
+        }
+    }
+
+    private static Incoming Read(JsonElement root)
+    {
         if (root.ValueKind != JsonValueKind.Object)
         {
             throw new UnreadableLineException("not a JSON object");
@@ -41,7 +52,8 @@ public abstract record Incoming
             var name = Json.Str(root, "event");
             if (name == "hello")
             {
-                return new HelloLine(new Hello(Json.Int(root, "protocol"), Json.Str(root, "version"), Json.Str(root, "language")));
+                // only the protocol is needed to tell a core of another release
+                return new HelloLine(new Hello(Json.Int(root, "protocol"), Json.OptStr(root, "version") ?? "", Json.OptStr(root, "language") ?? ""));
             }
             var seq = Json.OptInt(root, "seq") ?? 0;
             return name switch

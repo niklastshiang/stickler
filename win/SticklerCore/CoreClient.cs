@@ -260,12 +260,14 @@ public sealed class CoreClient : ICore, IDisposable
             }
             answer.TrySetCanceled(cancel);
         });
-        await writing.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+        // a cancelled wait (a quit's time limit) also ends a wait for the pipe or a blocked write;
+        // the registration above has already let go of the reply
+        await writing.WaitAsync(cancel).ConfigureAwait(false);
         try
         {
             // one writer at a time, and always "\n": the bridge reads lines (docs/bridge.md)
-            await input.WriteAsync(command.Line(id) + "\n").ConfigureAwait(false);
-            await input.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+            await input.WriteAsync((command.Line(id) + "\n").AsMemory(), cancel).ConfigureAwait(false);
+            await input.FlushAsync(cancel).ConfigureAwait(false);
         }
         catch (Exception error) when (error is IOException or ObjectDisposedException or InvalidOperationException)
         {
@@ -385,11 +387,15 @@ public sealed class CoreClient : ICore, IDisposable
         {
             // the pipe broke with the process
         }
-        lock (gate)
+        finally
         {
-            openStreams--;
+            // the end comes even when a line's handler threw
+            lock (gate)
+            {
+                openStreams--;
+            }
+            EndIfDone();
         }
-        EndIfDone();
     }
 
     private void KeepStderr(string line)

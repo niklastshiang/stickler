@@ -39,7 +39,7 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json # the owner's SDK: the same analyzers here and there
       - name: Tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - run: uv sync --locked
@@ -65,7 +65,7 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json # the owner's SDK: the same analyzers here and there
       - name: Tools
         run: |
           choco install ffmpeg --no-progress -y
@@ -74,6 +74,8 @@ jobs:
       - run: uv sync --locked
       - name: Build (warnings are errors)
         run: dotnet build win/Stickler.sln -c Release
+      - name: The app is where the screenshots and the artifact look
+        run: test -f win/Stickler/bin/x64/Release/net10.0-windows10.0.26100.0/win-x64/Stickler.exe
       - name: Format
         run: dotnet format win/Stickler.sln --verify-no-changes
       - name: SticklerCore's tests with coverage
@@ -88,7 +90,7 @@ jobs:
         shell: pwsh
         run: >
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/win_screens.ps1
-          -App "win/Stickler/bin/Release/net10.0-windows10.0.26100.0/win-x64/Stickler.exe"
+          -App "win/Stickler/bin/x64/Release/net10.0-windows10.0.26100.0/win-x64/Stickler.exe"
           -Out "$env:RUNNER_TEMP/screens"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
@@ -99,4 +101,4 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: stickler-windows-app
-          path: win/Stickler/bin/Release/net10.0-windows10.0.26100.0/win-x64
+          path: win/Stickler/bin/x64/Release/net10.0-windows10.0.26100.0/win-x64

@@ -203,17 +203,19 @@ public sealed class WindowViewTests
         {
             var model = Shown(state);
             Assert.AreEqual(page, WindowView.Page(model), state);
-            Assert.AreEqual(dialog, WindowView.Dialog(model.State), state);
+            Assert.AreEqual(dialog, WindowView.Dialog(model), state);
             Assert.AreEqual(header, WindowView.ShowsHeader(model), state);
         }
     }
 
     [TestMethod]
-    public void AStoppedCoreShowsItsPage()
+    public void AStoppedCoreShowsItsPageAndNoSetupDialogOverIt()
     {
-        var model = Shown("{\"kind\": \"empty\"}");
+        var model = Shown("{\"kind\": \"setting_up\", \"song\": null, \"steps\": []}");
+        Assert.AreEqual(SetupDialog.Download, WindowView.Dialog(model));
         core.Stop(new CoreEnd(CoreEndReason.Exited, 1, "", []));
         Assert.AreEqual(Page.Stopped, WindowView.Page(model));
+        Assert.AreEqual(SetupDialog.None, WindowView.Dialog(model));
         Assert.IsFalse(WindowView.ShowsHeader(model));
     }
 
