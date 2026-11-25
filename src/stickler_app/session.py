@@ -45,6 +45,7 @@ class Result:
     notation: api.Notation
     corrections: api.Corrections = DETECTED  # what `notation` was made with
     pending: Pending | None = None
+    sheet: int = 0  # the job that wrote `notation`: changes with each new one, for the Mac app
 
     @property
     def wanted(self) -> api.Corrections:
@@ -219,7 +220,7 @@ def exported(state: State, job: int) -> State:
 def finished(state: State, job: int, info: api.SongInfo, notation: api.Notation) -> State:
     if not _current(state, job):
         return state
-    return Result(state.song, info, notation, state.corrections)
+    return Result(state.song, info, notation, state.corrections, sheet=job)
 
 
 def correct(result: Result, corrections: api.Corrections) -> Result:
@@ -235,7 +236,10 @@ def corrected(state: State, job: int, notation: api.Notation) -> State:
     """The newest correction's sheet; an older one finishing late changes nothing."""
     if not _correcting(state, job):
         return state
-    return replace(state, notation=notation, corrections=state.pending.corrections, pending=None)
+    done = state.pending
+    return replace(
+        state, notation=notation, corrections=done.corrections, pending=None, sheet=done.job
+    )
 
 
 def correction_failed(state: State, job: int) -> State:

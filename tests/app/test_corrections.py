@@ -110,3 +110,49 @@ def test_an_unknown_song_has_the_detected_values_and_changes_nothing(tmp_path):
 
 def test_the_digest_is_not_a_correction():
     assert corrections._parse({"tempo": "half", "digest": "abc"}) == api.Corrections(tempo="half")
+
+
+# what the controls show (SPEC.md "Mac corrections", scope 1), for every app
+
+
+def test_the_controls_show_the_engraved_values_until_they_are_corrected():
+    shown = corrections.controls(DETECTED, beats_per_bar=4, first_one=2)
+    assert shown == corrections.Controls(
+        tempo="normal",
+        beats_per_bar=4,
+        first_one=2,
+        first_one_label="Beat 2",
+        earlier=True,
+        later=True,
+        simplify=True,
+        repeats=True,
+        corrected=False,
+    )
+    fixed = api.Corrections(tempo="half", beats_per_bar=3, first_downbeat=3, simplify=False)
+    shown = corrections.controls(fixed, beats_per_bar=4, first_one=2)
+    assert (shown.tempo, shown.beats_per_bar, shown.first_one) == ("half", 3, 3)
+    assert (shown.earlier, shown.later, shown.simplify, shown.corrected) == (
+        True,
+        False,
+        False,
+        True,
+    )
+
+
+def test_the_engraved_first_one_is_kept_within_a_shorter_corrected_bar():
+    shown = corrections.controls(api.Corrections(beats_per_bar=2), beats_per_bar=4, first_one=3)
+    assert (shown.first_one, shown.first_one_label, shown.later) == (2, "Beat 2", False)
+    first = corrections.controls(DETECTED, beats_per_bar=4, first_one=1)
+    assert (first.earlier, first.later) == (False, True)
+
+
+def test_a_change_from_a_control_is_kept_in_range():
+    change = corrections.change
+    assert change(DETECTED, "tempo", "double", beats_per_bar=4).tempo == "double"
+    assert change(DETECTED, "beats_per_bar", 20, beats_per_bar=4).beats_per_bar == 12
+    assert change(DETECTED, "first_one", 9, beats_per_bar=3).first_downbeat == 3
+    assert change(DETECTED, "first_one", 0, beats_per_bar=3).first_downbeat == 1
+    assert not change(DETECTED, "simplify", False, beats_per_bar=4).simplify
+    assert not change(DETECTED, "repeats", False, beats_per_bar=4).repeats
+    fixed = api.Corrections(tempo="half", repeats=False)
+    assert change(fixed, "detected", True, beats_per_bar=4) == DETECTED

@@ -57,6 +57,60 @@ def beat_label(beat: int) -> str:
     return _("Beat {number}").format(number=beat)
 
 
+@dataclasses.dataclass(frozen=True)
+class Controls:
+    """What the corrections controls show, in every app (SPEC.md "Mac corrections")."""
+
+    tempo: str
+    beats_per_bar: int
+    first_one: int
+    first_one_label: str
+    earlier: bool  # the first one can move to an earlier beat
+    later: bool
+    simplify: bool
+    repeats: bool
+    corrected: bool  # "Back to Detected" has something to undo
+
+
+def controls(fix: api.Corrections, *, beats_per_bar: int, first_one: int) -> Controls:
+    """`fix` as the controls show it; `beats_per_bar` and `first_one` as engraved, for the
+    values the reader has not set (the engraved first one kept within a corrected bar)."""
+    beats = fix.beats_per_bar or beats_per_bar
+    first = fix.first_downbeat or min(first_one, beats)
+    return Controls(
+        tempo=fix.tempo,
+        beats_per_bar=beats,
+        first_one=first,
+        first_one_label=beat_label(first),
+        earlier=first > 1,
+        later=first < beats,
+        simplify=fix.simplify,
+        repeats=fix.repeats,
+        corrected=corrected(fix),
+    )
+
+
+CHANGES = ("tempo", "beats_per_bar", "first_one", "simplify", "repeats", "detected")
+
+
+def change(
+    fix: api.Corrections, name: str, value: str | int | bool, *, beats_per_bar: int
+) -> api.Corrections:
+    """One control's change, kept in range; `beats_per_bar` is the bar as shown. `name` is
+    one of CHANGES and `value` of its type (the caller checks them)."""
+    if name == "tempo":
+        return with_tempo(fix, str(value))
+    if name == "beats_per_bar":
+        return with_beats(fix, int(value))
+    if name == "first_one":
+        return with_first_one(fix, int(value), beats_per_bar=beats_per_bar)
+    if name == "simplify":
+        return with_simplify(fix, bool(value))
+    if name == "repeats":
+        return with_repeats(fix, bool(value))
+    return DETECTED
+
+
 # the store: corrections.json in the app's data folder, {song path: {field: value}}
 
 

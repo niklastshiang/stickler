@@ -104,6 +104,8 @@ def test_each_state_kind_is_documented_with_exactly_its_fields(kind, tmp_path):
     for key in ("steps", "models", "bars"):
         if key in encoded:
             assert set(example[key][0]) == set(encoded[key][0])
+    if "controls" in encoded:
+        assert set(example["controls"]) == set(encoded["controls"])
 
 
 def test_the_documented_page_has_the_fields_of_an_encoded_one():

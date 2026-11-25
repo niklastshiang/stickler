@@ -22,9 +22,11 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any, TextIO
 
+from stickler import notation
 from stickler_app import (
     backup,
     controller,
+    corrections,
     engraving,
     i18n,
     paths,
@@ -134,9 +136,19 @@ def _result(state: session.Result) -> dict[str, Any]:
         "musicxml": str(state.notation.musicxml),
         "corrections": dataclasses.asdict(state.wanted),
         "correcting": state.pending is not None,
+        "controls": dataclasses.asdict(_controls(state)),
+        "sheet": state.sheet,
         "clicks": _path(clicks if (clicks := paths.hits_path(state.song)).is_file() else None),
         "bars": _bars(state.notation.bars),
     }
+
+
+def _controls(state: session.Result) -> corrections.Controls:
+    """What the corrections controls show for the wanted values (SPEC.md "Mac corrections")."""
+    engraved = state.notation
+    return corrections.controls(
+        state.wanted, beats_per_bar=engraved.meter[0], first_one=engraved.first_downbeat
+    )
 
 
 def _bars(bars: list) -> list[dict[str, Any]]:
@@ -367,6 +379,7 @@ class Bridge:
             "step": self._step,
             "volumes": self._volumes,
             "playable": self._playable,
+            "correct": self._correct,
             "quit": lambda _c: {},
         }
 
@@ -515,6 +528,31 @@ class Bridge:
         """The start of the song bar `by` bars away from `at` (the arrow keys)."""
         at, by = _seconds(command, "at"), _whole(command, "by")
         return {"seconds": playback.step(self._result().notation.bars, at, by)}
+
+    def _correct(self, command: dict[str, Any]) -> dict[str, Any]:
+        """One control's change (SPEC.md "Mac corrections", scope 1): shown at once, notated
+        once the changes pause; one that changes nothing sends no state."""
+        given = [name for name in corrections.CHANGES if name in command]
+        if len(given) != 1:
+            raise _bad_argument("change")
+        name = given[0]
+        value: str | int | bool
+        if name == "tempo":
+            value = _text(command, name)
+            if value not in notation.TEMPOS:
+                raise _bad_argument(name)
+        elif name in ("beats_per_bar", "first_one"):
+            value = _whole(command, name)
+        else:
+            value = _flag(command, name)
+            if name == "detected" and not value:
+                raise _bad_argument(name)
+        result = self._result()
+        shown = _controls(result)
+        fix = corrections.change(result.wanted, name, value, beats_per_bar=shown.beats_per_bar)
+        if fix == result.wanted:
+            return {}
+        return self._fits(self._ctl.correct(fix))
 
     @staticmethod
     def _volumes(command: dict[str, Any]) -> dict[str, Any]:
