@@ -165,6 +165,7 @@ def test_the_mac_app_with_its_own_core_gives_uv_folders_of_its_own(tmp_path, mon
         "UV_PYTHON_PREFERENCE": "only-managed",  # forced: never a Python found on the Mac
         "UV_PYTHON_DOWNLOADS": "automatic",
         "UV_PYTHON_INSTALL_DIR": str(SUPPORT / "python"),
+        "UV_SYSTEM_CERTS": "1",
     }  # a UV_CACHE_DIR already set stays
     assert paths.packaged_env(MAC)["UV_CACHE_DIR"] == str(CACHES / "uv")
 
@@ -232,5 +233,20 @@ def test_the_windows_app_with_its_own_core_gives_uv_folders_of_its_own(tmp_path,
         "UV_PYTHON_PREFERENCE": "only-managed",
         "UV_PYTHON_DOWNLOADS": "automatic",
         "UV_PYTHON_INSTALL_DIR": str(root / "data" / "python"),
+        "UV_SYSTEM_CERTS": "1",
     }
     assert paths.packaged_env(_windows(tmp_path))["UV_CACHE_DIR"] == str(root / "cache" / "uv")
+
+
+def test_every_packaged_app_lets_uv_trust_the_systems_certificates(tmp_path, monkeypatch):
+    """A company network that inspects TLS stopped the setup on the owner's Windows PC
+    (2026-11-25, task 179): uv only trusts its own roots unless told to use the system's.
+    A value the user set stays, as for the other uv settings that are not requirements."""
+    import stickler_app
+
+    monkeypatch.setattr(stickler_app, "prefix", lambda env=None: tmp_path)
+    (tmp_path / "share" / "stickler" / "adapters").mkdir(parents=True)
+    for env in (_windows(tmp_path), MAC, {"STICKLER_PACKAGED": "system", "HOME": "/home/me"}):
+        assert paths.packaged_env(env)["UV_SYSTEM_CERTS"] == "1"
+        assert "UV_SYSTEM_CERTS" not in paths.packaged_env({**env, "UV_SYSTEM_CERTS": "0"})
+    assert paths.packaged_env({}) == {}  # from a checkout uv is left as the user set it up

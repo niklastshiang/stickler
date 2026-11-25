@@ -1323,7 +1323,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ## Phase 31: Release 11 (Windows app), module `win-shell` (being built from 2026-11-25, SPEC.md "Module `win-shell`")
 
-- [ ] **Task 181: System certificates for the core's downloads** (S)
+- [x] **Task 181: System certificates for the core's downloads** (S): done 2026-11-25. `packaged_env` adds `UV_SYSTEM_CERTS=1` for the AppImage, `.deb`/`.rpm`, the Mac app with its own core and the Windows app; a value the user set stays. The Flatpak sets its own environment in the manifest and is left alone (its sandbox has the runtime's certificates, not the host's, so the setting would not help there). The reason is in the code's comment; no document lists these variables.
   - Acceptance: `stickler_app.paths.packaged_env` sets `UV_SYSTEM_CERTS=1` for every packaged app unless already set (open question 3); a test for Linux, macOS and Windows; `docs/bridge.md` or the packaging notes say why.
   - Verify: `uv run pytest -q tests/app/test_paths.py`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler_app/paths.py`, `tests/app/test_paths.py`

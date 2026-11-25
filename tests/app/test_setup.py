@@ -168,6 +168,7 @@ def test_an_appimage_sets_where_its_files_are_and_keeps_uv_off_its_own_python():
         # folders removes everything (owner, 2026-11-15)
         "UV_CACHE_DIR": str(Path("/c/stickler/uv")),
         "UV_PYTHON_INSTALL_DIR": str(Path("/d/stickler/python")),
+        "UV_SYSTEM_CERTS": "1",
     }
     # requirements, not preferences: a user's own setting would let uv take the AppImage's Python
     chosen = {**env, "UV_PYTHON_PREFERENCE": "system", "UV_CACHE_DIR": "/mine/uv"}
@@ -196,6 +197,7 @@ def test_a_deb_or_rpm_keeps_uv_and_its_python_in_sticklers_folders():
         "UV_PYTHON_DOWNLOADS": "automatic",
         "UV_CACHE_DIR": str(Path("/c/stickler/uv")),
         "UV_PYTHON_INSTALL_DIR": str(Path("/d/stickler/python")),
+        "UV_SYSTEM_CERTS": "1",
     }
 
 

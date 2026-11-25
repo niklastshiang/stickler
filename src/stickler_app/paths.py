@@ -146,8 +146,9 @@ def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
     `.rpm` (module `linux-packages`), and the Mac app that brings its own core (module
     `mac-package`), and the Windows app (module `win-core`): where its adapters' sources are; that
     uv uses a Python of its own, never the AppImage's, whose path changes with every mount; and
-    that uv keeps its downloads and that Python in Stickler's folders. The Python settings
-    always apply (otherwise uv may take the AppImage's own); other values already set stay."""
+    that uv keeps its downloads and that Python in Stickler's folders, and trusts the system's
+    certificates. The Python settings always apply (otherwise uv may take the AppImage's own);
+    other values already set stay."""
     kind = packaged(env)
     if kind not in ("appimage", "macos", "system", "windows"):
         return {}
@@ -164,6 +165,9 @@ def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
         # removes everything, and nothing of another uv user's is touched (owner, 2026-11-15)
         "UV_CACHE_DIR": str(cache_home(env) / "uv"),
         "UV_PYTHON_INSTALL_DIR": str(data_home(env) / "python"),
+        # the system's certificates, so a company network that inspects TLS does not stop the
+        # setup (found on the owner's Windows PC, 2026-11-25); the same roots elsewhere
+        "UV_SYSTEM_CERTS": "1",
     }
     forced = ("UV_PYTHON_PREFERENCE", "UV_PYTHON_DOWNLOADS")  # requirements, not preferences
     return {key: value for key, value in wanted.items() if key in forced or key not in env}
