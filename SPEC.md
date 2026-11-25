@@ -3174,9 +3174,10 @@ src/stickler_app/paths.py            # + packaged() == "system"
 
 ## Mac playback (module `mac-playback`)
 
-> Status: **approved** by the owner on 2026-11-25 (the plan in chat; both open questions
-> answered, below). The screens (M10) were approved on
-> 2026-11-24 (SPEC "Module `mac-design`", "Playback screens M10"); this section adds what the
+> Status: **done** (Checkpoint AC, 2026-11-25: the owner's check on the Mac). Approved by the
+> owner on 2026-11-25 (the plan in chat; both open questions answered, below). The screens
+> (M10) were approved on 2026-11-24 (SPEC "Module `mac-design`", "Playback screens M10"); this
+> section adds what the
 > screens leave open: where each decision lives, how the Mac plays two sources in time, what
 > the bridge gains. Facts checked on 2026-11-25 on the owner's Mac (macOS 27.2, Command Line
 > Tools SDK 26.5) unless named otherwise. Plan: `tasks/plan.md` ("Mac playback"), tasks 161–167.
