@@ -3764,7 +3764,9 @@ cannot hold there is skipped with that reason); ARM64.
 ### Module `win-spike`
 
 > Status: **answered** 2026-11-25 (runner 2026-11-24, the owner's PC 2026-11-25; below), the
-> branch's deletion waiting for the owner. Approved by the owner on 2026-11-24 (the company laptop is the only Windows PC
+> branch `claude/win-spike` kept as `win-package`'s reference for its installer script, launcher
+> and measuring workflow, deleted once that module is written (owner, 2026-11-25: "delete it
+> when we no longer need it"). Approved by the owner on 2026-11-24 (the company laptop is the only Windows PC
 > and counts: "wenn er hier läuft, passt das so"; decisions 2 and 3 as proposed). Plan:
 > `tasks/plan.md` ("`win-spike`"), tasks 176–180. Nothing of the spike's code is merged: its workflow, installer script and launcher live on a throwaway branch
 > (`claude/win-spike`); what stays are its findings, written into this spec and `tasks/todo.md`.
