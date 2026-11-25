@@ -2351,7 +2351,9 @@ with `mac-package`.
    - **Quitting** sends `quit` and waits at most 3 s for the core to exit, then ends it.
    - **Texts:** every text comes from `po/` through the String Catalog (`scripts/xcstrings.py`);
      the new ones of `mac-design` ("Show in Finder", "Takes about 15 seconds") and of this module
-     are added to `po/` with German and Spanish. Window size: at least 640 × 480 points.
+     are added to `po/` with German and Spanish. Window size: at least 480 points high, and
+     as wide as the playback controls need in one row (`mac-playback`, scope 4; 640 points
+     before it).
 3. **The Xcode project** is generated from `mac/project.yml` by XcodeGen (pinned, in CI), not
    committed: a hand-edited `.xcodeproj` cannot be written or reviewed without Xcode, and no one
    here has one. The generated project is a CI artifact for the owner.
@@ -3259,6 +3261,11 @@ asked first, so it is listed here for the owner):
    Detected hits sliders) and Song · Hits · Both as the segmented picker. VoiceOver names
    every control ("Position" with the time and bar as its value). The "saved" note sits above
    the capsule while a song is open. Shown with a result only (not during an export's steps).
+   The capsule keeps one row: the window's minimum width is what it needs with its margins,
+   for every window, so opening a song never resizes it; an inspector at the window's side
+   adds its own width to that minimum. At the former minimum of 640 points the picker covered
+   the Volume button (owner, 2026-11-25); macOS windows have a minimum size instead of the GTK
+   app's second row (SPEC "Module `mac-design`", out of scope).
 5. **The marker and bar clicks:** the sounding bar's rectangle drawn over the page in the
    system's accent colour, also on the inverted dark page (drawn outside the inverted
    paper), and scrolled into view when it leaves it; a click on a bar jumps there. Both by the

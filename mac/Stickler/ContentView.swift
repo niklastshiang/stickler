@@ -7,9 +7,15 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     let model: AppModel
 
+    /// The page's least width: the playback controls in one row with their margins (M10), for
+    /// every window, so opening a song never resizes it. A side inspector adds its own width.
+    static let minimumWidth = 740.0
+
     var body: some View {
         page
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(
+                minWidth: Self.minimumWidth, maxWidth: .infinity,
+                minHeight: 480, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if let notice = model.notice, !controls {
                     NoticeBar(model: model, notice: notice)

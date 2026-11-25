@@ -73,6 +73,17 @@ extension ScreenshotTests {
         try await shootView(overlay(model), "M10-saved")
     }
 
+    /// At the former minimum of 640 points the picker covered the Volume button (owner,
+    /// 2026-11-25): the narrowest window holds the controls in one row.
+    func testTheNarrowestWindowHoldsTheControls() async throws {
+        let model = try await playingModel()
+        let host = NSHostingController(rootView: PlaybackOverlay(model: model))
+        let least = host.sizeThatFits(in: CGSize(width: 100, height: 200)).width
+        XCTAssertGreaterThan(least, 640, "the controls do not fit the old minimum")
+        XCTAssertLessThanOrEqual(
+            least, ContentView.minimumWidth, "the controls need \(least) points")
+    }
+
     /// The controls as they float over the sheet of a 900 points wide window.
     func overlay(_ model: AppModel) -> some View {
         PlaybackOverlay(model: model).frame(width: 900)
