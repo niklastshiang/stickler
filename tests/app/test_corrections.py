@@ -147,12 +147,18 @@ def test_the_engraved_first_one_is_kept_within_a_shorter_corrected_bar():
 
 
 def test_a_change_from_a_control_is_kept_in_range():
-    change = corrections.change
-    assert change(DETECTED, "tempo", "double", beats_per_bar=4).tempo == "double"
-    assert change(DETECTED, "beats_per_bar", 20, beats_per_bar=4).beats_per_bar == 12
-    assert change(DETECTED, "first_one", 9, beats_per_bar=3).first_downbeat == 3
-    assert change(DETECTED, "first_one", 0, beats_per_bar=3).first_downbeat == 1
-    assert not change(DETECTED, "simplify", False, beats_per_bar=4).simplify
-    assert not change(DETECTED, "repeats", False, beats_per_bar=4).repeats
-    fixed = api.Corrections(tempo="half", repeats=False)
-    assert change(fixed, "detected", True, beats_per_bar=4) == DETECTED
+    def change(fix, name, value, beats=4, first=1):
+        shown = corrections.controls(fix, beats_per_bar=beats, first_one=first)
+        return corrections.change(fix, name, value, shown=shown)
+
+    assert change(DETECTED, "tempo", "double").tempo == "double"
+    assert change(DETECTED, "beats_per_bar", 20).beats_per_bar == 12
+    assert change(DETECTED, "beats_per_bar_by", 1).beats_per_bar == 5
+    assert change(DETECTED, "beats_per_bar_by", -9).beats_per_bar == 1
+    assert change(DETECTED, "first_one", 9, beats=3).first_downbeat == 3
+    assert change(DETECTED, "first_one", 0, beats=3).first_downbeat == 1
+    assert change(DETECTED, "first_one_by", 1, first=2).first_downbeat == 3
+    assert change(DETECTED, "first_one_by", 5, first=2).first_downbeat == 4
+    assert not change(DETECTED, "simplify", False).simplify
+    assert not change(DETECTED, "repeats", False).repeats
+    assert change(api.Corrections(tempo="half", repeats=False), "detected", True) == DETECTED

@@ -678,8 +678,8 @@ Design decisions:
 - **The sheet follows the notation, not the wanted values:** `result` gains `sheet`, which
   changes with every new notation; `SheetModel` keys on it. Keyed on `corrections` (today) it
   would engrave the old notes at a correction's start and miss the new ones.
-- **Steppers go out one after another,** each computed from the newest state, so quick clicks
-  are not lost (as `step` for playback).
+- **Steppers send steps, not values** (`beats_per_bar_by`, `first_one_by`): the core counts
+  each from its newest values, so quick clicks are not lost (changed while building 190).
 - **The inspector is SwiftUI's own** (`inspector`, `Form` grouped), open or closed kept in
   `@AppStorage`; the View menu item is a gated logic type like `ControlsMenu`.
 
@@ -691,7 +691,7 @@ workflow.
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | The sheet shows the old notes after a correction | High | `sheet` in the state, `SheetModel` keyed on it; a test that pages are fetched once per new notation and not at the start |
-| Quick stepper clicks lost or sent twice | Medium | Commands one after another, each from the newest `controls`; a test with two quick clicks |
+| Quick stepper clicks lost or sent twice | Medium | Steps (`_by`) counted by the core in order; a test with two quick clicks |
 | `correct` waits behind `pages` while the core engraves | Low | The 250 ms pause already joins quick changes; a wait of one engraving is accepted |
 | The GTK panel changes while its rule moves to `stickler_app` | Medium | The GTK widget test of the shown values runs before and after (`scripts/gtk.sh test`) |
 | A toolbar button at the far right lands over the inspector on macOS 26 | Low | Placement checked in the screenshot against M11; the menu and ⌃⌘I work either way |

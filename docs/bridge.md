@@ -511,8 +511,10 @@ another song saved at the same place gets its own.
 
 One change from the corrections controls (SPEC.md "Mac corrections"), exactly one of:
 `tempo` (`"half"`, `"normal"` or `"double"`), `beats_per_bar` (kept within 1 to 12),
-`first_one` (kept within the bar as `controls` shows it), `simplify`, `repeats` (true or
-false), or `detected: true` ("Back to Detected"). The new values come at once in a `state`
+`first_one` (kept within the bar as `controls` shows it), `beats_per_bar_by` or
+`first_one_by` (a stepper's click, e.g. 1 or -1, counted from the newest values, so quick
+clicks are never lost), `simplify`, `repeats` (true or false), or `detected: true` ("Back to
+Detected"). The new values come at once in a `state`
 event before the reply, with `correcting` true; the new notation follows 250 ms after the
 changes pause, the newest winning, and the song keeps its corrections. A change that changes
 nothing sends no state. Only on a result; none or several changes are `bad_argument` named

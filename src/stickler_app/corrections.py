@@ -90,20 +90,32 @@ def controls(fix: api.Corrections, *, beats_per_bar: int, first_one: int) -> Con
     )
 
 
-CHANGES = ("tempo", "beats_per_bar", "first_one", "simplify", "repeats", "detected")
+CHANGES = (
+    "tempo",
+    "beats_per_bar",
+    "beats_per_bar_by",
+    "first_one",
+    "first_one_by",
+    "simplify",
+    "repeats",
+    "detected",
+)
 
 
 def change(
-    fix: api.Corrections, name: str, value: str | int | bool, *, beats_per_bar: int
+    fix: api.Corrections, name: str, value: str | int | bool, *, shown: Controls
 ) -> api.Corrections:
-    """One control's change, kept in range; `beats_per_bar` is the bar as shown. `name` is
+    """One control's change, kept in range. `shown` is what the controls show for `fix`; the
+    `_by` changes step from it (a stepper's click, counted on the newest values). `name` is
     one of CHANGES and `value` of its type (the caller checks them)."""
     if name == "tempo":
         return with_tempo(fix, str(value))
-    if name == "beats_per_bar":
-        return with_beats(fix, int(value))
-    if name == "first_one":
-        return with_first_one(fix, int(value), beats_per_bar=beats_per_bar)
+    if name in ("beats_per_bar", "beats_per_bar_by"):
+        base = shown.beats_per_bar if name.endswith("_by") else 0
+        return with_beats(fix, base + int(value))
+    if name in ("first_one", "first_one_by"):
+        base = shown.first_one if name.endswith("_by") else 0
+        return with_first_one(fix, base + int(value), beats_per_bar=shown.beats_per_bar)
     if name == "simplify":
         return with_simplify(fix, bool(value))
     if name == "repeats":

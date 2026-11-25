@@ -918,6 +918,11 @@ def test_each_correction_is_kept_in_range_and_one_that_changes_nothing_sends_no_
         assert running.state()["controls"]["first_one"] == 12
         running.send("correct", beats_per_bar=3)
         assert running.state()["controls"]["first_one"] == 3  # the same place in a shorter bar
+        running.send("correct", beats_per_bar_by=1)
+        running.send("correct", beats_per_bar_by=1)  # two quick clicks, two steps
+        assert running.state()["controls"]["beats_per_bar"] == 5
+        running.send("correct", first_one_by=-1)
+        assert running.state()["controls"]["first_one"] == 2
         running.send("correct", repeats=False)
         running.send("correct", simplify=False)
         shown = running.state()["controls"]
@@ -937,6 +942,8 @@ def test_a_correction_needs_one_valid_change(monkeypatch, tmp_path):
             {"beats_per_bar": "4"},
             {"beats_per_bar": True},
             {"first_one": 1.5},
+            {"first_one_by": "1"},
+            {"beats_per_bar_by": None},
             {"simplify": "no"},
             {"repeats": 0},
             {"detected": False},

@@ -541,15 +541,14 @@ class Bridge:
             value = _text(command, name)
             if value not in notation.TEMPOS:
                 raise _bad_argument(name)
-        elif name in ("beats_per_bar", "first_one"):
+        elif name in ("beats_per_bar", "beats_per_bar_by", "first_one", "first_one_by"):
             value = _whole(command, name)
         else:
             value = _flag(command, name)
             if name == "detected" and not value:
                 raise _bad_argument(name)
         result = self._result()
-        shown = _controls(result)
-        fix = corrections.change(result.wanted, name, value, beats_per_bar=shown.beats_per_bar)
+        fix = corrections.change(result.wanted, name, value, shown=_controls(result))
         if fix == result.wanted:
             return {}
         return self._fits(self._ctl.correct(fix))

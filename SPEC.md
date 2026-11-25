@@ -3388,7 +3388,9 @@ it. A drummer on a Mac fixes a wrong beat in a second, as on Linux.
      the app knows when to fetch pages again.
    - `correct` with exactly one change: `tempo` ("half", "normal", "double"),
      `beats_per_bar` (an integer, kept within 1–12), `first_one` (an integer, kept within the
-     shown bar), `simplify` or `repeats` (booleans), or `detected: true` ("Back to Detected").
+     shown bar), `beats_per_bar_by` or `first_one_by` (a stepper's click, counted by the core
+     from its newest values, added in task 190 so quick clicks are never lost), `simplify` or
+     `repeats` (booleans), or `detected: true` ("Back to Detected").
      The new values come as a `state` event before the reply; a change that changes nothing is
      answered `ok` with no event. `not_now` without a result (also while the drum track is
      exported); `bad_argument` for no change, two changes, an unknown tempo or a wrong type.
@@ -3397,10 +3399,9 @@ it. A drummer on a Mac fixes a wrong beat in a second, as on Linux.
    - `SongResult` decodes `controls` (missing in an older line: no inspector content) and
      `sheet`; `Command.correct(Correction)` with `Correction` one of `.tempo`, `.beatsPerBar`,
      `.firstOne`, `.simplify`, `.repeats`, `.detected`.
-   - `AppModel.correct(_:)` sends it; the steppers' commands go out one after another, each
-     computed from the state the previous one left (`beatsPerBar + 1` of the newest
-     `controls`), so two quick clicks make two steps, as `step` does for playback. A refusal
-     becomes the window's notice.
+   - `AppModel.correct(_:)` sends it, in the reader's order; the steppers send `_by` steps
+     (`.beatsPerBarBy(1)`), which the core counts from its newest values, so two quick clicks
+     make two steps. A refusal becomes the window's notice.
    - `SheetModel` asks for pages when `song` or `sheet` changes, no longer on `corrections`;
      a correction keeps the old pages until the new ones come, as a resize does.
 3. **The inspector** (app target, `CorrectionsInspector.swift`): SwiftUI's `inspector` at the
