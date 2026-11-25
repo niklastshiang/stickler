@@ -2089,7 +2089,10 @@ stays as it is); the macOS app icon is part of this module.
 **Decisions from the mockups (owner, 2026-11-17):**
 - **Window:** a unified toolbar (title, and under it artist, tempo and time signature once a
   song is open); on the right a capsule with Open and Export (Export is a menu, disabled without
-  a song). The sheet music sits on a grey desk, the page as in the GTK app.
+  a song). Built first as two toolbar items, which macOS 26 draws as two round
+  glasses (a menu button gets glass of its own); kept so on 2026-11-19, merged into one capsule
+  on 2026-11-25 (owner, with M11's toolbar): one `ControlGroup` holding Open and the Export
+  menu, the Corrections button alone after a fixed space. The sheet music sits on a grey desk, the page as in the GTK app.
 - **First start** comes as sheets over the empty window (consent, download, a server not
   answering), with the GTK app's texts and step list; buttons right-aligned, the default one blue.
 - **Export menu** items carry a second line (macOS 14 and later): PDF, MusicXML, Drum Track,
@@ -3423,7 +3426,9 @@ it. A drummer on a Mac fixes a wrong beat in a second, as on Linux.
 4. **Opening it:** a toolbar button at the far right (`sidebar.trailing`, help "Corrections",
    shown as pressed while open) and View › Show Corrections / Hide Corrections (⌃⌘I) between
    the zoom items and Enter Full Screen, enabled with a result. The item's title and state
-   are a logic type (`CorrectionsMenu`), tested and gated like `ControlsMenu`.
+   are a logic type (`CorrectionsMenu`), tested and gated like `ControlsMenu`. The button
+   stands alone after a fixed space; Open and Export before it become one capsule, as M4
+   draws them (owner, 2026-11-25; "Decisions from the mockups").
 5. **While a correction is written:** a small spinner left of Open and Export while
    `correcting` (owner, 2026-11-25; M11 draws it after the subtitle, see "Corrections screens
    M11"); the old sheet, title and marker stay until the new state comes; playback goes

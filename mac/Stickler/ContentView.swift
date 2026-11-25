@@ -42,26 +42,28 @@ struct ContentView: View {
                     }
                     .sharedBackgroundVisibility(.hidden)
                 }
+                // Open and Export in one capsule, as M4 draws them (owner, 2026-11-25): two
+                // items got a glass each, since macOS 26 gives a menu button its own
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        Panels.openSong(model)
-                    } label: {
-                        Label("Open…", systemImage: "folder")
+                    ControlGroup {
+                        Button {
+                            Panels.openSong(model)
+                        } label: {
+                            Label("Open…", systemImage: "folder")
+                        }
+                        .help(Text("Open a Song"))
+                        .disabled(!canOpen)
+                        Menu {
+                            ExportMenu(model: model)
+                        } label: {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                        .help(Text("Export"))
+                        // said again for VoiceOver: built with the macOS 26 SDK and run on
+                        // macOS 27, the menu button's name was its arrow's, "chevron.pulldown"
+                        .accessibilityLabel(Text("Export"))
+                        .disabled(Exports.result(model) == nil)
                     }
-                    .help(Text("Open a Song"))
-                    .disabled(!canOpen)
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        ExportMenu(model: model)
-                    } label: {
-                        Label("Export", systemImage: "square.and.arrow.up")
-                    }
-                    .help(Text("Export"))
-                    // said again for VoiceOver: built with the macOS 26 SDK and run on
-                    // macOS 27, the menu button's name was its arrow's, "chevron.pulldown"
-                    .accessibilityLabel(Text("Export"))
-                    .disabled(Exports.result(model) == nil)
                 }
                 ToolbarSpacer(.fixed, placement: .primaryAction)
                 ToolbarItem(placement: .primaryAction) {
