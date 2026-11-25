@@ -3172,9 +3172,10 @@ src/stickler_app/paths.py            # + packaged() == "system"
    the owner's check (task 160):** whether GNOME Software on Fedora Workstation shows an
    Uninstall button for a Flatpak installed from a file (`appstream:<id>`).
 
-## Mac playback (module `mac-playback`, proposed)
+## Mac playback (module `mac-playback`)
 
-> Status: **proposed** 2026-11-25, for the owner's approval. The screens (M10) were approved on
+> Status: **approved** by the owner on 2026-11-25 (the plan in chat; both open questions
+> answered, below). The screens (M10) were approved on
 > 2026-11-24 (SPEC "Module `mac-design`", "Playback screens M10"); this section adds what the
 > screens leave open: where each decision lives, how the Mac plays two sources in time, what
 > the bridge gains. Facts checked on 2026-11-25 on the owner's Mac (macOS 27.2, Command Line
@@ -3232,9 +3233,9 @@ asked first, so it is listed here for the owner):
    - `volumes {hear, song?, hits?}`: remembers the given volumes (0 to 1) in the settings and
      replies with the gains to play, `{"song", "hits"}` (`playback.volumes`, with the stored
      volumes for the ones left out). `settings` already sends `song_volume` and `hits_volume`.
-   - `playable`: the result's song as a file the Mac plays, a FLAC copy in the cache decoded
-     once (`_decoded`, as for the models; never part of a backup). Asked only when Core Audio
-     cannot read the song.
+   - `playable`: the result's song as a file the Mac plays, a FLAC copy decoded once into
+     the app's cache (`playable/`, beside the clicks in `hits/`; caches are never part of a
+     backup). Asked only when Core Audio cannot read the song.
 2. **`SticklerCore`** (Linux and macOS): the new fields and commands; `PlaybackModel`
    (`@Observable`, owned by `AppModel` as `playback`): the player behind a protocol
    (`Playing`: load, play, pause, seek, position, gains, stop; a fake in the tests), playing
@@ -3297,10 +3298,10 @@ drum samples, the Now Playing widget and media keys, remembering the position pe
 7. `scripts/check.sh task` green; `SticklerCore` and the app's logic ≥ 95 %; the `mac` workflow
    green; the GTK app and the benchmark unchanged.
 
-**Open questions** (for the owner, with the approval):
-1. "Remembered per song" (M10) is read as the GTK app does it: one pair of volumes kept for
-   every song, like the note size. Right?
-2. Which release carries it: release 11 alone, or with more?
+**Decided (owner, 2026-11-25):**
+1. "Remembered per song" (M10) means what the GTK app does: one pair of volumes kept for
+   every song, like the note size.
+2. Playback comes in a release together with other work, not in a release of its own.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)

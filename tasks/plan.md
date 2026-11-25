@@ -636,7 +636,7 @@ Design decisions:
 | GNOME Software shows no uninstall button for a Flatpak from a file | Low | the dialog shows the `flatpak uninstall` line there too |
 | PackageKit asks no password on some system (a polkit rule) | Low | the app's own dialog has already asked; documented |
 
-## Mac playback: `mac-playback` (proposed 2026-11-25, SPEC.md "Mac playback")
+## Mac playback: `mac-playback` (approved 2026-11-25, SPEC.md "Mac playback")
 
 The Mac app plays the song, its clicks or both, with the marker following (screens M10).
 
