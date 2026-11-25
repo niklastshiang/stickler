@@ -102,7 +102,7 @@ def test_setup_rocm_builds_env_with_replaced_torch(spec, monkeypatch):
     install = next(c for c in calls if c[:3] == ["uv", "pip", "install"])
     assert "torch[device-gfx1152]==2.12.0+rocm7.14.1" in install
     assert "https://repo.amd.com/rocm/whl-multi-arch/" in install
-    req = Path(install[install.index("-r") + 1]).read_text()
+    req = Path(install[install.index("-r") + 1]).read_text(encoding="utf-8")
     assert "torch==" not in req and "numpy" in req and "-e ../../_common" in req
 
 

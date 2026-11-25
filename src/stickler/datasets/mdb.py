@@ -101,7 +101,14 @@ def tracks(target: Path) -> list[Track]:
 
 
 def _git(*args: str) -> None:
-    subprocess.run(["git", *args], check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", *args],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
 
 
 def fetch(target: Path, repo_url: str = REPO_URL) -> int:

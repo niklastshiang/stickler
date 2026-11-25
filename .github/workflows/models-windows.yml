@@ -1,0 +1,80 @@
+# The Windows app's models on the runner's CPU (SPEC.md, module `win-core`, scope 8): ADTOF,
+# Beat This! and Demucs set up and run on their smoke clips; MuScriptor (gated, no token in CI)
+# only installed from its lock. Each model's seconds and peak RAM go into the job summary, and
+# the longest path below the models' folders (Windows' limit of 260 characters, `win-spike`).
+name: models-windows
+
+on:
+  push:
+    branches: [main, "claude/win-*"]
+    paths:
+      - "adapters/**"
+      - "src/stickler/**"
+      - "tests/test_adapter_smoke.py"
+      - ".github/workflows/models-windows.yml"
+  schedule:
+    - cron: "30 4 * * 1" # Mondays, 04:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  models:
+    runs-on: windows-2025
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      UV_PYTHON: "3.14"
+    steps:
+      - name: Files as they are in the repository (no CRLF on checkout)
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Tools
+        run: |
+          choco install ffmpeg --no-progress -y
+          ffmpeg -version | head -n 1
+      - run: uv sync --locked
+      - name: Set up ADTOF, Beat This! and Demucs
+        run: |
+          for adapter in adtof beat_this demucs; do
+            uv run stickler setup --adapter "$adapter"
+          done
+      - name: MuScriptor installs from its lock on Windows (not run; gated)
+        # without the harness's UV_PYTHON, as stickler runs adapters (their own Python)
+        run: |
+          env -u UV_PYTHON uv sync --locked --project adapters/transcribers/muscriptor_m
+          env -u UV_PYTHON uv sync --locked --project adapters/transcribers/muscriptor_l
+      - name: Smoke tests on the CPU
+        env:
+          STICKLER_SMOKE_REPORT: ${{ runner.temp }}/smoke.jsonl
+        run: >
+          uv run pytest -q -m adapters tests/test_adapter_smoke.py
+          -k "(transcriber_produces_midi and adtof) or (separator_produces_drum_stem and demucs)
+          or beat_tracker or without_network"
+      - name: Times and memory into the job summary and the log
+        if: always()
+        env:
+          REPORT: ${{ runner.temp }}/smoke.jsonl
+        run: |
+          uv run python - <<'EOF' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json, os, platform
+          from pathlib import Path
+          report = Path(os.environ["REPORT"])
+          rows = [json.loads(line) for line in report.read_text(encoding="utf-8").splitlines()] if report.exists() else []
+          print(f"### Models on {platform.machine()} Windows {platform.version()}, CPU, 10 s clip\n")
+          print("| Model | Seconds | Peak RAM (MB) |\n|---|---|---|")
+          for r in rows:
+              print(f"| {r['adapter']} | {r['seconds']} | {r['peak_rss_mb']} |")
+          if not rows:
+              print("| (no results) | | |")
+          root = Path("adapters").resolve()
+          longest = max((p for p in root.rglob("*")), key=lambda p: len(str(p.relative_to(root))))
+          print(f"\nLongest path below the models' folders: {len(str(longest.relative_to(root)))} characters")
+          print(f"(`{longest.relative_to(root).as_posix()}`)")
+          EOF

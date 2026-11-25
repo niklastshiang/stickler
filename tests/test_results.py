@@ -82,4 +82,4 @@ def test_summary_without_new_columns_still_works():
 
 def test_write_csv_empty(tmp_path):
     write_csv(tmp_path / "leer.csv", [])
-    assert (tmp_path / "leer.csv").read_text() == ""
+    assert (tmp_path / "leer.csv").read_text(encoding="utf-8") == ""

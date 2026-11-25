@@ -27,7 +27,7 @@ def _mac(home: Path) -> dict[str, str]:
 def _analysed(env, digest_folder: str, adapter: str = "adtof", size: int = 10) -> Path:
     folder = paths.results_cache(env) / adapter / digest_folder
     folder.mkdir(parents=True)
-    (folder / "meta.json").write_text("{}")
+    (folder / "meta.json").write_text("{}", encoding="utf-8")
     (folder / "drums.mid").write_bytes(b"x" * size)
     return folder
 
@@ -125,7 +125,7 @@ def test_a_restore_adds_what_is_missing_and_keeps_what_is_here(tmp_path):
 def test_a_broken_foreign_or_newer_file_is_refused_and_changes_nothing(tmp_path, made):
     bad = tmp_path / "bad.zip"
     if made == "not a zip at all":
-        bad.write_text("hello")
+        bad.write_text("hello", encoding="utf-8")
     else:
         with zipfile.ZipFile(bad, "w") as z:
             if made != "a zip without backup.json":

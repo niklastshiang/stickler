@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · export menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; color: #1b1b1b;">
+  <dc-import name="Sheet" hint-size="1000px,700px"></dc-import>
+  <ul role="menu" aria-label="Export" style="position: absolute; top: 124px; right: 24px; width: 240px; list-style: none; margin: 0; padding: 4px; box-sizing: border-box; background: #f9f9f9; border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,0.10), 0 8px 16px rgba(0,0,0,0.14); font-size: 14px; line-height: 20px; color: #1b1b1b;">
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px; background: rgba(0,0,0,0.05);">
+      <span style="flex-grow: 1;">Sheet Music (PDF)…</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">MusicXML…</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Drum Track…</span>
+    </li>
+    <li role="separator" style="height: 1px; margin: 4px 0; background: rgba(0,0,0,0.09);"></li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Open With…</span>
+    </li>
+  </ul>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

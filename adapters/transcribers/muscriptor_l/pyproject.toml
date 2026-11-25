@@ -12,9 +12,13 @@ dependencies = [
 
 [tool.uv]
 package = false
-# Stickler only runs on Linux; muscriptor pins an old torch for Intel macOS that cannot be
+# Stickler runs on Linux, macOS arm64 and Windows x64 only; muscriptor pins an old torch for Intel macOS that cannot be
 # resolved with the CPU index.
-environments = ["sys_platform == 'linux'", "sys_platform == 'darwin' and platform_machine == 'arm64'"]
+environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+]
 
 [tool.uv.sources]
 stickler-adapter = { path = "../../_common", editable = true }

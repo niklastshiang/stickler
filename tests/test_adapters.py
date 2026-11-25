@@ -3,9 +3,11 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
+from procs import Processes
 
 from stickler import adapters
 from stickler.midi import read_drum_notes
@@ -44,7 +46,7 @@ def test_dummy_adapter_runs_and_writes_meta(registry, tmp_path):
     assert result.ok, result.error
     assert result.output == tmp_path / "out" / "drums.mid"
     assert read_drum_notes(result.output) == [(0.5, 36), (1.0, 38)]
-    meta = json.loads((tmp_path / "out" / "meta.json").read_text())
+    meta = json.loads((tmp_path / "out" / "meta.json").read_text(encoding="utf-8"))
     assert meta["adapter"] == "dummy"
     assert meta["version"] == "1.0"
     assert meta["device"] == "cpu"
@@ -59,7 +61,7 @@ def test_broken_adapter_is_logged_not_raised(registry, tmp_path):
     result = adapters.run_adapter(registry["broken"], audio, tmp_path / "out", device="cpu")
     assert not result.ok
     assert "Model exploded" in result.error
-    assert "Model exploded" in (tmp_path / "out" / "error.log").read_text()
+    assert "Model exploded" in (tmp_path / "out" / "error.log").read_text(encoding="utf-8")
 
 
 def test_missing_output_counts_as_error(tmp_path):
@@ -98,7 +100,7 @@ def test_setup_adapter_syncs_and_runs_setup_py(registry):
     marker = registry["dummy"].path / ".setup-done"
     marker.unlink(missing_ok=True)
     adapters.setup_adapter(registry["dummy"])
-    assert marker.read_text() == "ok"
+    assert marker.read_text(encoding="utf-8") == "ok"
 
 
 def test_setup_without_setup_py_only_syncs(registry):
@@ -125,7 +127,7 @@ def test_timeout_kills_model_process_under_uv(registry, tmp_path, processes):
     result = adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=5)
     assert time.monotonic() - start < 20
     assert not result.ok and "time limit" in result.error
-    pid = int((out / "pid").read_text())
+    pid = int((out / "pid").read_text(encoding="utf-8"))
     time.sleep(0.5)
     assert not processes.running(pid), "model process keeps running after the time limit"
 
@@ -133,15 +135,14 @@ def test_timeout_kills_model_process_under_uv(registry, tmp_path, processes):
 def _cancel_when_running(pid_file: Path, token, seen: dict) -> None:
     """Sets `token` once the model process has written its pid; records the pid, its process
     group and the moment of cancelling in `seen`."""
-    import os
     import threading
     import time
 
     def watch() -> None:
-        while not (pid_file.exists() and pid_file.read_text()):
+        while not (pid_file.exists() and pid_file.read_text(encoding="utf-8")):
             time.sleep(0.01)
-        seen["pid"] = int(pid_file.read_text())
-        seen["group"] = os.getpgid(seen["pid"])
+        seen["pid"] = int(pid_file.read_text(encoding="utf-8"))
+        seen["group"] = Processes.group(seen["pid"])
         seen["at"] = time.monotonic()
         token.cancel()
 
@@ -158,6 +159,7 @@ def test_cancel_ends_the_process_group_within_a_second(registry, tmp_path, proce
         adapters.run_adapter(registry["sleepy"], tmp_path / "a.wav", out, timeout=30, cancel=token)
     assert time.monotonic() - seen["at"] < 1
     assert processes.group_gone(seen["group"]), "a process of the adapter's group survived"
+    assert not processes.running(seen["pid"]), "the model process survived"
 
 
 def test_cancelled_run_leaves_no_output_behind(registry, tmp_path):
@@ -190,7 +192,8 @@ def _local_adapter(root: Path, name: str = "t", weights: bool = True) -> adapter
     (d / "pyproject.toml").write_text(
         f'[project]\nname = "{name}"\nversion = "0"\nrequires-python = ">=3.12,<3.13"\n'
         'dependencies = ["stickler-adapter"]\n'
-        f'[tool.uv.sources]\nstickler-adapter = {{ path = "{COMMON}", editable = true }}\n',
+        "[tool.uv.sources]\n"
+        f'stickler-adapter = {{ path = "{COMMON.as_posix()}", editable = true }}\n',
         encoding="utf-8",
     )
     if weights:
@@ -249,6 +252,10 @@ def test_cancelling_the_weights_download_keeps_them_not_set_up(tmp_path, process
     assert not list((spec.path / "weights").rglob("*.partial"))
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="the stand-in for uv is a shell script; Windows starts only a uv.exe by that name",
+)
 def test_cancelling_uv_sync_leaves_the_environment_not_set_up(tmp_path, processes, monkeypatch):
     """A stand-in for `uv` that hangs: cancel kills it; the next setup with the real uv builds
     the environment (uv resumes, Task 32)."""
@@ -289,7 +296,9 @@ def dead_network(monkeypatch) -> None:
 
 def _python(spec: adapters.AdapterSpec, code: str) -> subprocess.CompletedProcess:
     cmd = [*adapters.cpu_python(spec), "-c", code]
-    return subprocess.run(cmd, capture_output=True, text=True, env=adapters.adapter_env())
+    return subprocess.run(
+        cmd, capture_output=True, text=True, encoding="utf-8", env=adapters.adapter_env()
+    )
 
 
 def test_a_set_up_adapter_starts_without_network(tmp_path, monkeypatch):
@@ -365,9 +374,95 @@ def test_gpu_environments_use_the_adapters_own_python(tmp_path):
 
     pinned = tmp_path / "pinned"
     pinned.mkdir()
-    (pinned / ".python-version").write_text("3.14\n")
+    (pinned / ".python-version").write_text("3.14\n", encoding="utf-8")
     assert adapters_mod.adapter_python(pinned) == "3.14"
     assert adapters_mod.adapter_python(tmp_path / "unpinned") == "3.12"
     real = Path(__file__).parents[1] / "adapters"
     assert adapters_mod.adapter_python(real / "separators" / "demucs") == "3.14"
     assert adapters_mod.adapter_python(real / "transcribers" / "muscriptor_m") == "3.12"
+
+
+class _Started:
+    """Stands in for a started adapter: a pid, and whether it was reaped."""
+
+    pid = 4711
+
+    def __init__(self):
+        self.reaped = False
+
+    def communicate(self):
+        self.reaped = True
+        return "", ""
+
+
+def test_on_windows_the_whole_tree_below_uv_is_ended_with_taskkill(monkeypatch):
+    """Windows has no process groups to signal and neither os.killpg nor SIGKILL: taskkill ends
+    `uv` and the model it started (/T), by force (/F). Real processes: the Windows job."""
+    import os
+    import signal
+
+    monkeypatch.delattr(os, "killpg", raising=False)  # Windows has neither
+    monkeypatch.delattr(signal, "SIGKILL", raising=False)
+    commands = []
+
+    def run(cmd, **kwargs):
+        commands.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, b"", b"")
+
+    proc = _Started()
+    adapters._kill_group(proc, platform="win32", run=run)
+    assert commands == [["taskkill", "/T", "/F", "/PID", "4711"]]
+    assert proc.reaped
+
+
+def test_on_windows_a_tree_that_has_just_ended_is_still_reaped():
+    def run(cmd, **kwargs):  # taskkill: "the process not found", exit code 128
+        return subprocess.CompletedProcess(cmd, 128, b"", b"ERROR: not found")
+
+    proc = _Started()
+    adapters._kill_group(proc, platform="win32", run=run)
+    assert proc.reaped
+
+
+def test_run_group_keeps_going_over_output_that_is_not_utf8():
+    """A model's console output is not ours to police: one stray byte (Latin-1 "café") must
+    not turn a finished adapter into a UnicodeDecodeError."""
+    code = (
+        "import sys\n"
+        "sys.stdout.buffer.write(b'caf\\xe9\\n')\n"
+        "sys.stderr.buffer.write(b'warn \\xff\\n')\n"
+    )
+    proc = adapters._run_group([sys.executable, "-c", code], timeout=60)
+    assert proc is not None
+    assert proc.returncode == 0
+    assert proc.stdout == "caf�\n"
+    assert proc.stderr == "warn �\n"
+
+
+def test_adapter_env_forces_utf8_on_windows_only():
+    """Windows decodes and encodes with cp1252 unless told otherwise; the adapters' own
+    Python processes get UTF-8 mode there. Elsewhere the environment is left as it is."""
+    plain = adapters.adapter_env(platform="linux")
+    assert adapters.adapter_env(platform="darwin") == plain
+    assert adapters.adapter_env() == adapters.adapter_env(platform=sys.platform)
+    assert adapters.adapter_env(platform="win32") == {**plain, "PYTHONUTF8": "1"}
+
+
+def test_an_adapter_does_not_get_the_callers_stdin():
+    """The bridge reads its stdin all the time. A model that inherited that pipe waits on it:
+    on Windows `uv` and Python already do so when they start, and the analysis never ended
+    (found on the Windows runner, 2026-11-24). Here: a caller whose stdin is an open pipe starts
+    a program that reads its stdin to the end; it must see the end at once."""
+    code = (
+        "import sys\n"
+        "from stickler import adapters\n"
+        "reader = [sys.executable, '-c', 'import sys; sys.stdin.read()']\n"
+        "done = adapters._run_group(reader, 5)\n"
+        "sys.exit(0 if done is not None and done.returncode == 0 else 1)\n"
+    )
+    caller = subprocess.Popen([sys.executable, "-c", code], stdin=subprocess.PIPE)
+    try:
+        assert caller.wait(30) == 0, "the program waited on the caller's stdin"
+    finally:
+        caller.stdin.close()
+        caller.wait()

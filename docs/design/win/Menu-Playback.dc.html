@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler for Windows · playback menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; font-family: 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui, sans-serif; color: #1b1b1b;">
+  <dc-import name="Playing" menu="playback" hint-size="1000px,700px"></dc-import>
+  <ul role="menu" aria-label="Playback" style="position: absolute; top: 72px; left: 110px; width: 260px; list-style: none; margin: 0; padding: 4px; box-sizing: border-box; background: #f9f9f9; border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,0.10), 0 8px 16px rgba(0,0,0,0.14); font-size: 14px; line-height: 20px; color: #1b1b1b;">
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px 0 40px; margin: 0; box-sizing: border-box; border-radius: 4px; background: rgba(0,0,0,0.05);">
+      <span style="flex-grow: 1;">Pause</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Space</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px 0 40px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Previous Bar</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Left</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px 0 40px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Next Bar</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Right</span>
+    </li>
+    <li role="menuitem" style="display: flex; align-items: center; height: 32px; padding: 0 12px 0 40px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Go to the Start</span>
+      <span style="font-size: 12px; line-height: 16px; color: #5c5c5c;">Home</span>
+    </li>
+    <li role="separator" style="height: 1px; margin: 4px 0; background: rgba(0,0,0,0.09);"></li>
+    <li role="menuitemradio" aria-checked="false" style="display: flex; align-items: center; height: 32px; padding: 0 12px 0 40px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Song</span>
+    </li>
+    <li role="menuitemradio" aria-checked="false" style="display: flex; align-items: center; height: 32px; padding: 0 12px 0 40px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <span style="flex-grow: 1;">Hits</span>
+    </li>
+    <li role="menuitemradio" aria-checked="true" style="position: relative; display: flex; align-items: center; height: 32px; padding: 0 12px 0 40px; margin: 0; box-sizing: border-box; border-radius: 4px;">
+      <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true" style="position: absolute; left: 16px; top: 12px;"><circle cx="4" cy="4" r="3.5" fill="#1b1b1b"></circle></svg>
+      <span style="flex-grow: 1;">Both</span>
+    </li>
+  </ul>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

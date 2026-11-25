@@ -27,7 +27,7 @@ def world(tmp_path):
         d = cache / spec_id / cachemigration.legacy_key(spec, _sha1(audio), env)
         d.mkdir(parents=True)
         (d / output).write_bytes(payload)
-        (d / "meta.json").write_text(json.dumps({"device": env.split("|")[-1]}))
+        (d / "meta.json").write_text(json.dumps({"device": env.split("|")[-1]}), encoding="utf-8")
         return d
 
     stem_dir = legacy_entry("copysep", mix, "auto", "drums.wav", b"stem-content")
@@ -48,10 +48,14 @@ def test_code_digest_ignores_comments_and_docstrings(tmp_path):
     spec_dir.mkdir()
     spec = adapters.AdapterSpec("a", "transcribers", spec_dir)
     (spec_dir / "run.py").write_text('"""Doc."""\nX = 1  # comment\n', encoding="utf-8")
-    (spec_dir / "pyproject.toml").write_text('[project]\nname = "a"  # Kommentar\n')
+    (spec_dir / "pyproject.toml").write_text(
+        '[project]\nname = "a"  # Kommentar\n', encoding="utf-8"
+    )
     before = runner.code_digest(spec)
-    (spec_dir / "run.py").write_text('"""Translated doc."""\n# new comment\nX = 1\n')
-    (spec_dir / "pyproject.toml").write_text('# header\n[project]\nname = "a"\n')
+    (spec_dir / "run.py").write_text(
+        '"""Translated doc."""\n# new comment\nX = 1\n', encoding="utf-8"
+    )
+    (spec_dir / "pyproject.toml").write_text('# header\n[project]\nname = "a"\n', encoding="utf-8")
     assert runner.code_digest(spec) == before
     (spec_dir / "run.py").write_text("X = 2\n", encoding="utf-8")
     assert runner.code_digest(spec) != before
@@ -107,7 +111,9 @@ def test_rekey_after_a_cosmetic_edit_keeps_results(world):
     cachemigration.migrate(cache, reg, [mix])
     before = cachemigration.digests(reg)
     run_py = reg["dummy"].path / "run.py"
-    run_py.write_text(run_py.read_text() + '\nMESSAGE = "translated"\n', encoding="utf-8")
+    run_py.write_text(
+        run_py.read_text(encoding="utf-8") + '\nMESSAGE = "translated"\n', encoding="utf-8"
+    )
     assert cachemigration.digests(reg)["dummy"] != before["dummy"]
     report = cachemigration.migrate(cache, reg, [mix], previous_digests=before)
     assert report.moved == 2 and report.orphaned == 0  # mix and stem transcription
@@ -120,7 +126,7 @@ def test_without_rekey_a_code_change_orphans_old_results(world):
     reg, cache, mix = world["registry"], world["cache"], world["mix"]
     cachemigration.migrate(cache, reg, [mix])
     run_py = reg["dummy"].path / "run.py"
-    run_py.write_text(run_py.read_text() + "\nX = 2\n", encoding="utf-8")
+    run_py.write_text(run_py.read_text(encoding="utf-8") + "\nX = 2\n", encoding="utf-8")
     report = cachemigration.migrate(cache, reg, [mix])
     assert report.moved == 0 and report.orphaned == 2
 

@@ -217,7 +217,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.record:
         out = record(args.record, [log_folder()])
-        print(f"{out.relative_to(ROOT)}: {len(json.loads(out.read_text())['days'])} days")
+        days = len(json.loads(out.read_text(encoding="utf-8"))["days"])
+        print(f"{out.relative_to(ROOT)}: {days} days")
         return 0
     if args.summary:
         rows, total = summary()

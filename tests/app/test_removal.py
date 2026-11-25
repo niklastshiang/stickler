@@ -56,6 +56,22 @@ def test_the_flatpak_also_removes_the_uv_cache_inside_its_sandbox_folder():
     assert Path(f"{HOME}/.cache/uv") not in removal.targets(shared, everything=False)
 
 
+def test_the_windows_app_removes_its_models_python_and_caches_but_not_its_settings(tmp_path):
+    local = tmp_path / "AppData" / "Local" / "Stickler"
+    env = {"STICKLER_PACKAGED": "windows", "LOCALAPPDATA": str(tmp_path / "AppData" / "Local")}
+    # the analyses sit in the cache folder; config (settings) and data/recent.json stay
+    assert removal.targets(env, everything=False) == [
+        local / "data" / "adapters",
+        local / "data" / "python",
+        local / "cache",
+    ]
+    assert removal.targets(env, everything=True) == [
+        local / "data",
+        local / "cache",
+        local / "config",
+    ]
+
+
 def test_size_and_removal_of_real_folders(tmp_path):
     env = {**APPIMAGE, "XDG_DATA_HOME": str(tmp_path / "d"), "XDG_CACHE_HOME": str(tmp_path / "c")}
     env["XDG_CONFIG_HOME"] = str(tmp_path / "f")
@@ -65,7 +81,7 @@ def test_size_and_removal_of_real_folders(tmp_path):
     (tmp_path / "c" / "stickler" / "scores").mkdir(parents=True)
     (tmp_path / "c" / "stickler" / "scores" / "a.musicxml").write_bytes(b"x" * 24)
     recent = tmp_path / "d" / "stickler" / "recent.json"
-    recent.write_text("[]")
+    recent.write_text("[]", encoding="utf-8")
     chosen = removal.targets(env, everything=False)
     assert removal.size(chosen) == 1024
     removal.remove(chosen)

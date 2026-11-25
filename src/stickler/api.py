@@ -1305,7 +1305,11 @@ def export_drum_track(stem: Path, dest: Path) -> Path:
         shutil.copyfile(stem, dest)
         return dest
     proc = audio.media_tool(
-        ["ffmpeg", "-v", "error", "-y", "-i", str(stem), str(dest)], capture_output=True, text=True
+        ["ffmpeg", "-v", "error", "-y", "-i", str(stem), str(dest)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg: {dest.name}: {proc.stderr.strip()}")
@@ -1360,7 +1364,7 @@ def cache_entries(
                     folders.add(runner.cache_dir_for(cache_dir, registry["beat_this"], t.mix))
     root = cache_dir.resolve()
     return sorted(
-        str(f.resolve().relative_to(root))
+        f.resolve().relative_to(root).as_posix()
         for f in folders
         if f.is_dir() and f.resolve().is_relative_to(root)
     )
@@ -1408,7 +1412,7 @@ def run_remote(
     plan = dataclasses.replace(plan, cache=cache_entries(config, only=set(missing)))
     remote.run_remote(
         remote.Host(host, port),
-        str(config.relative_to(PROJECT_ROOT)),
+        config.relative_to(PROJECT_ROOT).as_posix(),
         remote.adapters_for(config),
         plan,
         project_root=PROJECT_ROOT,

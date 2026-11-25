@@ -20,7 +20,9 @@ def root(tmp_path):
         "0.444 cb\n0.446 bd\n0.737 sd-\n1.0 chh\n1.1 rc3\n1.2 lmt\n1.3 cs\n1.4 sweep\n",
         encoding="utf-8",
     )
-    (d / "annotation" / "001_hits_snare-drum_sticks_x6.txt").write_text("0.1 sd\n")
+    (d / "annotation" / "001_hits_snare-drum_sticks_x6.txt").write_text(
+        "0.1 sd\n", encoding="utf-8"
+    )
     t = np.arange(SR) / SR
     write_wav(d / "audio/wet_mix" / f"{name}.wav", np.stack([0.6 * np.ones_like(t)] * 2, 1), SR)
     write_wav(

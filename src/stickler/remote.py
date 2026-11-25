@@ -99,7 +99,14 @@ def adapters_for(config: Path) -> list[str]:
 
 
 def tracked_files(root: Path) -> list[str]:
-    proc = subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=root)
+    proc = subprocess.run(
+        ["git", "ls-files"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=root,
+    )
     return [line for line in proc.stdout.splitlines() if line]
 
 
@@ -110,21 +117,21 @@ def sync_plan(
     data_dirs, data_files, audio, fetch = [], [], [], []
     for name in raw.get("datasets", []):
         if name == "mdb":
-            data_dirs.append(str((data_dir / name).relative_to(project_root)))
+            data_dirs.append((data_dir / name).relative_to(project_root).as_posix())
         elif name == "enst":
             # uploaded when prepared here: the host's ffmpeg writes its own version tag into the
             # mixes, so their bytes, and with them every cache key built on them, would differ
             # (2026-11-17); downloaded on the host only when this machine has none
             prepared = data_dir / name / "mix"
             if prepared.is_dir() and any(prepared.iterdir()):
-                data_dirs.append(str((data_dir / name).relative_to(project_root)))
+                data_dirs.append((data_dir / name).relative_to(project_root).as_posix())
             else:
                 fetch.append(name)
         elif name == "own":
             for track in own.tracks(references_dir, data_dir):
                 aligned = data_dir / "own" / track.id / "aligned.json"
-                data_files.append(str(aligned.relative_to(project_root)))
-                song_dir = str((data_dir / "own" / track.id).relative_to(project_root))
+                data_files.append(aligned.relative_to(project_root).as_posix())
+                song_dir = (data_dir / "own" / track.id).relative_to(project_root).as_posix()
                 audio.append((str(track.mix), song_dir))
     setup_dirs = [
         UPLOAD_WEIGHTS[a]
@@ -265,7 +272,17 @@ def run_remote(
 
     def run(cmd: list[str], step: str, stdin: str | None = None, live: bool = False) -> None:
         # live: show the long benchmark run in the terminal instead of buffering it
-        _ok(execute(cmd, input=stdin, capture_output=not live, text=True), step)
+        _ok(
+            execute(
+                cmd,
+                input=stdin,
+                capture_output=not live,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            ),
+            step,
+        )
 
     def upload(files: list[str], base: Path, dest: str, step: str) -> None:
         if files:
@@ -323,7 +340,14 @@ def run_remote(
         try:
             if wipe:
                 if not downloaded:  # keep what the failed run computed, if anything
-                    execute(cache_down, input=None, capture_output=True, text=True)
+                    execute(
+                        cache_down,
+                        input=None,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                    )
                 run([*ssh_command(host), wipe_command(plan)], "wipe")
         finally:
             if stop is not None:

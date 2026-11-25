@@ -12,7 +12,8 @@ flows). Specification: SPEC.md, module `core-bridge`.
 ## Lines and lifetime
 
 - Each line holds one JSON object, in UTF-8. The bridge writes only to stdout, and only these
-  lines. Logs, tracebacks and anything a model prints go to stderr.
+  lines. Logs, tracebacks and anything a model prints go to stderr. Every line the bridge
+  writes ends in `\n`, never `\r\n`, on every system; on input it accepts `\n` and `\r\n`.
 - The app starts the bridge once per launch and sets `LANGUAGE` to the user's preferred
   languages. Packaged as the Mac app, its launcher also sets `STICKLER_PACKAGED=macos`.
 - The first line is `hello`. After it come a `state` event (the empty window) and a `recent`

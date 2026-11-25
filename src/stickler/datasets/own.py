@@ -31,7 +31,13 @@ MUSIC_DIR_ENV = "STICKLER_MUSIC_DIR"
 
 def _xdg_music() -> Path | None:
     try:
-        out = subprocess.run(["xdg-user-dir", "MUSIC"], capture_output=True, text=True).stdout
+        out = subprocess.run(
+            ["xdg-user-dir", "MUSIC"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        ).stdout
     except OSError:
         return None
     path = Path(out.strip()) if out.strip() else None

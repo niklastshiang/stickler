@@ -31,7 +31,7 @@ def _where(env) -> dict[str, Path]:
 
 def test_the_mac_app_is_packaged_only_when_its_launcher_says_so():
     assert paths.packaged(MAC) == "macos"
-    assert paths.packaged({"STICKLER_PACKAGED": "windows", "HOME": HOME}) is None
+    assert paths.packaged({"STICKLER_PACKAGED": "plan9", "HOME": HOME}) is None
     assert paths.packaged({"HOME": HOME}) is None
     assert paths.packaged({**MAC, "FLATPAK_ID": "ng.tshia.Stickler"}) == "flatpak"
 
@@ -137,7 +137,8 @@ LINUX_HOME = "/home/me"
     ids=["checkout", "appimage", "flatpak", "deb-rpm"],
 )
 def test_linux_keeps_its_folders(env, expected):
-    assert {k: str(v) for k, v in _where(env).items()} == expected
+    # Compared as paths: Windows spells them with backslashes, the folders are the same
+    assert _where(env) == {k: Path(v) for k, v in expected.items()}
 
 
 def test_removing_the_mac_apps_models_takes_its_analyses_too():
@@ -175,3 +176,61 @@ def test_the_mac_app_run_from_a_checkout_keeps_uv_as_it_is(tmp_path, monkeypatch
 
     monkeypatch.setattr(stickler_app, "prefix", lambda env=None: tmp_path)
     assert paths.packaged_env(MAC) == {}
+
+
+def _windows(tmp_path) -> dict[str, str]:
+    return {"STICKLER_PACKAGED": "windows", "LOCALAPPDATA": str(tmp_path / "AppData" / "Local")}
+
+
+def test_the_windows_app_is_packaged_when_its_launcher_says_so():
+    assert paths.packaged({"STICKLER_PACKAGED": "windows"}) == "windows"
+    flatpak = {"STICKLER_PACKAGED": "windows", "FLATPAK_ID": "ng.tshia.Stickler"}
+    assert paths.packaged(flatpak) == "flatpak"
+
+
+def test_the_windows_app_keeps_everything_below_local_app_data(tmp_path):
+    root = tmp_path / "AppData" / "Local" / "Stickler"
+    assert _where(_windows(tmp_path)) == {
+        "data": root / "data",
+        "cache": root / "cache",
+        "adapters": root / "data" / "adapters",
+        "results": root / "cache" / "results",  # the generic rule, not the Mac's
+        "score": root / "cache" / "scores",
+        "hits": root / "cache" / "hits",
+        "settings": root / "config" / "settings.json",
+        "recent": root / "data" / "recent.json",
+        "corrections": root / "data" / "corrections.json",
+    }
+    assert paths.config_home(_windows(tmp_path)) == root / "config"
+
+
+@pytest.mark.parametrize("missing", [{}, {"LOCALAPPDATA": ""}])
+def test_the_windows_app_without_local_app_data_uses_the_home_folder(missing):
+    env = {"STICKLER_PACKAGED": "windows", "HOME": "/Users/me", **missing}
+    assert paths.data_home(env) == Path("/Users/me/AppData/Local/Stickler/data")
+    assert paths.cache_home(env) == Path("/Users/me/AppData/Local/Stickler/cache")
+    assert paths.config_home(env) == Path("/Users/me/AppData/Local/Stickler/config")
+
+
+def test_xdg_variables_still_win_in_the_windows_app(tmp_path):
+    env = {**_windows(tmp_path), "XDG_DATA_HOME": "/d", "XDG_CACHE_HOME": "/c"}
+    env["XDG_CONFIG_HOME"] = "/s"
+    where = _where(env)
+    assert where["data"] == Path("/d/stickler") and where["cache"] == Path("/c/stickler")
+    assert where["settings"] == Path("/s/stickler/settings.json")
+    assert paths.adapters_root({**env, "STICKLER_ADAPTERS": "/try"}) == Path("/try")
+
+
+def test_the_windows_app_with_its_own_core_gives_uv_folders_of_its_own(tmp_path, monkeypatch):
+    import stickler_app
+
+    monkeypatch.setattr(stickler_app, "prefix", lambda env=None: tmp_path / "app")
+    root = tmp_path / "AppData" / "Local" / "Stickler"
+    env = {**_windows(tmp_path), "UV_PYTHON_PREFERENCE": "system", "UV_CACHE_DIR": "/elsewhere"}
+    assert paths.packaged_env(env) == {
+        "STICKLER_ADAPTER_SOURCES": str(tmp_path / "app" / "share/stickler/adapters"),
+        "UV_PYTHON_PREFERENCE": "only-managed",
+        "UV_PYTHON_DOWNLOADS": "automatic",
+        "UV_PYTHON_INSTALL_DIR": str(root / "data" / "python"),
+    }
+    assert paths.packaged_env(_windows(tmp_path))["UV_CACHE_DIR"] == str(root / "cache" / "uv")

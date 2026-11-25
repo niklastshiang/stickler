@@ -28,7 +28,10 @@ def targets(env: Mapping[str, str] = os.environ, *, everything: bool) -> list[Pa
             chosen.append(data / "results")
     chosen = list(dict.fromkeys(chosen))  # the Mac app's settings sit in its data folder
     sandbox_cache = cache.parent  # in the Flatpak, uv keeps its downloads in the app's own cache
-    if paths.packaged(env) == "flatpak" and f"/.var/app/{APP_ID}/" in f"{sandbox_cache}/":
+    if (
+        paths.packaged(env) == "flatpak"
+        and f"/.var/app/{APP_ID}/" in f"{sandbox_cache.as_posix()}/"
+    ):
         chosen.append(sandbox_cache / "uv")
     return chosen
 

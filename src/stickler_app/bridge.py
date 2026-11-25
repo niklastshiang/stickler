@@ -665,7 +665,7 @@ def main() -> int:
     logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="bridge: %(message)s")
     os.environ.update(paths.packaged_env())
     i18n.setup()
-    protocol = os.fdopen(os.dup(1), "w", encoding="utf-8", buffering=1)
+    protocol = os.fdopen(os.dup(1), "w", encoding="utf-8", newline="\n", buffering=1)
     os.dup2(2, 1)
     sys.stdout = sys.stderr
     sys.stdin.reconfigure(encoding="utf-8")

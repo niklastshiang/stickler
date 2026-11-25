@@ -38,12 +38,16 @@ HUE_START, HUE_END = 30.0, -170.0
 
 def facts() -> dict[str, str]:
     """Version from pyproject.toml, tests and coverage from a test run."""
-    version = re.search(r'^version = "(\d+)"', (ROOT / "pyproject.toml").read_text(), re.M)
+    version = re.search(
+        r'^version = "(\d+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8"), re.M
+    )
     run = subprocess.run(
         ["uv", "run", "pytest", "-q", "--cov", "-p", "no:cacheprovider"],
         cwd=ROOT,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     passed = re.search(r"(\d+) passed", run.stdout)
     total = re.search(r"^TOTAL\s.*?(\d+)%", run.stdout, re.M)
@@ -52,6 +56,8 @@ def facts() -> dict[str, str]:
         cwd=ROOT,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     collected = re.search(r"(\d+)/\d+ tests collected", smoke.stdout)
     if not (version and passed and total and collected):

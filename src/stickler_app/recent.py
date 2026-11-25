@@ -90,7 +90,8 @@ def _when(opened: date, today: date) -> str:
     if opened == today - timedelta(days=1):
         return _("opened yesterday")
     # Translators: a date in strftime format, as in "12 November"
-    return _("opened {date}").format(date=opened.strftime(_("%-d %B")))
+    pattern = _("%-d %B").replace("%-d", str(opened.day))  # Windows' strftime knows no %-d
+    return _("opened {date}").format(date=opened.strftime(pattern))
 
 
 def rows(

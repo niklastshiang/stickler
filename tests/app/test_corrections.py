@@ -88,23 +88,24 @@ def test_a_moved_song_keeps_its_corrections(tmp_path):
     corrections.remember(store, Path("/old/song.mp3"), fix, digest="abc")
     assert corrections.lookup(store, Path("/new/song.mp3"), "abc") == fix
     # the entry moved with the song: the new path is remembered, the old one is gone
-    assert set(json.loads(store.read_text())) == {"/new/song.mp3"}
+    assert set(json.loads(store.read_text(encoding="utf-8"))) == {str(Path("/new/song.mp3"))}
     assert corrections.lookup(store, Path("/new/song.mp3"), "abc") == fix
 
 
 def test_an_entry_without_a_digest_gets_one_when_its_song_is_opened(tmp_path):
     store = tmp_path / "corrections.json"
-    store.write_text(json.dumps({"/a/song.mp3": {"tempo": "double"}}))  # before Release 10
+    key = str(Path("/a/song.mp3"))  # the store's keys are the platform's own spelling
+    store.write_text(json.dumps({key: {"tempo": "double"}}), encoding="utf-8")  # before Release 10
     assert corrections.lookup(store, Path("/a/song.mp3"), "abc") == api.Corrections(tempo="double")
-    assert json.loads(store.read_text())["/a/song.mp3"]["digest"] == "abc"
+    assert json.loads(store.read_text(encoding="utf-8"))[key]["digest"] == "abc"
 
 
 def test_an_unknown_song_has_the_detected_values_and_changes_nothing(tmp_path):
     store = tmp_path / "corrections.json"
     corrections.remember(store, Path("/a/song.mp3"), api.Corrections(tempo="half"), digest="abc")
-    before = store.read_text()
+    before = store.read_text(encoding="utf-8")
     assert corrections.lookup(store, Path("/b/other.mp3"), "xyz") == DETECTED
-    assert store.read_text() == before
+    assert store.read_text(encoding="utf-8") == before
 
 
 def test_the_digest_is_not_a_correction():

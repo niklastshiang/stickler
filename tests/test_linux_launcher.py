@@ -4,6 +4,7 @@ bundled uv first on PATH, and the app told that the system installed it."""
 
 import importlib.machinery
 import importlib.util
+import os
 from pathlib import Path
 
 import pytest
@@ -24,17 +25,18 @@ def test_the_wheels_of_the_running_python_go_on_the_path(tmp_path):
         (tmp_path / f"python{version}").mkdir()
     path, env = _launcher().prepare(tmp_path, (3, 15), {"PATH": "/usr/bin:/bin"})
     assert path == [str(tmp_path), str(tmp_path / "python3.15")]
-    assert env == {"STICKLER_PACKAGED": "system", "PATH": f"{tmp_path / 'bin'}:/usr/bin:/bin"}
+    assert env == {
+        "STICKLER_PACKAGED": "system",
+        "PATH": f"{tmp_path / 'bin'}{os.pathsep}/usr/bin:/bin",
+    }
 
 
 def test_without_a_path_the_systems_default_still_finds_ffmpeg(tmp_path):
-    import os
-
     (tmp_path / "python3.14").mkdir()
     _, env = _launcher().prepare(tmp_path, (3, 14), {})
-    assert env["PATH"] == f"{tmp_path / 'bin'}:{os.defpath}"
+    assert env["PATH"] == f"{tmp_path / 'bin'}{os.pathsep}{os.defpath}"
     _, env = _launcher().prepare(tmp_path, (3, 14), {"PATH": ""})
-    assert env["PATH"] == f"{tmp_path / 'bin'}:{os.defpath}"  # never the current folder
+    assert env["PATH"] == f"{tmp_path / 'bin'}{os.pathsep}{os.defpath}"  # never the current folder
 
 
 def test_a_python_without_wheels_names_the_supported_ones(tmp_path):

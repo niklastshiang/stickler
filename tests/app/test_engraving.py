@@ -234,7 +234,9 @@ def test_every_position_with_the_longest_names_stays_one_line_on_the_page():
     po = Path(__file__).resolve().parents[2] / "po"
     longest = {name: name for name in legend.NAMES.values()}
     for catalogue in po.glob("*.po"):
-        pairs = re.findall(r'^msgid "(.+)"\nmsgstr "(.+)"$', catalogue.read_text(), re.M)
+        pairs = re.findall(
+            r'^msgid "(.+)"\nmsgstr "(.+)"$', catalogue.read_text(encoding="utf-8"), re.M
+        )
         for msgid, msgstr in pairs:
             if msgid in longest and len(msgstr) > len(longest[msgid]):
                 longest[msgid] = msgstr

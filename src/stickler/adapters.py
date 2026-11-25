@@ -22,10 +22,12 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 import tomllib
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -155,9 +157,14 @@ def discover(root: Path) -> dict[str, AdapterSpec]:
 HARNESS_ONLY_ENV = ("UV_PYTHON", "UV_PROJECT_ENVIRONMENT", "UV_PROJECT", "VIRTUAL_ENV")
 
 
-def adapter_env() -> dict[str, str]:
-    """The environment for adapter processes: the harness's, without HARNESS_ONLY_ENV."""
-    return {k: v for k, v in os.environ.items() if k not in HARNESS_ONLY_ENV}
+def adapter_env(platform: str = sys.platform) -> dict[str, str]:
+    """The environment for adapter processes: the harness's, without HARNESS_ONLY_ENV. On
+    Windows (default text encoding cp1252) with PYTHONUTF8=1, so the models' Python reads and
+    writes UTF-8."""
+    env = {k: v for k, v in os.environ.items() if k not in HARNESS_ONLY_ENV}
+    if platform == "win32":
+        env["PYTHONUTF8"] = "1"
+    return env
 
 
 class CancelToken(threading.Event):
@@ -175,24 +182,39 @@ class Cancelled(Exception):
 CANCEL_POLL = 0.05  # seconds between looks at the cancel token while an adapter runs
 
 
-def _kill_group(proc: subprocess.Popen) -> None:
-    with contextlib.suppress(ProcessLookupError):  # the whole group may have just exited
-        os.killpg(proc.pid, signal.SIGKILL)
+def _kill_group(
+    proc: subprocess.Popen,
+    platform: str = sys.platform,
+    run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+) -> None:
+    if platform == "win32":
+        # no process group to signal there: taskkill ends `uv` and the model below it (/T),
+        # by force (/F); a tree that has just ended is fine (its exit code is not looked at)
+        run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True, check=False)
+    else:
+        with contextlib.suppress(ProcessLookupError):  # the whole group may have just exited
+            os.killpg(proc.pid, signal.SIGKILL)
     proc.communicate()
 
 
 def _run_group(
     cmd: list[str], timeout: float | None, cancel: threading.Event | None = None
 ) -> subprocess.CompletedProcess | None:
-    """Starts the adapter in its own process group. On timeout or cancel the whole group is
-    killed: `uv run` starts the model as a grandchild process that would otherwise keep
-    running. Returns None on timeout, raises Cancelled on cancel."""
+    """Starts the adapter in its own process group (Windows has none: `start_new_session` does
+    nothing there, and the tree below `uv` is ended instead). On timeout or cancel the whole
+    group is killed: `uv run` starts the model as a grandchild process that would otherwise
+    keep running. Returns None on timeout, raises Cancelled on cancel."""
     deadline = None if timeout is None else time.monotonic() + timeout
     with subprocess.Popen(
         cmd,
+        # not the caller's stdin: the bridge reads its own all the time, and on Windows a
+        # program that inherits that pipe (uv, Python) waits on it as soon as it starts
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         start_new_session=True,
         env=adapter_env(),
     ) as proc:
@@ -280,7 +302,16 @@ def run_adapter(
 
 
 def _check(cmd: list[str], spec: AdapterSpec, **kw) -> str:
-    proc = subprocess.run(cmd, capture_output=True, text=True, env=adapter_env(), **kw)
+    proc = subprocess.run(
+        cmd,
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=adapter_env(),
+        **kw,
+    )
     if proc.returncode != 0:
         tail = "\n".join(proc.stderr.strip().splitlines()[-20:])
         raise RuntimeError(f"Setup of {spec.id} failed ({cmd[0]} {cmd[1]}):\n{tail}")
@@ -298,7 +329,7 @@ def _setup_rocm(spec: AdapterSpec) -> Path:
             spec,
             cwd=spec.path,
         )
-    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write("\n".join(rocm_requirements(spec, cfg.replace)) + "\n")
     _check(
         [
@@ -368,7 +399,7 @@ def _setup_cuda(spec: AdapterSpec) -> Path:
         spec,
     )
     replace = {p.split("==")[0] for p in pins}
-    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write("\n".join(cuda_requirements(export, replace)) + "\n")
     errors = []
     for index in CUDA_INDEXES:
@@ -387,7 +418,15 @@ def _setup_cuda(spec: AdapterSpec) -> Path:
             f.name,
             *pins,
         ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=spec.path, env=adapter_env())
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=spec.path,
+            env=adapter_env(),
+        )
         if proc.returncode == 0:
             return python
         errors.append(f"{index}: {proc.stderr.strip().splitlines()[-1:] or proc.returncode}")
@@ -420,7 +459,7 @@ def _environment_ready(spec: AdapterSpec, device: str) -> bool:
         return False
     cmd = ["uv", "sync", "--check", "--offline", "--quiet", "--project", str(spec.path)]
     try:
-        proc = subprocess.run(cmd, capture_output=True, env=adapter_env())
+        proc = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, env=adapter_env())
     except OSError:  # no uv: nothing can run
         return False
     return proc.returncode == 0

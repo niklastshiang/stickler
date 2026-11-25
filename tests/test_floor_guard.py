@@ -121,6 +121,7 @@ def test_cli_exit_code_two_outside_git(tmp_path):
         cwd=tmp_path,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert proc.returncode == 2
 

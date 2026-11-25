@@ -10,14 +10,19 @@ Deliberately free of dependencies so that it fits into every adapter environment
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
-import resource
 import struct
 import sys
 import time
 import traceback
 from collections.abc import Callable, Iterable
 from pathlib import Path
+
+try:
+    import resource
+except ImportError:  # Windows has none; _peak_rss_mb reads the working set there
+    resource = None
 
 DEVICES = ("auto", "cpu", "gpu")
 
@@ -76,7 +81,46 @@ def write_drum_midi(path: Path, notes: Iterable[tuple[float, int, int]]) -> None
     path.write_bytes(header + b"MTrk" + struct.pack(">I", len(track)) + bytes(track))
 
 
-def _peak_rss_mb(platform: str = sys.platform) -> float:
+class _MemoryCounters(ctypes.Structure):
+    """PROCESS_MEMORY_COUNTERS of the Windows API (psapi.h)."""
+
+    _fields_ = (
+        ("cb", ctypes.c_uint32),
+        ("PageFaultCount", ctypes.c_uint32),
+        ("PeakWorkingSetSize", ctypes.c_size_t),
+        ("WorkingSetSize", ctypes.c_size_t),
+        ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+        ("PagefileUsage", ctypes.c_size_t),
+        ("PeakPagefileUsage", ctypes.c_size_t),
+    )
+
+
+def _windows_peak_bytes() -> int:
+    """This process's PeakWorkingSetSize; 0 when Windows does not tell."""
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetCurrentProcess.restype = ctypes.c_void_p
+    kernel32.K32GetProcessMemoryInfo.argtypes = (
+        ctypes.c_void_p,
+        ctypes.POINTER(_MemoryCounters),
+        ctypes.c_uint32,
+    )
+    kernel32.K32GetProcessMemoryInfo.restype = ctypes.c_int
+    counters = _MemoryCounters()
+    counters.cb = ctypes.sizeof(counters)
+    known = kernel32.K32GetProcessMemoryInfo(
+        kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb
+    )
+    return counters.PeakWorkingSetSize if known else 0
+
+
+def _peak_rss_mb(
+    platform: str = sys.platform, windows_peak: Callable[[], int] = _windows_peak_bytes
+) -> float:
+    if platform == "win32":  # no `resource` there; the model runs in this process
+        return windows_peak() / (1024 * 1024)
     own = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     children = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
     per_mb = 1024 * 1024 if platform == "darwin" else 1024  # macOS reports bytes, Linux KiB

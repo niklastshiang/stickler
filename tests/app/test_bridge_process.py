@@ -6,12 +6,15 @@ during an analysis must end the model too and leave no half-written cache entry.
 import importlib.util
 import json
 import os
+import queue
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 import pytest
+from procs import Processes
 
 from stickler import adapters, runner
 
@@ -56,10 +59,28 @@ class Process:
         )
         self.lines: list[dict] = []
         self._id = 0
+        # Both pipes are read all the time: a full stderr pipe would stop the bridge (Windows'
+        # pipes hold a few kilobytes), and a silent bridge must fail a test, not hold it.
+        self._out: queue.Queue[str] = queue.Queue()
+        self._err: list[str] = []
+        threading.Thread(target=self._pump_out, daemon=True).start()
+        threading.Thread(target=lambda: self._err.extend(self.proc.stderr), daemon=True).start()
 
-    def read(self) -> dict:
-        line = self.proc.stdout.readline()
-        assert line, f"the bridge ended: {self.proc.stderr.read()}"
+    def _pump_out(self) -> None:
+        for line in self.proc.stdout:
+            self._out.put(line)
+        self._out.put("")  # the bridge closed its stdout
+
+    def read(self, seconds: float = 60.0) -> dict:
+        try:
+            line = self._out.get(timeout=seconds)
+        except queue.Empty:
+            said = "".join(self._err)[-3000:]
+            raise AssertionError(
+                f"no line from the bridge in {seconds} s; last lines: {self.lines[-3:]}; "
+                f"its stderr ends: {said}"
+            ) from None
+        assert line, f"the bridge ended: {''.join(self._err)}"
         self.lines.append(json.loads(line))
         return self.lines[-1]
 
@@ -120,9 +141,12 @@ def test_closing_stdin_during_an_analysis_ends_the_model_and_leaves_no_cache_ent
         bridge.send("open", path=str(song))
         bridge.state("analysing")
         end = time.monotonic() + 60
-        while not (pid_file.exists() and pid_file.read_text()) and time.monotonic() < end:
+        while (
+            not (pid_file.exists() and pid_file.read_text(encoding="utf-8"))
+            and time.monotonic() < end
+        ):
             time.sleep(0.05)
-        model = int(pid_file.read_text())
+        model = int(pid_file.read_text(encoding="utf-8"))
         start = time.monotonic()
         bridge.proc.stdin.close()
         assert bridge.proc.wait(3) == 0
@@ -138,11 +162,7 @@ def test_closing_stdin_during_an_analysis_ends_the_model_and_leaves_no_cache_ent
 
 
 def _alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+    return Processes.running(pid)  # not os.kill(pid, 0): Windows has no signal 0
 
 
 STRAY = """import os
@@ -173,12 +193,29 @@ def test_stray_output_cannot_break_a_line(tmp_path):
         input='{"id": 1, "cmd": "quit"}\n',
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=30,
     )
     assert proc.returncode == 0, proc.stderr
     lines = [json.loads(line) for line in proc.stdout.splitlines()]
     assert lines[0]["event"] == "hello" and lines[-1] == {"id": 1, "ok": True}
     assert "stray print" in proc.stderr and "stray fd" in proc.stderr
+
+
+def test_every_line_ends_in_a_bare_newline_and_a_crlf_request_is_answered(tmp_path):
+    """Passes on Linux before and after the fix too; the Windows CI job is what proves it."""
+    proc = subprocess.run(
+        [sys.executable, "-m", "stickler_app.bridge"],
+        input=b'{"id": 1, "cmd": "quit"}\r\n',
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "STICKLER_RESULTS_CACHE": str(tmp_path / "results")},
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.endswith(b"\n") and b"\r" not in proc.stdout
+    lines = proc.stdout.split(b"\n")[:-1]
+    assert json.loads(lines[0])["event"] == "hello"
+    assert json.loads(lines[-1]) == {"id": 1, "ok": True}
 
 
 def test_the_demo_finds_the_same_musicxml_as_the_gtk_app(models, song, tmp_path):
@@ -189,11 +226,13 @@ def test_the_demo_finds_the_same_musicxml_as_the_gtk_app(models, song, tmp_path)
         **os.environ,
         "STICKLER_ADAPTERS": str(models),
         "STICKLER_RESULTS_CACHE": str(tmp_path / "results"),
+        "PYTHONIOENCODING": "utf-8",  # what this test reads; Windows' pipes default to cp1252
     }
     proc = subprocess.run(
         [sys.executable, str(demo), str(song), "--out", str(out), "--width", "600"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=120,
         env=environment,
     )

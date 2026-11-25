@@ -153,7 +153,9 @@ def unpack_command(archive: Path, target: Path, tar_version: str | None = None) 
     """tar call that unpacks only NEEDED. GNU tar needs `--wildcards` for the patterns; BSD
     tar (macOS) matches them as patterns anyway and rejects the option."""
     if tar_version is None:
-        tar_version = subprocess.run(["tar", "--version"], capture_output=True, text=True).stdout
+        tar_version = subprocess.run(
+            ["tar", "--version"], capture_output=True, text=True, encoding="utf-8", errors="replace"
+        ).stdout
     wildcards = ["--wildcards"] if "GNU tar" in tar_version else []
     cmd = ["tar", "--zstd", "-xf", str(archive), "-C", str(target), "--strip-components=1"]
     return [*cmd, *wildcards, *NEEDED]

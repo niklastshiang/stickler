@@ -84,8 +84,12 @@ def test_the_copy_names_the_release_files_in_both_languages(built):
         assert '<span data-name="deb">Stickler-8_amd64.deb</span>' in html
         assert '<span data-name="rpm">Stickler-8.x86_64.rpm</span>' in html
         assert '<span data-size="rpm">72 MB</span>' in html
-    assert '<span data-size="dmg">412 MB</span>' in (built / "index.html").read_text()
-    assert '<span data-size="dmg">412 MB</span>' in (built / "de/index.html").read_text()
+    assert '<span data-size="dmg">412 MB</span>' in (built / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert '<span data-size="dmg">412 MB</span>' in (built / "de/index.html").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_the_rest_of_the_site_is_copied_unchanged(built):

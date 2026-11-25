@@ -106,7 +106,10 @@ def test_run_and_evaluate_benchmark(monkeypatch, tmp_path):
 def test_error_breakdown_of_a_pipeline(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0; dummy echoes it
     cfg = _bench(tmp_path)
-    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    cfg.write_text(
+        cfg.read_text(encoding="utf-8") + "combos:\n  kick:\n    none+dummy: [KD]\n",
+        encoding="utf-8",
+    )
     kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
     api.run_benchmark(cfg, **kw)
     pooled = api.error_breakdown(
@@ -115,7 +118,7 @@ def test_error_breakdown_of_a_pipeline(monkeypatch, tmp_path):
     by = {(r["pipeline"], r["class"]): r for r in pooled}
     assert by[("none+dummy", "SD")]["tp"] == 1 and by[("none+dummy", "SD")]["missed"] == 0
     assert by[("combo+kick", "SD")]["missed"] == 1 and by[("combo+kick", "KD")]["tp"] == 1
-    rows = (tmp_path / "results" / "errors.csv").read_text().splitlines()
+    rows = (tmp_path / "results" / "errors.csv").read_text(encoding="utf-8").splitlines()
     assert rows[0].startswith("dataset,track,pipeline,class,tp,missed")
     assert len(rows) == 1 + 2 * 5  # one row per pipeline and class of the 5-class scheme
 
@@ -138,7 +141,8 @@ def test_evaluate_scores_combos(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)
     cfg = _bench(tmp_path)
     cfg.write_text(
-        cfg.read_text() + "combos:\n  quality:\n    none+dummy: [KD, SD]\n", encoding="utf-8"
+        cfg.read_text(encoding="utf-8") + "combos:\n  quality:\n    none+dummy: [KD, SD]\n",
+        encoding="utf-8",
     )
     assert api.load_benchmark_config(cfg).combos == {"quality": {"none+dummy": ["KD", "SD"]}}
     kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
@@ -169,7 +173,10 @@ def test_fusions_are_scored_and_tuned_from_cached_activations(monkeypatch, tmp_p
     classes = {c: {"weights": [1], "threshold": 0.3} for c in ("KD", "SD", "TT", "HH", "CY")}
     cfg = _bench(tmp_path)
     cfg.write_text(
-        cfg.read_text() + "fusions:\n  f:\n    inputs: [none]\n    classes: " + str(classes) + "\n",
+        cfg.read_text(encoding="utf-8")
+        + "fusions:\n  f:\n    inputs: [none]\n    classes: "
+        + str(classes)
+        + "\n",
         encoding="utf-8",
     )
     summary = api.evaluate_benchmark(
@@ -230,7 +237,7 @@ def test_grid_pipelines_get_beats_and_are_scored(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0; dummy echoes it
     cfg = _bench(tmp_path)
     cfg.write_text(
-        cfg.read_text()
+        cfg.read_text(encoding="utf-8")
         + "grid: [none+dummy]\nconsensus: {similarity: 0.7, add: 0.6, remove: 0.1}\n"
         + "simplify: true\n",
         encoding="utf-8",
@@ -258,7 +265,7 @@ def test_votes_are_scored_and_usable_in_combos(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)
     cfg = _bench(tmp_path)
     cfg.write_text(
-        cfg.read_text()
+        cfg.read_text(encoding="utf-8")
         + "votes:\n  v:\n    pipelines: [none+dummy, none+dummy]\n    min_agree: 2\n"
         + "combos:\n  c:\n    vote+v: [KD, SD]\n",
         encoding="utf-8",
@@ -277,7 +284,8 @@ def test_cache_entries_are_the_results_a_config_uses(monkeypatch, tmp_path):
     (rec,) = api.run_benchmark(cfg, **kw)
     (tmp_path / "cache" / "other" / "unrelated").mkdir(parents=True)
     entries = api.cache_entries(cfg, **kw)
-    assert entries == [str(rec.midi.parent.relative_to(tmp_path / "cache"))]
+    # with forward slashes on every system: the list goes to rsync on the host
+    assert entries == [rec.midi.parent.relative_to(tmp_path / "cache").as_posix()]
 
 
 def test_only_restricts_run_and_eval_to_the_given_tracks(monkeypatch, tmp_path):
@@ -335,14 +343,15 @@ def test_run_doctor_returns_checks(tmp_path):
 def test_config_timeout_optional(tmp_path):
     cfg = _bench(tmp_path)
     assert api.load_benchmark_config(cfg).timeout is None
-    cfg.write_text(cfg.read_text() + "timeout: 1800\n", encoding="utf-8")
+    cfg.write_text(cfg.read_text(encoding="utf-8") + "timeout: 1800\n", encoding="utf-8")
     assert api.load_benchmark_config(cfg).timeout == 1800.0
 
 
 def test_config_timeout_per_stage(tmp_path):
     cfg = _bench(tmp_path)
     cfg.write_text(
-        cfg.read_text() + "timeout:\n  separators: 1800\n  transcribers: 300\n", encoding="utf-8"
+        cfg.read_text(encoding="utf-8") + "timeout:\n  separators: 1800\n  transcribers: 300\n",
+        encoding="utf-8",
     )
     assert api.load_benchmark_config(cfg).timeout == {"separators": 1800.0, "transcribers": 300.0}
 
@@ -350,7 +359,8 @@ def test_config_timeout_per_stage(tmp_path):
 def test_config_timeout_relative(tmp_path):
     cfg = _bench(tmp_path)
     cfg.write_text(
-        cfg.read_text() + "timeout:\n  separators: 1800\n  transcribers: {factor: 10, min: 120}\n",
+        cfg.read_text(encoding="utf-8")
+        + "timeout:\n  separators: 1800\n  transcribers: {factor: 10, min: 120}\n",
         encoding="utf-8",
     )
     assert api.load_benchmark_config(cfg).timeout == {
@@ -361,7 +371,9 @@ def test_config_timeout_relative(tmp_path):
 
 def test_config_timeout_relative_needs_factor(tmp_path):
     cfg = _bench(tmp_path)
-    cfg.write_text(cfg.read_text() + "timeout:\n  transcribers: {min: 120}\n", encoding="utf-8")
+    cfg.write_text(
+        cfg.read_text(encoding="utf-8") + "timeout:\n  transcribers: {min: 120}\n", encoding="utf-8"
+    )
     with pytest.raises(ValueError, match="factor"):
         api.load_benchmark_config(cfg)
 
@@ -415,14 +427,16 @@ def test_align_songs_end_to_end(tmp_path, monkeypatch):
     wav, mid, notes, beats = _synth_song(tmp_path)
     refs, data = tmp_path / "references", tmp_path / "data"
     refs.mkdir()
-    (refs / "synth.yaml").write_text(f'title: "Synth"\naudio: "{wav}"\n', encoding="utf-8")
+    (refs / "synth.yaml").write_text(
+        f'title: "Synth"\naudio: "{wav.as_posix()}"\n', encoding="utf-8"
+    )
     (data / "own" / "synth").mkdir(parents=True)
     mid.save(data / "own" / "synth" / "score.mid")
 
     def fake_cached_or_run(spec, audio_in, cache, device, execute, timeout=None):
         if spec.stage == "beats":
             out = tmp_path / "beats.json"
-            out.write_text(json.dumps({"beats": beats, "downbeats": beats[::4]}))
+            out.write_text(json.dumps({"beats": beats, "downbeats": beats[::4]}), encoding="utf-8")
             return ad.AdapterResult(True, out, {}, None)
         return ad.AdapterResult(True, wav, {}, None)  # stem = the mix itself
 
@@ -498,14 +512,16 @@ def test_write_report_shows_corrected_scores_when_there_are_any(tmp_path):
 def test_write_report_for_given_configs(tmp_path):
     _write_summary(tmp_path)
     _write_summary(tmp_path / "own_songs")
-    html = api.write_report([api.CONFIG, tmp_path / "own_songs.yaml"], tmp_path).read_text()
+    html = api.write_report([api.CONFIG, tmp_path / "own_songs.yaml"], tmp_path).read_text(
+        encoding="utf-8"
+    )
     assert "Config: default" in html and "Config: own_songs" in html
-    only = api.write_report([tmp_path / "own_songs.yaml"], tmp_path).read_text()
+    only = api.write_report([tmp_path / "own_songs.yaml"], tmp_path).read_text(encoding="utf-8")
     assert "Config: default" not in only
 
 
 def test_write_report_without_results_still_writes_a_page(tmp_path):
-    html = api.write_report(results_dir=tmp_path / "empty").read_text()
+    html = api.write_report(results_dir=tmp_path / "empty").read_text(encoding="utf-8")
     assert "No results" in html
 
 
@@ -537,7 +553,10 @@ def _fake_pipeline(tmp_path, monkeypatch):
     midi_path = tmp_path / "drums.mid"
     mid.save(midi_path)
     beats = tmp_path / "beats.json"
-    beats.write_text(json.dumps({"beats": [k * 0.5 for k in range(9)], "downbeats": [0.0, 2.0]}))
+    beats.write_text(
+        json.dumps({"beats": [k * 0.5 for k in range(9)], "downbeats": [0.0, 2.0]}),
+        encoding="utf-8",
+    )
     calls = []
 
     def fake(spec, audio_in, cache, device, execute, timeout=None, cancel=None):
@@ -694,7 +713,7 @@ def test_corrections_change_the_bars_but_never_the_hits(tmp_path, monkeypatch):
         (2.0, 3.0, 3),
         (3.0, 4.0, 4),
     ]
-    assert "<beats>2</beats>" in target.read_text()
+    assert "<beats>2</beats>" in target.read_text(encoding="utf-8")
     assert corrected.transcription == plain.transcription
 
 
@@ -730,7 +749,7 @@ def test_a_correction_on_a_cached_song_starts_no_adapter(tmp_path, monkeypatch):
     beats_dir = runner.cache_dir_for(tmp_path / "cache", specs[1], audio)
     for folder in (adtof_dir, beats_dir):
         folder.mkdir(parents=True)
-        (folder / "meta.json").write_text("{}")
+        (folder / "meta.json").write_text("{}", encoding="utf-8")
     mid = mido.MidiFile(ticks_per_beat=480)
     track = mido.MidiTrack()
     mid.tracks.append(track)
@@ -739,7 +758,9 @@ def test_a_correction_on_a_cached_song_starts_no_adapter(tmp_path, monkeypatch):
     )
     mid.save(adtof_dir / "drums.mid")
     beats = [k * 0.5 for k in range(17)]
-    (beats_dir / "beats.json").write_text(json.dumps({"beats": beats, "downbeats": beats[:-1:4]}))
+    (beats_dir / "beats.json").write_text(
+        json.dumps({"beats": beats, "downbeats": beats[:-1:4]}), encoding="utf-8"
+    )
     monkeypatch.setattr(ad, "run_adapter", lambda *a, **kw: pytest.fail("an adapter was started"))
     kw = {"pdf": False, "cache_dir": tmp_path / "cache", "adapters_root": root}
     for c in (
@@ -830,9 +851,9 @@ def _cancel_when_running(pid_file, token, seen):
     import time
 
     def watch():
-        while not (pid_file.exists() and pid_file.read_text()):
+        while not (pid_file.exists() and pid_file.read_text(encoding="utf-8")):
             time.sleep(0.01)
-        seen["pid"] = int(pid_file.read_text())
+        seen["pid"] = int(pid_file.read_text(encoding="utf-8"))
         seen["at"] = time.monotonic()
         token.cancel()
 
@@ -949,7 +970,7 @@ def test_notate_writes_musicxml_and_reports_missing_musescore(tmp_path, monkeypa
     monkeypatch.setattr(api.musescore, "find", lambda: None)
     result = api.notate(audio, cache_dir=tmp_path)
     assert result.musicxml == audio.with_suffix(".musicxml")  # next to the song
-    assert "<score-partwise" in result.musicxml.read_text()
+    assert "<score-partwise" in result.musicxml.read_text(encoding="utf-8")
     assert result.pdf is None and "MuseScore" in result.pdf_error
 
 
@@ -992,29 +1013,33 @@ def test_notate_takes_title_and_artist_from_tags(tmp_path, monkeypatch):
     audio_path, _, _ = _fake_pipeline(tmp_path, monkeypatch)
     monkeypatch.setattr(api.musescore, "find", lambda: None)
     monkeypatch.setattr(api.audio, "tags", lambda p: {"title": "Tagged", "artist": "Band"})
-    xml = api.notate(audio_path, tmp_path / "o.musicxml", cache_dir=tmp_path).musicxml.read_text()
+    xml = api.notate(audio_path, tmp_path / "o.musicxml", cache_dir=tmp_path).musicxml.read_text(
+        encoding="utf-8"
+    )
     assert "<work-title>Tagged</work-title>" in xml and ">Band</creator>" in xml
     xml = api.notate(
         audio_path, tmp_path / "o.musicxml", cache_dir=tmp_path, title="T", artist="A"
-    ).musicxml.read_text()
+    ).musicxml.read_text(encoding="utf-8")
     assert "<work-title>T</work-title>" in xml and ">A</creator>" in xml
 
 
 def test_notate_folds_repeated_bars_by_default(tmp_path, monkeypatch):
     audio, _, _ = _fake_pipeline(tmp_path, monkeypatch)  # two equal bars
     monkeypatch.setattr(api.musescore, "find", lambda: None)
-    xml = api.notate(audio, cache_dir=tmp_path).musicxml.read_text()
+    xml = api.notate(audio, cache_dir=tmp_path).musicxml.read_text(encoding="utf-8")
     assert xml.count("<measure ") == 1 and 'times="2"' in xml
     exact = api.notate(audio, cache_dir=tmp_path, simplify=False, repeats=False)
-    xml = exact.musicxml.read_text()
+    xml = exact.musicxml.read_text(encoding="utf-8")
     assert xml.count("<measure ") == 2 and "<repeat" not in xml
 
 
 def test_config_skip_combinations(tmp_path):
     cfg = _bench(tmp_path)
-    cfg.write_text(cfg.read_text() + 'skip: ["none+muscriptor_m"]\n', encoding="utf-8")
+    cfg.write_text(
+        cfg.read_text(encoding="utf-8") + 'skip: ["none+muscriptor_m"]\n', encoding="utf-8"
+    )
     assert api.load_benchmark_config(cfg).skip == {("none", "muscriptor_m")}
-    cfg.write_text(cfg.read_text() + 'skip: ["kaputt"]\n', encoding="utf-8")
+    cfg.write_text(cfg.read_text(encoding="utf-8") + 'skip: ["kaputt"]\n', encoding="utf-8")
     with pytest.raises(ValueError, match="skip"):
         api.load_benchmark_config(cfg)
 
@@ -1149,7 +1174,7 @@ def test_save_digests_writes_every_adapter(tmp_path):
     api.save_digests(out)
     import json
 
-    snapshot = json.loads(out.read_text())
+    snapshot = json.loads(out.read_text(encoding="utf-8"))
     assert snapshot["definition"] == 2 and {"adtof", "demucs"} <= snapshot["digests"].keys()
 
 
@@ -1201,7 +1226,10 @@ def test_listening_snippet_never_runs_a_model(monkeypatch, tmp_path):
 def test_listening_sample_is_drawn_once_and_kept(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0
     cfg = _bench(tmp_path)
-    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    cfg.write_text(
+        cfg.read_text(encoding="utf-8") + "combos:\n  kick:\n    none+dummy: [KD]\n",
+        encoding="utf-8",
+    )
     kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
     api.run_benchmark(cfg, **kw)
     where = tmp_path / "listening"
@@ -1318,7 +1346,10 @@ def test_unknown_listening_event(tmp_path):
 def test_corrected_scores_only_once_every_spot_is_judged(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)  # reference KD 0.5, SD 1.0
     cfg = _bench(tmp_path)
-    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    cfg.write_text(
+        cfg.read_text(encoding="utf-8") + "combos:\n  kick:\n    none+dummy: [KD]\n",
+        encoding="utf-8",
+    )
     kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
     api.run_benchmark(cfg, **kw)
     where, out = tmp_path / "listening", tmp_path / "results"
@@ -1331,7 +1362,11 @@ def test_corrected_scores_only_once_every_spot_is_judged(monkeypatch, tmp_path):
     by = {r["class"]: r for r in rows}
     assert by["SD"]["measured"] == by["SD"]["corrected"] == 0.0 and by["SD"]["n_ref"] == 1
     assert by["KD"]["corrected"] == 1.0 and "macro" in by
-    assert (out / "corrected.csv").read_text().startswith("pipeline,class,measured,corrected")
+    assert (
+        (out / "corrected.csv")
+        .read_text(encoding="utf-8")
+        .startswith("pipeline,class,measured,corrected")
+    )
 
 
 def test_eval_of_the_own_songs_adds_the_corrected_scores(monkeypatch, tmp_path):
@@ -1346,7 +1381,10 @@ def test_eval_of_the_own_songs_adds_the_corrected_scores(monkeypatch, tmp_path):
 def test_finale_after_the_last_spot(monkeypatch, tmp_path):
     fixtures = _fake_mdb(monkeypatch, tmp_path)
     cfg = _bench(tmp_path)
-    cfg.write_text(cfg.read_text() + "combos:\n  kick:\n    none+dummy: [KD]\n", encoding="utf-8")
+    cfg.write_text(
+        cfg.read_text(encoding="utf-8") + "combos:\n  kick:\n    none+dummy: [KD]\n",
+        encoding="utf-8",
+    )
     kw = {"data_dir": tmp_path, "cache_dir": tmp_path / "cache", "adapters_root": fixtures}
     api.run_benchmark(cfg, **kw)
     where = tmp_path / "listening"
@@ -1465,7 +1503,7 @@ def test_the_app_side_of_the_library_loads_no_benchmark_scoring():
         "print(sorted(m for m in ('mir_eval', 'scipy') if m in sys.modules))"
     )
     loaded = subprocess.run(
-        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+        [sys.executable, "-c", code], capture_output=True, text=True, encoding="utf-8", check=True
     )
     assert loaded.stdout.strip() == "[]"
 

@@ -208,7 +208,11 @@ def main(argv: list[str]) -> int:
                 extra.setdefault(name, []).append(Path(file))
             collect_licenses(Path(core), extra)
         case ["check", core]:
-            languages = (Path(__file__).resolve().parents[1] / "po" / "LINGUAS").read_text().split()
+            languages = (
+                (Path(__file__).resolve().parents[1] / "po" / "LINGUAS")
+                .read_text(encoding="utf-8")
+                .split()
+            )
             found = problems(Path(core), languages)
             for line in found:
                 print(f"mac-bundle: {line}", file=sys.stderr)

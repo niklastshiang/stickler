@@ -1,9 +1,10 @@
-# The checks from CONSTRAINTS.md on every push to main and every pull request.
+# The checks from CONSTRAINTS.md on every push to main and every pull request (and on the
+# branches of the Windows work, whose only Windows is the runner here).
 name: check
 
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/win-*"]
   pull_request:
 
 permissions:
@@ -58,6 +59,36 @@ jobs:
       - name: Tools
         run: |
           brew install ffmpeg
+          git config --global user.name "CI"
+          git config --global user.email "ci@users.noreply.github.com"
+      - run: uv sync --locked
+      - name: Lint, format, floor guard, tests with coverage
+        run: scripts/check.sh task
+
+  # The Windows app's core (SPEC.md, module `win-core`): the same checks on Windows x64.
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 30 # a test that hangs must not hold the runner for six hours
+    defaults:
+      run:
+        shell: bash # scripts/check.sh; the runner's Git for Windows brings it
+    env:
+      UV_PYTHON: "3.14"
+      # the skipped tests with their reasons; where a test hangs: every thread's stack after
+      # three minutes in one test
+      PYTEST_ADDOPTS: "-rs -o faulthandler_timeout=180"
+    steps:
+      - name: Files as they are in the repository (no CRLF on checkout)
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # the floor guard and a cache-key test read earlier commits
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Tools
+        run: |
+          choco install ffmpeg --no-progress -y
+          ffmpeg -version | head -n 1
           git config --global user.name "CI"
           git config --global user.email "ci@users.noreply.github.com"
       - run: uv sync --locked

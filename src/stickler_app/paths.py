@@ -1,7 +1,8 @@
 """Where the app reads and writes. It writes only into its own folders (in the Flatpak they
 are inside the sandbox); songs come in, exports go out through portals. On Linux these are the
 XDG folders; the Mac app keeps its files in Apple's folders under ~/Library (SPEC.md, module
-`core-bridge`), unless XDG variables are set."""
+`core-bridge`), the Windows app below %LOCALAPPDATA%\\Stickler (module `win-core`), unless XDG
+variables are set."""
 
 from __future__ import annotations
 
@@ -20,7 +21,7 @@ def is_audio(path: Path) -> bool:
     return path.suffix.lower() in AUDIO_SUFFIXES
 
 
-MAC_NAME = "Stickler"  # the folder under ~/Library/Application Support and ~/Library/Caches
+MAC_NAME = "Stickler"  # the app's folder under ~/Library/... on the Mac and under %LOCALAPPDATA%
 
 
 def _home(env: Mapping[str, str]) -> Path:
@@ -31,13 +32,21 @@ def _mac(env: Mapping[str, str], folder: str) -> Path:
     return _home(env) / "Library" / folder / MAC_NAME
 
 
+def _windows(env: Mapping[str, str], folder: str) -> Path:
+    """%LOCALAPPDATA%\\Stickler\\<folder>; without LOCALAPPDATA <home>/AppData/Local."""
+    local = env.get("LOCALAPPDATA")
+    return (Path(local) if local else _home(env) / "AppData" / "Local") / MAC_NAME / folder
+
+
 def cache_home(env: Mapping[str, str] = os.environ) -> Path:
     """$XDG_CACHE_HOME/stickler (the Flatpak points XDG_CACHE_HOME into the app's folder); in
-    the Mac app ~/Library/Caches/Stickler."""
+    the Mac app ~/Library/Caches/Stickler; in the Windows app %LOCALAPPDATA%\\Stickler\\cache."""
     if env.get("XDG_CACHE_HOME"):
         return Path(env["XDG_CACHE_HOME"]) / "stickler"
     if packaged(env) == "macos":
         return _mac(env, "Caches")
+    if packaged(env) == "windows":
+        return _windows(env, "cache")
     return _home(env) / ".cache" / "stickler"
 
 
@@ -72,33 +81,39 @@ def playable_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
 
 
 def packaged(env: Mapping[str, str] = os.environ) -> str | None:
-    """ "flatpak", "appimage", "macos" or "system" (a `.deb` or `.rpm`) when installed as one;
-    None when run from the checkout. The launchers of the Mac app and of the `.deb`/`.rpm` set
-    STICKLER_PACKAGED."""
+    """ "flatpak", "appimage", "macos", "windows" or "system" (a `.deb` or `.rpm`) when installed
+    as one; None when run from the checkout. The launchers of the Mac app, the Windows app and
+    the `.deb`/`.rpm` set STICKLER_PACKAGED."""
     if env.get("FLATPAK_ID") == APP_ID:
         return "flatpak"
     if env.get("APPIMAGE") and env.get("SHARUN_DIR"):  # ours: another AppImage has no SHARUN_DIR
         return "appimage"
-    if env.get("STICKLER_PACKAGED") in ("macos", "system"):
+    if env.get("STICKLER_PACKAGED") in ("macos", "system", "windows"):
         return env["STICKLER_PACKAGED"]
     return None
 
 
 def data_home(env: Mapping[str, str] = os.environ) -> Path:
-    """$XDG_DATA_HOME/stickler; in the Mac app ~/Library/Application Support/Stickler."""
+    """$XDG_DATA_HOME/stickler; in the Mac app ~/Library/Application Support/Stickler; in the
+    Windows app %LOCALAPPDATA%\\Stickler\\data."""
     if env.get("XDG_DATA_HOME"):
         return Path(env["XDG_DATA_HOME"]) / "stickler"
     if packaged(env) == "macos":
         return _mac(env, "Application Support")
+    if packaged(env) == "windows":
+        return _windows(env, "data")
     return _home(env) / ".local" / "share" / "stickler"
 
 
 def config_home(env: Mapping[str, str] = os.environ) -> Path:
-    """$XDG_CONFIG_HOME/stickler; in the Mac app the settings sit with its data."""
+    """$XDG_CONFIG_HOME/stickler; in the Mac app the settings sit with its data; in the Windows
+    app %LOCALAPPDATA%\\Stickler\\config."""
     if env.get("XDG_CONFIG_HOME"):
         return Path(env["XDG_CONFIG_HOME"]) / "stickler"
     if packaged(env) == "macos":
         return _mac(env, "Application Support")
+    if packaged(env) == "windows":
+        return _windows(env, "config")
     return _home(env) / ".config" / "stickler"
 
 
@@ -129,12 +144,12 @@ def results_cache(env: Mapping[str, str] = os.environ) -> Path:
 def packaged_env(env: Mapping[str, str] = os.environ) -> dict[str, str]:
     """What an AppImage sets for itself (the Flatpak's manifest sets the same), a `.deb` or
     `.rpm` (module `linux-packages`), and the Mac app that brings its own core (module
-    `mac-package`): where its adapters' sources are; that
+    `mac-package`), and the Windows app (module `win-core`): where its adapters' sources are; that
     uv uses a Python of its own, never the AppImage's, whose path changes with every mount; and
     that uv keeps its downloads and that Python in Stickler's folders. The Python settings
     always apply (otherwise uv may take the AppImage's own); other values already set stay."""
     kind = packaged(env)
-    if kind not in ("appimage", "macos", "system"):
+    if kind not in ("appimage", "macos", "system", "windows"):
         return {}
     import stickler_app
 

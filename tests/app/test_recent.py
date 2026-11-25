@@ -74,6 +74,20 @@ def test_rows_say_who_played_it_and_when_and_mark_missing_files():
     assert "12" in recent.rows([songs[2]], today=today, exists=lambda p: True)[0].detail
 
 
+def test_the_day_is_written_without_a_strftime_flag_only_some_systems_know():
+    """`%-d` (the day without a leading zero) is glibc's and macOS'; Windows' strftime raises
+    "Invalid format string" (found on the Windows runner, 2026-11-24)."""
+
+    class Strict(date):
+        def strftime(self, pattern: str) -> str:
+            assert "%-" not in pattern, pattern
+            return super().strftime(pattern)
+
+    song = recent.Recent(Path("/music/c.flac"), "C", "", Strict(2026, 11, 5))
+    (row,) = recent.rows([song], today=date(2026, 11, 15), exists=lambda p: True)
+    assert row.detail == "opened 5 November"
+
+
 def test_a_finished_song_is_noted_with_todays_date():
     song = recent.opened_now(Path("/music/eye.flac"), "Eye of the Tiger", "Survivor")
     assert song == recent.Recent(
@@ -96,6 +110,8 @@ def test_the_digest_is_kept_and_old_lists_load_without_one(tmp_path):
     song = recent.Recent(Path("/a/song.mp3"), "Song", "Band", date(2026, 11, 22), "abc")
     recent.save(store, [song])
     assert recent.load(store) == [song]
-    store.write_text('[{"path": "/b.mp3", "title": "B", "artist": "", "opened": "2026-11-01"}]')
+    store.write_text(
+        '[{"path": "/b.mp3", "title": "B", "artist": "", "opened": "2026-11-01"}]', encoding="utf-8"
+    )
     (loaded,) = recent.load(store)
     assert loaded.path == Path("/b.mp3") and loaded.digest == ""

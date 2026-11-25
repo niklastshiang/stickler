@@ -543,7 +543,7 @@ def test_the_musicxml_is_saved_where_chosen(monkeypatch, tmp_path, host):
     assert ctl.export_musicxml(dest)
     assert dest.read_bytes() == result.notation.musicxml.read_bytes()
     assert host.events[-1] == controller.Notice("Saved “eye.musicxml”", dest)
-    (tmp_path / "file").write_text("")
+    (tmp_path / "file").write_text("", encoding="utf-8")
     assert ctl.export_musicxml(tmp_path / "file" / "eye.musicxml")  # a file is in the way
     assert host.notices()[-1].startswith("Could not save: ")
     assert ctl.state is result
@@ -769,7 +769,7 @@ def test_a_restore_brings_the_recent_songs_back_at_once(monkeypatch, tmp_path, h
 def test_a_file_that_is_no_backup_is_refused_with_its_reason(monkeypatch, tmp_path, host):
     _installed(monkeypatch)
     bad = tmp_path / "bad.zip"
-    bad.write_text("hello")
+    bad.write_text("hello", encoding="utf-8")
     ctl = _made(host)
     assert ctl.restore(bad)
     assert wait(lambda: host.notices())

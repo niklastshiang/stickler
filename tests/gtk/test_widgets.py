@@ -402,7 +402,9 @@ def test_the_app_environment_finds_the_leipzig_font():
     """scripts/gtk.sh points fontconfig at the app's font folder (librsvg's only way in)."""
     import subprocess
 
-    families = subprocess.run(["fc-list", ":", "family"], capture_output=True, text=True).stdout
+    families = subprocess.run(
+        ["fc-list", ":", "family"], capture_output=True, text=True, encoding="utf-8"
+    ).stdout
     assert "Leipzig" in families
 
 
@@ -1038,7 +1040,9 @@ def test_an_appimage_uninstalls_itself_its_entries_and_its_models(monkeypatch, t
     md5 = hashlib.md5(f"file://{image}".encode()).hexdigest()
     entry = Path(os.environ["XDG_DATA_HOME"]) / "applications" / f"appimagekit_{md5}-S.desktop"
     entry.parent.mkdir(parents=True, exist_ok=True)
-    entry.write_text(f"[Desktop Entry]\nExec={image}\nX-AppImage-Identifier={md5}\n")
+    entry.write_text(
+        f"[Desktop Entry]\nExec={image}\nX-AppImage-Identifier={md5}\n", encoding="utf-8"
+    )
     weights = paths.adapters_root() / "beats" / "beat_this" / "weights"
     weights.mkdir(parents=True)
     (weights / "m.ckpt").write_bytes(b"x")
@@ -1171,7 +1175,7 @@ def test_after_removing_the_models_a_song_asks_for_them_instead_of_failing(monke
     monkeypatch.setenv("SHARUN_DIR", str(tmp_path / "mount"))
     shipped = tmp_path / "mount" / "share" / "stickler" / "adapters"
     (shipped / "transcribers" / "adtof").mkdir(parents=True)
-    (shipped / "transcribers" / "adtof" / "run.py").write_text("print('adtof')\n")
+    (shipped / "transcribers" / "adtof" / "run.py").write_text("print('adtof')\n", encoding="utf-8")
     monkeypatch.setenv("STICKLER_ADAPTER_SOURCES", str(shipped))
     source = paths.adapters_root() / "transcribers" / "adtof" / "run.py"
     window = Window()

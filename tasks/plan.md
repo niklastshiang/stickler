@@ -665,3 +665,72 @@ from 163 on each push goes through the `mac` workflow.
 | A command waits behind `pages` while the core engraves | Low | Only clicks and keys wait, not the marker (looked up in Swift); a short wait after a resize is accepted |
 | Headphones unplugged stop the engine | Medium | The configuration change pauses playback and rebuilds the engine at the same position |
 | Space taken by a focused control | Low | Space is the Controls menu's key equivalent, which the menu gets first; checked by hand |
+
+## Release 11 (Windows app): `win-core` (approved 2026-11-24, SPEC.md "Module `win-core`")
+
+The Python core and the first version's models on Windows 11 x64 (CPU), checked by a Windows
+runner; Linux and macOS unchanged. Tasks 168–175.
+
+Design decisions:
+- **What Linux can show comes first** (168–173): encodings (Python's `EncodingWarning` finds
+  them here), peak RAM, the locks, the kill, the folders and the bridge's lines are each built
+  with a stand-in for the platform and a test on Linux, as `_peak_rss_mb(platform)` was for the
+  Mac. The runner then shows what is left (174), not everything at once.
+- **Digest edits one at a time** (169, then 170), as for `mac-core`: each takes `stickler
+  cache-digests` before and after and adds its own pairs.
+- **The runner is the only Windows:** the branch `claude/win-core` is pushed after each task
+  from 174 on; a red Windows job is read from its log (`gh run view --log-failed`), fixed and
+  pushed again. Linux' check stays the pre-commit hook.
+- **Sub-agents** (owner, 2026-11-24: cheaper models where sensible): mechanical or
+  self-contained tasks (168's encodings, 172's folders, the workflow files) go to a cheaper
+  model with the task's acceptance as its brief; every diff is read and `scripts/check.sh task`
+  run before its commit. The digest tasks (169, 170) and reading the runner's failures stay
+  with the main session.
+
+Order: encodings (168) → peak RAM (169) → wider platforms (170) → the kill (171) → folders
+(172) → bridge lines (173) → Windows job (174) → smoke tests on the runner (175).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The relock moves a Linux or macOS package | High | The comparison must show no difference; else stop, ask the owner |
+| A pair is added for an edit that changes results | High | Peak RAM: tests fix the Linux and macOS numbers; locks: the comparison; `stickler eval` reads every result |
+| `taskkill` leaves a model running (a process outside the tree) | Medium | The cancel tests run with real processes on the runner; a Job Object if they fail |
+| Many tests assume POSIX; the first Windows run is very red | Medium | 168 and the process helper take the known ones first; the rest one by one from the log, each fixed or skipped with its reason |
+| An adapter's package does not install or import on Windows (adtof-pytorch, Demucs) | Medium | Seen in 175; a platform note in the adapter only with `digests.yaml` pairs if behaviour-neutral, else stop and ask |
+| Windows runner minutes, slow model downloads | Low | Free for a public repository; smoke tests only on relevant pushes and weekly |
+
+## Release 11 (Windows app): `win-spike` (approved 2026-11-24, SPEC.md "Module `win-spike`")
+
+A throwaway installer that proves the way the app brings its core along, on the runner and
+then on the owner's company laptop. Tasks 176–180. Nothing but findings reaches
+`claude/win-core` or `main`.
+
+Design decisions:
+- **A branch of its own** (`claude/win-spike`, from `claude/win-core`): the workflow
+  `win-spike.yml`, the Inno Setup script, the launcher and the driver live only there. The
+  findings are written into SPEC.md and `tasks/todo.md` on `claude/win-core`; the branch is
+  deleted on GitHub at the end (its last run's number stays in the notes).
+- **The runner answers first** (176–178): layout, installer, a silent install, the launcher on
+  a synthetic clip, signatures, hashes, path lengths, the uninstaller. The owner is asked to
+  install only something that already ran once on Windows.
+- **The log is the spike's result:** the launcher writes one text file with every step, every
+  program started and its exit code. On the owner's PC a held-back program shows as the last
+  line; no guessing from a window that closed.
+- **No tests of the usual kind:** the spike's code is deleted with its branch. What proves it
+  is the workflow's run; `scripts/check.sh task` still gates every commit of the branch (lint,
+  floor guard, the existing suite), and the driver stays small enough to read.
+- **Sub-agents:** a cheaper model builds the workflow and iterates on the runner (each try is
+  a push and a wait); the main session reads every run's summary itself before a finding is
+  written down.
+
+Order: layout and installer (176) → launcher and driver (177) → the runner's two runs and the
+summary (178) → the owner's PC (179) → findings, branch deleted (180).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The antivirus holds a program back for good | High for the owner's checks | A valid result (decision 2); the log names the program; tried again after an hour and a day |
+| An environment's launcher differs per user, so no reputation can grow | Medium | Measured on the runner; starting the models with the downloaded Python directly is tried there |
+| Paths over 260 characters without `LongPathsEnabled` | Medium | The runner's second run; a shorter folder is `win-package`'s change if needed |
+| The relocated Python does not find its own files or the adapters' sources | Medium | Seen in the runner's first install; `STICKLER_ADAPTER_SOURCES` from the launcher |
+| The installer is too large for an artifact or slow to build | Low | Sizes in the summary; ffmpeg's essentials build |
+
