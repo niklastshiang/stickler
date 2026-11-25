@@ -3593,6 +3593,23 @@
         }
       }
     },
+    "“%1$@” cannot be played." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%1$@“ lässt sich nicht abspielen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede reproducir «%1$@»."
+          }
+        }
+      }
+    },
     "“%1$@” cannot be read. Is it a complete sound file?" : {
       "extractionState" : "manual",
       "localizations" : {

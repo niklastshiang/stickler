@@ -740,3 +740,122 @@ def test_the_mac_app_uninstalls_its_data_over_the_bridge_and_is_told_when_it_is_
 
 def test_from_the_checkout_nothing_is_uninstalled(running):
     assert running.send("uninstall", everything=True)["error"]["code"] == "not_now"
+
+
+# playback for the Mac app (SPEC.md "Mac playback", scope 1)
+
+
+def test_a_result_carries_its_bars_in_played_order_and_its_clicks(monkeypatch, tmp_path):
+    from stickler_app import paths
+
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        result = running.state()
+        assert result["clicks"] is None  # the fake analysis writes no clicks
+        assert len(result["bars"]) == 8
+        assert result["bars"][0] == {"start": 0.0, "end": 2.0, "bar": 1, "label": "Bar 1 of 8"}
+        assert result["bars"][7]["label"] == "Bar 8 of 8"
+        clicks = paths.hits_path(tmp_path / "eye.flac")
+        clicks.parent.mkdir(parents=True)
+        clicks.write_bytes(b"RIFF")
+        running.send("close")
+        running.send("open", path=str(tmp_path / "eye.flac"))
+        assert running.until("result")["clicks"] == str(clicks)
+    finally:
+        running.stop()
+
+
+def test_jump_and_step_give_the_time_to_go_to(monkeypatch, tmp_path):
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        assert running.send("jump", bar=3, at=0.5)["seconds"] == 4.0
+        assert running.send("jump", bar=9, at=0.5)["seconds"] is None  # not in the song
+        assert running.send("jump", bar=0, at=0)["seconds"] is None  # no pickup bar
+        assert running.send("step", at=5.0, by=1)["seconds"] == 6.0
+        assert running.send("step", at=5.0, by=-1)["seconds"] == 2.0
+        assert running.send("step", at=0, by=-3)["seconds"] == 0.0
+        for cmd, bad in (
+            ("jump", {"at": 1.0}),
+            ("jump", {"bar": "3", "at": 1.0}),
+            ("jump", {"bar": -1, "at": 1.0}),
+            ("jump", {"bar": True, "at": 1.0}),
+            ("jump", {"bar": 3, "at": -1}),
+            ("jump", {"bar": 3, "at": float("inf")}),
+            ("step", {"at": 1.0}),
+            ("step", {"at": 1.0, "by": 1.5}),
+            ("step", {"by": 1}),
+        ):
+            assert running.send(cmd, **bad)["error"]["code"] == "bad_argument", (cmd, bad)
+    finally:
+        running.stop()
+
+
+@pytest.mark.parametrize(
+    ("cmd", "args"),
+    [("jump", {"bar": 1, "at": 0}), ("step", {"at": 0, "by": 1}), ("playable", {})],
+)
+def test_the_playback_commands_need_a_result(running, cmd, args):
+    assert running.send(cmd, **args)["error"]["code"] == "not_now"
+
+
+def test_volumes_are_remembered_and_answered_as_the_gains_to_play(running):
+    from stickler_app import settings
+
+    assert running.send("volumes", hear="both") == {"id": 1, "ok": True, "song": 0.7, "hits": 1.0}
+    assert running.send("volumes", hear="hits", song=0.4)["song"] == 0.0
+    stored = settings.load(settings.store_path())
+    assert (stored.song_volume, stored.hits_volume) == (0.4, 1.0)
+    reply = running.send("volumes", hear="song", song=0.5, hits=0)
+    assert (reply["song"], reply["hits"]) == (0.5, 0.0)
+    assert settings.load(settings.store_path()).hits_volume == 0.0
+    assert running.send("settings")["song_volume"] == 0.5
+    for bad in (
+        {},
+        {"hear": "drums"},
+        {"hear": "both", "song": 1.5},
+        {"hear": "both", "hits": -0.1},
+        {"hear": "both", "song": "loud"},
+        {"hear": "both", "song": False},
+    ):
+        assert running.send("volumes", **bad)["error"]["code"] == "bad_argument", bad
+
+
+def test_volumes_that_cannot_be_saved_still_play(monkeypatch, running, caplog):
+    from stickler_app import settings
+
+    def read_only(store, **changes):
+        raise OSError(30, "Read-only file system")
+
+    monkeypatch.setattr(settings, "update", read_only)
+    reply = running.send("volumes", hear="both", song=0.2, hits=0.3)
+    assert (reply["song"], reply["hits"]) == (0.2, 0.3)
+    assert "volumes could not be saved" in caplog.text
+
+
+def test_a_song_the_mac_cannot_play_is_decoded_once(monkeypatch, tmp_path):
+    from stickler_app import paths, playback
+
+    made: list[Path] = []
+
+    def decode(song, dest):
+        made.append(dest)
+        return dest
+
+    monkeypatch.setattr(playback, "playable", decode)
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        reply = running.send("playable")
+        assert reply["path"] == str(paths.playable_path(tmp_path / "eye.flac"))
+        assert made == [paths.playable_path(tmp_path / "eye.flac")]
+    finally:
+        running.stop()
+
+
+def test_a_song_that_cannot_be_decoded_is_refused_with_the_reason(monkeypatch, tmp_path):
+    running = _with_result(monkeypatch, tmp_path)  # eye.flac does not exist
+    try:
+        error = running.send("playable")["error"]
+        assert error["code"] == "not_playable"
+        assert error["message"].startswith("“eye.flac” cannot be played.")
+    finally:
+        running.stop()

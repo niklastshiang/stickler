@@ -1190,7 +1190,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ## Phase 28: Mac playback, module `mac-playback` (approved 2026-11-25, SPEC.md "Mac playback")
 
-- [ ] **Task 161: Playback in the bridge** (M): `result` with `clicks` and `bars` (start, end, written bar, "Bar n of N"); the commands `jump {bar, at}`, `step {at, by}`, `volumes {hear, song?, hits?}` and `playable`; `docs/bridge.md`.
+- [x] **Task 161: Playback in the bridge** (M): done 2026-11-25. `result` with `clicks` (the hits file, `null` when not there) and `bars` (start, end, written `bar`, "Bar n of N" from `playback.labels`); `jump {bar, at}` and `step {at, by}` wrap `playback.jump_target`/`step`; `volumes {hear, song?, hits?}` remembers what it is given (unsaved still answered) and replies the gains of `playback.volumes`; `playable` decodes once with ffmpeg into `paths.playable_path` (cache `playable/`), refused as `not_playable` ("“{name}” cannot be played.", German and Spanish) when ffmpeg cannot. `docs/bridge.md` documents all four and the two fields; the doc test now checks the bars' fields. Tests: 9 bridge, 4 playback.
   - Acceptance: the fields and commands of SPEC "Mac playback" scope 1; a correction's state carries its new bars; `volumes` remembers what it is given and answers the gains for the mode; `playable` decodes once into the cache's `playable/` (caches are not backed up); every new command answers `not_now` without a result and `bad_argument` for a wrong value.
   - Verify: `uv run pytest -q tests/app` (bridge and doc tests), `scripts/check.sh task`, coverage ≥ 95 %
   - Dependencies: none · Files: `src/stickler_app/bridge.py`, `docs/bridge.md`, `tests/app/`
