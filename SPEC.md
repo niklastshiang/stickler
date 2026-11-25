@@ -3990,8 +3990,8 @@ inspects TLS; the run's log `%LOCALAPPDATA%\Stickler\spike-log.txt`, the install
    - Starting models without the launcher was not needed here.
 4. **Question 4: not testable here.** `LongPathsEnabled` is on; the runner's answer stands.
 5. **Question 5:** the uninstall entry is in Settings › Apps ("Stickler (spike)", version 9,
-   381 MB). Panda refused the uninstaller `unins000.exe` at 12:35, 13:12 and 14:15 (one hour
-   40 minutes); nothing was removed. Still open: whether it removes everything once Panda
+   381 MB). Panda refused the uninstaller `unins000.exe` at 12:35, 13:12, 14:15 and 14:44 (two hours
+   ten minutes); nothing was removed. Still open: whether it removes everything once Panda
    releases it. Here Panda held the uninstaller back longer than the installer's helper and
    the environment's launcher (about half an hour each).
 
