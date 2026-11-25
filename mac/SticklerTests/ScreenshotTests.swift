@@ -37,10 +37,12 @@ final class ScreenshotTests: XCTestCase {
         + #""can_export": true}}"#
 
     /// A launched model whose core plays `lines`.
-    func model(_ lines: [String], core given: (any Core)? = nil) async throws -> AppModel {
+    func model(
+        _ lines: [String], core given: (any Core)? = nil, player: (any Playing)? = nil
+    ) async throws -> AppModel {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "screens-\(UUID().uuidString)"))
         let core = given ?? ScriptedCore(lines: lines)
-        let model = AppModel(defaults: defaults, languages: ["en"]) { _ in core }
+        let model = AppModel(defaults: defaults, languages: ["en"], player: player) { _ in core }
         model.launch()
         for _ in 0..<200 where model.recent.isEmpty && !lines.isEmpty {
             try await Task.sleep(for: .milliseconds(10))

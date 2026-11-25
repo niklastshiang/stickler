@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-25 07:07+0100\n"
+"POT-Creation-Date: 2026-11-25 07:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -285,8 +285,15 @@ msgid ""
 "Stickler’s data is removed. To remove the app too, drag Stickler to the Bin."
 msgstr ""
 
+#. Translators: Mac app, the menu between View and Window with Play, Previous Bar and Next
+#. Bar, and the playback controls' name for VoiceOver; Apple's Music calls its menu
+#. "Steuerung" in German, "Controles" in Spanish
+#: src/stickler_app/mac_texts.py:45
+msgid "Controls"
+msgstr ""
+
 #. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
-#: src/stickler_app/mac_texts.py:48
+#: src/stickler_app/mac_texts.py:52
 #, python-brace-format
 msgid "{count} page"
 msgid_plural "{count} pages"

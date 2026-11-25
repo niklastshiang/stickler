@@ -1205,7 +1205,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: the `mac` workflow's app tests; `scripts/xccov_gate.py` with `Player` added (and CONSTRAINTS.md's list), ≥ 95 %
   - Dependencies: 162 · Files: `mac/Stickler/Player.swift`, `mac/SticklerTests/`, `scripts/xccov_gate.py`, `CONSTRAINTS.md`
 
-- [ ] **Task 164: The controls capsule and the volume popover** (M): M10's capsule over the desk, the popover, the notice above the capsule.
+- [x] **Task 164: The controls capsule and the volume popover** (M): done 2026-11-25 (pictures from the `mac` workflow's screenshots). `Playbar` (`glassEffect` capsule, 52 points high, 16 from the bottom): Previous Bar, Play/Pause, Next Bar as icon buttons with their names and help, the time, the position slider (VoiceOver: "Position", its value the time and the bar), the length, the bar's text, Volume with a popover (`VolumeSliders`: Song and Detected hits), Song · Hits · Both as the segmented picker; the whole capsule named "Controls" for VoiceOver (new in `po/`: German "Steuerung", Spanish "Controles"). Shown while `playback.canPlay`; then the notice sits above the capsule (rounded) instead of at the window's bottom, and the sheet leaves 84 points of desk under its last page (`SheetHTML.content(…, below:)`). Screenshots: `M10-playing`, `M10-hits`, `M10-saved`, `M10-volume` in light and dark.
   - Acceptance: SPEC scope 4; every control named for VoiceOver; shown with a result only.
   - Verify: screenshots of M10 light and dark and with the popover (`ScreenshotTests`), compared with `docs/design/mac/Playing*.dc.html`
   - Dependencies: 162, 163 · Files: `mac/Stickler/` (a new `Playbar.swift`, `ContentView.swift`), `mac/SticklerTests/`

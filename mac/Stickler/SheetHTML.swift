@@ -58,8 +58,9 @@ enum SheetHTML {
         }
     }
 
-    /// The styles and sheets for `pages` in the window's appearance.
-    static func content(_ pages: [Page], dark: Bool) -> Content {
+    /// The styles and sheets for `pages` in the window's appearance; `below` points of desk
+    /// stay free under the last page (the playback controls float there, M10).
+    static func content(_ pages: [Page], dark: Bool, below: Double = 0) -> Content {
         // the canvas inverts a light grey paper, so the dark page is not pure black
         let paper =
             dark
@@ -71,7 +72,8 @@ enum SheetHTML {
         }
         let style = """
             html { background: rgb(\(desk.red), \(desk.green), \(desk.blue)); overflow-x: hidden; }
-            body { margin: 0; padding: \(gutter)px; cursor: default; -webkit-user-select: none; }
+            body { margin: 0; padding: \(gutter)px \(gutter)px \(gutter + below)px;
+              cursor: default; -webkit-user-select: none; }
             .page { margin: 0 auto \(gutter)px; box-shadow: 0 1px 3px rgba(0,0,6,.18); \(paper) }
             .page:last-child { margin-bottom: 0; }
             .page svg { display: block; }

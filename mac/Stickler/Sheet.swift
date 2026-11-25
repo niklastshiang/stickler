@@ -12,7 +12,10 @@ struct SheetView: View {
     var body: some View {
         let dark = scheme == .dark
         SheetWeb(
-            content: SheetHTML.content(model.sheet.pages, dark: dark), dark: dark,
+            content: SheetHTML.content(
+                model.sheet.pages, dark: dark,
+                below: model.playback.canPlay ? Playbar.room : 0),
+            dark: dark,
             resized: { width in
                 if let pages = SheetHTML.pagesWidth(in: width) {
                     model.sheet.resize(to: pages)

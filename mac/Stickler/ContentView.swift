@@ -11,8 +11,22 @@ struct ContentView: View {
         page
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                if let notice = model.notice {
+                if let notice = model.notice, !controls {
                     NoticeBar(model: model, notice: notice)
+                }
+            }
+            // the controls float over the sheet; the notice sits above them (M10)
+            .overlay(alignment: .bottom) {
+                if controls {
+                    VStack(spacing: 8) {
+                        if let notice = model.notice {
+                            NoticeBar(model: model, notice: notice)
+                                .clipShape(.rect(cornerRadius: 12))
+                        }
+                        Playbar(playback: model.playback)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
                 }
             }
             .navigationTitle(model.title)
@@ -55,6 +69,11 @@ struct ContentView: View {
         Binding(
             get: { model.phase == .running ? SetupSheet(model.state.screen) : nil },
             set: { _ in })
+    }
+
+    /// A shown result can be played: its controls are on the window (M10).
+    private var controls: Bool {
+        model.phase == .running && model.playback.canPlay
     }
 
     private var canOpen: Bool {

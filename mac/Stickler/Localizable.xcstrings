@@ -711,6 +711,24 @@
         }
       }
     },
+    "Controls" : {
+      "comment" : "Translators: Mac app, the menu between View and Window with Play, Previous Bar and Next Bar, and the playback controls' name for VoiceOver; Apple's Music calls its menu \"Steuerung\" in German, \"Controles\" in Spanish",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steuerung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controles"
+          }
+        }
+      }
+    },
     "Corrections" : {
       "extractionState" : "manual",
       "localizations" : {
