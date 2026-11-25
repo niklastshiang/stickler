@@ -2144,8 +2144,11 @@ the macOS 26 way, for `mac-playback`:
   bars are written once") as switches.
 - **Back to Detected** under the sections, disabled while nothing is corrected.
 - **Every change applies at once.** While the core writes the corrected notes, a small spinner
-  sits after the subtitle and the old sheet stays (owner: shown, although it is mostly under a
-  second; the GTK app shows nothing).
+  turns and the old sheet stays (owner: shown, although it is mostly under a second; the GTK
+  app shows nothing). Drawn after the subtitle; built left of Open and Export (owner,
+  2026-11-25, while building: macOS puts an app's toolbar items only before the title, per
+  Apple's `ToolbarItemPlacement.navigation`, so "after the subtitle" would need a title drawn
+  by the app).
 - **New texts for `po/`** (added by `mac-corrections`): "Show Corrections", "Hide Corrections".
   Every other text exists from the GTK app.
 
@@ -3415,8 +3418,9 @@ it. A drummer on a Mac fixes a wrong beat in a second, as on Linux.
    shown as pressed while open) and View › Show Corrections / Hide Corrections (⌃⌘I) between
    the zoom items and Enter Full Screen, enabled with a result. The item's title and state
    are a logic type (`CorrectionsMenu`), tested and gated like `ControlsMenu`.
-5. **While a correction is written:** a small spinner after the window's subtitle while
-   `correcting`; the old sheet, title and marker stay until the new state comes; playback goes
+5. **While a correction is written:** a small spinner left of Open and Export while
+   `correcting` (owner, 2026-11-25; M11 draws it after the subtitle, see "Corrections screens
+   M11"); the old sheet, title and marker stay until the new state comes; playback goes
    on (`mac-playback`).
 6. **Texts:** "Show Corrections" and "Hide Corrections" new in `po/` through `mac_texts.py`,
    German "Korrekturen einblenden" / "Korrekturen ausblenden" (as macOS words "Seitenleiste

@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 /// state call for.
 struct ContentView: View {
     let model: AppModel
+    /// The corrections inspector left open or closed (M11), kept across launches.
+    @AppStorage(CorrectionsMenu.shownKey) private var correctionsShown = false
 
     var body: some View {
         page
@@ -21,9 +23,25 @@ struct ContentView: View {
                     PlaybackOverlay(model: model)
                 }
             }
+            // the corrections at the trailing edge, with a result only (M11)
+            .inspector(isPresented: inspectorShown) {
+                if let controls = CorrectionsMenu.controls(model) {
+                    CorrectionsInspector(model: model, controls: controls)
+                }
+            }
             .navigationTitle(model.title)
             .navigationSubtitle(model.subtitle)
             .toolbar {
+                // a correction's notes being written (owner, 2026-11-25: before Open and
+                // Export, as the system puts its own items only before the title)
+                if CorrectionsMenu.correcting(model) {
+                    ToolbarItem(placement: .primaryAction) {
+                        ProgressView()
+                            .controlSize(.small)
+                            .accessibilityLabel(Text("Write the notes"))
+                    }
+                    .sharedBackgroundVisibility(.hidden)
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         Panels.openSong(model)
@@ -45,6 +63,15 @@ struct ContentView: View {
                     .accessibilityLabel(Text("Export"))
                     .disabled(Exports.result(model) == nil)
                 }
+                ToolbarSpacer(.fixed, placement: .primaryAction)
+                ToolbarItem(placement: .primaryAction) {
+                    Toggle(isOn: inspectorShown) {
+                        Label("Corrections", systemImage: "sidebar.trailing")
+                    }
+                    .toggleStyle(.button)
+                    .help(Text("Corrections"))
+                    .disabled(!CorrectionsMenu.enabled(model))
+                }
             }
             .sheet(item: setupSheet) { _ in
                 SetupSheetView(model: model)
@@ -61,6 +88,13 @@ struct ContentView: View {
         Binding(
             get: { model.phase == .running ? SetupSheet(model.state.screen) : nil },
             set: { _ in })
+    }
+
+    /// The inspector is on the window when left open and there is a result to correct.
+    private var inspectorShown: Binding<Bool> {
+        Binding(
+            get: { CorrectionsMenu.presented(shown: correctionsShown, model) },
+            set: { correctionsShown = $0 })
     }
 
     /// A shown result can be played: its controls are on the window (M10).
