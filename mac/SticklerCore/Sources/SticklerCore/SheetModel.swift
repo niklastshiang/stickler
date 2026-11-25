@@ -16,11 +16,12 @@ public final class SheetModel {
     /// saved: the steps are shown then, and the core engraves nothing.
     public var canZoom: Bool { music != nil && onScreen }
 
-    /// What decides the pages of a result: a correction changes it, an export does not.
+    /// What decides the pages of a result: a correction's new notation changes it (`sheet`),
+    /// its start does not (the notes are still the old ones then), nor does an export.
     private struct Music: Equatable {
         let song: String
         let musicxml: String
-        let corrections: Corrections
+        let sheet: Int
     }
 
     private let settle: Duration
@@ -68,7 +69,7 @@ public final class SheetModel {
         switch screen {
         case .result(let result):
             let next = Music(
-                song: result.song, musicxml: result.musicxml, corrections: result.corrections)
+                song: result.song, musicxml: result.musicxml, sheet: result.sheet)
             onScreen = true
             guard next != music || owed else { return }
             music = next

@@ -1,40 +1,284 @@
 {
   "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-11-17T17:20:00Z"},
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-17T17:20:00Z"
+  },
   "title": "Stickler Mac screens",
-  "launch": {"view": "canvas"},
+  "launch": {
+    "view": "canvas"
+  },
   "pages": [],
   "boards": {
-    "Main.dc.html": {"x": 0, "y": 0, "w": 1000, "h": 700, "title": "M4 · Empty window (light)", "radius": 16},
-    "Sheet.dc.html": {"x": 1080, "y": 0, "w": 1000, "h": 700, "title": "M6 · Sheet music (light)", "radius": 16},
-    "Main-Dark.dc.html": {"x": 0, "y": 820, "w": 1000, "h": 700, "title": "M4 · Empty window (dark)", "radius": 16},
-    "Sheet-Dark.dc.html": {"x": 1080, "y": 820, "w": 1000, "h": 700, "title": "M6 · Sheet music (dark)", "radius": 16},
-    "SheetPage.dc.html": {"x": 2160, "y": 0, "w": 640, "h": 560, "title": "Engraved page (shared with the GTK mockups)"},
-    "Setup-Consent.dc.html": {"x": 0, "y": 1900, "w": 1000, "h": 700, "title": "M1 · First start: consent", "radius": 16},
-    "Setup-Download.dc.html": {"x": 1080, "y": 1900, "w": 1000, "h": 700, "title": "M2 · First start: download", "radius": 16},
-    "Setup-Error.dc.html": {"x": 2160, "y": 1900, "w": 1000, "h": 700, "title": "M3 · First start: a server is not answering", "radius": 16},
-    "Analysing.dc.html": {"x": 0, "y": 2960, "w": 1000, "h": 700, "title": "M5 · Analysis", "radius": 16},
-    "Export-Menu.dc.html": {"x": 1080, "y": 2960, "w": 1000, "h": 700, "title": "M7 · Export menu", "radius": 16},
-    "Export-Saved.dc.html": {"x": 2160, "y": 2960, "w": 1000, "h": 700, "title": "M7 · Saved", "radius": 16},
-    "Menu-App.dc.html": {"x": 0, "y": 4020, "w": 1000, "h": 520, "title": "M8 · Menu bar: Stickler"},
-    "Menu-File.dc.html": {"x": 1080, "y": 4020, "w": 1000, "h": 520, "title": "M8 · Menu bar: File"},
-    "Menu-View.dc.html": {"x": 2160, "y": 4020, "w": 1000, "h": 520, "title": "M8 · Menu bar: View"},
-    "Icon.dc.html": {"x": 0, "y": 4920, "w": 1240, "h": 640, "title": "App icon for macOS"},
-    "Playing.dc.html": {"x": 0, "y": 5900, "w": 1000, "h": 700, "title": "M10 · Playing (light)", "radius": 16},
-    "Playing-Dark.dc.html": {"x": 1080, "y": 5900, "w": 1000, "h": 700, "title": "M10 · Playing, only the hits (dark)", "radius": 16},
-    "Playing-Volume.dc.html": {"x": 2160, "y": 5900, "w": 1000, "h": 700, "title": "M10 · Volume", "radius": 16},
-    "Menu-Controls.dc.html": {"x": 3240, "y": 5900, "w": 1000, "h": 520, "title": "M10 · Menu bar: Controls"}
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1000,
+      "h": 700,
+      "title": "M4 · Empty window (light)",
+      "radius": 16
+    },
+    "Sheet.dc.html": {
+      "x": 1080,
+      "y": 0,
+      "w": 1000,
+      "h": 700,
+      "title": "M6 · Sheet music (light)",
+      "radius": 16
+    },
+    "Main-Dark.dc.html": {
+      "x": 0,
+      "y": 820,
+      "w": 1000,
+      "h": 700,
+      "title": "M4 · Empty window (dark)",
+      "radius": 16
+    },
+    "Sheet-Dark.dc.html": {
+      "x": 1080,
+      "y": 820,
+      "w": 1000,
+      "h": 700,
+      "title": "M6 · Sheet music (dark)",
+      "radius": 16
+    },
+    "SheetPage.dc.html": {
+      "x": 2160,
+      "y": 0,
+      "w": 640,
+      "h": 560,
+      "title": "Engraved page (shared with the GTK mockups)"
+    },
+    "Setup-Consent.dc.html": {
+      "x": 0,
+      "y": 1900,
+      "w": 1000,
+      "h": 700,
+      "title": "M1 · First start: consent",
+      "radius": 16
+    },
+    "Setup-Download.dc.html": {
+      "x": 1080,
+      "y": 1900,
+      "w": 1000,
+      "h": 700,
+      "title": "M2 · First start: download",
+      "radius": 16
+    },
+    "Setup-Error.dc.html": {
+      "x": 2160,
+      "y": 1900,
+      "w": 1000,
+      "h": 700,
+      "title": "M3 · First start: a server is not answering",
+      "radius": 16
+    },
+    "Analysing.dc.html": {
+      "x": 0,
+      "y": 2960,
+      "w": 1000,
+      "h": 700,
+      "title": "M5 · Analysis",
+      "radius": 16
+    },
+    "Export-Menu.dc.html": {
+      "x": 1080,
+      "y": 2960,
+      "w": 1000,
+      "h": 700,
+      "title": "M7 · Export menu",
+      "radius": 16
+    },
+    "Export-Saved.dc.html": {
+      "x": 2160,
+      "y": 2960,
+      "w": 1000,
+      "h": 700,
+      "title": "M7 · Saved",
+      "radius": 16
+    },
+    "Menu-App.dc.html": {
+      "x": 0,
+      "y": 4020,
+      "w": 1000,
+      "h": 520,
+      "title": "M8 · Menu bar: Stickler"
+    },
+    "Menu-File.dc.html": {
+      "x": 1080,
+      "y": 4020,
+      "w": 1000,
+      "h": 520,
+      "title": "M8 · Menu bar: File"
+    },
+    "Menu-View.dc.html": {
+      "x": 2160,
+      "y": 4020,
+      "w": 1000,
+      "h": 520,
+      "title": "M8 · Menu bar: View"
+    },
+    "Icon.dc.html": {
+      "x": 0,
+      "y": 4920,
+      "w": 1240,
+      "h": 640,
+      "title": "App icon for macOS"
+    },
+    "Playing.dc.html": {
+      "x": 0,
+      "y": 5900,
+      "w": 1000,
+      "h": 700,
+      "title": "M10 · Playing (light)",
+      "radius": 16
+    },
+    "Playing-Dark.dc.html": {
+      "x": 1080,
+      "y": 5900,
+      "w": 1000,
+      "h": 700,
+      "title": "M10 · Playing, only the hits (dark)",
+      "radius": 16
+    },
+    "Playing-Volume.dc.html": {
+      "x": 2160,
+      "y": 5900,
+      "w": 1000,
+      "h": 700,
+      "title": "M10 · Volume",
+      "radius": 16
+    },
+    "Menu-Controls.dc.html": {
+      "x": 3240,
+      "y": 5900,
+      "w": 1000,
+      "h": 520,
+      "title": "M10 · Menu bar: Controls"
+    },
+    "Corrections.dc.html": {
+      "x": 0,
+      "y": 6980,
+      "w": 1000,
+      "h": 700,
+      "title": "M11 · Corrections inspector (light, Simplify off)",
+      "radius": 16,
+      "is_interactive": true
+    },
+    "Corrections-Dark.dc.html": {
+      "x": 1080,
+      "y": 6980,
+      "w": 1000,
+      "h": 700,
+      "title": "M11 · Corrections while playing, half tempo being written (dark)",
+      "radius": 16
+    },
+    "Menu-View-Corrections.dc.html": {
+      "x": 2160,
+      "y": 6980,
+      "w": 1000,
+      "h": 520,
+      "title": "M11 · Menu bar: View with Show Corrections"
+    }
   },
-  "order": ["Main.dc.html", "Sheet.dc.html", "Main-Dark.dc.html", "Sheet-Dark.dc.html", "SheetPage.dc.html", "Setup-Consent.dc.html", "Setup-Download.dc.html", "Setup-Error.dc.html", "Analysing.dc.html", "Export-Menu.dc.html", "Export-Saved.dc.html", "Menu-App.dc.html", "Menu-File.dc.html", "Menu-View.dc.html", "Icon.dc.html", "Playing.dc.html", "Playing-Dark.dc.html", "Playing-Volume.dc.html", "Menu-Controls.dc.html"],
+  "order": [
+    "Main.dc.html",
+    "Sheet.dc.html",
+    "Main-Dark.dc.html",
+    "Sheet-Dark.dc.html",
+    "SheetPage.dc.html",
+    "Setup-Consent.dc.html",
+    "Setup-Download.dc.html",
+    "Setup-Error.dc.html",
+    "Analysing.dc.html",
+    "Export-Menu.dc.html",
+    "Export-Saved.dc.html",
+    "Menu-App.dc.html",
+    "Menu-File.dc.html",
+    "Menu-View.dc.html",
+    "Icon.dc.html",
+    "Playing.dc.html",
+    "Playing-Dark.dc.html",
+    "Playing-Volume.dc.html",
+    "Menu-Controls.dc.html",
+    "Corrections.dc.html",
+    "Corrections-Dark.dc.html",
+    "Menu-View-Corrections.dc.html"
+  ],
   "notes": {
-    "row1": {"x": 0, "y": -300, "text": "Stickler for macOS · first screens", "kind": "title1", "maxW": 2080},
-    "assume": {"x": 2160, "y": 660, "w": 420, "size": "m", "fill": "orange", "text": "Draft 1 (2026-11-17). macOS 26, SwiftUI defaults: unified toolbar, menu bar for the commands, system accent. No playback in the first Mac version, so no bar marker yet. Inter stands in for SF Pro on the canvas."},
-    "row3": {"x": 0, "y": 1640, "text": "First start", "kind": "title1", "maxW": 3160},
-    "row4": {"x": 0, "y": 2700, "text": "Analysis and export", "kind": "title1", "maxW": 3160},
-    "row5": {"x": 0, "y": 3760, "text": "Menu bar", "kind": "title1", "maxW": 3160},
-    "row6": {"x": 0, "y": 4660, "text": "App icon", "kind": "title1", "maxW": 1240},
-    "row7": {"x": 0, "y": 5640, "text": "Playback (a later release)", "kind": "title1", "maxW": 4240},
-    "playback": {"x": 4320, "y": 5900, "w": 480, "size": "m", "fill": "blue", "text": "Approved by the owner on 2026-11-24 (draft 1). Playback comes to the Mac in a later release; the GTK app's behaviour (SPEC.md, module playback), drawn the macOS 26 way.\n1. The controls float as a glass capsule over the desk at the window's bottom, the sheet scrolling under it: Previous Bar, Play/Pause, Next Bar (plain glyphs, as in Apple's Music), time, position slider, length, \"Bar 2 of 110\", Volume, Song · Hits · Both.\n2. Song · Hits · Both is the native segmented picker.\n3. Volume: a popover above the button with two sliders, Song and Detected hits (70 % and 100 % at first, remembered per song).\n4. A Controls menu between View and Window, named as in Apple's Music (its guide: Choose Controls > Shuffle): Play or Pause (Space, as in Music), Previous Bar (←), Next Bar (→) (Music steps songs with the same arrows), Go to the Start (⌥←, QuickTime Player's key for the beginning of a movie; MacBooks have no Home key, Stickler also takes Home as on Linux), then Song, Hits, Both with a checkmark.\n5. The bar marker in the accent blue; a click on a bar jumps there.\n6. The \"saved\" note (M7) moves up above the capsule while a song is open.\nNew text for po/: \"Controls\". Menu name and keys checked against Apple's support guides for Music and QuickTime Player (2026-11-24)."}
+    "row1": {
+      "x": 0,
+      "y": -300,
+      "text": "Stickler for macOS · first screens",
+      "kind": "title1",
+      "maxW": 2080
+    },
+    "assume": {
+      "x": 2160,
+      "y": 660,
+      "w": 420,
+      "size": "m",
+      "fill": "orange",
+      "text": "Draft 1 (2026-11-17). macOS 26, SwiftUI defaults: unified toolbar, menu bar for the commands, system accent. No playback in the first Mac version, so no bar marker yet. Inter stands in for SF Pro on the canvas."
+    },
+    "row3": {
+      "x": 0,
+      "y": 1640,
+      "text": "First start",
+      "kind": "title1",
+      "maxW": 3160
+    },
+    "row4": {
+      "x": 0,
+      "y": 2700,
+      "text": "Analysis and export",
+      "kind": "title1",
+      "maxW": 3160
+    },
+    "row5": {
+      "x": 0,
+      "y": 3760,
+      "text": "Menu bar",
+      "kind": "title1",
+      "maxW": 3160
+    },
+    "row6": {
+      "x": 0,
+      "y": 4660,
+      "text": "App icon",
+      "kind": "title1",
+      "maxW": 1240
+    },
+    "row7": {
+      "x": 0,
+      "y": 5640,
+      "text": "Playback (a later release)",
+      "kind": "title1",
+      "maxW": 4240
+    },
+    "playback": {
+      "x": 4320,
+      "y": 5900,
+      "w": 480,
+      "size": "m",
+      "fill": "blue",
+      "text": "Approved by the owner on 2026-11-24 (draft 1). Playback comes to the Mac in a later release; the GTK app's behaviour (SPEC.md, module playback), drawn the macOS 26 way.\n1. The controls float as a glass capsule over the desk at the window's bottom, the sheet scrolling under it: Previous Bar, Play/Pause, Next Bar (plain glyphs, as in Apple's Music), time, position slider, length, \"Bar 2 of 110\", Volume, Song · Hits · Both.\n2. Song · Hits · Both is the native segmented picker.\n3. Volume: a popover above the button with two sliders, Song and Detected hits (70 % and 100 % at first, remembered per song).\n4. A Controls menu between View and Window, named as in Apple's Music (its guide: Choose Controls > Shuffle): Play or Pause (Space, as in Music), Previous Bar (←), Next Bar (→) (Music steps songs with the same arrows), Go to the Start (⌥←, QuickTime Player's key for the beginning of a movie; MacBooks have no Home key, Stickler also takes Home as on Linux), then Song, Hits, Both with a checkmark.\n5. The bar marker in the accent blue; a click on a bar jumps there.\n6. The \"saved\" note (M7) moves up above the capsule while a song is open.\nNew text for po/: \"Controls\". Menu name and keys checked against Apple's support guides for Music and QuickTime Player (2026-11-24)."
+    },
+    "row8": {
+      "x": 0,
+      "y": 6720,
+      "text": "Corrections (mac-corrections)",
+      "kind": "title1",
+      "maxW": 3160
+    },
+    "corrections": {
+      "x": 3240,
+      "y": 6980,
+      "w": 480,
+      "size": "m",
+      "fill": "blue",
+      "text": "Approved by the owner on 2026-11-25 (draft 1). The GTK app's corrections (SPEC.md, module corrections), drawn the macOS 26 way, for mac-corrections.\n1. An inspector at the window's trailing edge (SwiftUI .inspector), 300 pt; the sheet narrows beside it, the playback capsule stays over the desk. Open or closed is remembered across launches (as in Xcode and Pages); never shown without a result.\n2. Opened and closed by a toolbar button at the far right (tooltip \"Corrections\") and View → Show Corrections / Hide Corrections, ⌃⌘I (the key of Apple's InspectorCommands; own words, so it says what opens).\n3. Beat: Tempo as a segmented control (Half · As Detected · Double); Beats per bar and the first \"one\" as steppers (1–12; Beat 1 … Beat n, with \"Beats before it are a pickup\").\n4. Easier to Read: Simplify and Repeat signs as switches with their GTK lines.\n5. Back to Detected, disabled while nothing is corrected.\n6. Every change applies at once; while the core writes the notes a small spinner sits after the subtitle and the old sheet stays.\nNew texts for po/: \"Show Corrections\", \"Hide Corrections\". Try it: the light board's controls work."
+    }
   },
   "designSystems": []
 }

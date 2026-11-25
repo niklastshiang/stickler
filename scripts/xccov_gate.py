@@ -33,6 +33,7 @@ LOGIC = (
     "Uninstalling",
     "Player",
     "ControlsMenu",
+    "CorrectionsMenu",
 )
 
 

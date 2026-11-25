@@ -43,6 +43,12 @@ TEXTS = (
     # Bar, and the playback controls' name for VoiceOver; Apple's Music calls its menu
     # "Steuerung" in German, "Controles" in Spanish
     N_("Controls"),
+    # Translators: Mac app, View menu (⌃⌘I): opens the corrections beside the sheet music
+    # (tempo, beats per bar, the first "one"); macOS says "Seitenleiste einblenden" in German,
+    # "Mostrar barra lateral" in Spanish
+    N_("Show Corrections"),
+    # Translators: Mac app, View menu (⌃⌘I): closes the corrections again
+    N_("Hide Corrections"),
 )
 
 # Texts with a count: the String Catalog holds both forms under the plural one, and Swift

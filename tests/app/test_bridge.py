@@ -859,3 +859,147 @@ def test_a_song_that_cannot_be_decoded_is_refused_with_the_reason(monkeypatch, t
         assert error["message"].startswith("“eye.flac” cannot be played.")
     finally:
         running.stop()
+
+
+# corrections for the Mac app (SPEC.md "Mac corrections", scope 1)
+
+
+def test_a_result_carries_what_the_corrections_controls_show_and_its_sheet(monkeypatch, tmp_path):
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        result = running.state()
+        assert result["controls"] == {
+            "tempo": "normal",
+            "beats_per_bar": 4,
+            "fewer": True,
+            "more": True,
+            "first_one": 1,
+            "first_one_label": "Beat 1",
+            "earlier": False,
+            "later": True,
+            "simplify": True,
+            "repeats": True,
+            "corrected": False,
+        }
+        assert isinstance(result["sheet"], int)
+    finally:
+        running.stop()
+
+
+def test_a_correction_shows_at_once_and_its_sheet_follows(monkeypatch, tmp_path):
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        first = running.state()
+        seen = len(running.states())
+        assert running.send("correct", tempo="half") == {"id": 2, "ok": True}
+        started = running.states()[seen]  # sent before the reply
+        assert started["correcting"] and started["controls"]["tempo"] == "half"
+        assert started["controls"]["corrected"] and started["sheet"] == first["sheet"]
+        assert wait(lambda: not running.state()["correcting"])
+        done = running.state()
+        assert done["sheet"] != first["sheet"] and done["tempo"] == 54
+        assert running.send("correct", detected=True)["ok"]
+        assert wait(lambda: not running.state()["correcting"])
+        assert not running.state()["controls"]["corrected"]
+    finally:
+        running.stop()
+
+
+def test_each_correction_is_kept_in_range_and_one_that_changes_nothing_sends_no_state(
+    monkeypatch, tmp_path
+):
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        seen = len(running.states())
+        assert running.send("correct", tempo="normal")["ok"]
+        assert running.send("correct", simplify=True)["ok"]
+        assert len(running.states()) == seen
+        running.send("correct", beats_per_bar=30)
+        assert running.state()["controls"]["beats_per_bar"] == 12
+        running.send("correct", first_one=40)
+        assert running.state()["controls"]["first_one"] == 12
+        running.send("correct", beats_per_bar=3)
+        assert running.state()["controls"]["first_one"] == 3  # the same place in a shorter bar
+        running.send("correct", beats_per_bar_by=1)
+        running.send("correct", beats_per_bar_by=1)  # two quick clicks, two steps
+        assert running.state()["controls"]["beats_per_bar"] == 5
+        running.send("correct", first_one_by=-1)
+        assert running.state()["controls"]["first_one"] == 2
+        running.send("correct", repeats=False)
+        running.send("correct", simplify=False)
+        shown = running.state()["controls"]
+        assert (shown["repeats"], shown["simplify"]) == (False, False)
+    finally:
+        running.stop()
+
+
+def test_a_correction_needs_one_valid_change(monkeypatch, tmp_path):
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        for bad in (
+            {},
+            {"tempo": "half", "simplify": False},
+            {"tempo": "triple"},
+            {"tempo": 2},
+            {"beats_per_bar": "4"},
+            {"beats_per_bar": True},
+            {"first_one": 1.5},
+            {"first_one_by": "1"},
+            {"beats_per_bar_by": None},
+            {"simplify": "no"},
+            {"repeats": 0},
+            {"detected": False},
+        ):
+            assert running.send("correct", **bad)["error"]["code"] == "bad_argument", bad
+    finally:
+        running.stop()
+
+
+def test_a_correction_needs_a_result(running):
+    assert running.send("correct", tempo="half")["error"]["code"] == "not_now"
+
+
+def test_no_export_starts_while_a_correction_is_being_written(monkeypatch, tmp_path):
+    """An export would cancel the correction's run and leave it pending for ever, and the PDF
+    and MusicXML would have the notes from before it (the review of task 194)."""
+    FakeApi(monkeypatch, hold=False)
+    running = Running()
+    try:
+        running.send("open", path=str(tmp_path / "eye.flac"))
+        running.until("result")
+        from stickler_app import controller
+
+        monkeypatch.setattr(controller, "CORRECT_AFTER", 5.0)  # the change stays pending
+        running.send("correct", tempo="half")
+        assert running.state()["correcting"]
+        for cmd, args in (
+            ("export_drum_track", {"dest": str(tmp_path / "d.flac")}),
+            ("export_musicxml", {"dest": str(tmp_path / "e.musicxml")}),
+            ("a4_pages", {}),
+        ):
+            assert running.send(cmd, **args)["error"]["code"] == "not_now", cmd
+        assert running.state()["kind"] == "result" and running.state()["correcting"]
+    finally:
+        running.stop()
+
+
+def test_a_correction_is_refused_while_the_drum_track_is_saved(monkeypatch, tmp_path):
+    from stickler_app import exports
+
+    started = threading.Event()
+
+    def slow(song, dest, report, token, *, setup):
+        started.set()
+        while not token.is_set():
+            time.sleep(0.005)
+        raise api.Cancelled("cancelled")
+
+    monkeypatch.setattr(exports, "drum_track", slow)
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        assert running.send("export_drum_track", dest=str(tmp_path / "d.flac"))["ok"]
+        assert started.wait(5)
+        assert running.send("correct", tempo="half")["error"]["code"] == "not_now"
+        running.send("cancel")
+    finally:
+        running.stop()

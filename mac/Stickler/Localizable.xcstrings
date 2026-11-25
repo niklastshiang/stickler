@@ -2,6 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "%-d %B" : {
+      "comment" : "Translators: a date in strftime format, as in \"12 November\"",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
@@ -1205,6 +1206,24 @@
         }
       }
     },
+    "Hide Corrections" : {
+      "comment" : "Translators: Mac app, View menu (⌃⌘I): closes the corrections again",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korrekturen ausblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar correcciones"
+          }
+        }
+      }
+    },
     "High Tom" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2390,6 +2409,24 @@
         }
       }
     },
+    "Show Corrections" : {
+      "comment" : "Translators: Mac app, View menu (⌃⌘I): opens the corrections beside the sheet music (tempo, beats per bar, the first \"one\"); macOS says \"Seitenleiste einblenden\" in German, \"Mostrar barra lateral\" in Spanish",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korrekturen einblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar correcciones"
+          }
+        }
+      }
+    },
     "Show in Finder" : {
       "comment" : "Translators: Mac app, the bar after saving a file (design screen M7)",
       "extractionState" : "manual",
@@ -3509,7 +3546,6 @@
       }
     },
     "opened %1$@" : {
-      "comment" : "Translators: a date in strftime format, as in \"12 November\"",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stickler · corrections</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position: relative; width: 1000px; height: 700px; box-sizing: border-box; display: flex; flex-direction: column; background: {{c.window}}; color: {{c.text}}; font-family: -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 1px {{c.edge}};">
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 0 14px 0 18px; background: {{c.bar}}; border-bottom: 1px solid {{c.hair}};">
+    <div style="display: flex; gap: 8px;" aria-hidden="true">
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #ff5f57;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #febc2e;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #28c840;"></span>
+    </div>
+    <div style="margin-left: 10px; flex-grow: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+      <h1 style="margin: 0; font-size: 15px; font-weight: 600; line-height: 1.2;">Eye of the Tiger</h1>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <p style="margin: 0; font-size: 11px; line-height: 1.2; color: {{c.secondary}};">{{subtitle}}</p>
+        <sc-if value="{{correcting}}" hint-placeholder-val="{{false}}">
+          <svg width="11" height="11" viewBox="0 0 16 16" role="img" aria-label="Writing the notes" style="color: {{c.secondary}};"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="1.5" x2="8" y2="4.5" opacity="1"></line><line x1="12.6" y1="3.4" x2="10.5" y2="5.5" opacity="0.88"></line><line x1="14.5" y1="8" x2="11.5" y2="8" opacity="0.76"></line><line x1="12.6" y1="12.6" x2="10.5" y2="10.5" opacity="0.64"></line><line x1="8" y1="14.5" x2="8" y2="11.5" opacity="0.52"></line><line x1="3.4" y1="12.6" x2="5.5" y2="10.5" opacity="0.4"></line><line x1="1.5" y1="8" x2="4.5" y2="8" opacity="0.3"></line><line x1="3.4" y1="3.4" x2="5.5" y2="5.5" opacity="0.2"></line></g></svg>
+        </sc-if>
+      </div>
+    </div>
+    <div style="display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: {{c.capsule}}; box-shadow: inset 0 0 0 1px {{c.hair}};">
+      <button type="button" aria-label="Open a Song" style="width: 36px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+      </button>
+      <button type="button" aria-label="Export" style="height: 30px; padding: 0 8px 0 9px; border: 0; border-radius: 999px; background: transparent; color: {{c.text}}; display: flex; align-items: center; gap: 3px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+    </div>
+    <button type="button" aria-label="Corrections" title="Corrections (⌃⌘I)" aria-pressed="true" style="width: 38px; height: 36px; border: 0; border-radius: 999px; background: {{c.toggleOn}}; color: {{c.accent}}; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px {{c.hair}};">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"></rect><line x1="14.5" y1="4.5" x2="14.5" y2="19.5"></line><line x1="16.8" y1="8.5" x2="18.6" y2="8.5"></line><line x1="16.8" y1="11.5" x2="18.6" y2="11.5"></line><line x1="16.8" y1="14.5" x2="18.6" y2="14.5"></line></svg>
+    </button>
+  </header>
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <main style="position: relative; flex-grow: 1; min-width: 0; display: flex; justify-content: center; align-items: flex-start; padding: 36px 0 0; background: {{c.desk}}; overflow: hidden;">
+      <dc-import name="SheetPage" width="560" marked="{{marked}}" inverted="{{dark}}" hint-size="560px,490px"></dc-import>
+      <sc-if value="{{playing}}" hint-placeholder-val="{{false}}">
+        <div role="toolbar" aria-label="Controls" style="position: absolute; left: 14px; right: 14px; bottom: 14px; height: 52px; box-sizing: border-box; display: flex; align-items: center; gap: 9px; padding: 0 12px; border-radius: 26px; background: {{c.glass}}; backdrop-filter: blur(20px); box-shadow: 0 8px 26px rgba(0,0,0,0.16), 0 0 0 1px {{c.glassEdge}}; font-size: 13px;">
+          <div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;">
+            <button type="button" aria-label="Previous Bar" style="width: 30px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="2.5" y="3" width="1.8" height="10" rx="0.9"></rect><path d="M13 3.6v8.8a.6.6 0 0 1-.92.5L5.6 8.5a.6.6 0 0 1 0-1l6.48-4.4a.6.6 0 0 1 .92.5z"></path></svg>
+            </button>
+            <button type="button" aria-label="Pause" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1"></rect><rect x="9.5" y="2.5" width="3" height="11" rx="1"></rect></svg>
+            </button>
+            <button type="button" aria-label="Next Bar" style="width: 30px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="11.7" y="3" width="1.8" height="10" rx="0.9"></rect><path d="M3 3.6v8.8a.6.6 0 0 0 .92.5l6.48-4.4a.6.6 0 0 0 0-1L3.92 3.1a.6.6 0 0 0-.92.5z"></path></svg>
+            </button>
+          </div>
+          <span style="width: 30px; flex-shrink: 0; text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; color: {{c.secondary}};">0:06</span>
+          <div role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="246" aria-valuenow="6" aria-valuetext="{{positionText}}" style="flex-grow: 1; min-width: 80px; height: 24px; position: relative; display: flex; align-items: center;">
+            <div style="width: 100%; height: 4px; border-radius: 2px; background: {{c.track}};"></div>
+            <div style="position: absolute; left: 0; width: 2.4%; height: 4px; border-radius: 2px; background: {{c.accent}};"></div>
+            <div style="position: absolute; left: calc(2.4% - 11px); width: 22px; height: 16px; border-radius: 8px; background: #ffffff; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.25);"></div>
+          </div>
+          <span style="width: 30px; flex-shrink: 0; font-size: 11px; font-variant-numeric: tabular-nums; color: {{c.secondary}};">4:06</span>
+          <span style="width: 84px; flex-shrink: 0; white-space: nowrap;">{{barText}}</span>
+          <button type="button" aria-label="Volume" style="width: 30px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;">
+            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6h2.5l3.5-3v10l-3.5-3H2.5z" fill="currentColor"></path><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.5a6 6 0 0 1 0 9"></path></svg>
+          </button>
+          <div role="radiogroup" aria-label="What to Hear" style="width: 156px; height: 28px; box-sizing: border-box; flex-shrink: 0; display: flex; gap: 2px; padding: 2px; border-radius: 14px; background: {{c.segTrack}};">
+            <button type="button" role="radio" aria-checked="false" style="flex: 1; height: 24px; border: 0; border-radius: 12px; background: transparent; color: {{c.text}}; font: 400 13px -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif;">Song</button>
+            <button type="button" role="radio" aria-checked="false" style="flex: 1; height: 24px; border: 0; border-radius: 12px; background: transparent; color: {{c.text}}; font: 400 13px -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif;">Hits</button>
+            <button type="button" role="radio" aria-checked="true" style="flex: 1; height: 24px; border: 0; border-radius: 12px; background: {{c.segOn}}; color: {{c.text}}; font: 500 13px -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif; box-shadow: 0 1px 2px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.06);">Both</button>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+    <aside aria-label="Corrections" style="width: 300px; flex-shrink: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; padding: 18px 14px 16px; background: {{c.inspector}}; border-left: 1px solid {{c.hair}}; font-size: 13px; overflow: hidden;">
+      <h2 style="margin: 0 0 2px 10px; font-size: 11px; font-weight: 600; color: {{c.secondary}};">Beat</h2>
+      <div style="display: flex; flex-direction: column; border-radius: 10px; background: {{c.card}}; box-shadow: 0 0 0 1px {{c.cardEdge}};">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 11px;">
+          <span id="tempo-label">Tempo</span>
+          <div role="radiogroup" aria-labelledby="tempo-label" style="display: flex; gap: 2px; padding: 2px; border-radius: 7px; background: {{c.segTrack}};">
+            <sc-for list="{{tempos}}" as="t" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{t.checked}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="height: 1px; margin: 0 12px; background: {{c.hair}};"></div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; min-height: 26px;">
+          <span id="beats-label" style="flex-grow: 1;">Beats per bar</span>
+          <span aria-hidden="true" style="min-width: 30px; padding: 2px 6px; box-sizing: border-box; border-radius: 5px; background: {{c.field}}; box-shadow: inset 0 0 0 1px {{c.cardEdge}}; text-align: right; font-variant-numeric: tabular-nums;">{{beats}}</span>
+          <div role="group" aria-labelledby="beats-label" style="display: flex; flex-direction: column; border-radius: 5px; background: {{c.field}}; box-shadow: 0 0 0 1px {{c.cardEdge}}, 0 1px 1px rgba(0,0,0,0.06); overflow: hidden;">
+            <button type="button" aria-label="More beats" onClick="{{moreBeats}}" style="width: 15px; height: 11px; padding: 0; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;"><svg width="7" height="5" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 4.2L4 1l3 3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+            <button type="button" aria-label="Fewer beats" onClick="{{fewerBeats}}" style="width: 15px; height: 11px; padding: 0; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;"><svg width="7" height="5" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 .8L4 4l3-3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+          </div>
+        </div>
+        <div style="height: 1px; margin: 0 12px; background: {{c.hair}};"></div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px;">
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span id="first-label">First “one”</span>
+            <span style="font-size: 11px; color: {{c.secondary}};">Beats before it are a pickup</span>
+          </div>
+          <span aria-hidden="true" style="font-variant-numeric: tabular-nums; white-space: nowrap;">{{firstText}}</span>
+          <div role="group" aria-labelledby="first-label" style="display: flex; flex-direction: column; border-radius: 5px; background: {{c.field}}; box-shadow: 0 0 0 1px {{c.cardEdge}}, 0 1px 1px rgba(0,0,0,0.06); overflow: hidden;">
+            <button type="button" aria-label="Later first one" onClick="{{laterFirst}}" style="width: 15px; height: 11px; padding: 0; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;"><svg width="7" height="5" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 4.2L4 1l3 3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+            <button type="button" aria-label="Earlier first one" onClick="{{earlierFirst}}" style="width: 15px; height: 11px; padding: 0; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;"><svg width="7" height="5" viewBox="0 0 8 5" aria-hidden="true"><path d="M1 .8L4 4l3-3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+          </div>
+        </div>
+      </div>
+      <h2 style="margin: 14px 0 2px 10px; font-size: 11px; font-weight: 600; color: {{c.secondary}};">Easier to Read</h2>
+      <div style="display: flex; flex-direction: column; border-radius: 10px; background: {{c.card}}; box-shadow: 0 0 0 1px {{c.cardEdge}};">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px;">
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span id="simplify-label">Simplify</span>
+            <span style="font-size: 11px; color: {{c.secondary}};">Nearly equal bars get one pattern</span>
+          </div>
+          <button type="button" role="switch" aria-labelledby="simplify-label" aria-checked="{{simplifyChecked}}" onClick="{{toggleSimplify}}" style="{{simplifyStyle}}"><span style="{{simplifyKnob}}"></span></button>
+        </div>
+        <div style="height: 1px; margin: 0 12px; background: {{c.hair}};"></div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px;">
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span id="repeats-label">Repeat signs</span>
+            <span style="font-size: 11px; color: {{c.secondary}};">Equal bars are written once</span>
+          </div>
+          <button type="button" role="switch" aria-labelledby="repeats-label" aria-checked="{{repeatsChecked}}" onClick="{{toggleRepeats}}" style="{{repeatsStyle}}"><span style="{{repeatsKnob}}"></span></button>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: center; margin-top: 16px;">
+        <button type="button" onClick="{{reset}}" aria-disabled="{{resetDisabled}}" style="{{resetStyle}}">Back to Detected</button>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"playing":{"editor":"boolean","default":false},"correcting":{"editor":"boolean","default":false},"start":{"editor":"enum","options":["detected","simplify-off","half"],"default":"simplify-off"},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const playing = this.props.playing === true || this.props.playing === 'true';
+    const correcting = this.props.correcting === true || this.props.correcting === 'true';
+    const light = {window: '#ffffff', bar: '#f6f6f6', hair: 'rgba(0,0,0,0.10)', edge: 'rgba(0,0,0,0.18)', text: '#1d1d1f', secondary: '#6e6e73', capsule: 'rgba(0,0,0,0.04)', desk: '#ececee', glass: 'rgba(250,250,252,0.86)', glassEdge: 'rgba(0,0,0,0.10)', track: 'rgba(0,0,0,0.12)', accent: '#0060df', segTrack: 'rgba(0,0,0,0.07)', segOn: '#ffffff', inspector: '#f5f5f7', card: '#ffffff', cardEdge: 'rgba(0,0,0,0.08)', field: '#ffffff', toggleOn: 'rgba(0,96,223,0.12)', switchOff: 'rgba(0,0,0,0.14)', disabled: 'rgba(29,29,31,0.35)', buttonBg: '#ffffff'};
+    const darkC = {window: '#1e1e1e', bar: '#2a2a2b', hair: 'rgba(255,255,255,0.10)', edge: 'rgba(255,255,255,0.16)', text: '#f5f5f7', secondary: '#a1a1a6', capsule: 'rgba(255,255,255,0.06)', desk: '#141414', glass: 'rgba(44,44,46,0.86)', glassEdge: 'rgba(255,255,255,0.12)', track: 'rgba(255,255,255,0.18)', accent: '#0a84ff', segTrack: 'rgba(255,255,255,0.08)', segOn: 'rgba(255,255,255,0.24)', inspector: '#242425', card: '#2c2c2e', cardEdge: 'rgba(255,255,255,0.08)', field: '#3a3a3c', toggleOn: 'rgba(10,132,255,0.22)', switchOff: 'rgba(255,255,255,0.18)', disabled: 'rgba(245,245,247,0.35)', buttonBg: '#48484a'};
+    const c = dark ? darkC : light;
+    const start = this.props.start ?? 'simplify-off';
+    const s = Object.assign({ tempo: start === 'half' ? 'half' : 'normal', beats: 4, first: 1, simplify: start !== 'simplify-off', repeats: true }, this.state || {});
+    const set = (patch) => this.setState(patch);
+    const font = (on) => 'flex: 1; height: 22px; padding: 0; border: 0; border-radius: 5px; color: ' + c.text + '; font: ' + (on ? '500' : '400') + ' 12px -apple-system, \'SF Pro Text\', Inter, system-ui, sans-serif; background: ' + (on ? c.segOn : 'transparent') + '; box-shadow: ' + (on ? '0 1px 2px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.06)' : 'none') + ';';
+    const tempos = [['half', 'Half'], ['normal', 'As Detected'], ['double', 'Double']].map(([id, label]) => ({
+      label, checked: s.tempo === id ? 'true' : 'false', style: font(s.tempo === id),
+      pick: () => set(s.tempo === id ? {} : { tempo: id, first: 1 })
+    }));
+    const sw = (on) => 'width: 38px; height: 22px; flex-shrink: 0; padding: 0; border: 0; border-radius: 11px; position: relative; background: ' + (on ? c.accent : c.switchOff) + ';';
+    const knob = (on) => 'position: absolute; top: 2px; left: ' + (on ? '18px' : '2px') + '; width: 18px; height: 18px; border-radius: 9px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.3);';
+    const corrected = s.tempo !== 'normal' || s.beats !== 4 || s.first !== 1 || !s.simplify || !s.repeats;
+    const bpm = s.tempo === 'half' ? 55 : s.tempo === 'double' ? 218 : 109;
+    const bars = s.tempo === 'half' ? 55 : s.tempo === 'double' ? 220 : 110;
+    return {
+      dark, playing, correcting, c, tempos,
+      beats: String(s.beats),
+      firstText: 'Beat ' + s.first,
+      subtitle: 'Survivor · ♩ = ' + bpm + ' · ' + s.beats + '/4',
+      barText: 'Bar 2 of ' + bars,
+      positionText: '0:06, Bar 2 of ' + bars,
+      marked: playing ? 2 : 0,
+      moreBeats: () => set({ beats: Math.min(12, s.beats + 1) }),
+      fewerBeats: () => { const b = Math.max(1, s.beats - 1); set({ beats: b, first: s.first > b ? ((s.first - 1) % b) + 1 : s.first }); },
+      laterFirst: () => set({ first: Math.min(s.beats, s.first + 1) }),
+      earlierFirst: () => set({ first: Math.max(1, s.first - 1) }),
+      simplifyChecked: s.simplify ? 'true' : 'false', simplifyStyle: sw(s.simplify), simplifyKnob: knob(s.simplify),
+      repeatsChecked: s.repeats ? 'true' : 'false', repeatsStyle: sw(s.repeats), repeatsKnob: knob(s.repeats),
+      toggleSimplify: () => set({ simplify: !s.simplify }),
+      toggleRepeats: () => set({ repeats: !s.repeats }),
+      reset: () => set({ tempo: 'normal', beats: 4, first: 1, simplify: true, repeats: true }),
+      resetDisabled: corrected ? 'false' : 'true',
+      resetStyle: 'height: 26px; padding: 0 14px; border: 0; border-radius: 13px; font: 400 13px -apple-system, \'SF Pro Text\', Inter, system-ui, sans-serif; background: ' + c.buttonBg + '; color: ' + (corrected ? c.text : c.disabled) + '; box-shadow: 0 0 0 0.5px ' + c.cardEdge + ', 0 1px 2px rgba(0,0,0,0.12);'
+    };
+  }
+}
+</script>
+</body>
+</html>

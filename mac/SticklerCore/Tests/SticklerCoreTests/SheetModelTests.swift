@@ -3,16 +3,19 @@ import Testing
 
 @testable import SticklerCore
 
-/// A result's state event; `corrections` changes with a correction, `correcting` does not.
+/// A result's state event; `tempo` and `correcting` change when a correction starts, `sheet`
+/// when its notation is shown.
 func resultEvent(
-    seq: Int, song: String = "/m/e.flac", tempo: String = "normal", correcting: Bool = false
+    seq: Int, song: String = "/m/e.flac", tempo: String = "normal", correcting: Bool = false,
+    sheet: Int = 1
 ) -> String {
     #"{"event": "state", "seq": \#(seq), "state": {"kind": "result", "song": "\#(song)", "#
         + #""title": "Eye of the Tiger", "subtitle": "Survivor · ♩ = 109 · 4/4", "#
         + #""artist": "Survivor", "seconds": 246.0, "tempo": 109, "meter": [4, 4], "#
         + #""musicxml": "/c/e.musicxml", "corrections": {"tempo": "\#(tempo)", "#
         + #""beats_per_bar": null, "first_downbeat": null, "simplify": true, "repeats": true}, "#
-        + #""correcting": \#(correcting), "can_open": true, "can_close": true, "#
+        + #""correcting": \#(correcting), "sheet": \#(sheet), "#
+        + #""can_open": true, "can_close": true, "#
         + #""can_export": true}}"#
 }
 
@@ -96,9 +99,13 @@ struct ZoomStep {
         #expect(pagesAsked(harness.core).count == 1)
         #expect(model.sheet.pages.count == 1)  // an export keeps the sheet
 
-        try harness.core.emit(resultEvent(seq: 5, tempo: "double"))  // a correction
+        // a correction starts: the notes are still the old ones, so no new pages yet
+        try harness.core.emit(resultEvent(seq: 5, tempo: "double", correcting: true))
+        try await Task.sleep(for: .milliseconds(80))
+        #expect(pagesAsked(harness.core).count == 1)
+        try harness.core.emit(resultEvent(seq: 6, tempo: "double", sheet: 2))  // its notes
         #expect(await settled { pagesAsked(harness.core).count == 2 })
-        try harness.core.emit(resultEvent(seq: 6, song: "/m/other.flac"))  // another song
+        try harness.core.emit(resultEvent(seq: 7, song: "/m/other.flac", sheet: 3))  // a song
         #expect(await settled { pagesAsked(harness.core).count == 3 })
     }
 

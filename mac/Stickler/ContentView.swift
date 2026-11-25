@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 /// state call for.
 struct ContentView: View {
     let model: AppModel
+    /// The corrections inspector left open or closed (M11), kept across launches.
+    @AppStorage(CorrectionsMenu.shownKey) private var correctionsShown = false
 
     /// The page's least width beside an inspector: the playback controls at their narrowest
     /// (`Playbar.Fit.narrowest`) with their margins, in every language. The window itself is
@@ -26,29 +28,58 @@ struct ContentView: View {
                     PlaybackOverlay(model: model)
                 }
             }
+            // the corrections at the trailing edge, with a result only (M11)
+            .inspector(isPresented: inspectorShown) {
+                if let controls = CorrectionsMenu.controls(model) {
+                    CorrectionsInspector(model: model, controls: controls)
+                }
+            }
             .navigationTitle(model.title)
             .navigationSubtitle(model.subtitle)
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        Panels.openSong(model)
-                    } label: {
-                        Label("Open…", systemImage: "folder")
+                // a correction's notes being written (owner, 2026-11-25: before Open and
+                // Export, as the system puts its own items only before the title)
+                if CorrectionsMenu.correcting(model) {
+                    ToolbarItem(placement: .primaryAction) {
+                        ProgressView()
+                            .controlSize(.small)
+                            .accessibilityLabel(Text("Write the notes"))
                     }
-                    .help(Text("Open a Song"))
-                    .disabled(!canOpen)
+                    .sharedBackgroundVisibility(.hidden)
                 }
+                // Open and Export in one capsule, as M4 draws them (owner, 2026-11-25): AppKit
+                // gives a menu button glass of its own, so two items (or a `ControlGroup`,
+                // which it splits into items again) got a glass each; one view is one item
                 ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        ExportMenu(model: model)
-                    } label: {
-                        Label("Export", systemImage: "square.and.arrow.up")
+                    HStack(spacing: 0) {
+                        Button {
+                            Panels.openSong(model)
+                        } label: {
+                            Label("Open…", systemImage: "folder")
+                        }
+                        .help(Text("Open a Song"))
+                        .disabled(!canOpen)
+                        Menu {
+                            ExportMenu(model: model)
+                        } label: {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                        .help(Text("Export"))
+                        // said again for VoiceOver: built with the macOS 26 SDK and run on
+                        // macOS 27, the menu button's name was its arrow's, "chevron.pulldown"
+                        .accessibilityLabel(Text("Export"))
+                        .disabled(Exports.result(model) == nil)
                     }
-                    .help(Text("Export"))
-                    // said again for VoiceOver: built with the macOS 26 SDK and run on
-                    // macOS 27, the menu button's name was its arrow's, "chevron.pulldown"
-                    .accessibilityLabel(Text("Export"))
-                    .disabled(Exports.result(model) == nil)
+                    .labelStyle(.iconOnly)
+                }
+                ToolbarSpacer(.fixed, placement: .primaryAction)
+                ToolbarItem(placement: .primaryAction) {
+                    Toggle(isOn: inspectorShown) {
+                        Label("Corrections", systemImage: "sidebar.trailing")
+                    }
+                    .toggleStyle(.button)
+                    .help(Text("Corrections"))
+                    .disabled(!CorrectionsMenu.enabled(model))
                 }
             }
             .sheet(item: setupSheet) { _ in
@@ -66,6 +97,13 @@ struct ContentView: View {
         Binding(
             get: { model.phase == .running ? SetupSheet(model.state.screen) : nil },
             set: { _ in })
+    }
+
+    /// The inspector is on the window when left open and there is a result to correct.
+    private var inspectorShown: Binding<Bool> {
+        Binding(
+            get: { CorrectionsMenu.presented(shown: correctionsShown, model) },
+            set: { correctionsShown = $0 })
     }
 
     /// A shown result can be played: its controls are on the window (M10).

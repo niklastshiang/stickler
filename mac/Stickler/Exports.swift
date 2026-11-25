@@ -42,7 +42,9 @@ struct ExportMenu: View {
 enum Exports {
     /// The result being shown, if any.
     static func result(_ model: AppModel) -> SongResult? {
-        if case .result(let result) = model.state.screen, model.state.can.export {
+        // not while a correction's notes are written: the core would refuse (the old notes)
+        if case .result(let result) = model.state.screen, model.state.can.export,
+            !result.correcting {
             return result
         }
         return nil

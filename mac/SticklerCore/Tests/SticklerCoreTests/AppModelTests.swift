@@ -215,6 +215,55 @@ func refusal(_ message: String) -> String {
         #expect(harness.core.actions == expected)  // in the order the reader gave them
     }
 
+    @Test func eachCorrectionSendsItsChangeAndQuickStepsGoOutAsSteps() async throws {
+        let harness = try Harness()
+        let model = harness.model()
+        model.launch()
+        let changes: [Correction] = [
+            .tempo(.half), .beatsPerBar(3), .beatsPerBarBy(1), .beatsPerBarBy(1), .firstOne(2),
+            .firstOneBy(-1), .simplify(false), .repeats(false), .detected
+        ]
+        for change in changes {
+            model.correct(change)
+        }
+        #expect(await settled { harness.core.actions.count == changes.count + 1 })
+        #expect(harness.core.actions == [.start] + changes.map { .correct($0) })
+        harness.core.answer("correct", with: refusal("Das geht gerade nicht."))
+        model.correct(.simplify(true))
+        #expect(await settled { model.notice != nil })
+        #expect(model.notice?.text == "Das geht gerade nicht.")
+    }
+
+    @Test func eachCorrectionIsWrittenWithItsOneArgument() throws {
+        let lines: [(Correction, String)] = [
+            (.tempo(.double), #""tempo":"double""#), (.beatsPerBar(3), #""beats_per_bar":3"#),
+            (.beatsPerBarBy(-1), #""beats_per_bar_by":-1"#), (.firstOne(2), #""first_one":2"#),
+            (.firstOneBy(1), #""first_one_by":1"#), (.simplify(false), #""simplify":false"#),
+            (.repeats(true), #""repeats":true"#), (.detected, #""detected":true"#)
+        ]
+        for (change, argument) in lines {
+            let line = try Command.correct(change).line(id: 7)
+            let text = try #require(String(bytes: line, encoding: .utf8))
+            #expect(try object(text) == object(#"{"cmd":"correct",\#(argument),"id":7}"#))
+        }
+    }
+
+    @Test func aResultFromBeforeTheCorrectionsHasNoControls() throws {
+        let line = #"{"event": "state", "seq": 1, "state": {"kind": "result", "#
+            + #""song": "/m/e.flac", "title": "E", "subtitle": "", "artist": "", "#
+            + #""seconds": 1.0, "tempo": 109, "meter": [4, 4], "musicxml": "/c/e.musicxml", "#
+            + #""corrections": {"tempo": "normal", "beats_per_bar": null, "#
+            + #""first_downbeat": null, "simplify": true, "repeats": true}, "#
+            + #""correcting": false}}"#
+        guard case .event(_, .state(let state)) = try Incoming(line: Data(line.utf8)),
+            case .result(let result) = state.screen
+        else {
+            Issue.record("not a result")
+            return
+        }
+        #expect(result.controls == nil && result.sheet == 0)
+    }
+
     @Test func aRefusedCommandSaysWhyAndAStoppedCoreSaysNothing() async throws {
         let harness = try Harness()
         let model = harness.model()

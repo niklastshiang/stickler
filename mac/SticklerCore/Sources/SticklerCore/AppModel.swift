@@ -216,6 +216,9 @@ public final class AppModel {
     public func removeModels(everything: Bool) { send(.removeModels(everything: everything)) }
     public func backUp(to path: String) { send(.backUp(dest: path)) }
     public func restore(from path: String) { send(.restore(src: path)) }
+    /// One change from the corrections inspector (SPEC.md "Mac corrections"); the core shows
+    /// it at once and writes the notes once the changes pause.
+    public func correct(_ change: Correction) { send(.correct(change)) }
 
     /// File › Open Recent › Clear Menu: every recent song forgotten.
     public func clearRecent() {
