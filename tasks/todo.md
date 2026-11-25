@@ -1345,7 +1345,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ### Checkpoint AG
 - [ ] All success criteria of SPEC.md "Mac corrections" met (owner, on the Mac); merged into `main`; then `win-corrections` (release 11) builds on task 190
-- **Found while trying the image (owner, 2026-11-25):** Open and Export, two round glasses since `mac-shell` (kept so on 2026-11-19), become one capsule as M4 draws them: one `ControlGroup` in one toolbar item (AppKit gives a pop-up button glass of its own, so two items never share one); the Corrections button stays alone after the fixed space. SPEC "Decisions from the mockups" and "Mac corrections" scope 4.
+- **Found while trying the image (owner, 2026-11-25):** Open and Export, two round glasses since `mac-shell` (kept so on 2026-11-19), become one capsule as M4 draws them: one view (`HStack`) in one toolbar item (AppKit gives a pop-up button glass of its own, so two items never share one; a `ControlGroup` tried first came out as two glasses again in the CI's screenshots); the Corrections button stays alone after the fixed space. SPEC "Decisions from the mockups" and "Mac corrections" scope 4.
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 

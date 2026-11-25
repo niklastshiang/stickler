@@ -42,10 +42,11 @@ struct ContentView: View {
                     }
                     .sharedBackgroundVisibility(.hidden)
                 }
-                // Open and Export in one capsule, as M4 draws them (owner, 2026-11-25): two
-                // items got a glass each, since macOS 26 gives a menu button its own
+                // Open and Export in one capsule, as M4 draws them (owner, 2026-11-25): AppKit
+                // gives a menu button glass of its own, so two items (or a `ControlGroup`,
+                // which it splits into items again) got a glass each; one view is one item
                 ToolbarItem(placement: .primaryAction) {
-                    ControlGroup {
+                    HStack(spacing: 0) {
                         Button {
                             Panels.openSong(model)
                         } label: {
@@ -64,6 +65,7 @@ struct ContentView: View {
                         .accessibilityLabel(Text("Export"))
                         .disabled(Exports.result(model) == nil)
                     }
+                    .labelStyle(.iconOnly)
                 }
                 ToolbarSpacer(.fixed, placement: .primaryAction)
                 ToolbarItem(placement: .primaryAction) {

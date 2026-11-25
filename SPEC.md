@@ -2091,8 +2091,9 @@ stays as it is); the macOS app icon is part of this module.
   song is open); on the right a capsule with Open and Export (Export is a menu, disabled without
   a song). Built first as two toolbar items, which macOS 26 draws as two round
   glasses (a menu button gets glass of its own); kept so on 2026-11-19, merged into one capsule
-  on 2026-11-25 (owner, with M11's toolbar): one `ControlGroup` holding Open and the Export
-  menu, the Corrections button alone after a fixed space. The sheet music sits on a grey desk, the page as in the GTK app.
+  on 2026-11-25 (owner, with M11's toolbar): Open and the Export menu as one view in one
+  toolbar item (a `ControlGroup` is split into items again), the Corrections button alone
+  after a fixed space. The sheet music sits on a grey desk, the page as in the GTK app.
 - **First start** comes as sheets over the empty window (consent, download, a server not
   answering), with the GTK app's texts and step list; buttons right-aligned, the default one blue.
 - **Export menu** items carry a second line (macOS 14 and later): PDF, MusicXML, Drum Track,
