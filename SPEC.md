@@ -3957,10 +3957,12 @@ Control and no third-party antivirus, so nothing below says what a user's PC doe
 
 ### Module `win-shell`
 
-> Status: **draft**, written 2026-11-25, not approved. Written while `win-spike`'s second try
-> on the owner's PC (task 179) was still waiting an hour: its outcome decides how the setup
-> starts the models (open question 1), and that part is marked as such. Open questions 1–4 at
-> the end are the owner's. Modelled on `mac-shell`, with the Windows screens of `win-design`.
+> Status: **being built** from 2026-11-25 on the owner's word "Bitte mach so weit du kommst,
+> den Spike-Lauf verschieben wir lieber darauf, bis du fertig bist": Claude's proposals for
+> open questions 2–4 are taken (Claude's reading; to be confirmed at the checkpoint), open
+> question 1 waits for the spike's retry, which comes after this module. Plan:
+> `tasks/plan.md` ("`win-shell`"), tasks 181–188, on the branch `claude/win-shell`. Modelled
+> on `mac-shell`, with the Windows screens of `win-design`.
 
 **Objective.** The first Stickler that runs as a Windows app: the WinUI 3 window of
 `win-design` (W1–W5, W7, W8, light and dark) over the core that `core-bridge` made and
@@ -4031,11 +4033,12 @@ playback with `win-playback`, the installer and "Uninstall Stickler…" with `wi
      "Technical Details", "Try Again" · "Later". **How the models are started is open
      question 1** (the spike's outcome).
    - **File menu** (W8): Open… (Ctrl+O), Open Recent (the core's recent songs, Clear Menu),
-     Export, Back Up…, Restore Backup…, Remove Downloaded Models…, Exit. "Remove Downloaded
+     Export, Close Song (Ctrl+W, `close`, while `can_close`; open question 4), Back Up…,
+     Restore Backup…, Remove Downloaded Models…, Exit. "Remove Downloaded
      Models…": a ContentDialog with the sizes from `removal_sizes`, the checkbox for settings,
      recent songs and corrections, a destructive button. Back Up and Restore: the GTK app's
      and the Mac app's flow and texts (`backup_summary` before restoring), with the save and
-     open pickers. "Close Song" is open question 4.
+     open pickers.
    - **Exports** (W7): Export's menu with MusicXML…, Drum Track…, Open With… (one line each,
      the other apps' second lines as tooltips); the save picker with the core's file name;
      the drum track's cost in a ContentDialog first (`drum_track_cost`). Open With… opens the

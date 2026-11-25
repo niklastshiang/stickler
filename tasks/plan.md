@@ -734,3 +734,28 @@ summary (178) → the owner's PC (179) → findings, branch deleted (180).
 | The relocated Python does not find its own files or the adapters' sources | Medium | Seen in the runner's first install; `STICKLER_ADAPTER_SOURCES` from the launcher |
 | The installer is too large for an artifact or slow to build | Low | Sizes in the summary; ffmpeg's essentials build |
 
+
+## Release 11 (Windows app): `win-shell` (being built from 2026-11-25, SPEC.md "Module `win-shell`")
+
+The WinUI 3 window over the bridge, as `mac-shell` built the Mac's. Tasks 181–188, on the
+branch `claude/win-shell`; the spike's retry on the owner's PC comes after it (owner).
+
+Design decisions:
+- **What Linux and Python can check comes first** (181–184): the certificates in the core,
+  the texts and string tables, the C# floor, then `SticklerCore` with its tests on Linux (WSL)
+  and Windows. The WinUI app (185, 186) only draws what `SticklerCore` holds.
+- **Built and tested on this PC too:** the .NET 10 SDK installed for the user (open question
+  2); the runner stays the check every C# change goes through (`win.yml`, 187).
+- **No NuGet package beyond the Windows App SDK, MSTest and its coverage** (the release's
+  boundary): no MVVM toolkit, `System.Text.Json`'s source generator for the protocol.
+
+Order: certificates (181) → texts and tables (182) → C# floor (183) → `SticklerCore` (184) →
+window, steps, errors (185) → dialogs, exports, backup (186) → `win.yml` (187) → review and a
+build for the owner (188).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| `dotnet build` cannot compile WinUI XAML without Visual Studio | Medium | Built on the runner (Visual Studio there); `SticklerCore` needs no XAML and builds here |
+| Panda holds back the built `Stickler.exe` on this PC | Medium | The runner's screenshots carry the module; the owner's check waits as `win-spike` decided |
+| The unpackaged app's new pickers fail | Low | The older pickers with `InitializeWithWindow` |
+| Runner screenshots blank (no GPU) | Low | Accepted; the owner's look counts |

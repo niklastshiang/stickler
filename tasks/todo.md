@@ -1321,6 +1321,52 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AE
 - [ ] The spike's five questions answered (owner); then `win-shell`'s spec (after `win-design` with the owner)
 
+## Phase 31: Release 11 (Windows app), module `win-shell` (being built from 2026-11-25, SPEC.md "Module `win-shell`")
+
+- [ ] **Task 181: System certificates for the core's downloads** (S)
+  - Acceptance: `stickler_app.paths.packaged_env` sets `UV_SYSTEM_CERTS=1` for every packaged app unless already set (open question 3); a test for Linux, macOS and Windows; `docs/bridge.md` or the packaging notes say why.
+  - Verify: `uv run pytest -q tests/app/test_paths.py`; `scripts/check.sh task`
+  - Dependencies: none · Files: `src/stickler_app/paths.py`, `tests/app/test_paths.py`
+
+- [ ] **Task 182: The Windows app's texts and string tables** (M)
+  - Acceptance: `src/stickler_app/win_texts.py` (as `mac_texts.py`) with "Show in Folder", "Exit" and this module's other new texts, collected into `po/` with German and Spanish; `scripts/winstrings.py` writes `win/Stickler/Strings/<lang>.json` from `po/` (keys the English text, named placeholders kept, plurals as `one`/`other`, an unknown plural rule an error, deterministic, `--check`); `scripts/check.sh` runs `--check`.
+  - Verify: `uv run pytest -q tests/test_winstrings.py tests/app/test_win_texts.py`; `scripts/check.sh task`
+  - Dependencies: none · Files: `src/stickler_app/win_texts.py`, `scripts/winstrings.py`, `scripts/check.sh`, `po/*`, `win/Stickler/Strings/`, tests
+
+- [ ] **Task 183: C# in the floor and in CONSTRAINTS.md** (S)
+  - Acceptance: `scripts/floor_guard.py` rejects `#pragma warning disable`, `[SuppressMessage`, `<NoWarn>`, `.editorconfig` severities `none`, placeholder `throw new NotImplementedException()` and `[Ignore]` in added C# and project lines; CONSTRAINTS.md has the C# rows (build, format, tests, coverage) as the Swift ones.
+  - Verify: `uv run pytest -q tests/test_floor_guard.py`; `scripts/check.sh task`
+  - Dependencies: none · Files: `scripts/floor_guard.py`, `tests/test_floor_guard.py`, `CONSTRAINTS.md`
+
+- [ ] **Task 184: `SticklerCore`** (L)
+  - Acceptance: SPEC scope 1: the client (process, UTF-8 lines with `
+`, a reader task, replies by `id`, exit code and stderr kept, `UV_SYSTEM_CERTS=1`), the protocol's records with the source generator, `AppModel`, the string lookup; MSTest tests incl. every example line of `docs/bridge.md` and the real bridge with stand-in models; coverage ≥ 95 %.
+  - Verify: `dotnet test win/SticklerCore.Tests` on this PC and in WSL
+  - Dependencies: 182 · Files: `win/SticklerCore/`, `win/SticklerCore.Tests/`, `win/Directory.Build.props`
+
+- [ ] **Task 185: The window, the steps, the errors** (L)
+  - Acceptance: SPEC scope 2 (window, empty window with drop and recent songs, header, step list, error page, result placeholder, the core stopped, where the core is, quitting); the app's logic types tested with a fake core.
+  - Verify: `dotnet build` and `dotnet test` on the runner (and here if XAML builds); the window started here against the checkout
+  - Dependencies: 184 · Files: `win/Stickler/`, `win/Stickler.Tests/`
+
+- [ ] **Task 186: Setup dialogs, removal, backup, exports, menus** (L)
+  - Acceptance: SPEC scope 2 (W1–W3, Remove Downloaded Models…, Back Up…/Restore Backup…, the Export menu, the saved flyout, File/Help menus, About, Close Song); pickers and the launcher behind an interface with a fake.
+  - Verify: tests of the flows with a fake core; by hand here
+  - Dependencies: 185 · Files: `win/Stickler/`, `win/Stickler.Tests/`
+
+- [ ] **Task 187: `win.yml`** (M)
+  - Acceptance: SPEC scope 4: `windows-2025` build with warnings as errors, format, tests, the coverage gate, screenshots light and dark, the app folder as an artifact; `SticklerCore`'s tests on `ubuntu`; runs on pushes to `main` and `claude/win-*`.
+  - Verify: the workflow green on `claude/win-shell`
+  - Dependencies: 184–186 · Files: `.github/workflows/win.yml`, `scripts/cobertura_gate.py`, tests
+
+- [ ] **Task 188: Review and a build for the owner** (S)
+  - Acceptance: a fresh-context review, its findings fixed with a test or answered; `docs/win-development.md`; the CI's zip ready.
+  - Verify: the owner on this PC: SPEC "Module `win-shell`" success criteria 1–5
+  - Dependencies: 181–187
+
+### Checkpoint AF
+- [ ] All success criteria of SPEC.md "Module `win-shell`" met (owner); questions 2–4 confirmed; then the spike's retry (task 179) and open question 1
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
