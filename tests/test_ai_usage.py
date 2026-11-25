@@ -152,3 +152,29 @@ def test_the_summary_adds_up_every_device(tmp_path):
     assert [row["device"] for row in rows] == ["linux", "mac"]
     assert rows[1]["hours"] == 1.5 and rows[1]["cost"] == 20.0
     assert total == {"hours": 2.0, "cost": 30.0, "tokens": 1_500_000, "responses": 4}
+
+
+def test_the_logs_are_read_from_the_checkout_and_all_its_worktrees(tmp_path):
+    """Claude Code names a project's folder after its path with every character but letters
+    and digits as '-', so `.claude/worktrees/x` becomes `--claude-worktrees-x`. A record made
+    in the checkout or in one of its worktrees reads all of them: it replaces whole days, so
+    reading one folder would drop the other sessions' share of a day."""
+    home = tmp_path / "home"
+    projects = home / ".claude" / "projects"
+    checkout = Path("/Users/me/Developer/my_app")
+    names = [
+        "-Users-me-Developer-my-app",
+        "-Users-me-Developer-my-app--claude-worktrees-mac-x",
+        "-Users-me-Developer-my-app--claude-worktrees-win-y",
+        "-Users-me-Developer-my-app-old",  # another project
+    ]
+    for name in names:
+        (projects / name).mkdir(parents=True)
+    wanted = [projects / name for name in names[:3]]
+    assert usage.log_folders(checkout, home) == wanted
+    assert usage.log_folders(checkout / ".claude" / "worktrees" / "mac-x", home) == wanted
+
+
+def test_a_checkout_without_logs_reads_its_own_folder_only(tmp_path):
+    folders = usage.log_folders(Path("/Users/me/new"), tmp_path)
+    assert folders == [tmp_path / ".claude" / "projects" / "-Users-me-new"]

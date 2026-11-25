@@ -46,10 +46,21 @@ DEVICE = re.compile(r"[a-z0-9][a-z0-9-]{0,23}")
 FIELDS = ("responses", "input", "output", "cache_read", "cache_write")
 
 
-def log_folder(project: Path = ROOT) -> Path:
-    """Claude Code names a project's folder after its path, with '/' and '_' as '-'."""
-    name = str(project).replace("/", "-").replace("_", "-")
-    return Path.home() / ".claude" / "projects" / name
+def _folder_name(path: Path) -> str:
+    """Claude Code names a project's folder after its path, every character but letters and
+    digits as '-' (`/x/.claude/worktrees/y` is `-x--claude-worktrees-y`)."""
+    return re.sub(r"[^A-Za-z0-9]", "-", str(path))
+
+
+def log_folders(project: Path = ROOT, home: Path | None = None) -> list[Path]:
+    """The log folders of the checkout and of every worktree under its `.claude/worktrees`,
+    whichever of them `project` is. A record replaces whole days, so it has to read the
+    sessions of all of them, not only the one it runs in."""
+    if project.parent.name == "worktrees" and project.parent.parent.name == ".claude":
+        project = project.parents[2]
+    projects = (home or Path.home()) / ".claude" / "projects"
+    name = _folder_name(project)
+    return [projects / name, *sorted(projects.glob(f"{name}--claude-worktrees-*"))]
 
 
 def collect(folders: list[Path]) -> tuple[dict[str, collections.Counter], str | None, str | None]:
@@ -216,7 +227,7 @@ def main() -> int:
     parser.add_argument("--summary", action="store_true", help="add up every recorded device")
     args = parser.parse_args()
     if args.record:
-        out = record(args.record, [log_folder()])
+        out = record(args.record, log_folders())
         days = len(json.loads(out.read_text(encoding="utf-8"))["days"])
         print(f"{out.relative_to(ROOT)}: {days} days")
         return 0
@@ -234,7 +245,7 @@ def main() -> int:
             f"{total['tokens'] / 1e6:,.0f} M | {total['cost']:,.2f} |"
         )
         return 0
-    totals, first, last = collect([log_folder()])
+    totals, first, last = collect(log_folders())
     print(f"Sessions logged from {first} to {last}\n")
     print("| Model | Responses | Output tokens | Cache read | Cache written | Cost (API, USD) |")
     print("|---|---:|---:|---:|---:|---:|")
