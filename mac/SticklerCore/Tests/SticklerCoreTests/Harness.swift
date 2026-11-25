@@ -102,10 +102,15 @@ final class Harness {
         defaults = try #require(UserDefaults(suiteName: "stickler-test-\(UUID().uuidString)"))
     }
 
-    func model(settle: Duration = .milliseconds(300)) -> AppModel {
+    func model(
+        settle: Duration = .milliseconds(300), player: (any Playing)? = nil,
+        tick: Duration = .milliseconds(5)
+    ) -> AppModel {
         let made = made
         let wanted = ["de-DE", "en"]
-        return AppModel(defaults: defaults, languages: wanted, settle: settle) { languages in
+        return AppModel(
+            defaults: defaults, languages: wanted, settle: settle, player: player, tick: tick
+        ) { languages in
             let core = FakeCore()
             made.lock.withLock {
                 for (command, fields) in made.preset {

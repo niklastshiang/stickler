@@ -125,7 +125,8 @@ let sampleCommands: [Command] = [
     .backUp(dest: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
     .backupSummary(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
     .restore(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"), .uninstallSizes,
-    .uninstall(everything: false), .quit
+    .uninstall(everything: false), .jump(bar: 2, at: 3.2), .step(at: 3.2, by: 1),
+    .volumes(hear: .hits, song: 0.6, hits: nil), .playable, .quit
 ]
 
 @Test func everyCommandIsWrittenAsTheDocumentShowsIt() throws {
@@ -167,6 +168,9 @@ func payloadMatches(_ command: String, _ line: Data) throws -> NSDictionary? {
     case "removal_sizes": return try object(encoding: reply.payload(RemovalSizes.self))
     case "uninstall_sizes": return try object(encoding: reply.payload(UninstallSizes.self))
     case "backup_summary": return try object(encoding: reply.payload(BackupSummary.self))
+    case "jump", "step": return try object(encoding: reply.payload(Seconds.self))
+    case "volumes": return try object(encoding: reply.payload(Gains.self))
+    case "playable": return try object(encoding: reply.payload(Playable.self))
     default: return NSDictionary()
     }
 }

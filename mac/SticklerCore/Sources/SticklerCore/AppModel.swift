@@ -39,6 +39,8 @@ public final class AppModel {
     public private(set) var language: String?
     /// The sheet music of the shown result (module `mac-sheet`).
     public let sheet: SheetModel
+    /// Playing the shown result (SPEC.md "Mac playback").
+    public let playback: PlaybackModel
 
     /// Where builds before `mac-package` kept the answer to "Where Is Stickler?".
     public static let formerFolderKey = "SticklerFolder"
@@ -73,10 +75,14 @@ public final class AppModel {
 
     /// `settle`: how long the sheet's width must hold before its pages are asked for.
     /// `makeCore` builds a core for the reader's languages: the app's own (`CoreClient.app`).
+    /// `player` plays the result (none: the controls stay off); `tick` is how often its
+    /// position is read while it plays.
     public init(
         defaults: UserDefaults = .standard,
         languages: [String] = Locale.preferredLanguages,
         settle: Duration = .milliseconds(300),
+        player: (any Playing)? = nil,
+        tick: Duration = .milliseconds(50),
         makeCore: @escaping @Sendable ([String]) -> any Core = { CoreClient.app(languages: $0) }
     ) {
         self.defaults = defaults
@@ -85,6 +91,7 @@ public final class AppModel {
         // the sheet's refusals show as the window's notice
         let tell = Refusals()
         sheet = SheetModel(settle: settle) { tell.model?.refused($0) }
+        playback = PlaybackModel(player: player, tick: tick) { tell.model?.tell($0) }
         tell.model = self
     }
 
@@ -118,6 +125,7 @@ public final class AppModel {
         outbox?.finish()
         outbox = nil
         sheet.attach(nil)
+        playback.attach(nil)
         defer { core = nil }
         return core
     }
@@ -139,6 +147,7 @@ public final class AppModel {
         notice = nil
         phase = .running
         sheet.attach(next)
+        playback.attach(next)
         // one stream keeps the core's order; separate tasks per event would not
         let (signals, feed) = AsyncStream<Signal>.makeStream()
         listener = Task { [weak self] in
@@ -179,6 +188,7 @@ public final class AppModel {
             case .state(let next):
                 state = next
                 sheet.show(next.screen)
+                playback.show(next.screen)
             case .recent(let rows): recent = rows
             case .notice(let next): notice = next
             case .unknown: break

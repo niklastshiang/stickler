@@ -84,6 +84,37 @@ public struct UninstallSizes: Codable, Equatable, Sendable {
     }
 }
 
+/// `jump`, `step`: the time to go to; nil when the song never plays the bar.
+public struct Seconds: Codable, Equatable, Sendable {
+    public var seconds: Double?
+
+    public init(seconds: Double?) {
+        self.seconds = seconds
+    }
+
+    /// `seconds` is sent as `null` when there is none, as the core does.
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(seconds, forKey: .seconds)
+    }
+}
+
+/// `volumes`: the gains to play the song and the clicks with, 0 to 1.
+public struct Gains: Codable, Equatable, Sendable {
+    public var song: Double
+    public var hits: Double
+
+    public init(song: Double, hits: Double) {
+        self.song = song
+        self.hits = hits
+    }
+}
+
+/// `playable`: a copy of the song the player can read.
+public struct Playable: Codable, Equatable, Sendable {
+    public var path: String
+}
+
 /// A reply that carries nothing but its `ok` (`uninstall`).
 public struct Done: Codable, Equatable, Sendable {}
 
