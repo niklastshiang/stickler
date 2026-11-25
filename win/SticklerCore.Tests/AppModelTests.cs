@@ -127,6 +127,7 @@ public sealed class AppModelTests
         var core = cores.Single();
         core.Emit("{\"event\": \"hello\", \"protocol\": 1, \"version\": \"11\", \"language\": \"de\"}");
         Assert.AreEqual("de", model.Language);
+        Assert.AreEqual("11", model.Version);
         core.Emit(State(2, Analysing));
         Assert.IsInstanceOfType<AnalysingScreen>(model.State.Screen);
         Assert.AreEqual("a", model.Title);

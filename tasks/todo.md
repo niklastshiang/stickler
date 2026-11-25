@@ -1347,11 +1347,13 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Dependencies: 182 · Files: `win/SticklerCore/`, `win/SticklerCore.Tests/`, `win/Directory.Build.props`
 
 - [ ] **Task 185: The window, the steps, the errors** (L)
+  - 2026-11-25, built, not yet all seen: `win/Stickler` (WinUI 3, unpackaged, self-contained) builds here with `dotnet build` alone and starts against the checkout (Panda let `Stickler.exe` run). What the window shows and the menus' flows are decided in `SticklerCore` (`WindowView`, `Flows` with an `IAsk` the app answers with WinUI; 60 tests, 97.7 %), so the XAML only draws. Seen on this PC by a window capture: W1 (consent, German, the core's texts too once `.venv\share\locale` was built from WSL's msgfmt) and W4 (the empty window after "Nicht jetzt", through UI Automation). Not yet seen: the steps, the error page, the stopped core, the download dialogs, a real analysis. New texts "File" and "Help" (Windows' menu bar has them; the Mac's comes from macOS).
   - Acceptance: SPEC scope 2 (window, empty window with drop and recent songs, header, step list, error page, result placeholder, the core stopped, where the core is, quitting); the app's logic types tested with a fake core.
   - Verify: `dotnet build` and `dotnet test` on the runner (and here if XAML builds); the window started here against the checkout
   - Dependencies: 184 · Files: `win/Stickler/`, `win/Stickler.Tests/`
 
 - [ ] **Task 186: Setup dialogs, removal, backup, exports, menus** (L)
+  - 2026-11-25, built with 185, flows tested with a fake `IAsk`; the WinUI side (pickers with `InitializeWithWindow`, the classic ones: the Windows App SDK's new pickers were not tried; ContentDialogs; "Open with" through `Launcher`; Explorer `/select`) not yet tried by hand. The download dialog shows a ring and the core's "650 MB of 1.3 GB" text, not W2's determinate bar: the state carries text, not numbers.
   - Acceptance: SPEC scope 2 (W1–W3, Remove Downloaded Models…, Back Up…/Restore Backup…, the Export menu, the saved flyout, File/Help menus, About, Close Song); pickers and the launcher behind an interface with a fake.
   - Verify: tests of the flows with a fake core; by hand here
   - Dependencies: 185 · Files: `win/Stickler/`, `win/Stickler.Tests/`

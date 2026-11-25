@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-25 10:33+0100\n"
+"POT-Creation-Date: 2026-11-25 11:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -470,6 +470,18 @@ msgstr ""
 #. Translators: Windows app, the last entry of the File menu (design screen W8): ends the app
 #: src/stickler_app/win_texts.py:15
 msgid "Exit"
+msgstr ""
+
+#. Translators: Windows app, the menu bar (design screen W8); Windows says "Datei" in
+#. German, "Archivo" in Spanish
+#: src/stickler_app/win_texts.py:18
+msgid "File"
+msgstr ""
+
+#. Translators: Windows app, the menu bar (design screen W8); Windows says "Hilfe" in
+#. German, "Ayuda" in Spanish
+#: src/stickler_app/win_texts.py:21
+msgid "Help"
 msgstr ""
 
 #. Translators: a percentage; German puts a no-break space before the sign

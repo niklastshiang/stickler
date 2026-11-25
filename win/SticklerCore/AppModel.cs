@@ -33,6 +33,7 @@ public sealed class AppModel : INotifyPropertyChanged
     private Notice? notice;
     private int noticeSerial;
     private string? language;
+    private string? version;
 
     /// <summary><paramref name="makeCore"/> builds a core for the reader's languages;
     /// <paramref name="post"/> runs work on the window's thread, in order (the dispatcher queue).</summary>
@@ -82,6 +83,9 @@ public sealed class AppModel : INotifyPropertyChanged
 
     /// <summary>The core's language (<c>hello</c>).</summary>
     public string? Language { get => language; private set => Set(ref language, value); }
+
+    /// <summary>The core's release (<c>hello</c>), for About Stickler.</summary>
+    public string? Version { get => version; private set => Set(ref version, value); }
 
     /// <summary>The header's title: the song once it has one, else the app.</summary>
     public string Title => State.Screen switch
@@ -171,6 +175,7 @@ public sealed class AppModel : INotifyPropertyChanged
         {
             case HelloLine hello:
                 Language = hello.Hello.Language;
+                Version = hello.Hello.Version;
                 break;
             case StateEvent e when Fresh(e.Seq):
                 State = e.State;

@@ -13,4 +13,10 @@ TEXTS = (
     N_("Show in Folder"),
     # Translators: Windows app, the last entry of the File menu (design screen W8): ends the app
     N_("Exit"),
+    # Translators: Windows app, the menu bar (design screen W8); Windows says "Datei" in
+    # German, "Archivo" in Spanish
+    N_("File"),
+    # Translators: Windows app, the menu bar (design screen W8); Windows says "Hilfe" in
+    # German, "Ayuda" in Spanish
+    N_("Help"),
 )
