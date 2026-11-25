@@ -32,8 +32,9 @@ struct CorrectionsInspector: View {
                             .accessibilityHidden(true)  // the stepper says it
                         Stepper(
                             "Beats per bar",
-                            onIncrement: { model.correct(.beatsPerBarBy(1)) },
-                            onDecrement: { model.correct(.beatsPerBarBy(-1)) }
+                            onIncrement: controls.more ? { model.correct(.beatsPerBarBy(1)) } : nil,
+                            onDecrement: controls.fewer
+                                ? { model.correct(.beatsPerBarBy(-1)) } : nil
                         )
                         .labelsHidden()
                         .accessibilityValue(Text(verbatim: "\(controls.beatsPerBar)"))

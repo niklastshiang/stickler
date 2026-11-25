@@ -228,8 +228,8 @@ class Controller:
         """Copies the result's MusicXML to `dest`; False without a result."""
         with self._lock:
             result = self._state
-            if not isinstance(result, session.Result):
-                return False
+            if not isinstance(result, session.Result) or result.pending is not None:
+                return False  # a correction's notes are still being written
             try:
                 exports.save_musicxml(result.notation.musicxml, dest)
             except OSError as exc:
@@ -253,8 +253,8 @@ class Controller:
         with steps and Cancel; back to the result after. False without a result."""
         with self._lock:
             result = self._state
-            if not isinstance(result, session.Result):
-                return False
+            if not isinstance(result, session.Result) or result.pending is not None:
+                return False  # the export would cancel the correction and keep it pending
             download = self._separator_missing()
             self._stop_job()
             self._token = token = api.CancelToken()

@@ -871,6 +871,8 @@ def test_a_result_carries_what_the_corrections_controls_show_and_its_sheet(monke
         assert result["controls"] == {
             "tempo": "normal",
             "beats_per_bar": 4,
+            "fewer": True,
+            "more": True,
             "first_one": 1,
             "first_one_label": "Beat 1",
             "earlier": False,
@@ -955,3 +957,49 @@ def test_a_correction_needs_one_valid_change(monkeypatch, tmp_path):
 
 def test_a_correction_needs_a_result(running):
     assert running.send("correct", tempo="half")["error"]["code"] == "not_now"
+
+
+def test_no_export_starts_while_a_correction_is_being_written(monkeypatch, tmp_path):
+    """An export would cancel the correction's run and leave it pending for ever, and the PDF
+    and MusicXML would have the notes from before it (the review of task 194)."""
+    FakeApi(monkeypatch, hold=False)
+    running = Running()
+    try:
+        running.send("open", path=str(tmp_path / "eye.flac"))
+        running.until("result")
+        from stickler_app import controller
+
+        monkeypatch.setattr(controller, "CORRECT_AFTER", 5.0)  # the change stays pending
+        running.send("correct", tempo="half")
+        assert running.state()["correcting"]
+        for cmd, args in (
+            ("export_drum_track", {"dest": str(tmp_path / "d.flac")}),
+            ("export_musicxml", {"dest": str(tmp_path / "e.musicxml")}),
+            ("a4_pages", {}),
+        ):
+            assert running.send(cmd, **args)["error"]["code"] == "not_now", cmd
+        assert running.state()["kind"] == "result" and running.state()["correcting"]
+    finally:
+        running.stop()
+
+
+def test_a_correction_is_refused_while_the_drum_track_is_saved(monkeypatch, tmp_path):
+    from stickler_app import exports
+
+    started = threading.Event()
+
+    def slow(song, dest, report, token, *, setup):
+        started.set()
+        while not token.is_set():
+            time.sleep(0.005)
+        raise api.Cancelled("cancelled")
+
+    monkeypatch.setattr(exports, "drum_track", slow)
+    running = _with_result(monkeypatch, tmp_path)
+    try:
+        assert running.send("export_drum_track", dest=str(tmp_path / "d.flac"))["ok"]
+        assert started.wait(5)
+        assert running.send("correct", tempo="half")["error"]["code"] == "not_now"
+        running.send("cancel")
+    finally:
+        running.stop()

@@ -489,6 +489,8 @@ class Bridge:
         """The A4 pages for the PDF, which the app writes (SPEC point 3). The legend (module
         `legend`) is deferred, as in the GTK app."""
         result = self._result()
+        if result.pending is not None:  # the PDF would have the notes before the correction
+            raise _not_now()
         pages = engraving.a4_pages(self._musicxml())
         return {"title": result.title, "pages": [encode_page(p) for p in pages]}
 

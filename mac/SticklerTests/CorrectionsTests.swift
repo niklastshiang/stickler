@@ -15,7 +15,8 @@ final class CorrectionsTests: XCTestCase {
         subtitle: String = "Survivor · ♩ = 109 · 4/4", controls: Bool = true, bars: Bool = false
     ) -> String {
         let corrected = tempo != "normal" || !simplify
-        let shown = #""controls": {"tempo": "\#(tempo)", "beats_per_bar": 4, "first_one": 1, "#
+        let shown = #""controls": {"tempo": "\#(tempo)", "beats_per_bar": 4, "fewer": true, "#
+            + #""more": true, "first_one": 1, "#
             + #""first_one_label": "Beat 1", "earlier": false, "later": true, "#
             + #""simplify": \#(simplify), "repeats": true, "corrected": \#(corrected)}, "#
         let played = (0..<8).map { bar in
@@ -85,13 +86,16 @@ final class CorrectionsTests: XCTestCase {
         XCTAssertEqual(CorrectionsMenu.shownKey, "CorrectionsShown")
     }
 
-    func testTheSpinnerTurnsWhileACorrectionIsWritten() async throws {
+    func testTheSpinnerTurnsAndNothingIsExportedWhileACorrectionIsWritten() async throws {
         let line = Self.result(tempo: "half", correcting: true)
-        let (model, _) = try await model([ScreenshotTests.empty, line])
-        XCTAssertTrue(CorrectionsMenu.correcting(model))
+        let (writing, _) = try await model([ScreenshotTests.empty, line])
+        XCTAssertTrue(CorrectionsMenu.correcting(writing))
+        XCTAssertNil(Exports.result(writing))  // the core would refuse: the old notes
+        let (written, _) = try await model([ScreenshotTests.empty, Self.result(tempo: "half")])
+        XCTAssertNotNil(Exports.result(written))
     }
 
-    func testEachControlSendsItsChange() async throws {
+    func testTheInspectorBuildsAndTheModelSendsEachChange() async throws {
         let (model, core) = try await model([ScreenshotTests.empty, Self.result()])
         let controls = try XCTUnwrap(CorrectionsMenu.controls(model))
         let inspector = CorrectionsInspector(model: model, controls: controls)

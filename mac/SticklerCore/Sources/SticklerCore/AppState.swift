@@ -224,6 +224,9 @@ public enum Tempo: String, Codable, Sendable, CaseIterable {
 public struct CorrectionControls: Codable, Equatable, Sendable {
     public var tempo: Tempo
     public var beatsPerBar: Int
+    /// Whether the bar can lose or gain a beat (1 to 12).
+    public var fewer: Bool
+    public var more: Bool
     public var firstOne: Int
     /// "Beat 2", translated.
     public var firstOneLabel: String
@@ -236,11 +239,14 @@ public struct CorrectionControls: Codable, Equatable, Sendable {
     public var corrected: Bool
 
     public init(
-        tempo: Tempo, beatsPerBar: Int, firstOne: Int, firstOneLabel: String, earlier: Bool,
-        later: Bool, simplify: Bool, repeats: Bool, corrected: Bool
+        tempo: Tempo, beatsPerBar: Int, fewer: Bool, more: Bool, firstOne: Int,
+        firstOneLabel: String, earlier: Bool, later: Bool, simplify: Bool, repeats: Bool,
+        corrected: Bool
     ) {
         self.tempo = tempo
         self.beatsPerBar = beatsPerBar
+        self.fewer = fewer
+        self.more = more
         self.firstOne = firstOne
         self.firstOneLabel = firstOneLabel
         self.earlier = earlier

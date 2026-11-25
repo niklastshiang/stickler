@@ -63,6 +63,8 @@ class Controls:
 
     tempo: str
     beats_per_bar: int
+    fewer: bool  # the bar can lose a beat (not below FEWEST_BEATS)
+    more: bool  # or gain one (not above MOST_BEATS)
     first_one: int
     first_one_label: str
     earlier: bool  # the first one can move to an earlier beat
@@ -80,6 +82,8 @@ def controls(fix: api.Corrections, *, beats_per_bar: int, first_one: int) -> Con
     return Controls(
         tempo=fix.tempo,
         beats_per_bar=beats,
+        fewer=beats > FEWEST_BEATS,
+        more=beats < MOST_BEATS,
         first_one=first,
         first_one_label=beat_label(first),
         earlier=first > 1,
@@ -112,10 +116,13 @@ def change(
         return with_tempo(fix, str(value))
     if name in ("beats_per_bar", "beats_per_bar_by"):
         base = shown.beats_per_bar if name.endswith("_by") else 0
-        return with_beats(fix, base + int(value))
+        changed = with_beats(fix, base + int(value))
+        # a step past the end shows the same bar: no correction made of nothing
+        return fix if changed.beats_per_bar == shown.beats_per_bar else changed
     if name in ("first_one", "first_one_by"):
         base = shown.first_one if name.endswith("_by") else 0
-        return with_first_one(fix, base + int(value), beats_per_bar=shown.beats_per_bar)
+        moved = with_first_one(fix, base + int(value), beats_per_bar=shown.beats_per_bar)
+        return fix if moved.first_downbeat == shown.first_one else moved
     if name == "simplify":
         return with_simplify(fix, bool(value))
     if name == "repeats":

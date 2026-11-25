@@ -3385,8 +3385,10 @@ it. A drummer on a Mac fixes a wrong beat in a second, as on Linux.
      first "one" never beyond the bar), with the first "one"'s label, whether it can move
      earlier or later, and `corrected` ("Back to Detected" enabled). The GTK panel calls it;
      its behaviour is unchanged.
-   - `result` gains `controls`: `{"tempo", "beats_per_bar", "first_one", "first_one_label",
-     "earlier", "later", "simplify", "repeats", "corrected"}` for the wanted values, and
+   - `result` gains `controls`: `{"tempo", "beats_per_bar", "fewer", "more", "first_one",
+     "first_one_label", "earlier", "later", "simplify", "repeats", "corrected"}` for the
+     wanted values (`fewer`/`more` added with the review of task 194: a stepper at 1 or 12
+     is off, and a step past an end makes no correction), and
      `sheet`: a number that changes with every new notation shown (the job that wrote it), so
      the app knows when to fetch pages again.
    - `correct` with exactly one change: `tempo` ("half", "normal", "double"),
@@ -3395,7 +3397,11 @@ it. A drummer on a Mac fixes a wrong beat in a second, as on Linux.
      from its newest values, added in task 190 so quick clicks are never lost), `simplify` or
      `repeats` (booleans), or `detected: true` ("Back to Detected").
      The new values come as a `state` event before the reply; a change that changes nothing is
-     answered `ok` with no event. `not_now` without a result (also while the drum track is
+     answered `ok` with no event. While a correction is being written the exports
+     (`export_musicxml`, `export_drum_track`, `a4_pages`) answer `not_now` (review of task
+     194: a drum track export cancelled the correction's run and left it pending for ever,
+     and the PDF and MusicXML had the notes from before it); the Mac app's Export is off
+     meanwhile. `not_now` without a result (also while the drum track is
      exported); `bad_argument` for no change, two changes, an unknown tempo or a wrong type.
    - `docs/bridge.md` documents `correct`, `controls` and `sheet`; the doc test checks them.
 2. **`SticklerCore`** (Linux and macOS):

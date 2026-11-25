@@ -120,6 +120,8 @@ def test_the_controls_show_the_engraved_values_until_they_are_corrected():
     assert shown == corrections.Controls(
         tempo="normal",
         beats_per_bar=4,
+        fewer=True,
+        more=True,
         first_one=2,
         first_one_label="Beat 2",
         earlier=True,
@@ -144,6 +146,10 @@ def test_the_engraved_first_one_is_kept_within_a_shorter_corrected_bar():
     assert (shown.first_one, shown.first_one_label, shown.later) == (2, "Beat 2", False)
     first = corrections.controls(DETECTED, beats_per_bar=4, first_one=1)
     assert (first.earlier, first.later) == (False, True)
+    ends = corrections.controls(DETECTED, beats_per_bar=12, first_one=1)
+    assert (ends.fewer, ends.more) == (True, False)
+    ends = corrections.controls(DETECTED, beats_per_bar=1, first_one=1)
+    assert (ends.fewer, ends.more) == (False, True)
 
 
 def test_a_change_from_a_control_is_kept_in_range():
@@ -156,9 +162,14 @@ def test_a_change_from_a_control_is_kept_in_range():
     assert change(DETECTED, "beats_per_bar_by", 1).beats_per_bar == 5
     assert change(DETECTED, "beats_per_bar_by", -9).beats_per_bar == 1
     assert change(DETECTED, "first_one", 9, beats=3).first_downbeat == 3
-    assert change(DETECTED, "first_one", 0, beats=3).first_downbeat == 1
+    assert change(DETECTED, "first_one", 0, beats=3, first=2).first_downbeat == 1
     assert change(DETECTED, "first_one_by", 1, first=2).first_downbeat == 3
     assert change(DETECTED, "first_one_by", 5, first=2).first_downbeat == 4
     assert not change(DETECTED, "simplify", False).simplify
     assert not change(DETECTED, "repeats", False).repeats
     assert change(api.Corrections(tempo="half", repeats=False), "detected", True) == DETECTED
+    # a step past an end changes nothing: no correction is made of it
+    assert change(DETECTED, "beats_per_bar_by", 1, beats=12) == DETECTED
+    assert change(DETECTED, "beats_per_bar", 4) == DETECTED
+    assert change(DETECTED, "first_one_by", -1, first=1) == DETECTED
+    assert change(DETECTED, "first_one_by", 1, beats=3, first=3) == DETECTED
