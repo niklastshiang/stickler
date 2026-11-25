@@ -2660,192 +2660,6 @@ the Mac App Store, Quality, the GPU.
    of the owner's "no"; to be corrected if a fresh account was meant.
 5. **A plain image:** the app and the link to Applications, no background picture.
 
-## Release 11: Windows app
-
-> Status: **draft**, written 2026-11-25, not approved. Decided by the owner on 2026-11-25: a
-> native interface, as release 11; open questions 1–3 answered the same day (at the end).
-> Everything else here is Claude's proposal; question 4 is still the owner's, and nothing is
-> built before the spec is approved. Starts
-> from the Windows research in `tasks/todo.md` (2026-11-16) and from what release 8 builds
-> (`stickler_app`, `stickler-bridge`). Module specs are written and approved one at a time, in
-> build order, as for the Mac app.
-
-A native Windows app (WinUI 3) for the same drummers as the GTK and the Mac app: open or drop a
-song, wait for the analysis, read the sheet music, export it. It is the third thin interface
-over the same Python core, and reaches it through `stickler-bridge` as the Mac app does.
-
-### Objective
-- **User:** a drummer with a Windows 11 PC (x64) who is not technical.
-- **First version (owner, 2026-11-25: the same as the Mac app):** what the Mac app has when
-  release 11 is built; today that is the minimum of release 8: open or drop a song, set up the
-  models with consent, analyse it with progress and cancel, read the sheet music, export
-  MusicXML, PDF and the drum track, recent songs, English, German and Spanish. Fast mode only
-  and on the CPU, as on the Mac. If playback or corrections reach the Mac app before then, they
-  join this list and get modules here (Claude's reading of "the same state as the Mac").
-- **Later releases:** playback (`win-playback`), corrections (`win-corrections`), the NVIDIA
-  GPU through CUDA (`win-gpu`; the research of 2026-11-16 found torch's cu132 wheels for
-  Windows; measured against the CPU first, identical notes).
-- **Success:** a drummer installs `Stickler-11-setup.exe` from a GitHub release on a PC they
-  own and gets sheet music for a song without a terminal.
-
-### Decisions for all modules
-Decided (owner, 2026-11-25):
-- **Native interface**, not GTK: this replaces the decision of 2026-11-16 ("GTK on Windows and
-  macOS to start with") for Windows too. The GTK app stays the Linux app.
-- **Release 11.**
-- **The Mac app's features, CPU only, unsigned** (open questions 1–3, at the end).
-
-Proposed (Claude, 2026-11-25; to approve with this spec):
-- **The same core and the same bridge.** The Windows app is a second client of
-  `stickler-bridge`; its contract (`core-bridge`) does not fork. What the Windows app needs
-  and the bridge lacks goes into the bridge, in Python, tested once, and the Mac app can use it
-  too. C# only draws and forwards, as Swift does.
-- **C# on .NET 10 with WinUI 3** (Windows App SDK 2.x): Microsoft's own native stack for
-  Windows 11 apps, with the Windows 11 look (Mica, Fluent controls) and the accessibility of
-  the system controls. Not C++/WinRT (more code for the same window, nothing it would add
-  here), not WPF (the older look), not a web shell (not native).
-- **Unpackaged and self-contained:** the .NET runtime and the Windows App SDK runtime travel
-  with the app, so the installer installs nothing else. Not MSIX: installing an MSIX outside
-  the Store needs a signature the PC trusts, which a free route does not give.
-- **One source for translations:** `po/*.po` stays the only place to translate. A script
-  (`scripts/resw.py`, as `scripts/xcstrings.py` for the Mac) writes one `Resources.resw` per
-  language at build time, with named placeholders turned into .NET's positional ones
-  (`{name}` → `{0}`). `.resw` has no plural forms (none found in the MRT Core documentation,
-  2026-11-25), so a plural entry becomes two keys (`…_one`, `…_other`) and the app picks one by
-  the rule `n != 1`; a language with another `Plural-Forms` stops the script with an error, as
-  in `xcstrings.py`. Text the core produces arrives already translated from Python.
-- **Distribution without paying:** a per-user installer (`.exe`, Inno Setup, no admin rights),
-  built on GitHub's free Windows runners and attached to every release next to the `.dmg`, the
-  Flatpak and the AppImage. Unsigned (owner, 2026-11-25), Windows shows SmartScreen's
-  "Windows protected your PC" (More info → Run anyway), and Smart App Control may block it;
-  the install guide shows the steps with pictures.
-- **CPU only** in this release; CUDA is `win-gpu`.
-- **Windows 11 x64 only.** Windows 10's support ended on 2025-10-14; ARM64 Windows is not
-  checked (torch wheels, ffmpeg) and stays out.
-- **Testing on Windows:** unlike the Mac, Claude's sessions run on a Windows 11 PC (23H2,
-  .NET SDK, `uv` and the WebView2 runtime present, checked 2026-11-25), and Claude may build,
-  test and start the app here and run the models on its CPU (owner, 2026-11-25). It is also
-  the owner's checkpoint PC. Its network inspects TLS: `uv` downloads only with
-  `UV_SYSTEM_CERTS=1` (seen 2026-11-25), so the spike also checks the setup assistant's
-  downloads behind such a network. CI runs on GitHub's `windows-2025` runner (Visual Studio
-  2026 since June 2026); screenshots of the windows as artifacts. The owner checks the app on
-  this PC at every checkpoint.
-- **Quality bar:** CONSTRAINTS.md is extended to C# with the same rules: no suppressions
-  (`#pragma warning disable`, `[SuppressMessage]`, `<NoWarn>`), no stubs
-  (`throw new NotImplementedException()`), no skipped tests (`Skip =` without a reason in the
-  commit), the .NET analyzers at `latest-recommended` with warnings as errors,
-  `dotnet format --verify-no-changes` clean, coverage ≥ 95 % outside pure views (XAML and its
-  code-behind are excluded, as `ui/` is in GTK and pure views in Swift). The extension is
-  written when `win-shell` fixes the paths.
-- **Out of this release:** everything the Mac app's first version leaves out (playback,
-  corrections, the GPU, Quality), plus the Microsoft Store, MSIX, winget and Scoop (ideas for
-  later), updates from inside the app, ARM64 and Windows 10.
-
-### Capability map
-
-| Module id | Responsibility | Depends on | Spec |
-|---|---|---|---|
-| `win-core` | The Python core and the app's models on Windows x64 (CPU): cancelling without `os.killpg` and `start_new_session` (a Job Object, so the model's whole process tree ends), peak RAM without `resource` in `adapters/_common` (`GetProcessMemoryInfo` through `ctypes`, stdlib only; `digests.yaml` pairs, Linux unchanged), `Scripts\python.exe` next to `bin/python`, Demucs' and MuScriptor's `environments` widened by `sys_platform == 'win32'` (Linux resolution identical, as in `mac-core`), `paths.packaged() == "windows"` with Stickler's folders under `%LOCALAPPDATA%`, the test suite and the CPU smoke tests on a Windows runner | – | to write |
-| `win-design` | Mockups of every screen of the minimum, following Microsoft's Windows 11 design guidance (Fluent, Mica, the title bar), made with the owner on the design canvas from the Mac mockups; no code | – | to write |
-| `win-shell` | WinUI 3 app: window, command bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped (the bridge client in C#), the setup assistant (consent, model download with progress, resumable, "Remove Downloaded Models…"); `scripts/resw.py` and extracting the C# texts into `po/` | `win-core`, `win-design`, `core-bridge` | to write |
-| `win-sheet` | Sheet music in WebView2 from the core's SVG pages, zoom (Ctrl+wheel, pinch), title, artist and tempo in the window | `win-shell` | to write |
-| `win-package` | The app with `uv`, a relocatable Python with the core's wheels, ffmpeg and ffprobe, as `mac-package` decided; per-user Inno Setup installer, uninstaller, release job, install guide with pictures, the website's Windows card | all | to write |
-
-Build order: `win-core`, `win-design` (in parallel) → `win-shell` → `win-sheet` →
-`win-package`.
-
-Out of order on purpose, as on the Mac: a **packaging spike** early in `win-package` (an
-unsigned installer from the runner that installs per user, runs the bundled `uv`, builds
-ADTOF's environment and analyses a clip on the owner's PC after "Run anyway"), because a
-failure changes `win-shell`'s setup. Besides SmartScreen and Smart App Control it checks two
-Windows risks: paths longer than 260 characters inside the models' environments under
-`%LOCALAPPDATA%` (long paths are off by default), and Microsoft Defender scanning or blocking
-the Python and wheels `uv` downloads.
-
-### Tech stack
-- C# with .NET 10 (LTS, supported until 2028-11-14; .NET 11, released 2026-11-10, is a
-  two-year release), WinUI 3 from the Windows App SDK 2.x (2.4.0 the newest stable, 2026-08-13;
-  the exact versions are pinned when `win-shell` starts, newest stable at that time), MVVM with
-  `CommunityToolkit.Mvvm` (its maintenance and licence checked on the web when `win-shell`
-  starts), WebView2 (the Evergreen runtime that Windows 11 brings) for the sheet music.
-- Tests: xUnit and coverlet (versions and maintenance checked when `win-shell` starts).
-- Installer: Inno Setup 7 (7.1.1 the newest, 2026-10-28; free for open-source and
-  non-commercial use since 6.5.0's commercial licences: its licence is read again before
-  `win-package`).
-- The Python core unchanged: `uv`, Python 3.12–3.14, the adapters' own environments; no new
-  Python dependency (Windows calls through `ctypes`).
-
-### Commands (planned)
-```
-uv run stickler-bridge                     # the core, as for the Mac app
-uv run python scripts/resw.py              # po/*.po → win/Stickler/Strings/<lang>/Resources.resw
-dotnet build win/Stickler.sln -warnaserror
-dotnet test win/Stickler.sln --collect:"XPlat Code Coverage"
-dotnet format win/Stickler.sln --verify-no-changes
-scripts/check.sh task                      # unchanged; also checks the .resw files are current
-```
-
-### Project structure (additions)
-```
-win/                          # the .NET solution of the Windows app
-win/Stickler/                 # WinUI 3 views, view models and the bridge client
-win/Stickler.Tests/           # xUnit
-win/installer/stickler.iss    # the Inno Setup script
-scripts/resw.py               # .resw files from po/
-.github/workflows/win.yml     # build, analyzers, tests, screenshots; the installer on release
-docs/install-windows.md       # install guide with the SmartScreen pictures
-```
-
-### Testing strategy
-- `win-core`: the existing test suite on a Windows runner (Python 3.14, ffmpeg), plus the
-  adapters' smoke tests for ADTOF, Beat This! and Demucs on the runner's CPU; cancelling tested
-  with a model process that starts children (the whole tree ends).
-- The bridge's contract stays tested in Python; a Windows-only need is a new bridge test first.
-- C#: xUnit for the bridge client and the view models against a recorded or fake core; pure
-  views are checked by screenshots on the runner, by Claude on this PC and by the owner.
-- The `.resw` files: a test that every `msgid` is in them, placeholders and plurals kept, for
-  every language in `po/LINGUAS`.
-
-### Boundaries
-- **Always:** keep the Linux app, the Mac app and the benchmark unchanged in behaviour; run
-  `scripts/check.sh task` before every commit; every C# change goes through the Windows
-  workflow before it counts.
-- **Ask first:** paying for anything (a certificate, runners beyond the free tier); applying
-  to SignPath; changing a model's environment beyond widening its platforms; a new Python
-  dependency; moving a feature from Python into C#; installing anything system-wide on this PC.
-- **Never:** ship model weights; ship a feature in C# that the core could do; weaken
-  CONSTRAINTS.md for C#; claim a check on the owner's PC that the owner has not done.
-
-### Success criteria
-1. On the owner's Windows 11 PC, `Stickler-11-setup.exe` from a draft release installs
-   without admin rights after "Run anyway", the setup assistant downloads the Fast models, and
-   a song becomes sheet music; export of MusicXML, PDF and the drum track works. No terminal,
-   no `uv` or ffmpeg of the user's own needed.
-2. The app is in English, German and Spanish from the same `po/` files as the other apps.
-3. The Linux app, the Mac app, the command line and the benchmark behave as before (all tests
-   green, cache keys unchanged except the documented `digests.yaml` pairs).
-4. The Windows workflow builds, checks and tests on every push; the release attaches the
-   installer.
-5. CONSTRAINTS.md covers C#; coverage ≥ 95 % outside pure views.
-6. Uninstalling (Settings › Apps) after "Remove Downloaded Models…" leaves nothing of Stickler
-   behind under `%LOCALAPPDATA%` and `%APPDATA%`.
-
-### Open questions
-Decided (owner, 2026-11-25):
-1. **The first version's scope:** the same as the Mac app (see Objective); CUDA later
-   (`win-gpu`).
-2. **Signing:** unsigned for now, with the install guide's pictures. The SignPath Foundation
-   (free for open source; SignPath Foundation shown as the publisher, MFA for everyone with
-   access, a fully automated build, a code signing policy page with their credit line) and a
-   paid OV certificate (about 220–440 USD a year) stay options for later.
-3. **This PC:** Claude may build and start the app here and run the models on its CPU (their
-   environments and weights, several GB, under `%LOCALAPPDATA%`); it is the owner's
-   checkpoint PC too.
-
-Open:
-4. **The scope of releases 9 and 10:** not specified anywhere yet. Does anything in them
-   change what Windows needs (for example playback or corrections for the Mac app first)?
-
 ## Website
 
 > Status: **done**, online with release 8 on 2026-11-20 (Checkpoint W). Approved by the owner on
@@ -3120,8 +2934,8 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
 - Spanish (the app has it; the site may follow if people ask).
 - A documentation site; the report as a web page.
 - A language switch by the browser's language (needs script or a server).
-- Windows (no Windows version yet; the Windows app is release 11, and its card comes with
-  `win-package`).
+- Windows (no Windows version yet; the Windows app is planned in "Release 11: Windows app",
+  and its card comes with `win-package`).
 
 ### Open questions
 1. **The typeface** (decided, owner 2026-11-18): Figtree, chosen on the mockup from twelve
@@ -3491,6 +3305,212 @@ drum samples, the Now Playing widget and media keys, remembering the position pe
 1. "Remembered per song" (M10) means what the GTK app does: one pair of volumes kept for
    every song, like the note size.
 2. Playback comes in a release together with other work, not in a release of its own.
+
+## Release 11: Windows app
+
+> Status: **draft**, written 2026-11-25, not approved. Decided by the owner on 2026-11-25: a
+> native interface, as release 11; open questions 1–4 answered the same day (at the end).
+> Everything else here is Claude's proposal; question 5 (written after the rebase onto
+> releases 9 and 10 and `mac-playback`) is still the owner's, and nothing is built before the
+> spec is approved. Starts
+> from the Windows research in `tasks/todo.md` (2026-11-16) and from what release 8 builds
+> (`stickler_app`, `stickler-bridge`). Module specs are written and approved one at a time, in
+> build order, as for the Mac app.
+
+A native Windows app (WinUI 3) for the same drummers as the GTK and the Mac app: open or drop a
+song, wait for the analysis, read the sheet music, export it. It is the third thin interface
+over the same Python core, and reaches it through `stickler-bridge` as the Mac app does.
+
+### Objective
+- **User:** a drummer with a Windows 11 PC (x64) who is not technical.
+- **First version (owner, 2026-11-25: the same as the Mac app):** what the Mac app has when
+  the Windows app is built. On 2026-11-25 that is:
+  - release 8's minimum: open or drop a song, set up the models with consent, analyse it with
+    progress and cancel, read the sheet music, export MusicXML, PDF and the drum track, recent
+    songs, English, German and Spanish;
+  - release 10's "Back Up… / Restore Backup…" and "Uninstall Stickler…" (the same backup file
+    on every system, so a backup moves between a Mac, Linux and Windows);
+  - `mac-playback` (done 2026-11-25): the song, the detected hits as clicks, or both, with the
+    bar marker following.
+
+  Fast mode only and on the CPU, as on the Mac. What reaches the Mac app before the Windows
+  app is built (corrections, say) joins this list and gets a module here (Claude's reading of
+  "the same state as the Mac").
+- **Later releases:** corrections (`win-corrections`, with or after the Mac's), the NVIDIA GPU
+  through CUDA (`win-gpu`, owner 2026-11-25: later; the research of 2026-11-16 found torch's
+  cu132 wheels for Windows; measured against the CPU first, identical notes).
+- **Success:** a drummer installs `Stickler-<version>-setup.exe` from a GitHub release on a PC they
+  own and gets sheet music for a song without a terminal.
+
+### Decisions for all modules
+Decided (owner, 2026-11-25):
+- **Native interface**, not GTK: this replaces the decision of 2026-11-16 ("GTK on Windows and
+  macOS to start with") for Windows too. The GTK app stays the Linux app.
+- **Release 11.**
+- **The Mac app's features, CPU only, unsigned** (open questions 1–3, at the end).
+
+Proposed (Claude, 2026-11-25; to approve with this spec):
+- **The same core and the same bridge.** The Windows app is a second client of
+  `stickler-bridge`; its contract (`core-bridge`) does not fork. What the Windows app needs
+  and the bridge lacks goes into the bridge, in Python, tested once, and the Mac app can use it
+  too. C# only draws and forwards, as Swift does.
+- **C# on .NET 10 with WinUI 3** (Windows App SDK 2.x): Microsoft's own native stack for
+  Windows 11 apps, with the Windows 11 look (Mica, Fluent controls) and the accessibility of
+  the system controls. Not C++/WinRT (more code for the same window, nothing it would add
+  here), not WPF (the older look), not a web shell (not native).
+- **Unpackaged and self-contained:** the .NET runtime and the Windows App SDK runtime travel
+  with the app, so the installer installs nothing else. Not MSIX: installing an MSIX outside
+  the Store needs a signature the PC trusts, which a free route does not give.
+- **One source for translations:** `po/*.po` stays the only place to translate. A script
+  (`scripts/resw.py`, as `scripts/xcstrings.py` for the Mac) writes one `Resources.resw` per
+  language at build time, with named placeholders turned into .NET's positional ones
+  (`{name}` → `{0}`). `.resw` has no plural forms (none found in the MRT Core documentation,
+  2026-11-25), so a plural entry becomes two keys (`…_one`, `…_other`) and the app picks one by
+  the rule `n != 1`; a language with another `Plural-Forms` stops the script with an error, as
+  in `xcstrings.py`. Text the core produces arrives already translated from Python.
+- **Distribution without paying:** a per-user installer (`.exe`, Inno Setup, no admin rights),
+  built on GitHub's free Windows runners and attached to every release next to the `.dmg`, the
+  Flatpak and the AppImage. Unsigned (owner, 2026-11-25), Windows shows SmartScreen's
+  "Windows protected your PC" (More info → Run anyway), and Smart App Control may block it;
+  the install guide shows the steps with pictures.
+- **CPU only** in this release; CUDA is `win-gpu`.
+- **Windows 11 x64 only.** Windows 10's support ended on 2025-10-14; ARM64 Windows is not
+  checked (torch wheels, ffmpeg) and stays out.
+- **Testing on Windows:** unlike the Mac, Claude's sessions run on a Windows 11 PC (23H2,
+  .NET SDK, `uv` and the WebView2 runtime present, checked 2026-11-25), and Claude may build,
+  test and start the app here and run the models on its CPU (owner, 2026-11-25). It is also
+  the owner's checkpoint PC. Its network inspects TLS: `uv` downloads only with
+  `UV_SYSTEM_CERTS=1` (seen 2026-11-25), so the spike also checks the setup assistant's
+  downloads behind such a network. CI runs on GitHub's `windows-2025` runner (Visual Studio
+  2026 since June 2026); screenshots of the windows as artifacts. The owner checks the app on
+  this PC at every checkpoint.
+- **Quality bar:** CONSTRAINTS.md is extended to C# with the same rules: no suppressions
+  (`#pragma warning disable`, `[SuppressMessage]`, `<NoWarn>`), no stubs
+  (`throw new NotImplementedException()`), no skipped tests (`Skip =` without a reason in the
+  commit), the .NET analyzers at `latest-recommended` with warnings as errors,
+  `dotnet format --verify-no-changes` clean, coverage ≥ 95 % outside pure views (XAML and its
+  code-behind are excluded, as `ui/` is in GTK and pure views in Swift). The extension is
+  written when `win-shell` fixes the paths.
+- **Out of this release:** what the Mac app does not have yet (corrections, the GPU, Quality),
+  plus the Microsoft Store, MSIX, winget and Scoop (ideas for later), updates from inside the
+  app, ARM64 and Windows 10.
+
+### Capability map
+
+| Module id | Responsibility | Depends on | Spec |
+|---|---|---|---|
+| `win-core` | The Python core and the app's models on Windows x64 (CPU): cancelling without `os.killpg` and `start_new_session` (a Job Object, so the model's whole process tree ends), peak RAM without `resource` in `adapters/_common` (`GetProcessMemoryInfo` through `ctypes`, stdlib only; `digests.yaml` pairs, Linux unchanged), `Scripts\python.exe` next to `bin/python`, Demucs' and MuScriptor's `environments` widened by `sys_platform == 'win32'` (Linux resolution identical, as in `mac-core`), `paths.packaged() == "windows"` with Stickler's folders under `%LOCALAPPDATA%`, the test suite and the CPU smoke tests on a Windows runner | – | to write |
+| `win-design` | Mockups of every screen of the first version (the Mac's screens up to M10, playback), following Microsoft's Windows 11 design guidance (Fluent, Mica, the title bar), made with the owner on the design canvas from the Mac mockups; no code | – | to write |
+| `win-shell` | WinUI 3 app: window, command bar, open or drop a song, analysis steps with cancel, errors, recent songs, export, the core started and stopped (the bridge client in C#), the setup assistant (consent, model download with progress, resumable, "Remove Downloaded Models…"), "Back Up… / Restore Backup…" (release 10, through the bridge); `scripts/resw.py` and extracting the C# texts into `po/` | `win-core`, `win-design`, `core-bridge` | to write |
+| `win-sheet` | Sheet music in WebView2 from the core's SVG pages, zoom (Ctrl+wheel, pinch), title, artist and tempo in the window | `win-shell` | to write |
+| `win-playback` | What `mac-playback` does, drawn as `win-design` draws it: the song, the clicks or both in time, volumes, the bar marker, a click on a bar, the keys; the rules stay in `stickler_app.playback` and `stickler_app.marker`, the bridge's playback messages are reused; the Windows audio library (two sources in time, as `AVAudioEngine` on the Mac) is chosen in the module spec, maintenance and licence checked on the web | `win-sheet` | to write |
+| `win-package` | The app with `uv`, a relocatable Python with the core's wheels, ffmpeg and ffprobe, as `mac-package` decided; per-user Inno Setup installer and its uninstaller, "Uninstall Stickler…" as release 10 asks of every system, release job, install guide with pictures, the website's Windows card | all | to write |
+
+Build order: `win-core`, `win-design` (in parallel) → `win-shell` → `win-sheet` →
+`win-playback` → `win-package`.
+
+Out of order on purpose, as on the Mac: a **packaging spike** early in `win-package` (an
+unsigned installer from the runner that installs per user, runs the bundled `uv`, builds
+ADTOF's environment and analyses a clip on the owner's PC after "Run anyway"), because a
+failure changes `win-shell`'s setup. Besides SmartScreen and Smart App Control it checks two
+Windows risks: paths longer than 260 characters inside the models' environments under
+`%LOCALAPPDATA%` (long paths are off by default), and Microsoft Defender scanning or blocking
+the Python and wheels `uv` downloads.
+
+### Tech stack
+- C# with .NET 10 (LTS, supported until 2028-11-14; .NET 11, released 2026-11-10, is a
+  two-year release), WinUI 3 from the Windows App SDK 2.x (2.4.0 the newest stable, 2026-08-13;
+  the exact versions are pinned when `win-shell` starts, newest stable at that time), MVVM with
+  `CommunityToolkit.Mvvm` (its maintenance and licence checked on the web when `win-shell`
+  starts), WebView2 (the Evergreen runtime that Windows 11 brings) for the sheet music.
+- Tests: xUnit and coverlet (versions and maintenance checked when `win-shell` starts).
+- Installer: Inno Setup 7 (7.1.1 the newest, 2026-10-28; free for open-source and
+  non-commercial use since 6.5.0's commercial licences: its licence is read again before
+  `win-package`).
+- The Python core unchanged: `uv`, Python 3.12–3.14, the adapters' own environments; no new
+  Python dependency (Windows calls through `ctypes`).
+
+### Commands (planned)
+```
+uv run stickler-bridge                     # the core, as for the Mac app
+uv run python scripts/resw.py              # po/*.po → win/Stickler/Strings/<lang>/Resources.resw
+dotnet build win/Stickler.sln -warnaserror
+dotnet test win/Stickler.sln --collect:"XPlat Code Coverage"
+dotnet format win/Stickler.sln --verify-no-changes
+scripts/check.sh task                      # unchanged; also checks the .resw files are current
+```
+
+### Project structure (additions)
+```
+win/                          # the .NET solution of the Windows app
+win/Stickler/                 # WinUI 3 views, view models and the bridge client
+win/Stickler.Tests/           # xUnit
+win/installer/stickler.iss    # the Inno Setup script
+scripts/resw.py               # .resw files from po/
+.github/workflows/win.yml     # build, analyzers, tests, screenshots; the installer on release
+docs/install-windows.md       # install guide with the SmartScreen pictures
+```
+
+### Testing strategy
+- `win-core`: the existing test suite on a Windows runner (Python 3.14, ffmpeg), plus the
+  adapters' smoke tests for ADTOF, Beat This! and Demucs on the runner's CPU; cancelling tested
+  with a model process that starts children (the whole tree ends).
+- The bridge's contract stays tested in Python; a Windows-only need is a new bridge test first.
+- C#: xUnit for the bridge client and the view models against a recorded or fake core; pure
+  views are checked by screenshots on the runner, by Claude on this PC and by the owner.
+- The `.resw` files: a test that every `msgid` is in them, placeholders and plurals kept, for
+  every language in `po/LINGUAS`.
+
+### Boundaries
+- **Always:** keep the Linux app, the Mac app and the benchmark unchanged in behaviour; run
+  `scripts/check.sh task` before every commit; every C# change goes through the Windows
+  workflow before it counts.
+- **Ask first:** paying for anything (a certificate, runners beyond the free tier); applying
+  to SignPath; changing a model's environment beyond widening its platforms; a new Python
+  dependency; moving a feature from Python into C#; installing anything system-wide on this PC.
+- **Never:** ship model weights; ship a feature in C# that the core could do; weaken
+  CONSTRAINTS.md for C#; claim a check on the owner's PC that the owner has not done.
+
+### Success criteria
+1. On the owner's Windows 11 PC, `Stickler-<version>-setup.exe` from a draft release installs
+   without admin rights after "Run anyway", the setup assistant downloads the Fast models, and
+   a song becomes sheet music; export of MusicXML, PDF and the drum track works; the song, the
+   clicks and both play with the bar marker following. No terminal, no `uv` or ffmpeg of the
+   user's own needed.
+2. The app is in English, German and Spanish from the same `po/` files as the other apps.
+3. The Linux app, the Mac app, the command line and the benchmark behave as before (all tests
+   green, cache keys unchanged except the documented `digests.yaml` pairs).
+4. The Windows workflow builds, checks and tests on every push; the release attaches the
+   installer.
+5. CONSTRAINTS.md covers C#; coverage ≥ 95 % outside pure views.
+6. "Uninstall Stickler…" (and the uninstaller in Settings › Apps) leaves nothing of Stickler
+   behind under `%LOCALAPPDATA%` and `%APPDATA%` except what the user chose to keep.
+7. A backup made on the Mac or on Linux restores on Windows and the other way round: a song
+   analysed before opens with its sheet music without a new analysis.
+
+### Open questions
+Decided (owner, 2026-11-25):
+1. **The first version's scope:** the same as the Mac app (see Objective); CUDA later
+   (`win-gpu`).
+2. **Signing:** unsigned for now, with the install guide's pictures. The SignPath Foundation
+   (free for open source; SignPath Foundation shown as the publisher, MFA for everyone with
+   access, a fully automated build, a code signing policy page with their credit line) and a
+   paid OV certificate (about 220–440 USD a year) stay options for later.
+3. **This PC:** Claude may build and start the app here and run the models on its CPU (their
+   environments and weights, several GB, under `%LOCALAPPDATA%`); it is the owner's
+   checkpoint PC too.
+4. **Releases 9 and 10:** already published (the draft was first written on a stale
+   checkout). Release 10's backup and uninstall and the Mac playback join the first version
+   through question 1 (see Objective).
+
+Open:
+5. **The release number:** every release counts (ADR 0006), and release 10 is out; the next
+   one is 11. The Mac playback is done on `main`. If it is released before the Windows app is
+   ready, it takes 11 and the Windows app a later number. Options: (a) the Mac playback waits
+   and ships with the Windows app as release 11; (b) the Windows app is "the Windows release,
+   whatever its number is", as the GTK app once was (release plan, 2026-11-13). Claude's
+   proposal: (b), so the Mac playback reaches users now; the spec's title then names the
+   number when the release is cut.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
