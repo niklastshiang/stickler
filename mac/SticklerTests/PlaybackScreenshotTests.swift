@@ -73,9 +73,47 @@ extension ScreenshotTests {
         try await shootView(overlay(model), "M10-saved")
     }
 
-    /// The controls as they float over the sheet of a 900 points wide window.
-    func overlay(_ model: AppModel) -> some View {
-        PlaybackOverlay(model: model).frame(width: 900)
+    /// Each part of the capsule is as wide as its words (owner, 2026-11-25: a fixed width let
+    /// the German Song · Schläge · Beides spill over the Volume button), and in a narrow page
+    /// the capsule gives way part by part, down to what fits beside an inspector.
+    func testTheControlsFitTheirWordsAndGiveWay() async throws {
+        let model = try await playingModel()
+        let bar = Playbar(playback: model.playback)
+        var full: [String: Double] = [:]
+        for language in ["en", "de", "es"] {
+            let fits = Playbar.Fit.allCases.map { least(bar.row($0), in: language) }
+            full[language] = fits[0]
+            for (wider, narrower) in zip(fits, fits.dropFirst()) {
+                XCTAssertGreaterThan(wider, narrower, "\(language): \(fits)")
+            }
+            let overlay = least(PlaybackOverlay(model: model), in: language)
+            XCTAssertLessThanOrEqual(overlay, ContentView.minimumWidth, "\(language): \(fits)")
+        }
+        // the words are measured in each language, not a width set for English
+        XCTAssertGreaterThan(full["de", default: 0], full["en", default: 0], "\(full)")
+        try await shootView(overlay(model, width: 520), "M10-controls-narrow")
+    }
+
+    func testTheBarTextKeepsTheWidthOfTheSongsWidest() {
+        let bars = [
+            SongBar(start: 0, end: 2, bar: 9, label: "Bar 9 of 10"),
+            SongBar(start: 2, end: 4, bar: 10, label: "Bar 10 of 10"),
+            SongBar(start: 4, end: 6, bar: 9, label: "Bar 9 of 10")
+        ]
+        XCTAssertEqual(Playbar.widest(bars), "Bar 10 of 10")
+        XCTAssertEqual(Playbar.widest([]), "")
+    }
+
+    /// The least width `view` takes in `language`.
+    func least(_ view: some View, in language: String) -> Double {
+        let host = NSHostingController(
+            rootView: view.environment(\.locale, Locale(identifier: language)))
+        return host.sizeThatFits(in: CGSize(width: 10, height: 200)).width
+    }
+
+    /// The controls as they float over the sheet of a window `width` points wide.
+    func overlay(_ model: AppModel, width: Double = 900) -> some View {
+        PlaybackOverlay(model: model).frame(width: width)
     }
 
     func testTheVolumePopoverHoldsBothSliders() async throws {

@@ -123,6 +123,11 @@ jobs:
             -resultBundlePath "$RUNNER_TEMP/test.xcresult" -quiet
           xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/test.xcresult" \
             | python3 -c 'import json, sys; r = json.load(sys.stdin); print(r["result"], r["passedTests"], "passed,", r["failedTests"], "failed,", r["skippedTests"], "skipped")'
+      - name: What the failed tests said (-quiet keeps it out of the log above)
+        if: failure()
+        run: |
+          xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/test.xcresult" \
+            | python3 -c 'import json, sys; [print(f.get("testIdentifierString"), f.get("failureText"), sep="\n  ") for f in json.load(sys.stdin).get("testFailures", [])]'
       - name: The app's logic outside views is covered (CONSTRAINTS.md "Swift coverage")
         run: |
           xcrun xccov view --report --json "$RUNNER_TEMP/test.xcresult" > "$RUNNER_TEMP/coverage.json"

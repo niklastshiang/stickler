@@ -9,9 +9,14 @@ struct ContentView: View {
     /// The corrections inspector left open or closed (M11), kept across launches.
     @AppStorage(CorrectionsMenu.shownKey) private var correctionsShown = false
 
+    /// The page's least width beside an inspector: the playback controls at their narrowest
+    /// (`Playbar.Fit.narrowest`) with their margins, in every language. The window itself is
+    /// at least 640 points wide.
+    static let minimumWidth = 480.0
+
     var body: some View {
         page
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(minWidth: Self.minimumWidth, maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if let notice = model.notice, !controls {
                     NoticeBar(model: model, notice: notice)

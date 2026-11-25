@@ -195,6 +195,11 @@ Module `mac-playback` (SPEC.md "Mac playback", its success criteria 1–6), with
 7. **Screens:** compare the workflow's `M10-*` screenshots and the running app with the
    canvas (M10) in light and dark; VoiceOver names each control and reads the position
    slider's value as the time and the bar.
+8. **A narrow window** (added after the owner's report of 2026-11-25): in German, Song ·
+   Schläge · Beides sits beside the Volume button without covering it, inside the capsule.
+   Make the window narrower, or open an inspector beside the sheet: the capsule stays one row
+   and leaves out "Takt n von N", then the times, and then shows the three as a pop-up menu;
+   nothing is cut off at its ends.
 
 ## What to check for the corrections (Checkpoint AG)
 
