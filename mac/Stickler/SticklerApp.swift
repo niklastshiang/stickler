@@ -22,7 +22,7 @@ struct SticklerApp: App {
 /// Starts the core at launch and ends it politely when the app quits.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    let model = AppModel()
+    let model = AppModel(player: Player())
 
     func applicationDidFinishLaunching(_: Notification) {
         // the tests host the app: they build their own models, and no core is started

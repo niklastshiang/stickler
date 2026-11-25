@@ -31,6 +31,7 @@ LOGIC = (
     "ZoomMenu",
     "Backups",
     "Uninstalling",
+    "Player",
 )
 
 
