@@ -88,6 +88,23 @@ struct Playbar: View {
     }
 }
 
+/// What floats over the sheet at the window's bottom (M10): the notice, then the controls.
+struct PlaybackOverlay: View {
+    let model: AppModel
+
+    var body: some View {
+        VStack(spacing: 8) {
+            if let notice = model.notice {
+                NoticeBar(model: model, notice: notice)
+                    .clipShape(.rect(cornerRadius: 12))
+            }
+            Playbar(playback: model.playback)
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+    }
+}
+
 /// The volume popover (M10): the song's and the detected hits' slider, remembered by the core
 /// for every song.
 struct VolumeSliders: View {

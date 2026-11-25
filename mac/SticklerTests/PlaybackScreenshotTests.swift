@@ -58,15 +58,24 @@ extension ScreenshotTests {
         XCTAssertEqual(model.playback.time, "0:03")
         XCTAssertEqual(model.playback.lengthText, "0:16")
         XCTAssertEqual(model.playback.marked, 2)
+        // the window's picture has the marker; the sheet's snapshot is drawn over the window
+        // where the web view is, the controls too, so they are shot again on their own
         try await shoot(model, "M10-playing")
+        try await shootView(overlay(model), "M10-controls")
         model.playback.setHear(.hits)  // the canvas's dark board hears only the hits
-        try await shoot(model, "M10-hits")
+        XCTAssertEqual(model.playback.hear, .hits)
+        try await shootView(overlay(model), "M10-controls-hits")
     }
 
     func testTheSavedNoteSitsAboveTheControls() async throws {
         let model = try await playingModel()
         model.tell(Notice(text: "Saved “Eye of the Tiger.pdf”", opens: "/tmp/e.pdf"))
-        try await shoot(model, "M10-saved")
+        try await shootView(overlay(model), "M10-saved")
+    }
+
+    /// The controls as they float over the sheet of a 900 points wide window.
+    func overlay(_ model: AppModel) -> some View {
+        PlaybackOverlay(model: model).frame(width: 900)
     }
 
     func testTheVolumePopoverHoldsBothSliders() async throws {

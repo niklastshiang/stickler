@@ -18,15 +18,7 @@ struct ContentView: View {
             // the controls float over the sheet; the notice sits above them (M10)
             .overlay(alignment: .bottom) {
                 if controls {
-                    VStack(spacing: 8) {
-                        if let notice = model.notice {
-                            NoticeBar(model: model, notice: notice)
-                                .clipShape(.rect(cornerRadius: 12))
-                        }
-                        Playbar(playback: model.playback)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
+                    PlaybackOverlay(model: model)
                 }
             }
             .navigationTitle(model.title)
