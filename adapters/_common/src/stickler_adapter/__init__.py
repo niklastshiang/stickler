@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import ctypes
 import json
+import ssl
 import struct
 import sys
 import time
@@ -49,6 +50,22 @@ def choose_device(requested: str) -> str:
 def torch_device(device: str) -> str:
     """Stickler device → torch device name."""
     return "cuda" if device == "gpu" else "cpu"
+
+
+def _lenient_https_context() -> ssl.SSLContext:
+    context = ssl.create_default_context()  # the system's certificates, the host name checked
+    context.verify_flags &= ~ssl.VERIFY_X509_STRICT
+    return context
+
+
+def allow_proxy_certificates() -> None:
+    """Model downloads through a company proxy that inspects TLS (SPEC.md, module `win-shell`,
+    task 189; owner, 2026-11-25). Python 3.13 and later verify certificates in strict mode by
+    default, and such a proxy's own certificate may lack an extension strict mode asks for
+    ("Missing Authority Key Identifier" on the owner's PC). Leaves out only strict mode's extra
+    checks, as Python did before 3.13: the chain and the host name are still verified. Changes
+    the process's default HTTPS context, which urllib uses (Beat This!'s download)."""
+    ssl._create_default_https_context = _lenient_https_context
 
 
 def _vlq(value: int) -> bytes:

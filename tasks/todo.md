@@ -1371,6 +1371,8 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: the owner on this PC: SPEC "Module `win-shell`" success criteria 1–5
   - Dependencies: 181–187
 
+- [x] **Task 189: Model downloads through a company proxy** (S): done 2026-11-25 (owner: "Yes, relax it", after task 179's third run). `stickler_adapter.allow_proxy_certificates()` gives the process a default HTTPS context without `VERIFY_X509_STRICT` (chain and host name still verified, as before Python 3.13); Beat This!'s `setup.py` calls it before its `urllib` download. Demucs is left as it is: it downloads through Hugging Face's client with `truststore` (Windows' own verification), to be seen when its setup runs here. Digests taken in WSL before and after (`stickler cache-digests`), ten pairs in `digests.yaml` (every adapter imports `_common`; what they compute is unchanged); the test that pins the dummy adapter's digest updated. Checked on this PC: with the fixed code and the spike environment's Python 3.14.10 the checkpoint came from JKU Linz through the proxy (81 MB, 6 s, SHA-256 right), into the spike's folder.
+
 ### Checkpoint AF
 - [ ] All success criteria of SPEC.md "Module `win-shell`" met (owner); questions 2–4 confirmed; then the spike's retry (task 179) and open question 1
 

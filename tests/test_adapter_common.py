@@ -88,3 +88,16 @@ def test_the_package_imports_where_there_is_no_resource_module(monkeypatch):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert module._peak_rss_mb("win32", windows_peak=lambda: 1024 * 1024) == 1.0
+
+
+def test_downloads_through_a_company_proxy_leave_out_only_strict_mode(monkeypatch):
+    """Task 189: the default HTTPS context still checks the chain and the host name; only
+    VERIFY_X509_STRICT (default since Python 3.13), which a proxy's certificate may fail, goes."""
+    import ssl
+
+    monkeypatch.setattr(ssl, "_create_default_https_context", ssl._create_default_https_context)
+    sa.allow_proxy_certificates()
+    context = ssl._create_default_https_context()
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.check_hostname
+    assert not context.verify_flags & ssl.VERIFY_X509_STRICT
