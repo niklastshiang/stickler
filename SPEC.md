@@ -3172,6 +3172,136 @@ src/stickler_app/paths.py            # + packaged() == "system"
    the owner's check (task 160):** whether GNOME Software on Fedora Workstation shows an
    Uninstall button for a Flatpak installed from a file (`appstream:<id>`).
 
+## Mac playback (module `mac-playback`, proposed)
+
+> Status: **proposed** 2026-11-25, for the owner's approval. The screens (M10) were approved on
+> 2026-11-24 (SPEC "Module `mac-design`", "Playback screens M10"); this section adds what the
+> screens leave open: where each decision lives, how the Mac plays two sources in time, what
+> the bridge gains. Facts checked on 2026-11-25 on the owner's Mac (macOS 27.2, Command Line
+> Tools SDK 26.5) unless named otherwise. Plan: `tasks/plan.md` ("Mac playback"), tasks 161–167.
+
+**Objective.** The Mac app plays what the GTK app plays (module `playback`): the song, the
+detected hits as clicks, or both, while the bar marker follows; drawn as M10 draws it. A
+drummer hears on their Mac whether the notes are right, as on Linux.
+
+**Assumptions.**
+1. The core makes the clicks already: the controller writes `paths.hits_path(song)` after
+   every analysis, for both apps (`controller._start`). The bridge's `result` state does not
+   name it yet, nor the song's bars in played order (`notation.bars`: start, end, written bar).
+2. The GTK app's rules are in `stickler_app.playback` (volumes per Song/Hits/Both, a bar
+   click's target, the arrow keys' step, the "Bar 2 of 110" text) and `stickler_app.marker`
+   (the bar sounding at a time, its rectangle, the bar under a click), tested there.
+3. **AVAudioEngine** plays both sources: two `AVAudioPlayerNode`s into the engine's mixer,
+   started together at one host time, so they share one clock as GStreamer's one pipeline
+   does; each node's `volume` changes what is heard at once; a seek schedules both from the
+   same frame. Its offline manual rendering mode runs it without a sound device, so the CI
+   tests the real engine. GStreamer's counterpart is `ui/player.py`.
+4. Core Audio (`AVAudioFile`) reads MP3, M4A, FLAC, WAV, AIFF, Opus and Ogg Vorbis on macOS
+   27 (tried on the owner's Mac). Not checked on macOS 26, the app's oldest: a song it cannot
+   read is played from a FLAC copy the core decodes with its ffmpeg (as
+   `stickler.audio.readable` does for the models), once, into the cache.
+5. Content JavaScript stays off in the sheet's web view (`mac-sheet`); the app's own scripts
+   (`callAsyncJavaScript`) run, as the pinch's picture does. The marker and a click's page
+   point are such scripts.
+6. The bridge handles one command at a time; `pages` takes a moment while it engraves. A
+   command sent then waits for it (`docs/bridge.md`).
+
+**Where each decision lives** (SPEC "Release 8": one shared core; moving work into Swift is
+asked first, so it is listed here for the owner):
+- **Python (the core, tested once):** the bars in played order with their "Bar n of N" text,
+  sent in the `result` state; the clicks file; a bar click's target (`jump`) and the arrow
+  keys' step (`step`); the gains for Song/Hits/Both and the remembered volumes (`volumes`); the
+  playable copy of a song (`playable`).
+- **Swift, lookups at 20 frames a second** (a round trip per frame would wait behind `pages`):
+  which of the core's bars sounds at the player's position, the rectangle that marks it (the
+  core's page rectangles; a bar inside a multi-measure rest is shown by the engraved bar
+  before it, as `marker.locate`), the bar under a click (`marker.bar_at_point`) and the time
+  as "0:06" (`playback.clock`, no translation). Each mirrors its Python function and is tested
+  with the same cases as the Python tests.
+- **Swift, the player:** the engine itself, as `ui/player.py` is GTK's.
+
+**Scope.**
+1. **The bridge** (`stickler_app.bridge`, `docs/bridge.md`, protocol stays 1: fields and
+   commands are only added):
+   - `result` gains `clicks` (the clicks file, `null` when it is not there) and `bars`: in
+     played order, each `{"start", "end", "bar", "label"}` (seconds, the written bar,
+     "Bar 3 of 110"). A correction sends new bars with its new state.
+   - `jump {bar, at}`: the time a click on written bar `bar` goes to from position `at`
+     (`playback.jump_target`; `null` when the song never plays it). `step {at, by}`: the
+     start of the bar `by` bars away (`playback.step`). Only on a result; `not_now` otherwise.
+   - `volumes {hear, song?, hits?}`: remembers the given volumes (0 to 1) in the settings and
+     replies with the gains to play, `{"song", "hits"}` (`playback.volumes`, with the stored
+     volumes for the ones left out). `settings` already sends `song_volume` and `hits_volume`.
+   - `playable`: the result's song as a file the Mac plays, a FLAC copy in the cache decoded
+     once (`_decoded`, as for the models; never part of a backup). Asked only when Core Audio
+     cannot read the song.
+2. **`SticklerCore`** (Linux and macOS): the new fields and commands; `PlaybackModel`
+   (`@Observable`, owned by `AppModel` as `playback`): the player behind a protocol
+   (`Playing`: load, play, pause, seek, position, gains, stop; a fake in the tests), playing
+   or paused, the position and length, the sounding bar's index and label, the marked bar,
+   Song/Hits/Both, the two volumes from `settings`; a tick every 50 ms only while playing;
+   play, pause, seek, previous and next bar (`step`), go to the start, a bar click (`jump`;
+   when stopped it moves the position without playing); at the song's end it stops, and play
+   starts from the beginning; a new song, Close Song, a new core or the stopped core stop the
+   player at once. A player that fails shows its error as the window's notice.
+3. **The player** (app target, `Player.swift`): AVAudioEngine as in assumption 3; the song
+   from its file or, when `AVAudioFile` refuses it, from `playable`; the clicks only when the
+   file is there; the engine's configuration change (headphones unplugged, another output)
+   pauses playback instead of losing it; nothing holds the sound device once stopped.
+4. **The controls** (M10): the glass capsule floating over the desk at the window's bottom
+   (`glassEffect`), the sheet scrolling under it: Previous Bar, Play/Pause, Next Bar, the
+   time, the position slider, the length, "Bar 2 of 110", Volume (a popover with the Song and
+   Detected hits sliders) and Song · Hits · Both as the segmented picker. VoiceOver names
+   every control ("Position" with the time and bar as its value). The "saved" note sits above
+   the capsule while a song is open. Shown with a result only (not during an export's steps).
+5. **The marker and bar clicks:** the sounding bar's rectangle drawn over the page in the
+   system's accent colour, also on the inverted dark page (drawn outside the inverted
+   paper), and scrolled into view when it leaves it; a click on a bar jumps there. Both by the
+   app's own scripts in the loaded page (assumption 5); the page's own scripts stay off.
+6. **The Controls menu** between View and Window: Play or Pause (Space; the item reads "Play"
+   or "Pause", what Space does now), Previous Bar (←), Next Bar (→), Go to the Start (⌥←;
+   Home does the same), then Song, Hits and Both with a checkmark. Enabled with a shown result.
+7. **Texts:** "Controls" new in `po/` with German ("Steuerung", as in Apple's Music) and
+   Spanish ("Controles"); the others exist.
+
+**Not in this module:** loops, slower playback, muting single drums (GTK's "Not Doing" too),
+drum samples, the Now Playing widget and media keys, remembering the position per song.
+
+**Testing.**
+- Python: the new state fields (bars and labels, clicks or `null`, a correction's new bars),
+  `jump`, `step`, `volumes` (gains per mode, remembered, bad values `bad_argument`), `playable`
+  (a copy once, `not_now` without a result), the doc test for the new lines; 95 %.
+- `SticklerCore` with a scripted core and a fake player: every control, the tick only while
+  playing, the end, stopping on a new song, close, a new core and a stopped core, a refused
+  command as a notice; the lookups with the Python tests' cases; 95 %.
+- The player on the macOS runner in offline rendering: both sources start together, a seek
+  lands on its frame, the gains mute one source (measured in the rendered samples), the end is
+  reported once, stop leaves the engine stopped; the fallback to `playable` when a file cannot
+  be read. Counted by `scripts/xccov_gate.py` (`Player`, and the marker's and click's script
+  builders), 95 %.
+- Screenshots of M10 in light and dark, with the volume popover, from fixed states.
+- By hand on the owner's Mac: Eye of the Tiger with clicks by ear, Song/Hits/Both and the
+  volumes without a gap, the marker in dark mode, a click inside repeats, Space, ←, →, ⌥←,
+  Home, the menu's checkmarks, headphones unplugged, quitting while playing.
+
+**Success criteria.**
+1. On the owner's Mac a song plays with its clicks in time with the drums (by ear); pause,
+   resume, the slider, Previous and Next Bar work.
+2. Song/Hits/Both and both volume sliders change what is heard without a gap; the volumes are
+   the same after a restart.
+3. The marker follows the sounding bar within 0.1 s in the accent colour, light and dark, and
+   keeps it in view; a click on a bar inside repeat signs jumps to its next pass.
+4. The Controls menu and its keys work as in scope 6; the item says what Space does.
+5. Opening another song, Close Song and quitting stop the sound at once.
+6. The screens match M10 in light and dark (screenshots, the owner's check).
+7. `scripts/check.sh task` green; `SticklerCore` and the app's logic ≥ 95 %; the `mac` workflow
+   green; the GTK app and the benchmark unchanged.
+
+**Open questions** (for the owner, with the approval):
+1. "Remembered per song" (M10) is read as the GTK app does it: one pair of volumes kept for
+   every song, like the note size. Right?
+2. Which release carries it: release 11 alone, or with more?
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)

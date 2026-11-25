@@ -635,3 +635,33 @@ Design decisions:
 | The Mac helper cannot move the bundle (permissions, translocation) | Medium | the app shows the steps instead, as for a translocated app |
 | GNOME Software shows no uninstall button for a Flatpak from a file | Low | the dialog shows the `flatpak uninstall` line there too |
 | PackageKit asks no password on some system (a polkit rule) | Low | the app's own dialog has already asked; documented |
+
+## Mac playback: `mac-playback` (proposed 2026-11-25, SPEC.md "Mac playback")
+
+The Mac app plays the song, its clicks or both, with the marker following (screens M10).
+
+Design decisions:
+- **The rules stay in Python:** the bars with their texts come in the `result` state; a bar
+  click's target, the arrow keys' step and the gains per Song/Hits/Both are bridge commands
+  (`jump`, `step`, `volumes`), wrapping `stickler_app.playback`. Swift only looks up, 20 times
+  a second, which of the core's bars sounds and which rectangle marks it (mirrors of
+  `marker.written_at`/`locate`, tested with the same cases).
+- **One AVAudioEngine, two player nodes** started at one host time, as GTK's one pipeline;
+  tested for real in offline manual rendering on the macOS runner, so no sound device is
+  needed in CI.
+- **A model before any view:** `PlaybackModel` in `SticklerCore` drives a `Playing` protocol,
+  tested on Linux with a fake player, as `SheetModel` was before its view.
+- **The marker is the app's own script** in the loaded sheet (content scripts stay off), drawn
+  outside the inverted paper so the accent colour stays itself in dark mode.
+
+Order: bridge (161) → model (162) → player (163) → controls (164) → marker and clicks (165) →
+menu, keys, texts (166) → review, build for the owner (167). 161 and 162 are checked on Linux;
+from 163 on each push goes through the `mac` workflow.
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Song and clicks drift apart | High | One engine, both nodes started at the same host time and seeked from the same frame; an offline test checks it sample for sample |
+| macOS 26 cannot read a format macOS 27 reads (Ogg) | Medium | The core's FLAC copy (`playable`) when `AVAudioFile` refuses; a test on the runner lists what macOS 26 reads |
+| A command waits behind `pages` while the core engraves | Low | Only clicks and keys wait, not the marker (looked up in Swift); a short wait after a resize is accepted |
+| Headphones unplugged stop the engine | Medium | The configuration change pauses playback and rebuilds the engine at the same position |
+| Space taken by a focused control | Low | Space is the Controls menu's key equivalent, which the menu gets first; checked by hand |

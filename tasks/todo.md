@@ -1188,6 +1188,46 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 - [x] Prepared and committed as "Release 10" (2026-11-24; ADR 0006): no open Dependabot alerts; `claude/mac-keep-and-remove` merged into `main` (fc3a9ce; the `mac` workflow green on 188da00, Swift coverage 96.02 %); version 10 in `pyproject.toml`, `src/stickler/__init__.py`, `mac/project.yml` and `uv.lock`; the MetaInfo's `<release version="10">` from `tasks/release-10-notes.md` and `CITATION.cff` dated 2026-11-24 (change both if the tag comes on another day); the notes' draft checked against v9..HEAD and given the dark Mac icon and the Flatpak's translations (2098eaf); README (download names, roadmap with release 10, the roadmap's misplaced "Release 8" line moved, key figures: 1182 tests, 155 Mac tests from run 45479956214, 56 GTK widget tests counted, not run on the Mac), the website's download names, `docs/bridge.md`; badges version 10, AI cost about 595 USD and 1,747 M tokens from `scripts/ai_usage.py --summary` (bluefin 474 USD, 33.8 h; mac 121 USD, 5.8 h). SPEC's release 10 status done.
 - [x] Released 2026-11-24 (owner: push and tag when green, then "ja" to publishing): the tag `v10` on 2debfb4 with check, mac, site and models-macos green; the release run 45486689110 built all five packages, its `attach` job failed once on an artifact GitHub did not find ("No artifacts found", all four artifacts were there) and passed when rerun; the draft held `Stickler-10_amd64.deb`, `Stickler-10.x86_64.rpm`, `Stickler-10.flatpak`, `Stickler-10-x86_64.AppImage` with its `.zsync` and `Stickler-10.dmg`; published 21:15 UTC with the notes of `tasks/release-10-notes.md` (deleted); the site's run 45489202075 deployed it: `https://stickler.tshia.ng/` and `/de/` answer 200 and link the five v10 files.
 
+## Phase 28: Mac playback, module `mac-playback` (proposed 2026-11-25, SPEC.md "Mac playback")
+
+- [ ] **Task 161: Playback in the bridge** (M): `result` with `clicks` and `bars` (start, end, written bar, "Bar n of N"); the commands `jump {bar, at}`, `step {at, by}`, `volumes {hear, song?, hits?}` and `playable`; `docs/bridge.md`.
+  - Acceptance: the fields and commands of SPEC "Mac playback" scope 1; a correction's state carries its new bars; `volumes` remembers what it is given and answers the gains for the mode; `playable` decodes once into the cache's `_decoded`, which no backup takes; every new command answers `not_now` without a result and `bad_argument` for a wrong value.
+  - Verify: `uv run pytest -q tests/app` (bridge and doc tests), `scripts/check.sh task`, coverage ≥ 95 %
+  - Dependencies: none · Files: `src/stickler_app/bridge.py`, `docs/bridge.md`, `tests/app/`
+
+- [ ] **Task 162: The playback model in SticklerCore** (M): the new fields, commands and replies; `PlaybackModel` with the `Playing` protocol; the lookups (sounding bar, its rectangle, the bar under a point, the clock).
+  - Acceptance: SPEC scope 2: play, pause, seek, Previous/Next Bar through `step`, Go to the Start, a bar click through `jump` (stopped: no playing), the tick only while playing, the end stops and the next play starts at 0, the player stopped on a new song, Close Song, a new core and a stopped core; volumes from `settings`, changes through `volumes`; refusals as the notice; the lookups give the Python tests' answers.
+  - Verify: `swift test` in `mac/SticklerCore` (locally with the macro plugin path, and in `mac`), coverage ≥ 95 %
+  - Dependencies: 161 · Files: `mac/SticklerCore/Sources/SticklerCore/`, its tests
+
+- [ ] **Task 163: The player** (M): `Player` in the app with AVAudioEngine, two nodes, one start time; the song from `playable` when Core Audio refuses it; the output's configuration change pauses.
+  - Acceptance: SPEC scope 3; offline-rendered tests: both sources start on the same frame, a seek lands on its frame, the gains mute one source, the end is reported once, stop leaves nothing running; which formats macOS 26 reads is written to the test log.
+  - Verify: the `mac` workflow's app tests; `scripts/xccov_gate.py` with `Player` added (and CONSTRAINTS.md's list), ≥ 95 %
+  - Dependencies: 162 · Files: `mac/Stickler/Player.swift`, `mac/SticklerTests/`, `scripts/xccov_gate.py`, `CONSTRAINTS.md`
+
+- [ ] **Task 164: The controls capsule and the volume popover** (M): M10's capsule over the desk, the popover, the notice above the capsule.
+  - Acceptance: SPEC scope 4; every control named for VoiceOver; shown with a result only.
+  - Verify: screenshots of M10 light and dark and with the popover (`ScreenshotTests`), compared with `docs/design/mac/Playing*.dc.html`
+  - Dependencies: 162, 163 · Files: `mac/Stickler/` (a new `Playbar.swift`, `ContentView.swift`), `mac/SticklerTests/`
+
+- [ ] **Task 165: The marker and bar clicks** (M): the marker script in the accent colour outside the inverted paper, kept in view; a click's page point read by the app's script, its bar jumped to.
+  - Acceptance: SPEC scope 5; the scripts are built by plain functions (no content script turned on), tested and gated.
+  - Verify: `LogicTests` for the script builders under `scripts/xccov_gate.py`; a screenshot with the marker in light and dark
+  - Dependencies: 164 · Files: `mac/Stickler/Sheet.swift`, `SheetHTML.swift` or a new `Marker.swift`, tests
+
+- [ ] **Task 166: The Controls menu, the keys and the texts** (S): the menu of SPEC scope 6, Home, "Controls" in `po/` with German and Spanish and in the String Catalog.
+  - Acceptance: SPEC scopes 6 and 7; the item reads "Play" or "Pause" as Space would act; the checkmark follows the picker.
+  - Verify: tests for the menu's items and state (a logic type, gated); `uv run pytest -q tests/test_xcstrings.py tests/app/test_mac_texts.py`
+  - Dependencies: 164 · Files: `mac/Stickler/Commands.swift`, `src/stickler_app/mac_texts.py`, `po/*`, `mac/Stickler/Localizable.xcstrings`
+
+- [ ] **Task 167: Review and a build for the owner** (S): a fresh-context review of 161–166 against SPEC "Mac playback", findings fixed or answered; `docs/mac-development.md` says what to check; `release.yml` started by hand on the branch for the image.
+  - Acceptance: the review's findings fixed with a test or answered; the `mac` workflow green; the release workflow's image ready.
+  - Verify: the owner on the Mac: SPEC "Mac playback" success criteria 1–6
+  - Dependencies: 161–166 · Files: `docs/mac-development.md`
+
+### Checkpoint AC
+- [ ] All success criteria of SPEC.md "Mac playback" met (owner)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
