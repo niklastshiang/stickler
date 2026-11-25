@@ -57,14 +57,18 @@ extension SheetTests {
 
 extension SheetLoadTests {
     func testAClickIsAMouseThatWentUpWhereItWentDown() {
-        let view = SheetWebView.make()
-        view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
-        let point = view.clickPoint(down: CGPoint(x: 100, y: 200), up: CGPoint(x: 102, y: 201))
+        let sheet = sheetInAWindow()  // 400 by 300 points
+        let view = sheet.view
+        let point = view.clickPoint(
+            pressed: CGPoint(x: 100, y: 200), released: CGPoint(x: 102, y: 201))
         XCTAssertEqual(point?.x, 102)
-        // from the view's top left: the window counts from the bottom
-        XCTAssertEqual(point?.y, view.isFlipped ? 201 : 99)
-        XCTAssertNil(view.clickPoint(down: CGPoint(x: 100, y: 200), up: CGPoint(x: 110, y: 200)))
-        XCTAssertNil(view.clickPoint(down: nil, up: CGPoint(x: 100, y: 200)))
+        // from the view's top left: the window counts from its bottom
+        XCTAssertEqual(point?.y, 99)
+        XCTAssertNil(
+            view.clickPoint(pressed: CGPoint(x: 100, y: 200), released: CGPoint(x: 110, y: 200)),
+            "a drag")
+        XCTAssertNil(view.clickPoint(pressed: nil, released: CGPoint(x: 100, y: 200)))
+        sheet.window.close()
     }
 
     /// Two pages of 400 by 200 pixels as the app builds them.
