@@ -56,6 +56,8 @@ struct SticklerCommands: Commands {
         CommandGroup(before: .toolbar) {
             ZoomItems(model: model)
             Divider()
+            CorrectionsItem(model: model)
+            Divider()
         }
         CommandMenu("Controls") {
             ControlsItems(model: model)
