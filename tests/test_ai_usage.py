@@ -120,6 +120,15 @@ def test_recording_keeps_days_the_device_no_longer_has(tmp_path):
     assert list(saved["days"]) == sorted(saved["days"])
 
 
+def test_the_log_folder_is_named_as_claude_code_names_it():
+    """Every character but letters and digits becomes '-', so a Windows path is found too."""
+    folders = Path.home() / ".claude" / "projects"
+    mac = usage.log_folder(Path("/Users/someone/my_code/stickler"))
+    assert mac == folders / "-Users-someone-my-code-stickler"
+    windows = usage.log_folder(r"C:\Users\Some.One\Documents\stickler")
+    assert windows == folders / "C--Users-Some-One-Documents-stickler"
+
+
 def test_a_device_needs_a_plain_name(tmp_path):
     """The name goes into the repository: a short word of one's own, not the host's name."""
     import pytest

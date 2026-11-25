@@ -2,14 +2,26 @@
   "device": "windows-pc",
   "days": {
     "2026-11-18": {
-      "active_minutes": 165,
+      "active_minutes": 176,
       "models": {
         "claude-opus-5-5": {
-          "responses": 404,
-          "input": 880,
-          "output": 398213,
-          "cache_read": 116161784,
-          "cache_write": 859807
+          "responses": 428,
+          "input": 934,
+          "output": 411859,
+          "cache_read": 118120455,
+          "cache_write": 908114
+        }
+      }
+    },
+    "2026-11-25": {
+      "active_minutes": 259,
+      "models": {
+        "claude-opus-5-5": {
+          "responses": 465,
+          "input": 1020,
+          "output": 426621,
+          "cache_read": 189747413,
+          "cache_write": 1479147
         }
       }
     }

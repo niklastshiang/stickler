@@ -3990,7 +3990,10 @@ inspects TLS; the run's log `%LOCALAPPDATA%\Stickler\spike-log.txt`, the install
    - Starting models without the launcher was not needed here.
 4. **Question 4: not testable here.** `LongPathsEnabled` is on; the runner's answer stands.
 5. **Question 5:** the uninstall entry is in Settings › Apps ("Stickler (spike)", version 9,
-   381 MB). The uninstaller first had to wait for Panda (12:35); its second try is below.
+   381 MB). Panda refused the uninstaller `unins000.exe` at 12:35, 13:12 and 14:15 (one hour
+   40 minutes); nothing was removed. Still open: whether it removes everything once Panda
+   releases it. Here Panda held the uninstaller back longer than the installer's helper and
+   the environment's launcher (about half an hour each).
 
 **Notes for `win-shell` and `win-package`** (from the spike, not decided):
 - The bridge has no event for "the models are set up, nothing to ask": the driver waits 20 s

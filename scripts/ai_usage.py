@@ -47,8 +47,9 @@ FIELDS = ("responses", "input", "output", "cache_read", "cache_write")
 
 
 def log_folder(project: Path = ROOT) -> Path:
-    """Claude Code names a project's folder after its path, with '/' and '_' as '-'."""
-    name = str(project).replace("/", "-").replace("_", "-")
+    """Claude Code names a project's folder after its path, with every character but letters and
+    digits as '-' (on Windows also ':', '\\' and '.')."""
+    name = re.sub(r"[^A-Za-z0-9]", "-", str(project))
     return Path.home() / ".claude" / "projects" / name
 
 
