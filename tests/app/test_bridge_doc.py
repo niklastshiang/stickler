@@ -75,9 +75,10 @@ def _samples(tmp_path) -> dict[str, session.State]:
     """One state of each kind, as the controller makes them."""
     song = tmp_path / "eye.flac"
     score = tmp_path / "eye.musicxml"
-    score.write_text(groove_score().musicxml, encoding="utf-8")
+    engraved = groove_score()
+    score.write_text(engraved.musicxml, encoding="utf-8")
     t = api.SongTranscription(song, "fast", None, [], [], [])
-    notation = api.Notation(score, None, None, t, [], 109, (4, 4))
+    notation = api.Notation(score, None, None, t, engraved.bars, 109, (4, 4))
     result = session.Result(song, api.SongInfo("Eye", "Survivor", 246.0), notation)
     analysing = session.open_song(song, session.Empty())
     setting_up = session.start_setup(("environment:adtof",))
@@ -100,7 +101,7 @@ def test_each_state_kind_is_documented_with_exactly_its_fields(kind, tmp_path):
     encoded = bridge.encode(_samples(tmp_path)[kind])
     assert example["kind"] == kind
     assert set(example) == set(encoded)
-    for key in ("steps", "models"):
+    for key in ("steps", "models", "bars"):
         if key in encoded:
             assert set(example[key][0]) == set(encoded[key][0])
 

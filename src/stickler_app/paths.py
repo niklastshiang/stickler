@@ -64,6 +64,13 @@ def hits_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
     return cache_home(env) / "hits" / f"{score_path(song, env).stem}.wav"
 
 
+def playable_path(song: Path, env: Mapping[str, str] = os.environ) -> Path:
+    """A FLAC copy of a song the Mac app cannot play itself, named by the song's content, so
+    another song saved at the same place is not played from the old one's copy."""
+    name = song_digest(song) or score_path(song, env).stem
+    return cache_home(env) / "playable" / f"{name}.flac"
+
+
 def packaged(env: Mapping[str, str] = os.environ) -> str | None:
     """ "flatpak", "appimage", "macos" or "system" (a `.deb` or `.rpm`) when installed as one;
     None when run from the checkout. The launchers of the Mac app and of the `.deb`/`.rpm` set

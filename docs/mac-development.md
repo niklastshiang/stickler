@@ -164,3 +164,34 @@ of release 8, downloaded with a browser so that macOS treats it as a reader's do
 6. **The release and the website:** the draft release holds the image beside the Flatpak and
    the AppImage; the website's Mac card shows the image's size (`install-mac.html` has no
    pictures of its own: it links Apple's guide).
+
+## What to check for playback (Checkpoint AC)
+
+Module `mac-playback` (SPEC.md "Mac playback", its success criteria 1–6), with the image a
+`release.yml` run built from the branch (Actions › release › the run › the artifact `mac`).
+
+1. **Playing:** open Eye of the Tiger. The glass capsule floats over the sheet at the
+   window's bottom. Play: the song and its clicks sound together, the clicks in time with the
+   drums (by ear). Pause and play again; drag the position slider; Previous Bar and Next Bar.
+   The time, "Bar n of N" and the length follow.
+2. **What you hear:** Song, Hits and Both change what you hear at once, without a gap. In the
+   volume popover move both sliders while it plays. Quit and open the app again: the sliders
+   are where you left them (one pair for every song, as on Linux).
+3. **The marker:** the sounding bar is marked in your accent colour (System Settings ›
+   Appearance › Theme colour changes it after a reopen), in light and dark mode; it keeps
+   itself in view above the capsule. Click a bar inside repeat signs: playing goes to its
+   next pass; stopped, the position moves there without playing.
+4. **Controls menu and keys:** between View and Window. Space plays and pauses (the first
+   item reads "Play" or "Pause"), ← and → go a bar back and on, ⌥← and Home go to the start,
+   Song, Hits and Both carry the checkmark. Space should not press a focused button instead.
+   With a song shown, open File › Open… and type "a b" and ← → in its search field, and in
+   Export › MusicXML…'s name field: the space and the arrows edit the text and do not play
+   or move the music (the menu's keys have no ⌘).
+5. **Stopping:** open another song, Close Song (⌘W) and quit while it plays: the sound stops
+   at once. Unplug headphones (or change the output in Control Centre) while it plays: it
+   pauses where it was and plays on from there.
+6. **A song in another format:** an `.ogg` or `.opus` song plays (macOS reads some itself;
+   for the others the core makes a copy first, which takes a moment once).
+7. **Screens:** compare the workflow's `M10-*` screenshots and the running app with the
+   canvas (M10) in light and dark; VoiceOver names each control and reads the position
+   slider's value as the time and the bar.

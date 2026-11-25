@@ -65,7 +65,7 @@ let resultLine = #"{"event": "state", "seq": 2, "state": {"kind": "result", "son
         let (model, core) = try model([#"{"event": "recent", "seq": 1, "rows": \#(rows)}"#])
         #expect(await settled { model.recent.count == 2 })
         model.clearRecent()
-        #expect(await settled { core.sent.count == 4 })  // with `start` and `settings`
+        #expect(await settled { core.sent.count == 5 })  // with `start` and two `settings`
         #expect(core.sent.contains(.forgetRecent(path: "/m/a.flac")))
         #expect(core.sent.contains(.forgetRecent(path: "/m/b.flac")))
     }

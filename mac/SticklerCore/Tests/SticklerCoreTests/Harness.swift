@@ -86,11 +86,17 @@ final class Harness {
         var cores: [FakeCore] = []
         var languages: [[String]] = []
         var preset: [String: String] = [:]
+        var late: [String: (String, Duration)] = [:]
     }
 
     /// Every core made from now on answers `command` with `fields` (see `FakeCore.answer`).
     func preset(_ command: String, with fields: String) {
         made.lock.withLock { made.preset[command] = fields }
+    }
+
+    /// Every core made from now on answers its first `command` with `fields` after `delay`.
+    func preset(_ command: String, with fields: String, after delay: Duration) {
+        made.lock.withLock { made.late[command] = (fields, delay) }
     }
 
     var cores: [FakeCore] { made.lock.withLock { made.cores } }
@@ -102,14 +108,22 @@ final class Harness {
         defaults = try #require(UserDefaults(suiteName: "stickler-test-\(UUID().uuidString)"))
     }
 
-    func model(settle: Duration = .milliseconds(300)) -> AppModel {
+    func model(
+        settle: Duration = .milliseconds(300), player: (any Playing)? = nil,
+        tick: Duration = .milliseconds(5)
+    ) -> AppModel {
         let made = made
         let wanted = ["de-DE", "en"]
-        return AppModel(defaults: defaults, languages: wanted, settle: settle) { languages in
+        return AppModel(
+            defaults: defaults, languages: wanted, settle: settle, player: player, tick: tick
+        ) { languages in
             let core = FakeCore()
             made.lock.withLock {
                 for (command, fields) in made.preset {
                     core.answer(command, with: fields)
+                }
+                for (command, (fields, delay)) in made.late {
+                    core.queue(command, with: fields, after: delay)
                 }
                 made.cores.append(core)
                 made.languages.append(languages)

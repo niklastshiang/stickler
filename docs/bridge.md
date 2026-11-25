@@ -20,7 +20,7 @@ flows). Specification: SPEC.md, module `core-bridge`.
 - Each command is `{"id": <int>, "cmd": "<name>", ...arguments}`. It gets exactly one reply.
   The bridge handles commands one at a time. Most reply at once; `pages`, `a4_pages` and
   `removal_sizes` take a moment (engraving, walking folders), and the commands after them,
-  `cancel` too, wait for it. Long work, such as an analysis or a download, is reported through
+  `cancel` too, wait for it; so does `playable` the first time. Long work, such as an analysis or a download, is reported through
   `state` events.
 - Paths in commands should be absolute; a relative one is read from the bridge's working
   directory.
@@ -160,8 +160,16 @@ The sheet music. `subtitle` is the header's second line. `corrections` are the v
 corrections controls show, and `correcting` is true while a correction is being notated. Both
 are for `mac-corrections`. The pages come from `pages`.
 
+For playback (SPEC.md "Mac playback"): `clicks` is the file with the detected hits as clicks,
+as long as the song, or `null` when there is none (the song then plays alone). `bars` are the
+song's bars in played order, a repeated bar once per pass: when each starts and ends (seconds),
+the written bar it is engraved as (`bar`, the number in `pages`; the bars of a multi-measure
+rest share its first bar, a pickup bar is 0), and the text to show while it sounds. Before the
+first bar the first one's text is shown, after the last the last one's. A correction sends new
+bars with its state.
+
 ```json
-{"kind": "result", "song": "/Users/me/Music/Eye of the Tiger.flac", "title": "Eye of the Tiger", "subtitle": "Survivor · ♩ = 109 · 4/4", "artist": "Survivor", "seconds": 246.0, "tempo": 109, "meter": [4, 4], "musicxml": "/Users/me/Library/Caches/Stickler/scores/Eye of the Tiger-1a2b3c4d5e.musicxml", "corrections": {"tempo": "normal", "beats_per_bar": null, "first_downbeat": null, "simplify": true, "repeats": true}, "correcting": false, "can_open": true, "can_cancel": false, "can_retry": false, "can_close": true, "can_export": true, "can_agree": false, "can_not_now": false, "can_retry_setup": false, "can_remove_models": false}
+{"kind": "result", "song": "/Users/me/Music/Eye of the Tiger.flac", "title": "Eye of the Tiger", "subtitle": "Survivor · ♩ = 109 · 4/4", "artist": "Survivor", "seconds": 246.0, "tempo": 109, "meter": [4, 4], "musicxml": "/Users/me/Library/Caches/Stickler/scores/Eye of the Tiger-1a2b3c4d5e.musicxml", "corrections": {"tempo": "normal", "beats_per_bar": null, "first_downbeat": null, "simplify": true, "repeats": true}, "correcting": false, "clicks": "/Users/me/Library/Caches/Stickler/hits/Eye of the Tiger-1a2b3c4d5e.wav", "bars": [{"start": 0.31, "end": 2.51, "bar": 1, "label": "Bar 1 of 110"}, {"start": 2.51, "end": 4.71, "bar": 2, "label": "Bar 2 of 110"}], "can_open": true, "can_cancel": false, "can_retry": false, "can_close": true, "can_export": true, "can_agree": false, "can_not_now": false, "can_retry_setup": false, "can_remove_models": false}
 ```
 
 ### `exporting`
@@ -445,6 +453,51 @@ Only in an installed app, and not while something runs (`can_remove_models`).
 ```json
 {"id": 26, "cmd": "uninstall", "everything": false}
 {"id": 26, "ok": true}
+```
+
+### `jump`
+
+Where a click on written bar `bar` goes while the song is at `at` seconds: the start of that
+bar's next pass, or its first pass after its last one (SPEC.md, module `playback`). `seconds`
+is `null` when the song never plays that bar. Stopped, the app moves there without playing.
+
+```json
+{"id": 27, "cmd": "jump", "bar": 2, "at": 3.2}
+{"id": 27, "ok": true, "seconds": 2.51}
+```
+
+### `step`
+
+The start of the song bar `by` bars away from `at` (Previous Bar is -1, Next Bar 1), kept
+inside the song.
+
+```json
+{"id": 28, "cmd": "step", "at": 3.2, "by": 1}
+{"id": 28, "ok": true, "seconds": 4.71}
+```
+
+### `volumes`
+
+The gains to play the song and the clicks with for `hear` (`song`, `hits` or `both`): the
+source not heard is silent. `song` and `hits` (0 to 1), when given, are the volume sliders' new
+values; they are remembered for every song (`settings` sends them as `song_volume` and
+`hits_volume`). Left out, the stored ones count.
+
+```json
+{"id": 29, "cmd": "volumes", "hear": "hits", "song": 0.6}
+{"id": 29, "ok": true, "song": 0.0, "hits": 1.0}
+```
+
+### `playable`
+
+The result's song as a FLAC file, for a player that cannot read the song's own format. It is
+decoded once into the cache, so the first reply can take a moment. A song that cannot be
+decoded is refused with the code `not_playable`. The copy is named by the song's content, so
+another song saved at the same place gets its own.
+
+```json
+{"id": 30, "cmd": "playable"}
+{"id": 30, "ok": true, "path": "/Users/me/Library/Caches/Stickler/playable/3f786850e387550fdab836ed7e6dc881de23001b.flac"}
 ```
 
 ### `quit`

@@ -52,13 +52,24 @@ final class SheetTests: XCTestCase {
         }
         XCTAssertEqual(places, places.sorted())
         XCTAssertEqual(document.components(separatedBy: "<div class=\"page\"").count - 1, 3)
-        XCTAssertTrue(document.contains("<div class=\"page\" style=\"width: 640.0px;\"><svg"))
+        XCTAssertTrue(
+            document.contains(
+                "<div class=\"page\" style=\"width: 640.0px;\"><div class=\"paper\"><svg"))
     }
 
     func testWithoutPagesOnlyTheDeskIsShown() {
         let document = SheetHTML.document([], dark: true)
         XCTAssertFalse(document.contains("<div class=\"page\""))
         XCTAssertTrue(document.contains("html { background: rgb(20, 20, 20);"))
+    }
+
+    func testTheControlsLeaveTheDeskFreeUnderTheLastPage() throws {
+        let pages = [try page("one")]
+        XCTAssertTrue(
+            SheetHTML.content(pages, dark: false).style.contains("padding: 12.0px 12.0px 12.0px;"))
+        XCTAssertTrue(
+            SheetHTML.content(pages, dark: false, below: Playbar.room).style
+                .contains("padding: 12.0px 12.0px 96.0px;"))
     }
 
     func testTheWidthAskedForLeavesTheDeskOnBothSides() {

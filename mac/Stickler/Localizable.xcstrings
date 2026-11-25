@@ -711,6 +711,24 @@
         }
       }
     },
+    "Controls" : {
+      "comment" : "Translators: Mac app, the menu between View and Window with Play, Previous Bar and Next Bar, and the playback controls' name for VoiceOver; Apple's Music calls its menu \"Steuerung\" in German, \"Controles\" in Spanish",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steuerung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controles"
+          }
+        }
+      }
+    },
     "Corrections" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3589,6 +3607,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "el servicio de paquetes del sistema (PackageKit) no responde"
+          }
+        }
+      }
+    },
+    "“%1$@” cannot be played." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%1$@“ lässt sich nicht abspielen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede reproducir «%1$@»."
           }
         }
       }

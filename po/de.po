@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-22 18:08+0100\n"
+"POT-Creation-Date: 2026-11-25 07:27+0100\n"
 "PO-Revision-Date: 2026-11-14 16:03+0100\n"
 "Last-Translator: Stickler maintainers\n"
 "Language-Team: none\n"
@@ -27,41 +27,46 @@ msgstr ""
 "Korrekturen, die schon auf diesem Computer sind, bleiben; die Einstellungen "
 "werden ersetzt."
 
-#: src/stickler_app/bridge.py:193
+#: src/stickler_app/bridge.py:205
 msgid "This is not possible right now."
 msgstr "Das geht gerade nicht."
 
-#: src/stickler_app/bridge.py:198
+#: src/stickler_app/bridge.py:210
 #, python-brace-format
 msgid "The value of “{argument}” is not valid."
 msgstr "Der Wert von „{argument}“ ist ungültig."
 
-#: src/stickler_app/bridge.py:370
+#: src/stickler_app/bridge.py:415
 msgid "The request could not be read."
 msgstr "Die Anfrage ließ sich nicht lesen."
 
-#: src/stickler_app/bridge.py:374
+#: src/stickler_app/bridge.py:419
 #, python-brace-format
 msgid "Stickler does not know the command “{name}”."
 msgstr "Stickler kennt den Befehl „{name}“ nicht."
 
-#: src/stickler_app/bridge.py:384
+#: src/stickler_app/bridge.py:429
 msgid "Something went wrong inside Stickler."
 msgstr "In Stickler ist etwas schiefgegangen."
 
-#: src/stickler_app/bridge.py:472 src/stickler_app/controller.py:388
+#: src/stickler_app/bridge.py:552
+#, python-brace-format
+msgid "“{name}” cannot be played."
+msgstr "„{name}“ lässt sich nicht abspielen."
+
+#: src/stickler_app/bridge.py:565 src/stickler_app/controller.py:388
 #: src/stickler_gtk/ui/window.py:637
 #, python-brace-format
 msgid "This is no Stickler backup: {reason}"
 msgstr "Das ist keine Stickler-Sicherung: {reason}"
 
-#: src/stickler_app/bridge.py:488 src/stickler_gtk/ui/window.py:686
+#: src/stickler_app/bridge.py:581 src/stickler_gtk/ui/window.py:686
 #, python-brace-format
 msgid "This removes Stickler and frees {size}. Your songs and exports stay."
 msgstr ""
 "Das entfernt Stickler und gibt {size} frei. Deine Songs und Exporte bleiben."
 
-#: src/stickler_app/bridge.py:515 src/stickler_gtk/ui/window.py:583
+#: src/stickler_app/bridge.py:608 src/stickler_gtk/ui/window.py:583
 #, python-brace-format
 msgid "This frees {size}. Stickler asks before it downloads the models again."
 msgstr ""
@@ -294,15 +299,22 @@ msgstr ""
 "Die Daten von Stickler sind entfernt. Um auch die App zu entfernen, zieh "
 "Stickler in den Papierkorb."
 
+#. Translators: Mac app, the menu between View and Window with Play, Previous Bar and Next
+#. Bar, and the playback controls' name for VoiceOver; Apple's Music calls its menu
+#. "Steuerung" in German, "Controles" in Spanish
+#: src/stickler_app/mac_texts.py:45
+msgid "Controls"
+msgstr "Steuerung"
+
 #. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
-#: src/stickler_app/mac_texts.py:48
+#: src/stickler_app/mac_texts.py:52
 #, python-brace-format
 msgid "{count} page"
 msgid_plural "{count} pages"
 msgstr[0] "{count} Seite"
 msgstr[1] "{count} Seiten"
 
-#: src/stickler_app/playback.py:57
+#: src/stickler_app/playback.py:68
 #, python-brace-format
 msgid "Bar {number} of {total}"
 msgstr "Takt {number} von {total}"
@@ -461,7 +473,7 @@ msgstr "Modell {model} herunterladen"
 msgid "Once; later songs use it too"
 msgstr "Einmalig; spätere Songs nutzen es mit"
 
-#: src/stickler_app/uninstall.py:74
+#: src/stickler_app/uninstall.py:78
 msgid "the system’s package service (PackageKit) does not answer"
 msgstr "der Paketdienst des Systems (PackageKit) antwortet nicht"
 

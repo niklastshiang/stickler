@@ -1,11 +1,14 @@
 """Playback decisions (SPEC.md, module `playback`), without GStreamer: what is heard how loud,
-where a bar click or an arrow key goes, and the playback bar's texts."""
+where a bar click or an arrow key goes, and the playback bar's texts. The Mac app gets them
+through the bridge (SPEC.md "Mac playback"), and a copy of a song it cannot play."""
 
 from __future__ import annotations
 
 from bisect import bisect_right
+from pathlib import Path
 
 from stickler import api
+from stickler.audio import media_tool
 from stickler_app.i18n import _
 
 HEAR = ("song", "hits", "both")  # design screen 6: Song / Hits / Both
@@ -53,5 +56,29 @@ def bar_label(bars: list[api.BarTime], now: float) -> str:
     if not bars:
         return ""
     current = _index(bars, now)
-    number = min((current if current is not None else 0) + 1, len(bars))
-    return _("Bar {number} of {total}").format(number=number, total=len(bars))
+    return _label(min((current if current is not None else 0) + 1, len(bars)), len(bars))
+
+
+def labels(bars: list[api.BarTime]) -> list[str]:
+    """Each song bar's "Bar n of N", in played order (the Mac app shows the sounding one)."""
+    return [_label(number, len(bars)) for number in range(1, len(bars) + 1)]
+
+
+def _label(number: int, total: int) -> str:
+    return _("Bar {number} of {total}").format(number=number, total=total)
+
+
+def playable(song: Path, dest: Path) -> Path:
+    """A FLAC copy of `song` at `dest`, decoded once with ffmpeg, for a player that cannot
+    read the song's own format. RuntimeError, and nothing left behind, when ffmpeg cannot."""
+    if dest.exists():
+        return dest
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    part = dest.with_suffix(".part.flac")
+    cmd = ["ffmpeg", "-v", "error", "-y", "-i", str(song), "-map", "0:a:0", "-c:a", "flac"]
+    proc = media_tool([*cmd, str(part)], capture_output=True, text=True)
+    if proc.returncode != 0:
+        part.unlink(missing_ok=True)
+        raise RuntimeError(f"ffmpeg cannot decode {song.name}: {proc.stderr.strip()[-200:]}")
+    part.replace(dest)
+    return dest

@@ -28,6 +28,7 @@ from stickler_app import (
     engraving,
     i18n,
     paths,
+    playback,
     recent,
     session,
     settings,
@@ -133,7 +134,18 @@ def _result(state: session.Result) -> dict[str, Any]:
         "musicxml": str(state.notation.musicxml),
         "corrections": dataclasses.asdict(state.wanted),
         "correcting": state.pending is not None,
+        "clicks": _path(clicks if (clicks := paths.hits_path(state.song)).is_file() else None),
+        "bars": _bars(state.notation.bars),
     }
+
+
+def _bars(bars: list) -> list[dict[str, Any]]:
+    """The song's bars in played order, each with the written bar it is engraved as and its
+    "Bar n of N" (SPEC.md "Mac playback", scope 1)."""
+    return [
+        {"start": b.start, "end": b.end, "bar": b.written, "label": label}
+        for b, label in zip(bars, playback.labels(bars), strict=True)
+    ]
 
 
 def _failed(state: session.Failed) -> dict[str, Any]:
@@ -212,6 +224,35 @@ def _number(command: dict[str, Any], name: str, default: float | None = None) ->
     if isinstance(value, bool) or not isinstance(value, int | float):
         raise _bad_argument(name)
     if not 0 < value < float("inf"):
+        raise _bad_argument(name)
+    return float(value)
+
+
+def _seconds(command: dict[str, Any], name: str) -> float:
+    """A finite time in seconds, 0 or later."""
+    value = command.get(name)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise _bad_argument(name)
+    if not 0 <= value < float("inf"):
+        raise _bad_argument(name)
+    return float(value)
+
+
+def _whole(command: dict[str, Any], name: str, lowest: int | None = None) -> int:
+    value = command.get(name)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise _bad_argument(name)
+    if lowest is not None and value < lowest:
+        raise _bad_argument(name)
+    return value
+
+
+def _volume(command: dict[str, Any], name: str) -> float | None:
+    """A volume from 0 to 1; None when the argument is left out."""
+    if name not in command:
+        return None
+    value = command[name]
+    if isinstance(value, bool) or not isinstance(value, int | float) or not 0 <= value <= 1:
         raise _bad_argument(name)
     return float(value)
 
@@ -322,6 +363,10 @@ class Bridge:
             "restore": lambda c: self._fits(self._ctl.restore(Path(_text(c, "src")))),
             "uninstall_sizes": self._uninstall_sizes,
             "uninstall": lambda c: self._uninstall(_flag(c, "everything")),
+            "jump": self._jump,
+            "step": self._step,
+            "volumes": self._volumes,
+            "playable": self._playable,
             "quit": lambda _c: {},
         }
 
@@ -459,6 +504,54 @@ class Bridge:
         except OSError:
             log.warning("the note size could not be saved")
         return _zoom_reply(new)
+
+    def _jump(self, command: dict[str, Any]) -> dict[str, Any]:
+        """Where a click on a written bar goes from `at` (SPEC.md "Mac playback", scope 1);
+        null when the song never plays it."""
+        bar, at = _whole(command, "bar", lowest=0), _seconds(command, "at")
+        return {"seconds": playback.jump_target(self._result().notation.bars, bar, at)}
+
+    def _step(self, command: dict[str, Any]) -> dict[str, Any]:
+        """The start of the song bar `by` bars away from `at` (the arrow keys)."""
+        at, by = _seconds(command, "at"), _whole(command, "by")
+        return {"seconds": playback.step(self._result().notation.bars, at, by)}
+
+    @staticmethod
+    def _volumes(command: dict[str, Any]) -> dict[str, Any]:
+        """Remembers the volumes given (for every song, as the GTK app does) and answers the
+        gains to play for `hear`; unsaved they still play for this run."""
+        hear = command.get("hear")
+        if hear not in playback.HEAR:
+            raise _bad_argument("hear")
+        changes = {
+            key: value
+            for key, value in (
+                ("song_volume", _volume(command, "song")),
+                ("hits_volume", _volume(command, "hits")),
+            )
+            if value is not None
+        }
+        chosen = settings.load(settings.store_path())
+        if changes:
+            chosen = dataclasses.replace(chosen, **changes)
+            try:
+                settings.update(settings.store_path(), **changes)
+            except OSError:
+                log.warning("the volumes could not be saved")
+        song, hits = playback.volumes(hear, song=chosen.song_volume, hits=chosen.hits_volume)
+        return {"song": song, "hits": hits}
+
+    def _playable(self, _command: dict[str, Any]) -> dict[str, Any]:
+        """The result's song as FLAC, for a player that cannot read its format; decoded once
+        into the cache. Takes a moment the first time."""
+        song = self._result().song
+        try:
+            made = playback.playable(song, paths.playable_path(song))
+        except RuntimeError as exc:
+            log.warning("%s", exc)
+            text = _("“{name}” cannot be played.").format(name=song.name)
+            raise CommandError("not_playable", text) from exc
+        return {"path": str(made)}
 
     def _back_up(self, dest: Path) -> dict[str, Any]:
         self._ctl.back_up(dest)  # a notice follows

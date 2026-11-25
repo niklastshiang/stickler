@@ -1,3 +1,4 @@
+import Foundation
 import SticklerCore
 
 /// The page the sheet's web view shows (SPEC.md, module `mac-sheet`, scope 2; design screen
@@ -58,25 +59,107 @@ enum SheetHTML {
         }
     }
 
-    /// The styles and sheets for `pages` in the window's appearance.
-    static func content(_ pages: [Page], dark: Bool) -> Content {
+    /// The styles and sheets for `pages` in the window's appearance; `below` points of desk
+    /// stay free under the last page (the playback controls float there, M10).
+    static func content(_ pages: [Page], dark: Bool, below: Double = 0) -> Content {
         // the canvas inverts a light grey paper, so the dark page is not pure black
         let paper =
             dark
             ? "background: #e4e4e6; filter: invert(1) hue-rotate(180deg);"
             : "background: #ffffff;"
         let desk = desk(dark: dark)
+        // the paper inside the page, so the playback marker over it is not inverted with it
         let sheets = pages.map { page in
-            "<div class=\"page\" style=\"width: \(page.width)px;\">\(page.svg)</div>"
+            "<div class=\"page\" style=\"width: \(page.width)px;\">"
+                + "<div class=\"paper\">\(page.svg)</div></div>"
         }
         let style = """
             html { background: rgb(\(desk.red), \(desk.green), \(desk.blue)); overflow-x: hidden; }
-            body { margin: 0; padding: \(gutter)px; cursor: default; -webkit-user-select: none; }
-            .page { margin: 0 auto \(gutter)px; box-shadow: 0 1px 3px rgba(0,0,6,.18); \(paper) }
+            body { margin: 0; padding: \(gutter)px \(gutter)px \(gutter + below)px;
+              cursor: default; -webkit-user-select: none; }
+            .page { position: relative; margin: 0 auto \(gutter)px; }
+            .paper { box-shadow: 0 1px 3px rgba(0,0,6,.18); \(paper) }
             .page:last-child { margin-bottom: 0; }
             .page svg { display: block; }
+            #marker { position: absolute; border-radius: 5px; pointer-events: none; }
             """
         return Content(style: style, sheets: sheets.joined(separator: "\n"))
+    }
+
+    // the playback marker and a click on a bar (SPEC.md "Mac playback", scope 5): the app's
+    // own scripts in the loaded page, whose own scripts stay off
+
+    /// Draws the marker over a page's bar, or takes it away (`page` below 0), and scrolls it
+    /// into view when it is not in the part of the window above the controls.
+    static let markScript = """
+        let mark = document.getElementById("marker");
+        const host = page < 0 ? null : document.querySelectorAll(".page")[page];
+        if (!host) { if (mark) { mark.remove(); } return false; }
+        if (!mark) { mark = document.createElement("div"); mark.id = "marker"; }
+        if (mark.parentNode !== host) { host.appendChild(mark); }
+        mark.style.left = x + "px"; mark.style.top = y + "px";
+        mark.style.width = width + "px"; mark.style.height = height + "px";
+        mark.style.background = colour;
+        const seen = mark.getBoundingClientRect();
+        if (seen.top < 0 || seen.bottom > window.innerHeight - room) {
+            window.scrollTo(0, window.scrollY + seen.top - (window.innerHeight - room) / 3);
+        }
+        return true
+        """
+
+    /// What the marker shows: sent again only when it changed or the pages were replaced.
+    struct Marking: Equatable {
+        let mark: Marker.Mark?
+        let accent: Colour
+        let dark: Bool
+        let room: Double
+
+        var arguments: [String: Any] {
+            SheetHTML.markArguments(mark, accent: accent, dark: dark, room: room)
+        }
+    }
+
+    /// The marker's script arguments: where `mark` is, in the accent colour (a fifth of it on
+    /// white paper, a third on the dark page), keeping `room` points free above the window's
+    /// bottom. No mark takes the marker away.
+    static func markArguments(
+        _ mark: Marker.Mark?, accent: Colour, dark: Bool, room: Double
+    ) -> [String: Any] {
+        guard let mark else {
+            return ["page": -1, "x": 0, "y": 0, "width": 0, "height": 0, "colour": "", "room": 0]
+        }
+        let alpha = dark ? 0.32 : 0.2
+        return [
+            "page": mark.page, "x": mark.box.x, "y": mark.box.y, "width": mark.box.width,
+            "height": mark.box.height,
+            "colour": "rgba(\(accent.red), \(accent.green), \(accent.blue), \(alpha))",
+            "room": room
+        ]
+    }
+
+    /// The page under a point of the web view and the point on it, in page pixels: the
+    /// script answers `[page, x, y]`, or nothing between the pages. A pinch's picture draws
+    /// the pages larger or smaller; the point is taken back to the page's own pixels.
+    static let hitScript = """
+        const pages = document.querySelectorAll(".page");
+        for (let k = 0; k < pages.length; k++) {
+            const r = pages[k].getBoundingClientRect();
+            if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+                const scale = r.width / Math.max(1, pages[k].offsetWidth);
+                return [k, (x - r.left) / scale, (y - r.top) / scale];
+            }
+        }
+        return null
+        """
+
+    /// The written bar a click is on, from the hit script's answer and the shown pages.
+    static func bar(hit answer: Any?, in pages: [Page]) -> Int? {
+        guard let found = answer as? [Any], found.count == 3,
+            let page = (found[0] as? NSNumber)?.intValue, pages.indices.contains(page),
+            let x = (found[1] as? NSNumber)?.doubleValue,
+            let y = (found[2] as? NSNumber)?.doubleValue
+        else { return nil }
+        return Marker.bar(atX: x, y: y, on: pages[page])
     }
 
     /// The whole document for `pages` in the window's appearance.

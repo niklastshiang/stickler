@@ -39,6 +39,10 @@ TEXTS = (
     # Translators: Mac app, after "Uninstall Stickler…" when the app cannot move itself to the
     # Bin (it was started from the download without being moved)
     N_("Stickler’s data is removed. To remove the app too, drag Stickler to the Bin."),
+    # Translators: Mac app, the menu between View and Window with Play, Previous Bar and Next
+    # Bar, and the playback controls' name for VoiceOver; Apple's Music calls its menu
+    # "Steuerung" in German, "Controles" in Spanish
+    N_("Controls"),
 )
 
 # Texts with a count: the String Catalog holds both forms under the plural one, and Swift

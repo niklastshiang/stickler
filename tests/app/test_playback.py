@@ -56,3 +56,49 @@ def test_the_clicks_of_a_song_go_to_the_apps_cache(tmp_path):
     wav = paths.hits_path(Path("/music/a/Song.flac"), env)
     assert wav.parent == tmp_path / "stickler" / "hits" and wav.suffix == ".wav"
     assert wav.stem == paths.score_path(Path("/music/a/Song.flac"), env).stem
+
+
+def test_every_song_bar_has_its_label():
+    assert playback.labels(BARS) == [f"Bar {n} of 6" for n in range(1, 7)]
+    assert playback.labels([]) == []
+
+
+def test_a_playable_copy_goes_to_the_apps_cache_named_by_the_songs_content(tmp_path):
+    env = {"XDG_CACHE_HOME": str(tmp_path / "cache")}
+    song = tmp_path / "Song.ogg"
+    song.write_bytes(b"first")
+    copy = paths.playable_path(song, env)
+    assert copy.parent == tmp_path / "cache" / "stickler" / "playable" and copy.suffix == ".flac"
+    assert copy.stem == paths.song_digest(song)
+    song.write_bytes(b"another song at the same place")
+    assert paths.playable_path(song, env) != copy  # not the old song's copy
+    gone = tmp_path / "Gone.ogg"  # unreadable: named by its place, ffmpeg then says why
+    assert paths.playable_path(gone, env).stem == paths.score_path(gone, env).stem
+
+
+def _tone(path: Path) -> None:
+    import wave
+
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(8000)
+        w.writeframes(b"\x00\x10" * 8000)
+
+
+def test_a_song_is_decoded_to_flac_once(tmp_path):
+    song, dest = tmp_path / "song.wav", tmp_path / "playable" / "song.flac"
+    _tone(song)
+    assert playback.playable(song, dest) == dest
+    assert dest.read_bytes()[:4] == b"fLaC"
+    made = dest.stat().st_mtime_ns
+    assert playback.playable(song, dest) == dest and dest.stat().st_mtime_ns == made
+    assert not list(dest.parent.glob("*.part*"))
+
+
+def test_a_song_that_cannot_be_decoded_leaves_nothing(tmp_path):
+    song, dest = tmp_path / "song.wav", tmp_path / "playable" / "song.flac"
+    song.write_bytes(b"not a sound")
+    with pytest.raises(RuntimeError, match="song.wav"):
+        playback.playable(song, dest)
+    assert not dest.exists() and not list(dest.parent.glob("*"))

@@ -226,6 +226,67 @@ public struct SongResult: Codable, Equatable, Sendable {
     public var musicxml: String
     public var corrections: Corrections
     public var correcting: Bool
+    /// The detected hits as clicks, as long as the song; nil when there are none.
+    public var clicks: String?
+    /// The song's bars in played order (`docs/bridge.md`, `result`).
+    public var bars: [SongBar] = []
+}
+
+extension SongResult {
+    private enum Keys: String, CodingKey {
+        case song, title, subtitle, artist, seconds, tempo, meter, musicxml, corrections
+        case correcting, clicks, bars
+    }
+
+    /// `clicks` and `bars` came with `mac-playback`: an older line without them plays nothing.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: Keys.self)
+        song = try container.decode(String.self, forKey: .song)
+        title = try container.decode(String.self, forKey: .title)
+        subtitle = try container.decode(String.self, forKey: .subtitle)
+        artist = try container.decode(String.self, forKey: .artist)
+        seconds = try container.decode(Double.self, forKey: .seconds)
+        tempo = try container.decode(Int.self, forKey: .tempo)
+        meter = try container.decode([Int].self, forKey: .meter)
+        musicxml = try container.decode(String.self, forKey: .musicxml)
+        corrections = try container.decode(Corrections.self, forKey: .corrections)
+        correcting = try container.decode(Bool.self, forKey: .correcting)
+        clicks = try container.decodeIfPresent(String.self, forKey: .clicks)
+        bars = try container.decodeIfPresent([SongBar].self, forKey: .bars) ?? []
+    }
+
+    /// `clicks` is sent as `null` when there are none, as the core does.
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: Keys.self)
+        try container.encode(song, forKey: .song)
+        try container.encode(title, forKey: .title)
+        try container.encode(subtitle, forKey: .subtitle)
+        try container.encode(artist, forKey: .artist)
+        try container.encode(seconds, forKey: .seconds)
+        try container.encode(tempo, forKey: .tempo)
+        try container.encode(meter, forKey: .meter)
+        try container.encode(musicxml, forKey: .musicxml)
+        try container.encode(corrections, forKey: .corrections)
+        try container.encode(correcting, forKey: .correcting)
+        try container.encode(clicks, forKey: .clicks)
+        try container.encode(bars, forKey: .bars)
+    }
+}
+
+/// One bar of the song in played order: when it sounds, the written bar it is engraved as
+/// (`BarBox.bar`), and what the controls say while it sounds ("Bar 3 of 110").
+public struct SongBar: Codable, Equatable, Sendable {
+    public var start: Double
+    public var end: Double
+    public var bar: Int
+    public var label: String
+
+    public init(start: Double, end: Double, bar: Int, label: String) {
+        self.start = start
+        self.end = end
+        self.bar = bar
+        self.label = label
+    }
 }
 
 public struct Exporting: Codable, Equatable, Sendable {
