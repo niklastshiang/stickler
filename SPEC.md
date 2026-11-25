@@ -3176,7 +3176,8 @@ src/stickler_app/paths.py            # + packaged() == "system"
 
 ## Mac playback (module `mac-playback`)
 
-> Status: **done** (Checkpoint AC, 2026-11-25: the owner's check on the Mac). Approved by the
+> Status: **done** (Checkpoint AC, 2026-11-25: the owner's check on the Mac); released with the
+> Windows app as release 11 (owner, 2026-11-25; "Release 11: Windows app"). Approved by the
 > owner on 2026-11-25 (the plan in chat; both open questions answered, below). The screens
 > (M10) were approved on 2026-11-24 (SPEC "Module `mac-design`", "Playback screens M10"); this
 > section adds what the
@@ -3309,10 +3310,10 @@ drum samples, the Now Playing widget and media keys, remembering the position pe
 ## Release 11: Windows app
 
 > Status: **draft**, written 2026-11-25, not approved. Decided by the owner on 2026-11-25: a
-> native interface, as release 11; open questions 1–4 answered the same day (at the end).
-> Everything else here is Claude's proposal; question 5 (written after the rebase onto
-> releases 9 and 10 and `mac-playback`) is still the owner's, and nothing is built before the
-> spec is approved. Starts
+> native interface; release 11 is the Windows app together with the Mac playback, once both
+> apps are at the same state; open questions 1–5 answered the same day (at the end).
+> Everything else here is Claude's proposal, and nothing is built before the spec is
+> approved. Starts
 > from the Windows research in `tasks/todo.md` (2026-11-16) and from what release 8 builds
 > (`stickler_app`, `stickler-bridge`). Module specs are written and approved one at a time, in
 > build order, as for the Mac app.
@@ -3339,7 +3340,7 @@ over the same Python core, and reaches it through `stickler-bridge` as the Mac a
 - **Later releases:** corrections (`win-corrections`, with or after the Mac's), the NVIDIA GPU
   through CUDA (`win-gpu`, owner 2026-11-25: later; the research of 2026-11-16 found torch's
   cu132 wheels for Windows; measured against the CPU first, identical notes).
-- **Success:** a drummer installs `Stickler-<version>-setup.exe` from a GitHub release on a PC they
+- **Success:** a drummer installs `Stickler-11-setup.exe` from a GitHub release on a PC they
   own and gets sheet music for a song without a terminal.
 
 ### Decisions for all modules
@@ -3472,7 +3473,7 @@ docs/install-windows.md       # install guide with the SmartScreen pictures
   CONSTRAINTS.md for C#; claim a check on the owner's PC that the owner has not done.
 
 ### Success criteria
-1. On the owner's Windows 11 PC, `Stickler-<version>-setup.exe` from a draft release installs
+1. On the owner's Windows 11 PC, `Stickler-11-setup.exe` from a draft release installs
    without admin rights after "Run anyway", the setup assistant downloads the Fast models, and
    a song becomes sheet music; export of MusicXML, PDF and the drum track works; the song, the
    clicks and both play with the bar marker following. No terminal, no `uv` or ffmpeg of the
@@ -3502,15 +3503,11 @@ Decided (owner, 2026-11-25):
 4. **Releases 9 and 10:** already published (the draft was first written on a stale
    checkout). Release 10's backup and uninstall and the Mac playback join the first version
    through question 1 (see Objective).
-
-Open:
-5. **The release number:** every release counts (ADR 0006), and release 10 is out; the next
-   one is 11. The Mac playback is done on `main`. If it is released before the Windows app is
-   ready, it takes 11 and the Windows app a later number. Options: (a) the Mac playback waits
-   and ships with the Windows app as release 11; (b) the Windows app is "the Windows release,
-   whatever its number is", as the GTK app once was (release plan, 2026-11-13). Claude's
-   proposal: (b), so the Mac playback reaches users now; the spec's title then names the
-   number when the release is cut.
+5. **The release number:** release 11 is the Windows app and the Mac playback together,
+   released when both apps are at the same state. The Mac playback, done on `main`, waits for
+   it. Whatever else reaches the Mac app before then has to reach the Windows app too before
+   release 11 is cut. A fix that has to go out earlier would take the number 11 by ADR 0006
+   (every release counts); that is asked of the owner then, not decided here.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
