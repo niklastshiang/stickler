@@ -3955,6 +3955,196 @@ Control and no third-party antivirus, so nothing below says what a user's PC doe
   `GyanD/codexffmpeg` 9.1, not a checksum published by gyan.dev. The final source of ffmpeg
   is `win-package`'s decision.
 
+### Module `win-shell`
+
+> Status: **draft**, written 2026-11-25, not approved. Written while `win-spike`'s second try
+> on the owner's PC (task 179) was still waiting an hour: its outcome decides how the setup
+> starts the models (open question 1), and that part is marked as such. Open questions 1–4 at
+> the end are the owner's. Modelled on `mac-shell`, with the Windows screens of `win-design`.
+
+**Objective.** The first Stickler that runs as a Windows app: the WinUI 3 window of
+`win-design` (W1–W5, W7, W8, light and dark) over the core that `core-bridge` made and
+`win-core` made portable. A drummer opens or drops a song, agrees to the download on the first
+start, watches the steps, cancels, sees errors, saves MusicXML and the drum track, and backs up
+or restores Stickler's data (release 10). The sheet music and the PDF come with `win-sheet`,
+playback with `win-playback`, the installer and "Uninstall Stickler…" with `win-package`.
+
+**Assumptions** (from the code, this PC and the web on 2026-11-25):
+1. The bridge (`docs/bridge.md`) carries every state, command and text this module needs,
+   translated, including release 10's `back_up`, `backup_summary` and `restore`; the app
+   enables buttons and menu items from the state's `can_*` fields alone, as the Mac app does.
+2. The core runs on Windows x64 from a checkout (`win-core`: the suite on `windows-2025` and,
+   since 2026-11-25, natively on the owner's PC) and from an installed folder with
+   `STICKLER_PACKAGED=windows` (`win-spike`, 2026-11-25: the bridge answers, the folders are
+   under `%LOCALAPPDATA%\Stickler`, the adapters' sources are found).
+3. **The owner's PC** (task 179, 2026-11-25): the company network inspects TLS, so `uv`
+   downloads only with the system's certificates (`UV_SYSTEM_CERTS=1`); Panda Adaptive
+   Defense 360 refused uv 0.13.9's environment launcher (`.venv\Scripts\python.exe`) while
+   uv's downloaded Python and an older launcher start; the retry after an hour is pending.
+   Python's own downloads (Beat This!'s weights through `urllib`) use Windows' certificate
+   store and should pass; not yet seen.
+4. **This PC has no .NET SDK and no Visual Studio**, only the .NET 10.0.15 runtimes (checked
+   2026-11-25). GitHub's `windows-2025` image has Visual Studio 2026 with the .NET 10 SDK
+   since the June 2026 migration (the release's tech stack still names 2022 17.14; read
+   from the runner's log in the first task).
+5. The Windows App SDK's own pickers (`Microsoft.Windows.Storage.Pickers`, from 1.8) take the
+   window's `AppWindow.Id`; Microsoft's pages do not say whether they work in an unpackaged
+   app (read 2026-11-25). The older `Windows.Storage.Pickers` work there with
+   `InitializeWithWindow`. The first task tries the new ones and falls back.
+6. Whether `dotnet build` alone compiles a WinUI 3 app's XAML without Visual Studio is
+   unconfirmed here; on the runner Visual Studio is there. The first task finds out on this PC
+   (open question 2).
+
+**Scope.**
+1. **`SticklerCore`, a `net10.0` class library without Windows APIs** (`win/SticklerCore/`),
+   the counterpart of `mac/SticklerCore`:
+   - starts the core as a subprocess (from a checkout `uv run stickler-bridge`; from an
+     installed app `win-package`'s command), writes commands as UTF-8 JSON lines ending in
+     `\n`, reads its lines on a task of its own, decodes `hello`, `state`, `recent`, `notice`
+     and replies into C# records that mirror `docs/bridge.md` (`System.Text.Json` with its
+     source generator, no reflection), matches each reply to its command by `id`, and notices
+     when the process ends (exit code and stderr's last 40 lines kept for the error page);
+   - **always passes `UV_SYSTEM_CERTS=1`** to the core (assumption 3; harmless where no proxy
+     inspects TLS, since uv then reads the same roots from Windows' store) unless open
+     question 3 moves it into the core;
+   - an `AppModel` (plain `INotifyPropertyChanged`, no MVVM package) with the latest state,
+     the recent songs and the notices; it never decides a flow, it only forwards commands;
+   - the string lookup over `scripts/winstrings.py`'s JSON tables: the user's first
+     preferred UI language that `po/` has, else English; named placeholders and the plural
+     rule `n != 1`, as `scripts/xcstrings.py` maps them;
+   - builds and tests on Linux (WSL here, `ubuntu` in CI) and on Windows.
+2. **The app, `win/Stickler/`** (WinUI 3, C#, unpackaged and self-contained as the release
+   decided, `WindowsPackageType=None`):
+   - **Window** (W4, W5, W8): Mica, the standard title bar with the 16 px icon and
+     "Stickler"; the menu bar File, View, Help; once a song is open, the header with its
+     title, artist, tempo and time signature, and "Open" and "Export" at its right. The empty
+     window: the drop area (files dropped from Explorer), "Open a Song…", the recent songs (a
+     missing file dimmed with a remove button, as in GTK). The step list with Cancel for
+     analysis and drum track (a progress ring for the running step). The error page with
+     "Technical Details" (an expander), "Open Another Song…" and "Try Again" when
+     `can_retry`. Minimum window size 640 × 480 effective pixels.
+   - **Result placeholder** (until `win-sheet`): the grey desk with one centred line, as on
+     the Mac. Never in a release: `win-package` requires `win-sheet`.
+   - **Setup** (W1–W3) as ContentDialogs over the dimmed empty window: consent with the
+     models, their licences and sizes, "Download 2.2 GB" · "Not Now"; the download's step list
+     with a determinate progress bar and "Cancel"; a failed download naming the server,
+     "Technical Details", "Try Again" · "Later". **How the models are started is open
+     question 1** (the spike's outcome).
+   - **File menu** (W8): Open… (Ctrl+O), Open Recent (the core's recent songs, Clear Menu),
+     Export, Back Up…, Restore Backup…, Remove Downloaded Models…, Exit. "Remove Downloaded
+     Models…": a ContentDialog with the sizes from `removal_sizes`, the checkbox for settings,
+     recent songs and corrections, a destructive button. Back Up and Restore: the GTK app's
+     and the Mac app's flow and texts (`backup_summary` before restoring), with the save and
+     open pickers. "Close Song" is open question 4.
+   - **Exports** (W7): Export's menu with MusicXML…, Drum Track…, Open With… (one line each,
+     the other apps' second lines as tooltips); the save picker with the core's file name;
+     the drum track's cost in a ContentDialog first (`drum_track_cost`). Open With… opens the
+     MusicXML with Windows' "Open with" chooser (`Launcher` with the application picker shown).
+     "Sheet Music (PDF)…" comes with `win-sheet`. After saving: the flyout under Export,
+     "Saved “<file>”" with "Show in Folder" (Explorer with the file selected); other notices
+     in a flyout of the same kind.
+   - **View and Help:** View's zoom entries come with `win-sheet` (until then View holds
+     nothing and is hidden); Help: Stickler Help (the README on GitHub), Licences (the folder
+     of shipped licences, from `win-package`; until then the repository's licence page),
+     About Stickler (W8's dialog).
+   - **The core stopped:** "Stickler Stopped Unexpectedly", the technical details (exit code,
+     stderr's last lines) and "Start Again", as on the Mac.
+   - **Where the core is** (until `win-package`): a development build takes the checkout from
+     `STICKLER_CHECKOUT` or asks once with a folder picker, remembers it, and checks it holds
+     `pyproject.toml` and `adapters/`. `uv` is looked for on `PATH` and in winget's and uv's
+     own folders. Gone in `win-package`, whose installer brings the core along.
+   - **Quitting** sends `quit` and waits at most 3 s, then ends the core's process tree
+     (`taskkill /T`, as `win-core` ends a model).
+   - **Texts:** every text from `po/` through `scripts/winstrings.py`; the new ones ("Show in
+     Folder", "Exit", "Back Up…" where the Windows wording differs) go into
+     `src/stickler_app/win_texts.py` with German and Spanish, as `mac_texts.py`.
+3. **The solution** `win/Stickler.sln` with SDK-style projects, the Windows App SDK pinned
+   (the newest 2.x when this module starts; 2.7 on 2026-11-17), MSTest with
+   Microsoft.Testing.Platform and its coverage; `Directory.Build.props` with
+   `TreatWarningsAsErrors`, `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`,
+   `Nullable=enable`.
+4. **CI, `.github/workflows/win.yml`** on `windows-2025`: build, `dotnet format
+   --verify-no-changes`, tests with coverage gated at 95 % for `SticklerCore` and the app's
+   logic types (a script over the Cobertura file, as `scripts/xccov_gate.py`), screenshots of
+   every screen in light and dark from fixed states (the app started with a recorded core,
+   the window captured; the spike showed the runner's desktop can be captured), and the built
+   app folder as a zip artifact for the owner. `SticklerCore`'s tests also on `ubuntu` in the
+   same workflow, against the real bridge with stand-in models.
+5. **CONSTRAINTS.md for C#** (the release's quality bar): no `#pragma warning disable`,
+   `[SuppressMessage]`, `<NoWarn>` or `.editorconfig` severities lowered to `none`; no
+   placeholder `throw new NotImplementedException()`; no `[Ignore]` without a reason in the
+   commit; the build's analyzers and `dotnet format` clean; coverage as in scope 4.
+   `scripts/floor_guard.py` learns the C# patterns.
+6. **`docs/win-development.md`:** the owner's PC set up once (what open question 2 decides,
+   `uv`, ffmpeg, the checkout), starting a development build or the CI's zip, what to check at
+   the checkpoint, and what Panda may hold back.
+
+**Testing.**
+- `SticklerCore` on Linux and Windows: decoding of every example line in `docs/bridge.md`
+  (the same lines the Python doc test checks), replies matched to commands, lines split
+  across reads, `\r\n` never written, a core that exits (code and stderr kept), the string
+  tables' lookup and plurals, and the real bridge as a subprocess with stand-in models:
+  `hello`, `open` until `result`, `cancel`, `quit`.
+- The app's logic types with a fake core (MSTest): each state to what the window offers, the
+  setup dialogs, the export, backup and restore flows up to the picker's answer (pickers and
+  the launcher behind a small interface with a fake), the core stopped and started again.
+- Screenshots: W1–W5, W7, W8, the stopped core and the error page, light and dark; the owner
+  compares them with the canvas.
+- By hand on the owner's PC: a song from the drop to the saved MusicXML through a
+  development build, keyboard only once (Tab order, Alt for the menu bar), high contrast once.
+
+**Success criteria.**
+1. On the owner's PC, a development build (built here or the CI's zip) finds the checkout,
+   asks for consent, downloads the Fast models into `%LOCALAPPDATA%\Stickler`, and turns a
+   dropped song into a result; Cancel works during the analysis and the download.
+2. MusicXML and the drum track are saved; "Show in Folder" shows the file; a backup made here
+   restores in the GTK app and the other way round.
+3. Ending the core (Task Manager) shows the stopped page; "Start Again" works.
+4. Every screen matches the canvas in light and dark (screenshots, the owner's check); English,
+   German and Spanish follow Windows' display language.
+5. `win.yml` is green on every push: build with warnings as errors, format, tests, coverage
+   ≥ 95 % outside pure views; `SticklerCore`'s tests green on Linux too. The Linux and Mac
+   apps and the core unchanged (`scripts/check.sh task` green, no adapter file touched).
+
+**Out of scope.** The sheet music, zoom and the PDF (`win-sheet`); playback (`win-playback`);
+the installer, the bundled core, "Uninstall Stickler…", the app icon's `.ico` and the install
+guide (`win-package`); corrections, Quality, CUDA; ARM64.
+
+**Risks.**
+- Panda holds back the development build's own `Stickler.exe` (unsigned, a new hash on every
+  build): the CI's zip and builds here are tried at the first checkpoint; if it is held back
+  for good, the owner's checks wait for the signed release or the company's IT (as
+  `win-spike` decided), and the runner's screenshots carry the module.
+- The unpackaged app's pickers fail (assumption 5): the older pickers with
+  `InitializeWithWindow`.
+- Screenshots on the runner are blank or partial (no GPU, Mica falls back to a plain colour):
+  accepted for the comparison; the owner's look on the PC counts.
+- WinUI's drag and drop gives no file for a song dragged from a browser's download bar: only
+  files from Explorer are promised.
+
+**Open questions** (the owner's):
+1. **How the setup starts the models**, after the spike's retry: if Panda releases uv
+   0.13.9's launcher after a while, nothing changes; if it holds it back for good, either the
+   core starts each model with uv's downloaded Python directly (no environment launcher; a
+   change to `stickler.adapters` with its own task and `digests.yaml` pairs if
+   behaviour-neutral), or the owner's checks wait for signing or IT. Claude's proposal: decide
+   after the retry and the next day's, not now.
+2. **The .NET 10 SDK on this PC:** install it for the user (Microsoft's `dotnet-install.ps1`,
+   no administrator rights, under `%LOCALAPPDATA%\Microsoft\dotnet`), so Claude builds and
+   tests here and not only on the runner? Visual Studio is not needed if `dotnet build`
+   compiles the XAML (assumption 6). Claude's proposal: yes.
+3. **System certificates for every packaged app:** `UV_SYSTEM_CERTS=1` set by
+   `stickler_app.paths.packaged_env` for all three apps (a company network on Linux or a Mac
+   has the same problem), instead of in the Windows app alone. Claude's proposal: in the core,
+   as a task of this module.
+4. **"Close Song" (Ctrl+W) on Windows:** the Mac and GTK apps have it (owner, 2026-11-18);
+   `win-design`'s File menu does not. With "the same features everywhere", Claude's proposal:
+   add it to File, between Export and Back Up….
+
+Sources (read 2026-11-25): Microsoft Learn, "Save a file with Windows App SDK pickers" and
+"Using file and folder pickers"; GitHub's changelog on the `windows-2025` image's move to
+Visual Studio 2026 (2026-05-14).
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
