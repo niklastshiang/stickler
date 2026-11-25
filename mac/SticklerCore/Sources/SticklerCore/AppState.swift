@@ -192,7 +192,7 @@ public struct Analysing: Codable, Equatable, Sendable {
     public var steps: [Step]
 }
 
-/// The corrections' values (for `mac-corrections`; carried now, shown later).
+/// The corrections' wanted values, `nil` where nothing is corrected.
 public struct Corrections: Codable, Equatable, Sendable {
     public var tempo: String
     public var beatsPerBar: Int?
@@ -214,6 +214,43 @@ public struct Corrections: Codable, Equatable, Sendable {
     }
 }
 
+/// A tempo correction: half, as detected, or double.
+public enum Tempo: String, Codable, Sendable, CaseIterable {
+    case half, normal, double
+}
+
+/// What the corrections inspector shows (SPEC.md "Mac corrections", scope 1): the wanted
+/// values, the engraved ones where nothing is corrected, decided by the core.
+public struct CorrectionControls: Codable, Equatable, Sendable {
+    public var tempo: Tempo
+    public var beatsPerBar: Int
+    public var firstOne: Int
+    /// "Beat 2", translated.
+    public var firstOneLabel: String
+    /// Whether the first "one" can move to an earlier or a later beat.
+    public var earlier: Bool
+    public var later: Bool
+    public var simplify: Bool
+    public var repeats: Bool
+    /// "Back to Detected" has something to undo.
+    public var corrected: Bool
+
+    public init(
+        tempo: Tempo, beatsPerBar: Int, firstOne: Int, firstOneLabel: String, earlier: Bool,
+        later: Bool, simplify: Bool, repeats: Bool, corrected: Bool
+    ) {
+        self.tempo = tempo
+        self.beatsPerBar = beatsPerBar
+        self.firstOne = firstOne
+        self.firstOneLabel = firstOneLabel
+        self.earlier = earlier
+        self.later = later
+        self.simplify = simplify
+        self.repeats = repeats
+        self.corrected = corrected
+    }
+}
+
 /// A finished analysis (`result`).
 public struct SongResult: Codable, Equatable, Sendable {
     public var song: String
@@ -230,15 +267,20 @@ public struct SongResult: Codable, Equatable, Sendable {
     public var clicks: String?
     /// The song's bars in played order (`docs/bridge.md`, `result`).
     public var bars: [SongBar] = []
+    /// What the corrections inspector shows; nil in a line from before `mac-corrections`.
+    public var controls: CorrectionControls?
+    /// Changes with every new notation shown, not when a correction starts: new pages then.
+    public var sheet = 0
 }
 
 extension SongResult {
     private enum Keys: String, CodingKey {
         case song, title, subtitle, artist, seconds, tempo, meter, musicxml, corrections
-        case correcting, clicks, bars
+        case correcting, clicks, bars, controls, sheet
     }
 
-    /// `clicks` and `bars` came with `mac-playback`: an older line without them plays nothing.
+    /// `clicks` and `bars` came with `mac-playback`: an older line without them plays nothing;
+    /// `controls` and `sheet` with `mac-corrections`: without them nothing can be corrected.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: Keys.self)
         song = try container.decode(String.self, forKey: .song)
@@ -253,6 +295,8 @@ extension SongResult {
         correcting = try container.decode(Bool.self, forKey: .correcting)
         clicks = try container.decodeIfPresent(String.self, forKey: .clicks)
         bars = try container.decodeIfPresent([SongBar].self, forKey: .bars) ?? []
+        controls = try container.decodeIfPresent(CorrectionControls.self, forKey: .controls)
+        sheet = try container.decodeIfPresent(Int.self, forKey: .sheet) ?? 0
     }
 
     /// `clicks` is sent as `null` when there are none, as the core does.
@@ -270,6 +314,8 @@ extension SongResult {
         try container.encode(correcting, forKey: .correcting)
         try container.encode(clicks, forKey: .clicks)
         try container.encode(bars, forKey: .bars)
+        try container.encodeIfPresent(controls, forKey: .controls)
+        try container.encode(sheet, forKey: .sheet)
     }
 }
 

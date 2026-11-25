@@ -32,6 +32,7 @@ public enum Command: Equatable, Sendable {
     case step(from: Double, count: Int)
     case volumes(hear: Hear, song: Double?, hits: Double?)
     case playable
+    case correct(Correction)
     case quit
 
     /// The command's name on the wire.
@@ -67,6 +68,7 @@ public enum Command: Equatable, Sendable {
         case .step: "step"
         case .volumes: "volumes"
         case .playable: "playable"
+        case .correct: "correct"
         case .quit: "quit"
         }
     }
@@ -77,6 +79,19 @@ public enum Command: Equatable, Sendable {
     }
 }
 
+/// One change from the corrections inspector (`correct`): a value, a stepper's step (counted
+/// by the core from its newest values, so quick clicks are never lost), or Back to Detected.
+public enum Correction: Equatable, Sendable {
+    case tempo(Tempo)
+    case beatsPerBar(Int)
+    case beatsPerBarBy(Int)
+    case firstOne(Int)
+    case firstOneBy(Int)
+    case simplify(Bool)
+    case repeats(Bool)
+    case detected
+}
+
 /// A command with its `id`, as the core reads it.
 private struct CommandWire: Encodable {
     let id: Int
@@ -85,6 +100,9 @@ private struct CommandWire: Encodable {
     private enum Keys: String, CodingKey {
         case id, cmd, path, dest, src, width, zoom, everything, bar, hear, song, hits
         case from = "at", count = "by"  // the protocol's names
+        case tempo, simplify, repeats, detected
+        case beatsPerBar = "beats_per_bar", beatsPerBarBy = "beats_per_bar_by"
+        case firstOne = "first_one", firstOneBy = "first_one_by"
     }
 
     func encode(to encoder: any Encoder) throws {
@@ -115,8 +133,25 @@ private struct CommandWire: Encodable {
             try container.encode(hear, forKey: .hear)
             try container.encodeIfPresent(song, forKey: .song)  // the stored volume without
             try container.encodeIfPresent(hits, forKey: .hits)
+        case .correct(let change):
+            try encode(change, into: &container)
         default:
             break
+        }
+    }
+
+    private func encode(_ change: Correction, into container: inout KeyedEncodingContainer<Keys>)
+        throws
+    {
+        switch change {
+        case .tempo(let tempo): try container.encode(tempo, forKey: .tempo)
+        case .beatsPerBar(let beats): try container.encode(beats, forKey: .beatsPerBar)
+        case .beatsPerBarBy(let step): try container.encode(step, forKey: .beatsPerBarBy)
+        case .firstOne(let beat): try container.encode(beat, forKey: .firstOne)
+        case .firstOneBy(let step): try container.encode(step, forKey: .firstOneBy)
+        case .simplify(let on): try container.encode(on, forKey: .simplify)
+        case .repeats(let on): try container.encode(on, forKey: .repeats)
+        case .detected: try container.encode(true, forKey: .detected)
         }
     }
 }

@@ -1321,7 +1321,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/app tests/gtk` (bridge, doc and corrections tests), `scripts/gtk.sh test` for the panel, `scripts/check.sh task`, coverage ≥ 95 %
   - Dependencies: none · Files: `src/stickler_app/corrections.py`, `src/stickler_app/bridge.py`, `src/stickler_app/session.py`, `src/stickler_gtk/ui/corrections.py`, `docs/bridge.md`, `tests/app/`, `tests/gtk/`
 
-- [ ] **Task 191: Corrections in SticklerCore** (M)
+- [x] **Task 191: Corrections in SticklerCore** (M): done 2026-11-25 (locally `swift test` on this Mac, 119 tests, SticklerCore 97.5 %). `Tempo`, `CorrectionControls` and `SongResult.controls` (optional) and `.sheet` (0 in an older line); `Command.correct(Correction)` with `.tempo`, `.beatsPerBar`, `.beatsPerBarBy`, `.firstOne`, `.firstOneBy`, `.simplify`, `.repeats`, `.detected`, each written with its one argument; `AppModel.correct(_:)` through the model's ordered outbox, a refusal as the notice; `SheetModel` keys on `sheet` instead of `corrections` (a correction's start asks for no pages, its notation does). 3 new tests, the sheet's correction test rewritten for `sheet`, the protocol document test with `correct`.
   - Acceptance: SPEC scope 2. `SongResult` decodes `controls` (optional) and `sheet`; `Command.correct(Correction)`; `AppModel.correct(_:)`, the steppers sending `_by` steps; refusals as the notice; `SheetModel` fetches pages per `song` and `sheet`, not per `corrections`.
   - Verify: `swift test` in `mac/SticklerCore` (locally and in `mac`), coverage ≥ 95 %
   - Dependencies: 190 · Files: `mac/SticklerCore/Sources/SticklerCore/`, its tests
