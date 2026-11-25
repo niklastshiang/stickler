@@ -40,7 +40,7 @@ def test_the_stored_master_and_bundle_follow_the_gtk_icon():
     assert mac_icon.MASTER.read_text(encoding="utf-8") == mac_icon.master_svg(_gtk_icon())
     files = mac_icon.bundle_files(_gtk_icon())
     stored = {
-        str(path.relative_to(BUNDLE)): path.read_text(encoding="utf-8")
+        path.relative_to(BUNDLE).as_posix(): path.read_text(encoding="utf-8")
         for path in BUNDLE.rglob("*")
         if path.is_file()
     }
