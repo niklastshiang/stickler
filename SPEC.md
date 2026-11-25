@@ -3350,7 +3350,8 @@ drum samples, the Now Playing widget and media keys, remembering the position pe
 
 ## Mac corrections (module `mac-corrections`)
 
-> Status: **approved** by the owner on 2026-11-25 (the plan in chat; open question 1 decided:
+> Status: **done** (Checkpoint AG, 2026-11-25: the owner's check on the Mac); released with
+> release 11. Approved by the owner on 2026-11-25 (the plan in chat; open question 1 decided:
 > release 11). The screens (M11) were approved on
 > 2026-11-25 (SPEC "Module `mac-design`", "Corrections screens M11"); this section adds what
 > the screens leave open: where each decision lives, what the bridge gains, what Swift draws.
