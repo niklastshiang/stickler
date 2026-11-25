@@ -734,3 +734,22 @@ summary (178) → the owner's PC (179) → findings, branch deleted (180).
 | The relocated Python does not find its own files or the adapters' sources | Medium | Seen in the runner's first install; `STICKLER_ADAPTER_SOURCES` from the launcher |
 | The installer is too large for an artifact or slow to build | Low | Sizes in the summary; ffmpeg's essentials build |
 
+## Website: the Mac app in A look around (approved 2026-11-25, SPEC.md "Website", "Change 2026-11-25")
+
+A switch "Linux | Mac" above the carousel and a row of the Mac app's windows, drawn by the `mac`
+workflow from Stickler's real transcription of "Eyesplit". Tasks 195–199.
+
+Design decisions:
+- **The sheet recorded once, on Linux** (195): the Mac test cannot run the models; the core's
+  `pages` reply for the window's width is stored as a fixture, as `pages.json` is today.
+- **Pictures from CI, fetched by a script** (196, 197): the workflow keeps them as an artifact;
+  the script names the run, so every picture can be traced and recorded again.
+- **Pictures before the page** (196 before 198): the switch is only worth building once the
+  runner draws the toolbar as a Mac does; if it cannot, the owner decides again.
+
+| Risk | Likelihood | What then |
+|---|---|---|
+| The runner cannot capture the window as the window server draws it (no screen-recording permission) | Medium | try `cacheDisplay` with the toolbar's glass turned off for the test, else `CGWindowListCreateImage`/ScreenCaptureKit; if neither works, back to the owner (pictures by hand) |
+| The fixture's sheet does not match the Mac's width | Low | the test asserts the `pages` request's width, as `M6-sheet` does |
+| `:has()` with radios is read oddly by a screen reader | Low | a `<fieldset>` with `<legend>`, checked with Orca and VoiceOver by the owner |
+

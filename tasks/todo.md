@@ -1314,6 +1314,35 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AE
 - [ ] The spike's five questions answered (owner); then `win-shell`'s spec (after `win-design` with the owner)
 
+## Phase 33: Website, the Mac app in A look around (approved 2026-11-25, SPEC.md "Website", "Change 2026-11-25")
+
+- [ ] **Task 195: The sheet of Eyesplit as a fixture** (S)
+  - Acceptance: `scripts/site_mac.py fixture` runs the core's `pages` request for the cached Fast analysis of `data/own/eyesplit/Eyesplit.mp3` at the website window's width (1000 points, the desk's 12 on each side: 976) and writes `mac/SticklerTests/Fixtures/eyesplit_pages.json` in the shape of `pages.json`; it fails clearly when the analysis is not cached.
+  - Verify: `uv run pytest -q tests/test_site_mac.py` (the fixture parses as the core's reply, its width is 976, its first page has bars)
+  - Dependencies: none · Files: `scripts/site_mac.py`, `mac/SticklerTests/Fixtures/eyesplit_pages.json`, `tests/test_site_mac.py`
+
+- [ ] **Task 196: The website's pictures in the `mac` workflow** (M)
+  - Acceptance: `WebsiteScreenshotTests` draws the window at 1000 × 700 with Eyesplit (title, "Shane Ivers · ♩ = 154 · 4/4", recent songs only openly licensed), light and dark: `site-empty`, `site-analysing`, `site-sheet` (bar marked, playback bar); the toolbar as on screen; saved into the `screenshots` artifact.
+  - Verify: the `mac` workflow passes on `claude/site-mac`; the pictures looked at from the artifact
+  - Dependencies: 195 · Files: `mac/SticklerTests/WebsiteScreenshotTests.swift`, `mac/project.yml` if the fixture needs listing
+
+- [ ] **Task 197: The pictures into the site** (S)
+  - Acceptance: `scripts/site_mac.py fetch <run>` downloads the artifact with `gh` into a new folder, writes `site/images/mac-*.png` and `.webp` (light and dark) and prints the run; `docs/website.md` has the steps.
+  - Verify: `uv run pytest -q tests/test_site_mac.py`
+  - Dependencies: 196 · Files: `scripts/site_mac.py`, `site/images/mac-*`, `docs/website.md`
+
+- [ ] **Task 198: The switch and the Mac row** (M)
+  - Acceptance: `#look` in English and German has the radio group "Linux | Mac" (`<fieldset>`, `<legend>` for screen readers) and two rows; `:has(:checked)` shows one, without `:has()` both show; the Mac row lazy, with `alt` texts and sizes.
+  - Verify: `uv run pytest -q tests/test_site.py`; a look at 390 and 1280 px, light and dark, by keyboard
+  - Dependencies: 197 · Files: `site/index.html`, `site/de/index.html`, `site/style.css`, `tests/test_site.py`
+
+- [ ] **Task 199: The owner's check and going online** (S)
+  - Acceptance: the owner compares the pictures with the app on the Mac and approves; the branch merged into `main`, the site deployed.
+  - Dependencies: 198
+
+### Checkpoint AH
+- [ ] All success criteria of SPEC.md "Change 2026-11-25: the Mac app in 'A look around'" met (owner)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.
@@ -1388,7 +1417,7 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 
 - [x] **A rock or metal song as the example instead of "Fluffing a Duck" (owner, 2026-11-20: idea for later)**: an openly licensed song (e.g. CC BY, as Kevin MacLeod's) in the owner's genres for the screenshots, the website's clip and the README picture; licence and attribution checked on the web first, then the pictures recorded again (`docs/website.md`, `scripts/gtk.sh demo`). Done 2026-11-24: "Eyesplit" by Shane Ivers (silvermansound.com, CC BY 4.0, checked on the track's page), the owner's choice of three candidates after a Fast analysis of each (Silverman Sound's "Hard Sell Hotel" opens with hi-hat only; Soularflair's "Chaos ID" came out in 1/4 with almost only toms). Recorded again: the README's GIF and stills, the AppStream screenshots, the site's stills, videos, share picture, clip and the story's pictures; the credits on the site, in the README and in the Mac app's screenshot data. Found on the way: Fedora 45 (Bluefin) has no `dbus-run-session`, so `scripts/gtk.sh` silently showed the window on the desktop, where it was not redrawn (stale stills); it now starts the headless mutter's private bus with `dbus-broker` as a transient user service that names no service folders. `scripts/demo.py` moves the stills instead of renaming them (the frames' folder in /tmp is another file system).
 
-- [ ] **Mac screenshots in the website's "A look around" (owner, 2026-11-20: idea for later)**: the gallery (`site/index.html` `#look`, and `/de/`) shows only the GTK app; add the Mac app's windows, light and dark, e.g. from the `mac` workflow's screenshot artifacts. Best done together with the new example song (above), so all pictures are recorded once.
+- [x] **Mac screenshots in the website's "A look around" (owner, 2026-11-20: idea for later; 2026-11-25: wanted, and the Windows app's later)**: the gallery (`site/index.html` `#look`, and `/de/`) shows only the GTK app; add the Mac app's windows, light and dark, e.g. from the `mac` workflow's screenshot artifacts. Best done together with the new example song (above), so all pictures are recorded once. Found on 2026-11-25: the `mac` workflow's screenshots (`ScreenshotTests`, run 45581044634 on main) do not suit the site: they are drawn from a scripted core with a placeholder song title and a four-bar test sheet, at 900×620, and the toolbar's buttons come out as blank shapes off screen; the site needs the real app with "Eyesplit", as the GTK stills. The Windows app's pictures follow once `win-shell` is built (release 11). Specified 2026-11-25 (SPEC.md "Website", "Change 2026-11-25"), Phase 33.
 
 - [ ] **The README still shows the old song's video (owner, 2026-11-25)**: the owner sees the old example song ("Fluffing a Duck") in the README's animation. Found on 2026-11-25: `docs/screenshots/overview.gif` on `main` (re-recorded in 7eaac80) already shows "Eyesplit" in sampled frames, so first find where the old one is seen (GitHub's or the browser's image cache, another branch, a copy elsewhere such as the website or the release page) and replace or refresh it there.
 
