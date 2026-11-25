@@ -28,8 +28,8 @@ public enum Command: Equatable, Sendable {
     case restore(src: String)
     case uninstallSizes
     case uninstall(everything: Bool)
-    case jump(bar: Int, at: Double)
-    case step(at: Double, by: Int)
+    case jump(bar: Int, from: Double)
+    case step(from: Double, count: Int)
     case volumes(hear: Hear, song: Double?, hits: Double?)
     case playable
     case quit
@@ -83,7 +83,8 @@ private struct CommandWire: Encodable {
     let command: Command
 
     private enum Keys: String, CodingKey {
-        case id, cmd, path, dest, src, width, zoom, everything, bar, at, by, hear, song, hits
+        case id, cmd, path, dest, src, width, zoom, everything, bar, hear, song, hits
+        case from = "at", count = "by"  // the protocol's names
     }
 
     func encode(to encoder: any Encoder) throws {
@@ -104,12 +105,12 @@ private struct CommandWire: Encodable {
             try container.encode(everything, forKey: .everything)
         case .backupSummary(let src), .restore(let src):
             try container.encode(src, forKey: .src)
-        case .jump(let bar, let at):
+        case .jump(let bar, let from):
             try container.encode(bar, forKey: .bar)
-            try container.encode(at, forKey: .at)
-        case .step(let at, let by):
-            try container.encode(at, forKey: .at)
-            try container.encode(by, forKey: .by)
+            try container.encode(from, forKey: .from)
+        case .step(let from, let count):
+            try container.encode(from, forKey: .from)
+            try container.encode(count, forKey: .count)
         case .volumes(let hear, let song, let hits):
             try container.encode(hear, forKey: .hear)
             try container.encodeIfPresent(song, forKey: .song)  // the stored volume without

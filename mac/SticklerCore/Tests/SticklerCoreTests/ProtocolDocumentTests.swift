@@ -125,7 +125,7 @@ let sampleCommands: [Command] = [
     .backUp(dest: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
     .backupSummary(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
     .restore(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"), .uninstallSizes,
-    .uninstall(everything: false), .jump(bar: 2, at: 3.2), .step(at: 3.2, by: 1),
+    .uninstall(everything: false), .jump(bar: 2, from: 3.2), .step(from: 3.2, count: 1),
     .volumes(hear: .hits, song: 0.6, hits: nil), .playable, .quit
 ]
 
@@ -153,26 +153,28 @@ let sampleCommands: [Command] = [
     #expect(stored["zoom"] == nil)  // the stored note size
 }
 
-/// The payload type of each command whose reply has more than `ok`.
+/// The payload type of each command whose reply has more than `ok`, encoded back.
+let payloads: [String: @Sendable (Reply) throws -> NSDictionary] = [
+    "pages": { try object(encoding: $0.payload(Pages.self)) },
+    "a4_pages": { try object(encoding: $0.payload(A4Pages.self)) },
+    "drum_track_cost": { try object(encoding: $0.payload(DrumTrackCost.self)) },
+    "settings": { try object(encoding: $0.payload(Settings.self)) },
+    "set_zoom": { try object(encoding: $0.payload(Zoom.self)) },
+    "zoom_in": { try object(encoding: $0.payload(Zoom.self)) },
+    "zoom_out": { try object(encoding: $0.payload(Zoom.self)) },
+    "actual_size": { try object(encoding: $0.payload(Zoom.self)) },
+    "removal_sizes": { try object(encoding: $0.payload(RemovalSizes.self)) },
+    "uninstall_sizes": { try object(encoding: $0.payload(UninstallSizes.self)) },
+    "backup_summary": { try object(encoding: $0.payload(BackupSummary.self)) },
+    "jump": { try object(encoding: $0.payload(Seconds.self)) },
+    "step": { try object(encoding: $0.payload(Seconds.self)) },
+    "volumes": { try object(encoding: $0.payload(Gains.self)) },
+    "playable": { try object(encoding: $0.payload(Playable.self)) }
+]
+
 func payloadMatches(_ command: String, _ line: Data) throws -> NSDictionary? {
-    let reply: Reply
-    guard case .reply(let read) = try Incoming(line: line) else { return nil }
-    reply = read
-    switch command {
-    case "pages": return try object(encoding: reply.payload(Pages.self))
-    case "a4_pages": return try object(encoding: reply.payload(A4Pages.self))
-    case "drum_track_cost": return try object(encoding: reply.payload(DrumTrackCost.self))
-    case "settings": return try object(encoding: reply.payload(Settings.self))
-    case "set_zoom", "zoom_in", "zoom_out", "actual_size":
-        return try object(encoding: reply.payload(Zoom.self))
-    case "removal_sizes": return try object(encoding: reply.payload(RemovalSizes.self))
-    case "uninstall_sizes": return try object(encoding: reply.payload(UninstallSizes.self))
-    case "backup_summary": return try object(encoding: reply.payload(BackupSummary.self))
-    case "jump", "step": return try object(encoding: reply.payload(Seconds.self))
-    case "volumes": return try object(encoding: reply.payload(Gains.self))
-    case "playable": return try object(encoding: reply.payload(Playable.self))
-    default: return NSDictionary()
-    }
+    guard case .reply(let reply) = try Incoming(line: line) else { return nil }
+    return try payloads[command]?(reply) ?? NSDictionary()
 }
 
 @Test func everyReplyDecodesWithItsFields() throws {

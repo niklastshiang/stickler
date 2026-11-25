@@ -68,12 +68,12 @@ func playingResult(
 let gainsReply = #""ok": true, "song": 0.7, "hits": 1.0"#
 
 @MainActor
-func playing(_ player: FakePlayer = FakePlayer()) throws -> (Harness, AppModel, FakePlayer) {
+func playing(_ player: FakePlayer) throws -> (Harness, AppModel) {
     let harness = try Harness()
     harness.preset("volumes", with: gainsReply)
     let model = harness.model(player: player)
     model.launch()
-    return (harness, model, player)
+    return (harness, model)
 }
 
 /// The `volumes` commands sent so far.
@@ -83,7 +83,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
 
 @MainActor @Suite struct Playback {
     @Test func withoutAResultOrAPlayerNothingPlays() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         #expect(!model.playback.canPlay)
         model.playback.toggle()
         model.playback.nextBar()
@@ -116,7 +117,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func aResultIsReadyAtItsStart() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         #expect(model.playback.length == 12 && model.playback.lengthText == "0:12")
@@ -126,7 +128,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func playLoadsBothSourcesAtTheCoresGainsAndFollowsThePosition() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -152,7 +155,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func aSongWithoutClicksPlaysAlone() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1, clicks: nil))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -161,7 +165,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func theArrowsAndABarClickGoWhereTheCoreSays() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.seek(to: 5)
@@ -172,17 +177,17 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
         #expect(await settled { harness.core.sent.filter { $0.name == "step" }.count == 2 })
         #expect(
             harness.core.sent.filter { $0.name == "step" }
-                == [.step(at: 5, by: -1), .step(at: 2, by: 1)])
+                == [.step(from: 5, count: -1), .step(from: 2, count: 1)])
 
         harness.core.answer("jump", with: #""ok": true, "seconds": 8.0"#)
         model.playback.jump(toBar: 3)  // stopped: the position moves, nothing plays
         #expect(await settled { model.playback.position == 8 })
-        #expect(harness.core.sent.contains(.jump(bar: 3, at: 2)))
+        #expect(harness.core.sent.contains(.jump(bar: 3, from: 2)))
         #expect(!model.playback.playing && player.loads.isEmpty)
 
         harness.core.answer("jump", with: #""ok": true, "seconds": null"#)
         model.playback.jump(toBar: 9)  // never played: nowhere to go
-        #expect(await settled { harness.core.sent.contains(.jump(bar: 9, at: 8)) })
+        #expect(await settled { harness.core.sent.contains(.jump(bar: 9, from: 8)) })
         try await Task.sleep(for: .milliseconds(20))
         #expect(model.playback.position == 8)
 
@@ -195,7 +200,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func whilePlayingTheArrowsAskFromThePlayersPosition() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -204,11 +210,11 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
         harness.core.answer("step", with: #""ok": true, "seconds": 8.0"#)
         model.playback.nextBar()
         #expect(await settled { player.seeks.last == 8 })
-        #expect(harness.core.sent.contains(.step(at: 6.5, by: 1)))
+        #expect(harness.core.sent.contains(.step(from: 6.5, count: 1)))
     }
 
     @Test func aRefusedCommandSaysWhy() async throws {
-        let (harness, model, _) = try playing()
+        let (harness, model) = try playing(FakePlayer())
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         harness.core.answer("step", with: refusal("Not now."))
@@ -223,7 +229,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func theEndStopsAndPlayStartsAgainAtTheBeginning() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -237,7 +244,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func anOutputThatChangedPausesWhereItWas() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -251,7 +259,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func aNewSongCloseAndAStoppedCoreStopTheSound() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -285,7 +294,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func anExportPausesAndHidesTheControls() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -307,7 +317,7 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     @Test func aSongTheSystemCannotReadPlaysFromTheCoresCopy() async throws {
         let player = FakePlayer()
         player.unreadable = ["/m/e.ogg"]
-        let (harness, model, _) = try playing(player)
+        let (harness, model) = try playing(player)
         harness.core.answer("playable", with: #""ok": true, "path": "/c/e.flac""#)
         try harness.core.emit(try playingResult(seq: 1, song: "/m/e.ogg"))
         #expect(await settled { model.playback.canPlay })
@@ -320,7 +330,7 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     @Test func aSongThatPlaysNowhereSaysWhy() async throws {
         let player = FakePlayer()
         player.unreadable = ["/m/e.ogg"]
-        let (harness, model, _) = try playing(player)
+        let (harness, model) = try playing(player)
         harness.core.answer("playable", with: refusal("“e.ogg” cannot be played."))
         try harness.core.emit(try playingResult(seq: 1, song: "/m/e.ogg"))
         #expect(await settled { model.playback.canPlay })
@@ -342,7 +352,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func whatToHearAndTheVolumesAreTheCoresGains() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -369,7 +380,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func anAnswerANewerChangeOvertookIsDropped() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         model.playback.toggle()
@@ -385,7 +397,8 @@ func volumesAsked(_ core: FakeCore) -> [Command] {
     }
 
     @Test func theVolumesBeforeAPlayAreUsedWhenItLoads() async throws {
-        let (harness, model, player) = try playing()
+        let player = FakePlayer()
+        let (harness, model) = try playing(player)
         try harness.core.emit(try playingResult(seq: 1))
         #expect(await settled { model.playback.canPlay })
         harness.core.answer("volumes", with: #""ok": true, "song": 0.3, "hits": 1.0"#)

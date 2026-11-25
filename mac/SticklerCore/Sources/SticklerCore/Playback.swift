@@ -167,7 +167,7 @@ public final class PlaybackModel {
     /// moves there without playing.
     public func jump(toBar bar: Int) {
         guard canPlay else { return }
-        ask(.jump(bar: bar, at: now))
+        ask(.jump(bar: bar, from: now))
     }
 
     public func setHear(_ next: Hear) {
@@ -297,7 +297,7 @@ public final class PlaybackModel {
 extension PlaybackModel {
     private func step(by count: Int) {
         guard canPlay else { return }
-        ask(.step(at: now, by: count))
+        ask(.step(from: now, count: count))
     }
 
     /// Asks the core where to go and goes there, unless the song changed meanwhile.

@@ -227,7 +227,7 @@ public struct SongResult: Codable, Equatable, Sendable {
     public var corrections: Corrections
     public var correcting: Bool
     /// The detected hits as clicks, as long as the song; nil when there are none.
-    public var clicks: String? = nil
+    public var clicks: String?
     /// The song's bars in played order (`docs/bridge.md`, `result`).
     public var bars: [SongBar] = []
 }
