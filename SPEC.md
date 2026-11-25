@@ -3498,12 +3498,21 @@ docs/install-windows.md       # install guide with the SmartScreen pictures
    (administrator rights); `uv` handles long paths only with it, and deep PyTorch paths have
    failed elsewhere (WinError 206). The core's folders stay short
    (`%LOCALAPPDATA%\Stickler\` with `uv`'s Python and cache under it); the spike installs the
-   models under a long user name to see whether that is enough.
+   models under a long user name to see whether that is enough. **Answered by `win-spike`
+   (2026-11-24 and 2026-11-25):** short folders are enough. On the runner, setup and analysis
+   worked with `LongPathsEnabled=0` and a 50-character profile name (paths up to 270
+   characters, which uv writes itself); the owner's PC has `LongPathsEnabled=1`, so it could
+   not test this.
 4. **Decided (owner, 2026-11-24): SmartScreen and Smart App Control.** an unsigned installer shows "Windows protected your
    PC" for every new version (reputation is per file hash); Smart App Control, when on, blocks
    unsigned programs outright, and the bundled `uv.exe`, `python.exe` and ffmpeg too
    (unconfirmed which). The spike checks it on the owner's PC; with Smart App Control on, the
-   guide can only say to wait for the signed release.
+   guide can only say to wait for the signed release. **Answered by `win-spike` for the owner's
+   PC (2026-11-25):** it has Panda Adaptive Defense 360 instead of Defender, and Smart App
+   Control is off. Panda held back each new unsigned program the first time it started: the
+   installer's helper, the environment's launcher and the uninstaller. It released them
+   after a while; for the launcher that was about half an hour. A PC with Defender,
+   SmartScreen and Smart App Control is still untested (no such PC).
 5. **Decided (owner, 2026-11-25): the first version's scope** is the Mac app's state, CUDA
    later (see Objective). This replaces "so wie Release 8 beim Mac" and the catching up after
    it: playback, backup and uninstall come in release 11.
@@ -3754,7 +3763,8 @@ cannot hold there is skipped with that reason); ARM64.
 
 ### Module `win-spike`
 
-> Status: **approved** by the owner on 2026-11-24 (the company laptop is the only Windows PC
+> Status: **answered** 2026-11-25 (runner 2026-11-24, the owner's PC 2026-11-25; below), the
+> branch's deletion waiting for the owner. Approved by the owner on 2026-11-24 (the company laptop is the only Windows PC
 > and counts: "wenn er hier läuft, passt das so"; decisions 2 and 3 as proposed). Plan:
 > `tasks/plan.md` ("`win-spike`"), tasks 176–180. Nothing of the spike's code is merged: its workflow, installer script and launcher live on a throwaway branch
 > (`claude/win-spike`); what stays are its findings, written into this spec and `tasks/todo.md`.
@@ -3938,6 +3948,47 @@ Control and no third-party antivirus, so nothing below says what a user's PC doe
    Python writes `__pycache__` there; without it was not tried. Settings › Apps itself is
    looked at on the owner's PC.
 5. **A screenshot of the runner's desktop can be taken** (1024 × 768, `CopyFromScreen`).
+
+**Answered on the owner's PC** (2026-11-25, task 179: Windows 11 23H2 in a domain, Panda
+Adaptive Defense 360, Smart App Control off, `LongPathsEnabled=1`, a company network that
+inspects TLS; the run's log `%LOCALAPPDATA%\Stickler\spike-log.txt`, the installer from run
+45389618481):
+
+1. **Question 1: yes, once two network settings were in place.**
+   - The installed folder: the core started from it and found the adapters' sources itself;
+     the folders were as on the runner.
+   - Run 1: setup stopped at uv's download of Python ("invalid peer certificate:
+     UnknownIssuer"): uv trusts only its own certificates.
+   - With `UV_SYSTEM_CERTS=1`: both environments were set up in two minutes. Then Beat
+     This!'s own download failed: Python 3.13 and later check certificates in strict mode,
+     and the proxy's certificate lacks the "Authority Key Identifier" that mode asks for.
+   - Both now in the code: `packaged_env` sets `UV_SYSTEM_CERTS` (task 181), and
+     `allow_proxy_certificates` drops only strict mode for the download (task 189).
+   - Run 4: setup 29 s, then "Eye of the Tiger" analysed in 156 s on
+     the laptop's CPU (ADTOF 98 s, Beat This! 51 s). The MusicXML was written (♩ = 109, 4/4).
+   - Offline after the setup was not repeated here; the runner showed it.
+2. **Question 2: Panda, not SmartScreen. It holds back each new program for a while.**
+   - The installer's first start ended with Inno Setup's "Unable to execute file in the
+     temporary directory". Panda blocked its helper; a start "a little later" (owner) went
+     through, without administrator rights.
+   - The environment's `Scripts\python.exe` was refused ("Zugriff verweigert") at 10:13. At
+     10:44 Panda reported it available and it started.
+   - The uninstaller `unins000.exe` was refused at its first start (12:35).
+   - Programs Panda had already seen ran at once: uv, the shipped Python, Python as uv
+     downloaded it. So did the models.
+   - The same held for the work in the repository: uv's `stickler.exe` and
+     `stickler-bridge.exe` were refused at their first start. The app therefore starts the
+     core as `python -m stickler_app.bridge` (`win-shell`).
+   - The browser's message at the download was not noted.
+3. **Question 3: as on the runner, only uv is signed. The launcher's hash differs here.**
+   - The environments' `Scripts\python.exe` here hashes `5BAFA2BD…`; the runner's was
+     `f50e21b4…`.
+   - It is not one file for every PC, so it gains no reputation across users. On one PC it
+     is one file for all environments, and Panda released it once for all of them.
+   - Starting models without the launcher was not needed here.
+4. **Question 4: not testable here.** `LongPathsEnabled` is on; the runner's answer stands.
+5. **Question 5:** the uninstall entry is in Settings › Apps ("Stickler (spike)", version 9,
+   381 MB). The uninstaller first had to wait for Panda (12:35); its second try is below.
 
 **Notes for `win-shell` and `win-package`** (from the spike, not decided):
 - The bridge has no event for "the models are set up, nothing to ask": the driver waits 20 s
