@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-25 07:27+0100\n"
+"POT-Creation-Date: 2026-11-25 10:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -313,17 +313,17 @@ msgstr ""
 msgid "opened yesterday"
 msgstr ""
 
+#. Translators: a date in strftime format, as in "12 November"
 #: src/stickler_app/recent.py:93
 msgid "%-d %B"
 msgstr ""
 
-#. Translators: a date in strftime format, as in "12 November"
-#: src/stickler_app/recent.py:93
+#: src/stickler_app/recent.py:94
 #, python-brace-format
 msgid "opened {date}"
 msgstr ""
 
-#: src/stickler_app/recent.py:106
+#: src/stickler_app/recent.py:107
 msgid "file not found"
 msgstr ""
 
@@ -458,6 +458,18 @@ msgstr ""
 
 #: src/stickler_app/uninstall.py:78
 msgid "the system’s package service (PackageKit) does not answer"
+msgstr ""
+
+#. Translators: Windows app, the note after saving a file (design screen W7): opens Explorer
+#. with the file selected; Chrome says "In Ordner anzeigen" in German, "Mostrar en carpeta"
+#. in Spanish
+#: src/stickler_app/win_texts.py:13
+msgid "Show in Folder"
+msgstr ""
+
+#. Translators: Windows app, the last entry of the File menu (design screen W8): ends the app
+#: src/stickler_app/win_texts.py:15
+msgid "Exit"
 msgstr ""
 
 #. Translators: a percentage; German puts a no-break space before the sign

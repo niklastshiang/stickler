@@ -1328,7 +1328,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/app/test_paths.py`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler_app/paths.py`, `tests/app/test_paths.py`
 
-- [ ] **Task 182: The Windows app's texts and string tables** (M)
+- [x] **Task 182: The Windows app's texts and string tables** (M): done 2026-11-25. `win_texts.py` with "Show in Folder" (de "In Ordner anzeigen", es "Mostrar en carpeta", as Chrome words it) and "Exit" ("Beenden", "Salir"); every other text of the window was in `po/` already. `scripts/winstrings.py` reads po/ with `xcstrings.py`'s reader and writes `de.json`, `es.json` and `en.json` (English plural forms only); `scripts/i18n.sh` runs it; a test fails when the committed tables are not current (instead of a line in `scripts/check.sh`, as for the Mac's catalog). `scripts/i18n.sh` ran in WSL (this PC has no gettext); its msgmerge moved one comment and the Mac's catalog gained the two texts.
   - Acceptance: `src/stickler_app/win_texts.py` (as `mac_texts.py`) with "Show in Folder", "Exit" and this module's other new texts, collected into `po/` with German and Spanish; `scripts/winstrings.py` writes `win/Stickler/Strings/<lang>.json` from `po/` (keys the English text, named placeholders kept, plurals as `one`/`other`, an unknown plural rule an error, deterministic, `--check`); `scripts/check.sh` runs `--check`.
   - Verify: `uv run pytest -q tests/test_winstrings.py tests/app/test_win_texts.py`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler_app/win_texts.py`, `scripts/winstrings.py`, `scripts/check.sh`, `po/*`, `win/Stickler/Strings/`, tests

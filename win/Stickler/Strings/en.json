@@ -1,0 +1,14 @@
+{
+  "Separating the drums takes about {minutes} minute on this computer.": {
+    "one": "Separating the drums takes about {minutes} minute on this computer.",
+    "other": "Separating the drums takes about {minutes} minutes on this computer."
+  },
+  "To hear the drums, Stickler needs a trained model. It is downloaded once; after that, everything runs on this computer, offline.": {
+    "one": "To hear the drums, Stickler needs a trained model. It is downloaded once; after that, everything runs on this computer, offline.",
+    "other": "To hear the drums, Stickler needs {count} trained models. They are downloaded once; after that, everything runs on this computer, offline."
+  },
+  "{count} page": {
+    "one": "{count} page",
+    "other": "{count} pages"
+  }
+}

@@ -24,3 +24,5 @@ done
 echo "po/stickler.pot: $(grep -c '^msgid ' po/stickler.pot) entries (including the header)"
 # the Mac app's String Catalog follows po/ (SPEC.md, module `shared-core`)
 uv run python scripts/xcstrings.py
+# and the Windows app's string tables (SPEC.md, module `win-shell`)
+uv run python scripts/winstrings.py
