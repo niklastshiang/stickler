@@ -8,6 +8,8 @@ import Testing
 final class FakePlayer: Playing {
     var loads: [(song: String, clicks: String?)] = []
     var unreadable: Set<String> = []
+    /// Plays from the end: it tells it ended inside `play`, as the engine does.
+    var endsAtOnce = false
     var loadFailure: PlayerError?
     var playFailure: PlayerError?
     var isPlaying = false
@@ -18,7 +20,9 @@ final class FakePlayer: Playing {
     var paused: (@MainActor (PlayerPause) -> Void)?
 
     func load(song: URL, clicks: URL?) throws {
-        if unreadable.contains(song.path) { throw PlayerError.unreadable }
+        if unreadable.contains(song.path) {
+            throw PlayerError.unreadable(message: "Cannot read \(song.lastPathComponent).")
+        }
         if let loadFailure { throw loadFailure }
         loads.append((song.path, clicks?.path))
         position = 0
@@ -26,6 +30,10 @@ final class FakePlayer: Playing {
 
     func play() throws {
         if let playFailure { throw playFailure }
+        if endsAtOnce {
+            paused?(.ended)
+            return
+        }
         isPlaying = true
     }
 

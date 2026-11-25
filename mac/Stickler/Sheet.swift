@@ -310,17 +310,23 @@ final class SheetWebView: WKWebView {
 
     override func mouseUp(with event: NSEvent) {
         super.mouseUp(with: event)
-        guard let downAt else { return }
-        self.downAt = nil
-        let end = event.locationInWindow
-        guard abs(end.x - downAt.x) < Self.slack, abs(end.y - downAt.y) < Self.slack else {
-            return  // a drag, not a click
+        let down = downAt
+        downAt = nil
+        if let point = clickPoint(down: down, up: event.locationInWindow) {
+            click(at: point)
         }
-        var point = convert(end, from: nil)
+    }
+
+    /// Where a click landed, from the view's top left: the mouse went up within `slack`
+    /// points of where it went down (in the window), else it was a drag.
+    func clickPoint(down: CGPoint?, up: CGPoint) -> CGPoint? {
+        guard let down, abs(up.x - down.x) < Self.slack, abs(up.y - down.y) < Self.slack
+        else { return nil }
+        var point = convert(up, from: nil)
         if !isFlipped {
             point.y = bounds.height - point.y
         }
-        click(at: point)
+        return point
     }
 
     /// A click at `point` (from the view's top left): asks the page which page and point it

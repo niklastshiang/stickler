@@ -56,6 +56,17 @@ extension SheetTests {
 }
 
 extension SheetLoadTests {
+    func testAClickIsAMouseThatWentUpWhereItWentDown() {
+        let view = SheetWebView.make()
+        view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
+        let point = view.clickPoint(down: CGPoint(x: 100, y: 200), up: CGPoint(x: 102, y: 201))
+        XCTAssertEqual(point?.x, 102)
+        // from the view's top left: the window counts from the bottom
+        XCTAssertEqual(point?.y, view.isFlipped ? 201 : 99)
+        XCTAssertNil(view.clickPoint(down: CGPoint(x: 100, y: 200), up: CGPoint(x: 110, y: 200)))
+        XCTAssertNil(view.clickPoint(down: nil, up: CGPoint(x: 100, y: 200)))
+    }
+
     /// Two pages of 400 by 200 pixels as the app builds them.
     func twoPages() throws -> SheetHTML.Content {
         let page = try JSONDecoder().decode(
@@ -143,6 +154,16 @@ extension SheetLoadTests {
         XCTAssertEqual((first[0] as? NSNumber)?.intValue, 0)
         XCTAssertEqual((first[2] as? NSNumber)?.doubleValue ?? -1, 100, accuracy: 0.5)
         XCTAssertFalse(answers.last.flatMap { $0 } is [Any], "no page under the desk")
+        // a pinch's picture at twice the size: the point is still the page's own pixel
+        _ = await value("document.body.style.transformOrigin = '0 0'; "
+            + "document.body.style.transform = 'scale(2)'; return true", in: view)
+        view.click(at: CGPoint(x: 424, y: 224))  // (200, 100) on the first page, twice as large
+        for _ in 0..<250 where answers.count < 3 {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let scaled = try XCTUnwrap(answers.last as? [Any])
+        XCTAssertEqual((scaled[1] as? NSNumber)?.doubleValue ?? -1, 200, accuracy: 0.5)
+        XCTAssertEqual((scaled[2] as? NSNumber)?.doubleValue ?? -1, 100, accuracy: 0.5)
         sheet.window.close()
     }
 }

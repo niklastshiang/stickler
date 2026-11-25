@@ -138,13 +138,15 @@ enum SheetHTML {
     }
 
     /// The page under a point of the web view and the point on it, in page pixels: the
-    /// script answers `[page, x, y]`, or nothing between the pages.
+    /// script answers `[page, x, y]`, or nothing between the pages. A pinch's picture draws
+    /// the pages larger or smaller; the point is taken back to the page's own pixels.
     static let hitScript = """
         const pages = document.querySelectorAll(".page");
         for (let k = 0; k < pages.length; k++) {
             const r = pages[k].getBoundingClientRect();
             if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-                return [k, x - r.left, y - r.top];
+                const scale = r.width / Math.max(1, pages[k].offsetWidth);
+                return [k, (x - r.left) / scale, (y - r.top) / scale];
             }
         }
         return null

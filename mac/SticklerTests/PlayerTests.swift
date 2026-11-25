@@ -159,12 +159,31 @@ final class PlayerTests: XCTestCase {
         XCTAssertEqual(player.position, 0.1, accuracy: 0.001)
     }
 
+    func testAnOutputThatStoppedTheEngineKeepsThePlaceLastHeard() async throws {
+        let player = try loaded()
+        var told: [PlayerPause] = []
+        player.paused = { told.append($0) }
+        try player.play()
+        _ = try render(4410)
+        XCTAssertEqual(player.position, 0.1, accuracy: 0.001)  // read by the model's tick
+        engine.stop()  // the system stops the engine before it says the output changed
+        NotificationCenter.default.post(name: .AVAudioEngineConfigurationChange, object: engine)
+        for _ in 0..<100 where told.isEmpty {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertEqual(told, [.interrupted])
+        XCTAssertEqual(player.position, 0.1, accuracy: 0.001)
+    }
+
     func testASongTheSystemCannotReadIsUnreadableAndClicksItCannotAreLeftOut() throws {
         let player = Player(engine: engine)
         let text = try XCTUnwrap(folder).appendingPathComponent("song.txt")
         try Data("not a sound".utf8).write(to: text)
         XCTAssertThrowsError(try player.load(song: text, clicks: nil)) { error in
-            XCTAssertEqual(error as? PlayerError, .unreadable)
+            guard case .unreadable(let message) = error as? PlayerError else {
+                return XCTFail("\(error)")
+            }
+            XCTAssertTrue(message.hasPrefix("The song cannot be played: "), message)
         }
         try player.load(song: try impulses("song.wav", at: [1000]), clicks: text)
         try player.play()

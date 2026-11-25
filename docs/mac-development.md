@@ -184,6 +184,9 @@ Module `mac-playback` (SPEC.md "Mac playback", its success criteria 1–6), with
 4. **Controls menu and keys:** between View and Window. Space plays and pauses (the first
    item reads "Play" or "Pause"), ← and → go a bar back and on, ⌥← and Home go to the start,
    Song, Hits and Both carry the checkmark. Space should not press a focused button instead.
+   With a song shown, open File › Open… and type "a b" and ← → in its search field, and in
+   Export › MusicXML…'s name field: the space and the arrows edit the text and do not play
+   or move the music (the menu's keys have no ⌘).
 5. **Stopping:** open another song, Close Song (⌘W) and quit while it plays: the sound stops
    at once. Unplug headphones (or change the output in Control Centre) while it plays: it
    pauses where it was and plays on from there.

@@ -63,11 +63,17 @@ def test_every_song_bar_has_its_label():
     assert playback.labels([]) == []
 
 
-def test_a_playable_copy_goes_to_the_apps_cache_beside_the_clicks(tmp_path):
-    env = {"XDG_CACHE_HOME": str(tmp_path)}
-    copy = paths.playable_path(Path("/music/a/Song.ogg"), env)
-    assert copy.parent == tmp_path / "stickler" / "playable" and copy.suffix == ".flac"
-    assert copy.stem == paths.score_path(Path("/music/a/Song.ogg"), env).stem
+def test_a_playable_copy_goes_to_the_apps_cache_named_by_the_songs_content(tmp_path):
+    env = {"XDG_CACHE_HOME": str(tmp_path / "cache")}
+    song = tmp_path / "Song.ogg"
+    song.write_bytes(b"first")
+    copy = paths.playable_path(song, env)
+    assert copy.parent == tmp_path / "cache" / "stickler" / "playable" and copy.suffix == ".flac"
+    assert copy.stem == paths.song_digest(song)
+    song.write_bytes(b"another song at the same place")
+    assert paths.playable_path(song, env) != copy  # not the old song's copy
+    gone = tmp_path / "Gone.ogg"  # unreadable: named by its place, ffmpeg then says why
+    assert paths.playable_path(gone, env).stem == paths.score_path(gone, env).stem
 
 
 def _tone(path: Path) -> None:

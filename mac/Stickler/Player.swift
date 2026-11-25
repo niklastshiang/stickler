@@ -19,6 +19,9 @@ final class Player: Playing {
     /// Where the scheduled segments start, in seconds of the song; the position while paused.
     private var from = 0.0
     private var playing = false
+    /// The position last read while it played: an output that changed has stopped the engine
+    /// already, and its render time is gone by the time the player hears of it.
+    private var heard = 0.0
     /// Raised whenever the nodes are stopped: their completions from before are ignored.
     private var generation = 0
     private var changes: (any NSObjectProtocol)?
@@ -51,7 +54,7 @@ final class Player: Playing {
         do {
             song = try AVAudioFile(forReading: url)
         } catch {
-            throw PlayerError.unreadable
+            throw PlayerError.unreadable(message: Self.cannotPlay(error))
         }
         clicks = clicksURL.flatMap { try? AVAudioFile(forReading: $0) }
         if let song {
@@ -94,12 +97,17 @@ final class Player: Playing {
     }
 
     /// Where the song is: the place the segments started from plus what the song's node has
-    /// played since.
+    /// played since, less what is still on its way to the ears (Bluetooth takes a fifth of a
+    /// second), so the marker shows the bar that is heard.
     var position: Double {
-        guard playing, let song, let rendered = songNode.lastRenderTime,
+        guard playing, let song else { return from }
+        guard let rendered = songNode.lastRenderTime,
             let played = songNode.playerTime(forNodeTime: rendered), played.sampleTime >= 0
-        else { return from }
-        return min(from + Double(played.sampleTime) / song.processingFormat.sampleRate, length)
+        else { return heard }
+        let late = engine.isInManualRenderingMode ? 0 : engine.outputNode.presentationLatency
+        let seconds = Double(played.sampleTime) / song.processingFormat.sampleRate - late
+        heard = min(from + max(seconds, 0), length)
+        return heard
     }
 
     func setGains(_ next: Gains) {
@@ -130,6 +138,7 @@ final class Player: Playing {
         guard let song else { return }
         generation += 1
         let mine = generation
+        heard = from
         let ends = schedule(song, on: songNode) { [weak self] in
             Task { @MainActor in self?.reachedTheEnd(mine) }
         }

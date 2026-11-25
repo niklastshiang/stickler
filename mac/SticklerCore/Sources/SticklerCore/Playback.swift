@@ -11,8 +11,9 @@ public enum PlayerPause: Sendable {
 
 /// What the player cannot do; its message is shown as the window's notice.
 public enum PlayerError: Error, Equatable {
-    /// The system cannot read the song's format: the core decodes a copy (`playable`).
-    case unreadable
+    /// The system cannot read the file's format: the core decodes a copy of a song
+    /// (`playable`); the message is shown when the copy cannot be read either.
+    case unreadable(message: String)
     /// Anything else (no sound device, a broken file), said in words for the reader.
     case failed(message: String)
 }
@@ -80,6 +81,8 @@ public final class PlaybackModel {
     private var loaded = false  // the player holds this song
     private var atEnd = false  // played to the end: play starts again at 0
     private var starting = false  // a play waits for the core (a copy, the gains)
+    private var called = false  // a second press called off a play that still waits
+    private var moves: Task<Void, Never>?  // the last `step` or `jump`, sent in order
     private var gains: Gains?  // the core's newest answer
     private var volumeRequest = 0  // older answers are dropped
     private var volumes: Task<Void, Never>?  // the last `volumes` command, sent in order
@@ -102,10 +105,12 @@ public final class PlaybackModel {
         forgetSong()
         gains = nil
         guard let next else { return }
+        let asked = volumeRequest
         Task {
             do {
                 let settings = try await next.send(.settings).payload(Settings.self)
-                guard next === core else { return }
+                // a core replaced meanwhile, or a slider the reader moved before the answer
+                guard next === core, asked == volumeRequest else { return }
                 songVolume = settings.songVolume
                 hitsVolume = settings.hitsVolume
             } catch {
@@ -144,6 +149,8 @@ public final class PlaybackModel {
         guard canPlay else { return }
         if playing {
             pause()
+        } else if starting {
+            called = true  // pressed again while it waits: it does not start
         } else {
             Task { await start() }
         }
@@ -175,7 +182,7 @@ public final class PlaybackModel {
     /// moves there without playing.
     public func jump(toBar bar: Int) {
         guard canPlay else { return }
-        ask(.jump(bar: bar, from: now))
+        ask { .jump(bar: bar, from: $0) }
     }
 
     public func setHear(_ next: Hear) {
@@ -200,6 +207,7 @@ public final class PlaybackModel {
     private func start() async {
         guard let player, let song, !starting else { return }
         starting = true
+        called = false
         defer { starting = false }
         if !loaded {
             guard await load(song, into: player) else { return }
@@ -207,7 +215,7 @@ public final class PlaybackModel {
         if gains == nil {
             await changeVolumes(song: nil, hits: nil).value
         }
-        guard song == self.song, loaded, onScreen else { return }  // closed meanwhile
+        guard song == self.song, loaded, onScreen, !called else { return }  // closed, called off
         if atEnd {
             atEnd = false
             position = 0
@@ -219,6 +227,7 @@ public final class PlaybackModel {
             failed(error)
             return
         }
+        guard !atEnd else { return }  // nothing was left to play: it ended at once
         playing = true
         startTicking()
     }
@@ -313,15 +322,20 @@ public final class PlaybackModel {
 extension PlaybackModel {
     private func step(by count: Int) {
         guard canPlay else { return }
-        ask(.step(from: now, count: count))
+        ask { .step(from: $0, count: count) }
     }
 
-    /// Asks the core where to go and goes there, unless the song changed meanwhile.
-    private func ask(_ command: Command) {
+    /// Asks the core where to go from the position and goes there, unless the song changed
+    /// meanwhile. The questions go out one after another, each from where the one before
+    /// went, so two quick presses of → go two bars on.
+    private func ask(_ question: @escaping @MainActor (Double) -> Command) {
         guard let core, let asked = song else { return }
-        Task {
+        let before = moves
+        moves = Task {
+            await before?.value
+            guard asked == song else { return }
             do {
-                let reply = try await core.send(command).payload(Seconds.self)
+                let reply = try await core.send(question(now)).payload(Seconds.self)
                 guard asked == song, let seconds = reply.seconds else { return }
                 seek(to: seconds)
             } catch {
@@ -368,9 +382,10 @@ extension PlaybackModel {
     }
 
     private func failed(_ error: any Error) {
-        if case PlayerError.failed(let message) = error {
+        switch error {
+        case PlayerError.failed(let message), PlayerError.unreadable(let message):
             tell(Notice(text: message, opens: nil))
-        } else {
+        default:
             refused(error)
         }
     }

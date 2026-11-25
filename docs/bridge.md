@@ -492,11 +492,12 @@ values; they are remembered for every song (`settings` sends them as `song_volum
 
 The result's song as a FLAC file, for a player that cannot read the song's own format. It is
 decoded once into the cache, so the first reply can take a moment. A song that cannot be
-decoded is refused with the code `not_playable`.
+decoded is refused with the code `not_playable`. The copy is named by the song's content, so
+another song saved at the same place gets its own.
 
 ```json
 {"id": 30, "cmd": "playable"}
-{"id": 30, "ok": true, "path": "/Users/me/Library/Caches/Stickler/playable/Eye of the Tiger-1a2b3c4d5e.flac"}
+{"id": 30, "ok": true, "path": "/Users/me/Library/Caches/Stickler/playable/3f786850e387550fdab836ed7e6dc881de23001b.flac"}
 ```
 
 ### `quit`

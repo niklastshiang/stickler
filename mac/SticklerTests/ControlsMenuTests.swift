@@ -20,7 +20,9 @@ final class ControlsMenuTests: XCTestCase {
                 "volumes": #""ok": true, "song": 0.0, "hits": 1.0"#
             ])
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "controls-\(UUID().uuidString)"))
-        let model = AppModel(defaults: defaults, languages: ["en"], player: QuietPlayer()) { _ in core }
+        let model = AppModel(defaults: defaults, languages: ["en"], player: QuietPlayer()) { _ in
+            core
+        }
         model.launch()
         try await until { model.playback.canPlay }
         return (model, core)
@@ -71,13 +73,14 @@ final class ControlsMenuTests: XCTestCase {
     }
 
     func testTheItemsWorkOnlyWithAResult() async throws {
-        let (model, _) = try await playing()
+        let (model, core) = try await playing()
         XCTAssertTrue(ControlsMenu.enabled(model))
         model.close()
+        try await until { core.sent.contains(.close) }
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "controls-\(UUID().uuidString)"))
-        let core = ScriptedCore(lines: [ScreenshotTests.empty])
+        let quiet = ScriptedCore(lines: [ScreenshotTests.empty])
         let empty = AppModel(defaults: defaults, languages: ["en"], player: QuietPlayer()) { _ in
-            core
+            quiet
         }
         XCTAssertFalse(ControlsMenu.enabled(empty), "before the launch")
         empty.launch()

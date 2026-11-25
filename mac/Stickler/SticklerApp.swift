@@ -34,11 +34,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // keeps its Home
         homeKey = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
-            let typing = event.window is NSPanel || event.window?.firstResponder is NSText
+            let elsewhere =
+                event.window is NSPanel || event.window?.isMainWindow != true
+                || event.window?.firstResponder is NSText
             guard
                 ControlsMenu.goesToStart(
                     keyCode: event.keyCode, modifiers: event.modifierFlags,
-                    inMainWindow: !typing, canPlay: ControlsMenu.enabled(model))
+                    inMainWindow: !elsewhere, canPlay: ControlsMenu.enabled(model))
             else { return event }
             model.playback.goToStart()
             return nil
