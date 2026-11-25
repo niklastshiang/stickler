@@ -11,6 +11,7 @@ struct SticklerApp: App {
     var body: some Scene {
         Window("Stickler", id: "main") {
             ContentView(model: delegate.model)
+                .frame(minWidth: 640, minHeight: 480)
         }
         .commands {
             SticklerCommands(model: delegate.model)
