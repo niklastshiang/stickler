@@ -44,10 +44,22 @@ def test_the_details_are_the_errors_last_lines():
     assert setup.details("  short\n\n") == "short"
 
 
-def test_what_grew_is_the_free_space_a_step_used(tmp_path):
-    """Cheap enough for twice a second, unlike walking uv's cache."""
-    free = setup.free_space(tmp_path)
-    assert free > 0 and setup.free_space(tmp_path / "not" / "there") == free
+def test_what_grew_is_the_free_space_a_step_used(tmp_path, monkeypatch):
+    """Cheap enough for twice a second, unlike walking uv's cache. A folder not made yet is
+    measured on the disk of its nearest existing parent. (Two readings of a live disk differ
+    by what other programs wrote in between, a few kB on GitHub's macOS runner: the test asks
+    which folder is measured, not whether two readings agree.)"""
+    assert setup.free_space(tmp_path) > 0
+    measured: list[Path] = []
+    real = setup.shutil.disk_usage
+
+    def disk_usage(path):
+        measured.append(Path(path))
+        return real(path)
+
+    monkeypatch.setattr(setup.shutil, "disk_usage", disk_usage)
+    assert setup.free_space(tmp_path / "not" / "there") > 0
+    assert measured == [tmp_path]
 
 
 def test_the_model_download_counts_its_own_files_not_the_free_space(tmp_path):
