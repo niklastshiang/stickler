@@ -10,7 +10,7 @@ import XCTest
 @MainActor
 final class ControlsMenuTests: XCTestCase {
     /// A model showing a result that plays, its core answering `step` with 4 s.
-    func playing() async throws -> (AppModel, ScriptedCore, QuietPlayer) {
+    func playing() async throws -> (AppModel, ScriptedCore) {
         let lines = [ScreenshotTests.empty, ScreenshotTests.playing]
         let core = ScriptedCore(
             lines: lines,
@@ -19,12 +19,11 @@ final class ControlsMenuTests: XCTestCase {
                 "step": #""ok": true, "seconds": 4.0"#,
                 "volumes": #""ok": true, "song": 0.0, "hits": 1.0"#
             ])
-        let player = QuietPlayer()
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "controls-\(UUID().uuidString)"))
-        let model = AppModel(defaults: defaults, languages: ["en"], player: player) { _ in core }
+        let model = AppModel(defaults: defaults, languages: ["en"], player: QuietPlayer()) { _ in core }
         model.launch()
         try await until { model.playback.canPlay }
-        return (model, core, player)
+        return (model, core)
     }
 
     func until(_ condition: @escaping () -> Bool) async throws {
@@ -37,7 +36,7 @@ final class ControlsMenuTests: XCTestCase {
     }
 
     func testTheItemsAndTheirKeysAreMusicsAndQuickTimes() async throws {
-        let (model, _, _) = try await playing()
+        let (model, _) = try await playing()
         let items = ControlsMenu.items(model.playback)
         XCTAssertEqual(
             items.map(\.title), ["Play", "Previous Bar", "Next Bar", "Go to the Start"])
@@ -48,7 +47,7 @@ final class ControlsMenuTests: XCTestCase {
     }
 
     func testTheFirstItemSaysWhatSpaceDoesNow() async throws {
-        let (model, _, _) = try await playing()
+        let (model, _) = try await playing()
         XCTAssertEqual(ControlsMenu.playTitle(model.playback), "Play")
         ControlsMenu.items(model.playback)[0].act(model.playback)
         try await until { model.playback.playing }
@@ -59,7 +58,7 @@ final class ControlsMenuTests: XCTestCase {
     }
 
     func testEachItemTellsThePlaybackModel() async throws {
-        let (model, core, _) = try await playing()
+        let (model, core) = try await playing()
         let items = ControlsMenu.items(model.playback)
         items[2].act(model.playback)  // Next Bar
         try await until { model.playback.position == 4 }
@@ -72,7 +71,7 @@ final class ControlsMenuTests: XCTestCase {
     }
 
     func testTheItemsWorkOnlyWithAResult() async throws {
-        let (model, _, _) = try await playing()
+        let (model, _) = try await playing()
         XCTAssertTrue(ControlsMenu.enabled(model))
         model.close()
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "controls-\(UUID().uuidString)"))

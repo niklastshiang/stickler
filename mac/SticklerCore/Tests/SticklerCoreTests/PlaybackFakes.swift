@@ -55,7 +55,7 @@ func playingResult(
     seq: Int, song: String = "/m/e.flac", clicks: String? = "/c/e.wav",
     bars: [SongBar] = songBars, kind: String = "result"
 ) throws -> String {
-    let written = String(decoding: try LineCoding.encoder().encode(bars), as: UTF8.self)
+    let written = String(bytes: try LineCoding.encoder().encode(bars), encoding: .utf8) ?? ""
     let named = clicks.map { "\"\($0)\"" } ?? "null"
     return #"{"event": "state", "seq": \#(seq), "state": {"kind": "\#(kind)", "#
         + #""song": "\#(song)", "title": "E", "subtitle": "S", "artist": "", "#
