@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Windows app's link to the Python core (SPEC.md, module `win-shell`, scope 1): no
+       Windows APIs, so it builds and is tested on Linux too, as mac/SticklerCore is. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Stickler.Core</RootNamespace>
+    <AssemblyName>SticklerCore</AssemblyName>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="SticklerCore.Tests" />
+  </ItemGroup>
+</Project>

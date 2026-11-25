@@ -1,0 +1,16 @@
+<Project Sdk="MSTest.Sdk/4.5.3">
+  <!-- SticklerCore's tests (SPEC.md, module `win-shell`, "Testing"): on Windows and Linux.
+       MSTest.Sdk brings Microsoft.Testing.Platform; of its extensions only the code coverage.
+       The platform's telemetry is switched off where the tests run (TESTINGPLATFORM_TELEMETRY_OPTOUT
+       and DOTNET_CLI_TELEMETRY_OPTOUT in win.yml and docs/win-development.md). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Stickler.Core.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <TestingExtensionsProfile>None</TestingExtensionsProfile>
+    <EnableMicrosoftTestingExtensionsCodeCoverage>true</EnableMicrosoftTestingExtensionsCodeCoverage>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SticklerCore\SticklerCore.csproj" />
+  </ItemGroup>
+</Project>

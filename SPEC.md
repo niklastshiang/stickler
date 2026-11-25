@@ -4000,11 +4000,14 @@ playback with `win-playback`, the installer and "Uninstall Stickler…" with `wi
 **Scope.**
 1. **`SticklerCore`, a `net10.0` class library without Windows APIs** (`win/SticklerCore/`),
    the counterpart of `mac/SticklerCore`:
-   - starts the core as a subprocess (from a checkout `uv run stickler-bridge`; from an
-     installed app `win-package`'s command), writes commands as UTF-8 JSON lines ending in
-     `\n`, reads its lines on a task of its own, decodes `hello`, `state`, `recent`, `notice`
-     and replies into C# records that mirror `docs/bridge.md` (`System.Text.Json` with its
-     source generator, no reflection), matches each reply to its command by `id`, and notices
+   - starts the core as a subprocess (from a checkout `uv run python -m
+     stickler_app.bridge`: not the `stickler-bridge.exe` uv writes for the entry point, which
+     has a hash of its own that Panda held back on 2026-11-25, while the environment's
+     `python.exe` is one file for every environment of a uv release; from an installed app
+     `win-package`'s command), writes commands as UTF-8 JSON lines ending in `\n`, reads its
+     lines on a task of its own, decodes `hello`, `state`, `recent`, `notice` and replies
+     into C# records that mirror `docs/bridge.md` (read with `JsonDocument` field by field, no
+     reflection), matches each reply to its command by `id`, and notices
      when the process ends (exit code and stderr's last 40 lines kept for the error page);
    - **always passes `UV_SYSTEM_CERTS=1`** to the core (assumption 3; harmless where no proxy
      inspects TLS, since uv then reads the same roots from Windows' store) unless open
