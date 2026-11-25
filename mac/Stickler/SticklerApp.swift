@@ -23,11 +23,25 @@ struct SticklerApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel(player: Player())
+    private var homeKey: Any?
 
     func applicationDidFinishLaunching(_: Notification) {
         // the tests host the app: they build their own models, and no core is started
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
             model.launch()
+        }
+        // Home goes to the start too (the Controls menu's key is ⌥←); a panel's text field
+        // keeps its Home
+        homeKey = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+            let typing = event.window is NSPanel || event.window?.firstResponder is NSText
+            guard
+                ControlsMenu.goesToStart(
+                    keyCode: event.keyCode, modifiers: event.modifierFlags,
+                    inMainWindow: !typing, canPlay: ControlsMenu.enabled(model))
+            else { return event }
+            model.playback.goToStart()
+            return nil
         }
     }
 

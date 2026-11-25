@@ -1215,7 +1215,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `LogicTests` for the script builders under `scripts/xccov_gate.py`; a screenshot with the marker in light and dark
   - Dependencies: 164 · Files: `mac/Stickler/Sheet.swift`, `SheetHTML.swift` or a new `Marker.swift`, tests
 
-- [ ] **Task 166: The Controls menu, the keys and the texts** (S): the menu of SPEC scope 6, Home, "Controls" in `po/` with German and Spanish and in the String Catalog.
+- [x] **Task 166: The Controls menu, the keys and the texts** (S): done 2026-11-25 (the `mac` workflow checks the tests; the keys themselves only by hand on the Mac). `ControlsMenu` (a logic type, gated): Play or Pause (Space; the item reads "Play" or "Pause" as Space would act), Previous Bar (←), Next Bar (→), Go to the Start (⌥←), then Song, Hits and Both as an inline picker with the checkmark; enabled with a shown result. `CommandMenu("Controls")` puts it between View and Window. Home: a local key monitor in `AppDelegate` sends it to Go to the Start when `ControlsMenu.goesToStart` says so (Home alone or with Fn, in the app's window, not a panel's text field). "Controls" came with task 164 ("Steuerung", "Controles"); the other texts exist. 5 tests; `ControlsMenu` joins `scripts/xccov_gate.py` and CONSTRAINTS.md's list.
   - Acceptance: SPEC scopes 6 and 7; the item reads "Play" or "Pause" as Space would act; the checkmark follows the picker.
   - Verify: tests for the menu's items and state (a logic type, gated); `uv run pytest -q tests/test_xcstrings.py tests/app/test_mac_texts.py`
   - Dependencies: 164 · Files: `mac/Stickler/Commands.swift`, `src/stickler_app/mac_texts.py`, `po/*`, `mac/Stickler/Localizable.xcstrings`

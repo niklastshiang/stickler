@@ -57,6 +57,9 @@ struct SticklerCommands: Commands {
             ZoomItems(model: model)
             Divider()
         }
+        CommandMenu("Controls") {
+            ControlsItems(model: model)
+        }
         CommandGroup(replacing: .help) {
             Button("Stickler Help") {
                 if let help = Self.help {

@@ -32,6 +32,7 @@ LOGIC = (
     "Backups",
     "Uninstalling",
     "Player",
+    "ControlsMenu",
 )
 
 
