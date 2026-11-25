@@ -43,16 +43,22 @@ SUPPRESSIONS = re.compile(
     r"#\s*noqa|#\s*type:\s*ignore|#\s*pragma:\s*no\s*cover|#\s*ruff:\s*noqa|#\s*pyright:\s*ignore"
     r"|#\s*mypy:\s*ignore|gitleaks:allow"
     r"|//\s*swiftlint:"  # Swift: swiftlint:disable, :enable, :disable:next, :this
+    # C# (SPEC.md, module `win-shell`): pragmas, attributes, project and .editorconfig switches
+    r"|#\s*pragma\s+warning\s+disable|\bSuppressMessage(Attribute)?\s*\("
+    r"|\[\s*(assembly\s*:\s*)?SuppressMessage\b|\bExcludeFromCodeCoverage\b|<NoWarn>"
+    r"|\bdotnet_(analyzer_)?diagnostic\.[\w.-]*severity\s*=\s*(none|silent)\b"
 )
 STUBS = re.compile(
     r"raise\s+NotImplementedError|except\b[^:]*:\s*pass\b|\bTODO\b|\bFIXME\b|\bpass\s*#\s*stub"
     # Swift placeholders; a failure that names a real impossible case stays allowed
     r"|\b(fatalError|preconditionFailure)\(\s*\)"
     r"|\b(fatalError|preconditionFailure)\(\s*\"\s*(not\s+implemented|unimplemented)"
+    r"|\bNotImplementedException\b"  # C#: the placeholder convention, never a real failure
 )
 SKIPS = re.compile(
     r"@pytest\.mark\.(skip|xfail)\b|\bpytest\.skip\(|\bunittest\.skip\b"
     r"|\bXCTSkip(If|Unless)?\b|@Test\([^)]*\.disabled\b"  # Swift: XCTest, Swift Testing
+    r"|\[[^\]]*\bIgnore\b|\bAssert\.Inconclusive\("  # C#: MSTest, alone or in a list
 )
 # Patterns only; the value is never printed.
 SECRETS = re.compile(
@@ -76,6 +82,7 @@ def is_test(path: str) -> bool:
     return bool(
         re.search(r"(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$", path)
         or re.search(r"Tests?\.swift$|(^|/)\w*Tests/.*\.swift$", path)
+        or re.search(r"Tests?\.cs$|(^|/)[\w.]*Tests/.*\.cs$", path)
     )
 
 
@@ -180,6 +187,7 @@ def check(diff: str) -> list[tuple[str, str, str]]:
     # it is reported when a test file loses assertions on balance.
     assertion = re.compile(
         r"\bassert\b|pytest\.raises|approx\(|\bXCTAssert\w*\(|\bXCTFail\(|#expect\b|#require\b"
+        r"|\b(Collection|String)?Assert\.\w+\("
     )
     lost: dict[str, list[str]] = {}
     for ln in removed:

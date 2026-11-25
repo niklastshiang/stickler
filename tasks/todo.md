@@ -1333,7 +1333,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/test_winstrings.py tests/app/test_win_texts.py`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler_app/win_texts.py`, `scripts/winstrings.py`, `scripts/check.sh`, `po/*`, `win/Stickler/Strings/`, tests
 
-- [ ] **Task 183: C# in the floor and in CONSTRAINTS.md** (S)
+- [x] **Task 183: C# in the floor and in CONSTRAINTS.md** (S): done 2026-11-25. The floor guard also rejects `[ExcludeFromCodeCoverage]` (C#'s `pragma: no cover`), `silent` severities and `Assert.Inconclusive`, and counts MSTest's `Assert.*` as assertions; CONSTRAINTS.md names `mac/` and `win/` in its scope and has the four C# rows with `scripts/cobertura_gate.py` (written in 187).
   - Acceptance: `scripts/floor_guard.py` rejects `#pragma warning disable`, `[SuppressMessage`, `<NoWarn>`, `.editorconfig` severities `none`, placeholder `throw new NotImplementedException()` and `[Ignore]` in added C# and project lines; CONSTRAINTS.md has the C# rows (build, format, tests, coverage) as the Swift ones.
   - Verify: `uv run pytest -q tests/test_floor_guard.py`; `scripts/check.sh task`
   - Dependencies: none · Files: `scripts/floor_guard.py`, `tests/test_floor_guard.py`, `CONSTRAINTS.md`

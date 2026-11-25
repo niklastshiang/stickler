@@ -192,3 +192,59 @@ def test_a_deleted_swift_test_file_is_flagged():
     path = "mac/SticklerTests/AppModelTests.swift"
     diff = "\n".join([f"diff --git a/{path} b/{path}", f"--- a/{path}", "+++ /dev/null"])
     assert "test-deleted" in rules(diff)
+
+
+# C# (SPEC.md, module `win-shell`, scope 5)
+
+
+@pytest.mark.parametrize(
+    ("path", "line", "rule"),
+    [
+        ("win/SticklerCore/CoreClient.cs", "#pragma warning disable CA1062", "silenced-checker"),
+        (
+            "win/SticklerCore/CoreClient.cs",
+            '[SuppressMessage("Design", "CA1031")]',
+            "silenced-checker",
+        ),
+        ("win/SticklerCore/Usings.cs", '[assembly: SuppressMessage("x", "y")]', "silenced-checker"),
+        ("win/SticklerCore/AppModel.cs", "[ExcludeFromCodeCoverage]", "silenced-checker"),
+        ("win/Directory.Build.props", "    <NoWarn>CS1591</NoWarn>", "silenced-checker"),
+        ("win/.editorconfig", "dotnet_diagnostic.CA1062.severity = none", "silenced-checker"),
+        ("win/.editorconfig", "dotnet_analyzer_diagnostic.severity = silent", "silenced-checker"),
+        (
+            "win/SticklerCore/Strings.cs",
+            "        throw new NotImplementedException();",
+            "unfinished-work",
+        ),
+        ("win/SticklerCore.Tests/ClientTests.cs", '    [Ignore("flaky")]', "test-made-easier"),
+        ("win/SticklerCore.Tests/ClientTests.cs", "    [TestMethod, Ignore]", "test-made-easier"),
+        (
+            "win/SticklerCore.Tests/ClientTests.cs",
+            '        Assert.Inconclusive("later");',
+            "test-made-easier",
+        ),
+    ],
+)
+def test_added_csharp_violations_are_flagged(path, line, rule):
+    assert rule in rules(diff_for(path, [line]))
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        '        throw new InvalidOperationException("a reply without a command");',
+        "dotnet_diagnostic.CA1062.severity = error",
+        "        Assert.AreEqual(StateKind.Empty, state.Kind);",
+        "#nullable enable",
+    ],
+)
+def test_real_csharp_failures_settings_and_assertions_pass(line):
+    assert rules(diff_for("win/SticklerCore/CoreClient.cs", [line])) == set()
+
+
+def test_a_removed_csharp_assertion_and_a_deleted_test_file_are_flagged():
+    path = "win/SticklerCore.Tests/DecodingTests.cs"
+    for assertion in ("    Assert.AreEqual(a, b);", "    CollectionAssert.AreEqual(a, b);"):
+        assert "assertion-removed" in rules(diff_for(path, [], [assertion]))
+    diff = "\n".join([f"diff --git a/{path} b/{path}", f"--- a/{path}", "+++ /dev/null"])
+    assert "test-deleted" in rules(diff)
