@@ -52,7 +52,9 @@ final class SheetTests: XCTestCase {
         }
         XCTAssertEqual(places, places.sorted())
         XCTAssertEqual(document.components(separatedBy: "<div class=\"page\"").count - 1, 3)
-        XCTAssertTrue(document.contains("<div class=\"page\" style=\"width: 640.0px;\"><svg"))
+        XCTAssertTrue(
+            document.contains(
+                "<div class=\"page\" style=\"width: 640.0px;\"><div class=\"paper\"><svg"))
     }
 
     func testWithoutPagesOnlyTheDeskIsShown() {

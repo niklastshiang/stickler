@@ -9,6 +9,14 @@ public struct BarBox: Codable, Equatable, Sendable {
     public var y: Double
     public var width: Double
     public var height: Double
+
+    public init(bar: Int, x: Double, y: Double, width: Double, height: Double) {
+        self.bar = bar
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+    }
 }
 
 /// One engraved page: its SVG, its size and its bars.

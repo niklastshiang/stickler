@@ -16,12 +16,20 @@ struct SheetView: View {
                 model.sheet.pages, dark: dark,
                 below: model.playback.canPlay ? Playbar.room : 0),
             dark: dark,
+            mark: model.playback.marked.flatMap { Marker.locate($0, in: model.sheet.pages) },
+            room: model.playback.canPlay ? Playbar.room : 0,
             resized: { width in
                 if let pages = SheetHTML.pagesWidth(in: width) {
                     model.sheet.resize(to: pages)
                 }
             },
-            pinched: { scale in model.sheet.pinched(by: scale) })
+            pinched: { scale in model.sheet.pinched(by: scale) },
+            clicked: { answer in
+                // a click on a bar plays from it (M10); the sheet's pages say which bar
+                if let bar = SheetHTML.bar(hit: answer, in: model.sheet.pages) {
+                    model.playback.jump(toBar: bar)
+                }
+            })
         // one picture to VoiceOver, not the notes' hundreds of shapes
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isImage)
@@ -31,11 +39,15 @@ struct SheetView: View {
 }
 
 /// The web view in SwiftUI: it shows `content`, loaded once; later pages replace the first.
+/// The playback marker is drawn over `mark` in the system's accent colour.
 struct SheetWeb: NSViewRepresentable {
     let content: SheetHTML.Content
     let dark: Bool
+    let mark: Marker.Mark?
+    let room: Double
     let resized: @MainActor (Double) -> Void
     let pinched: @MainActor (Double) -> Void
+    let clicked: @MainActor (Any?) -> Void
 
     func makeCoordinator() -> SheetLoad {
         SheetLoad()
@@ -50,13 +62,23 @@ struct SheetWeb: NSViewRepresentable {
     func updateNSView(_ view: SheetWebView, context: Context) {
         view.resized = resized
         view.pinched = pinched
+        view.clicked = clicked
         let desk = SheetHTML.desk(dark: dark)
         view.underPageBackgroundColor = NSColor(
             srgbRed: CGFloat(desk.red) / 255, green: CGFloat(desk.green) / 255,
             blue: CGFloat(desk.blue) / 255, alpha: 1)
-        if !context.coordinator.show(content, in: view) {
+        let replaced = context.coordinator.show(content, in: view)
+        if !replaced {
             view.settle()  // no new pages: a lifted pinch's picture has nothing to wait for
         }
+        let accent = NSColor.controlAccentColor.usingColorSpace(.sRGB) ?? .systemBlue
+        let marking = SheetHTML.Marking(
+            mark: mark,
+            accent: SheetHTML.Colour(
+                red: Int(accent.redComponent * 255), green: Int(accent.greenComponent * 255),
+                blue: Int(accent.blueComponent * 255)),
+            dark: dark, room: room)
+        context.coordinator.mark(marking, in: view, again: replaced)
     }
 }
 
@@ -74,6 +96,8 @@ final class SheetLoad: NSObject, WKNavigationDelegate {
     private var loaded = false  // the document is there and takes new pages
     /// How far down the reader was: 0 the top, 1 the page's whole height.
     private var place = 0.0
+    /// The playback marker, drawn again after the pages are replaced or loaded.
+    private(set) var marking: SheetHTML.Marking?
 
     /// The app's own scripts, which run although the page's are off.
     static let goToPlace =
@@ -103,6 +127,17 @@ final class SheetLoad: NSObject, WKNavigationDelegate {
         }
         // a document still loading takes the newest pages once it is there
         return true
+    }
+
+    /// Draws `next` unless it is drawn already; `again` after the pages were replaced, which
+    /// took the marker with them. A document still loading gets it once it is there.
+    func mark(_ next: SheetHTML.Marking, in view: WKWebView, again: Bool) {
+        guard next != marking || again else { return }
+        marking = next
+        if loaded {
+            view.callAsyncJavaScript(
+                SheetHTML.markScript, arguments: next.arguments, in: nil, in: .page)
+        }
     }
 
     private func load(_ content: SheetHTML.Content, in view: WKWebView) {
@@ -146,6 +181,10 @@ final class SheetLoad: NSObject, WKNavigationDelegate {
         if let shown, shown != document {
             replace(with: shown, in: view)  // pages that came while it loaded
         }
+        if let marking {
+            view.callAsyncJavaScript(
+                SheetHTML.markScript, arguments: marking.arguments, in: nil, in: .page)
+        }
     }
 
     func webViewWebContentProcessDidTerminate(_ view: WKWebView) {
@@ -162,6 +201,11 @@ final class SheetWebView: WKWebView {
     var resized: (@MainActor (Double) -> Void)?
     /// Told a pinch's whole scale, once the fingers lift.
     var pinched: (@MainActor (Double) -> Void)?
+    /// Told where a click landed: the page and the point on it (`SheetHTML.hitScript`).
+    var clicked: (@MainActor (Any?) -> Void)?
+    /// Where the mouse went down; a click moves less than `slack` points before it goes up.
+    private var downAt: CGPoint?
+    static let slack = 4.0
     /// How long a lifted pinch's picture waits for the pages laid out at its size.
     var patience: Duration = .milliseconds(1500)
     private var told = 0.0
@@ -257,6 +301,39 @@ final class SheetWebView: WKWebView {
         waiting?.cancel()
         pictured = false
         callAsyncJavaScript(Self.noPicture, arguments: [:], in: nil, in: .page)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        downAt = event.locationInWindow
+        super.mouseDown(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        super.mouseUp(with: event)
+        guard let downAt else { return }
+        self.downAt = nil
+        let end = event.locationInWindow
+        guard abs(end.x - downAt.x) < Self.slack, abs(end.y - downAt.y) < Self.slack else {
+            return  // a drag, not a click
+        }
+        var point = convert(end, from: nil)
+        if !isFlipped {
+            point.y = bounds.height - point.y
+        }
+        click(at: point)
+    }
+
+    /// A click at `point` (from the view's top left): asks the page which page and point it
+    /// landed on and tells `clicked`.
+    func click(at point: CGPoint) {
+        callAsyncJavaScript(
+            SheetHTML.hitScript, arguments: ["x": Double(point.x), "y": Double(point.y)],
+            in: nil, in: .page
+        ) { [weak self] result in
+            if case .success(let answer) = result {
+                self?.clicked?(answer)
+            }
+        }
     }
 
     override func willOpenMenu(_ menu: NSMenu, with _: NSEvent) {

@@ -42,11 +42,15 @@ public protocol Playing: AnyObject {
 public final class PlaybackModel {
     public private(set) var playing = false
     /// Where the song is, in seconds.
-    public private(set) var position = 0.0
+    public private(set) var position = 0.0 {
+        didSet { follow() }
+    }
     /// The song's length in seconds.
     public private(set) var length = 0.0
     /// The song's bars in played order.
-    public private(set) var bars: [SongBar] = []
+    public private(set) var bars: [SongBar] = [] {
+        didSet { follow() }
+    }
     public private(set) var hear = Hear.both
     /// The volume sliders, 0 to 1 (remembered by the core for every song).
     public private(set) var songVolume = 0.7
@@ -60,14 +64,17 @@ public final class PlaybackModel {
     public var time: String { Timeline.clock(position) }
     /// "4:06".
     public var lengthText: String { Timeline.clock(length) }
-    /// The written bar to mark on the sheet; nil when none sounds.
-    public var marked: Int? { song == nil ? nil : Timeline.written(bars, at: position) }
+    /// The written bar to mark on the sheet; nil when none sounds. It changes only when the
+    /// bar does, so the sheet is not drawn again at every tick.
+    public private(set) var marked: Int?
 
     private let player: (any Playing)?
     private let tick: Duration
     private let tell: @MainActor (Notice) -> Void
     private var core: (any Core)?
-    private var song: String?
+    private var song: String? {
+        didSet { follow() }
+    }
     private var clicks: String?
     private var onScreen = false  // the result is shown, not an export's steps
     private var loaded = false  // the player holds this song
@@ -75,6 +82,7 @@ public final class PlaybackModel {
     private var starting = false  // a play waits for the core (a copy, the gains)
     private var gains: Gains?  // the core's newest answer
     private var volumeRequest = 0  // older answers are dropped
+    private var volumes: Task<Void, Never>?  // the last `volumes` command, sent in order
     private var ticking: Task<Void, Never>?
 
     /// `tick`: how often the position is read while playing (GTK: 50 ms). `tell` shows a
@@ -172,17 +180,17 @@ public final class PlaybackModel {
 
     public func setHear(_ next: Hear) {
         hear = next
-        Task { await applyVolumes(song: nil, hits: nil) }
+        changeVolumes(song: nil, hits: nil)
     }
 
     public func setSongVolume(_ value: Double) {
         songVolume = value
-        Task { await applyVolumes(song: value, hits: nil) }
+        changeVolumes(song: value, hits: nil)
     }
 
     public func setHitsVolume(_ value: Double) {
         hitsVolume = value
-        Task { await applyVolumes(song: nil, hits: value) }
+        changeVolumes(song: nil, hits: value)
     }
 
     // the player
@@ -197,7 +205,7 @@ public final class PlaybackModel {
             guard await load(song, into: player) else { return }
         }
         if gains == nil {
-            await applyVolumes(song: nil, hits: nil)
+            await changeVolumes(song: nil, hits: nil).value
         }
         guard song == self.song, loaded, onScreen else { return }  // closed meanwhile
         if atEnd {
@@ -286,6 +294,14 @@ public final class PlaybackModel {
         }
     }
 
+    /// The sounding bar's written number, set when it changes.
+    private func follow() {
+        let next = song == nil ? nil : Timeline.written(bars, at: position)
+        if next != marked {
+            marked = next
+        }
+    }
+
     private func stopTicking() {
         ticking?.cancel()
         ticking = nil
@@ -314,12 +330,24 @@ extension PlaybackModel {
         }
     }
 
-    /// Remembers the volumes given and plays at the gains the core answers; an answer that a
-    /// newer change overtook is dropped.
-    private func applyVolumes(song: Double?, hits: Double?) async {
-        guard let core else { return }
+    /// Remembers the volumes given and plays at the gains the core answers. The commands go
+    /// out one after another in the reader's order, so the core keeps the newest slider value;
+    /// an answer that a newer change overtook is dropped.
+    @discardableResult
+    private func changeVolumes(song: Double?, hits: Double?) -> Task<Void, Never> {
         volumeRequest += 1
         let mine = volumeRequest
+        let before = volumes
+        let next = Task {
+            await before?.value
+            await applyVolumes(song: song, hits: hits, request: mine)
+        }
+        volumes = next
+        return next
+    }
+
+    private func applyVolumes(song: Double?, hits: Double?, request mine: Int) async {
+        guard let core else { return }
         do {
             let reply = try await core.send(.volumes(hear: hear, song: song, hits: hits))
                 .payload(Gains.self)
