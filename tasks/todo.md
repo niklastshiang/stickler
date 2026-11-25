@@ -1316,14 +1316,14 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ## Phase 33: Website, the Mac app in A look around (approved 2026-11-25, SPEC.md "Website", "Change 2026-11-25")
 
-- [ ] **Task 195: The sheet of Eyesplit as a fixture** (S)
+- [x] **Task 195: The sheet of Eyesplit as a fixture** (S): done 2026-11-25. `scripts/site_mac.py fixture data/own/eyesplit/Eyesplit.mp3` runs the Fast analysis in private caches (as `site_story.py`; nothing is read from the user's cache) and writes `eyesplit_pages.json` (one page 976 × 2355 px, 85 written bars; numbers skip where a rest of several bars is one) and, instead of a song summary, `eyesplit_result.json`: the bridge's own `result` state (97 played bars with their times, "Shane Ivers · ♩ = 154 · 4/4") with the song in `/Users/me/Music` and the clicks' path set, so the Mac test sends what the core sends.
   - Acceptance: `scripts/site_mac.py fixture` runs the core's `pages` request for the cached Fast analysis of `data/own/eyesplit/Eyesplit.mp3` at the website window's width (1000 points, the desk's 12 on each side: 976) and writes `mac/SticklerTests/Fixtures/eyesplit_pages.json` in the shape of `pages.json`; it fails clearly when the analysis is not cached.
-  - Verify: `uv run pytest -q tests/test_site_mac.py` (the fixture parses as the core's reply, its width is 976, its first page has bars)
+  - Verify: `uv run pytest -q tests/test_site_mac.py` (the fixture parses as the core's reply, its width is 976, every played bar is written, no folder of this computer in either file)
   - Dependencies: none · Files: `scripts/site_mac.py`, `mac/SticklerTests/Fixtures/eyesplit_pages.json`, `tests/test_site_mac.py`
 
 - [ ] **Task 196: The website's pictures in the `mac` workflow** (M)
   - Acceptance: `WebsiteScreenshotTests` draws the window at 1000 × 700 with Eyesplit (title, "Shane Ivers · ♩ = 154 · 4/4", recent songs only openly licensed), light and dark: `site-empty`, `site-analysing`, `site-sheet` (bar marked, playback bar); the toolbar as on screen; saved into the `screenshots` artifact.
-  - Verify: the `mac` workflow passes on `claude/site-mac`; the pictures looked at from the artifact
+  - Verify: the `mac` workflow passes on `claude/mac-site` (the branch's name matches the workflow's `claude/mac-*`); the pictures looked at from the artifact
   - Dependencies: 195 · Files: `mac/SticklerTests/WebsiteScreenshotTests.swift`, `mac/project.yml` if the fixture needs listing
 
 - [ ] **Task 197: The pictures into the site** (S)
