@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Stickler.Core;
 using Microsoft.Windows.Storage.Pickers;
+using Stickler.Core;
 using Windows.Storage;
 using Windows.System;
 using WinRT.Interop;
