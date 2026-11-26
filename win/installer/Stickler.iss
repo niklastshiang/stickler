@@ -137,8 +137,9 @@ begin
           ExpandConstant('{app}\core'), SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then
         begin
           Log(Format('The core''s removal did not finish (exit code %d)', [Code]));
-          MsgBox(FmtMessage(CustomMessage('DataNotRemoved'),
-            [ExpandConstant('{localappdata}\Stickler')]), mbError, MB_OK);
+          { a line of its own must not begin with "[": Inno reads that as a section }
+          MsgBox(FmtMessage(CustomMessage('DataNotRemoved'), [ExpandConstant('{localappdata}\Stickler')]),
+            mbError, MB_OK);
         end;
       end;
   end;
