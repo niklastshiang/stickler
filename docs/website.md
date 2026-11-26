@@ -52,6 +52,19 @@ own page instead of `404.html`. GitHub Pages does both.
   After a new song, the pages' file card, clip names, credit and the sheet's alt text (its
   marked bar) change by hand, and the `<img>` of `story/notes.svg` takes the SVG's height.
 
+  The Mac app's pictures in "A look around" (`site/images/mac-*`) are drawn by the `mac`
+  workflow (`WebsiteScreenshotTests`) from the song's real sheet music, which is recorded here
+  once as a fixture; then a run's pictures are fetched with `gh`:
+
+  ```bash
+  uv run python scripts/site_mac.py fixture data/own/eyesplit/Eyesplit.mp3
+  # push to a claude/mac-* branch, wait for the mac workflow, then with its run number:
+  uv run python scripts/site_mac.py fetch <run>
+  ```
+
+  The workflow lets the test app record the screen (the runner has SIP off), so the window
+  server's own picture is taken, with the toolbar's glass and the floating controls.
+
   Close Stickler first. The recording runs the app on an invisible screen with private
   settings; only that screen's compositor gets a D-Bus session of its own (from
   `dbus-run-session`, or where that is missing, as on Fedora 45, from `dbus-broker` as a

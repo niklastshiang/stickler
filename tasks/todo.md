@@ -1321,17 +1321,17 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/test_site_mac.py` (the fixture parses as the core's reply, its width is 976, every played bar is written, no folder of this computer in either file)
   - Dependencies: none · Files: `scripts/site_mac.py`, `mac/SticklerTests/Fixtures/eyesplit_pages.json`, `tests/test_site_mac.py`
 
-- [ ] **Task 196: The website's pictures in the `mac` workflow** (M)
+- [x] **Task 196: The website's pictures in the `mac` workflow** (M): done 2026-11-26 (run 45829442145). `WebsiteScreenshotTests` takes the window server's picture with `screencapture -l`: a window drawn off screen leaves the toolbar's glass and the floating controls blank. The first runs found why it could not: the runner gives the right to record the screen only to `/bin/bash` (a probe: SIP off, three TCC entries); the workflow now copies that entry for `ng.tshia.Stickler` and `screencapture`. Also found: AppKit shortened the window to 677 points above the runner's Dock (a window class that keeps its size), the window looked inactive (the app activated with the macOS 14 calls), the runner showed scroll bars (no trackpad: `AppleShowScrollBars WhenScrolling`), and the light sheet once lacked the tempo mark's note (the test waits for `document.fonts`). The workflow prints the failure messages from the result bundle when tests fail (`-quiet` prints only names).
   - Acceptance: `WebsiteScreenshotTests` draws the window at 1000 × 700 with Eyesplit (title, "Shane Ivers · ♩ = 154 · 4/4", recent songs only openly licensed), light and dark: `site-empty`, `site-analysing`, `site-sheet` (bar marked, playback bar); the toolbar as on screen; saved into the `screenshots` artifact.
   - Verify: the `mac` workflow passes on `claude/mac-site` (the branch's name matches the workflow's `claude/mac-*`); the pictures looked at from the artifact
   - Dependencies: 195 · Files: `mac/SticklerTests/WebsiteScreenshotTests.swift`, `mac/project.yml` if the fixture needs listing
 
-- [ ] **Task 197: The pictures into the site** (S)
+- [x] **Task 197: The pictures into the site** (S): done 2026-11-26. `scripts/site_mac.py fetch 45829442145` wrote the six pictures (1000 × 700, checked from the PNG header; a missing or wrongly sized one stops it) with WebPs as `demo.py` makes them; tests with made-up PNGs.
   - Acceptance: `scripts/site_mac.py fetch <run>` downloads the artifact with `gh` into a new folder, writes `site/images/mac-*.png` and `.webp` (light and dark) and prints the run; `docs/website.md` has the steps.
   - Verify: `uv run pytest -q tests/test_site_mac.py`
   - Dependencies: 196 · Files: `scripts/site_mac.py`, `site/images/mac-*`, `docs/website.md`
 
-- [ ] **Task 198: The switch and the Mac row** (M)
+- [x] **Task 198: The switch and the Mac row** (M): done 2026-11-26. The switch is hidden where `:has()` is missing, so both rows show there; checked in Chromium at 1280 and 390 px, light and dark, the Mac chosen by arrow key; axe-core 0 violations.
   - Acceptance: `#look` in English and German has the radio group "Linux | Mac" (`<fieldset>`, `<legend>` for screen readers) and two rows; `:has(:checked)` shows one, without `:has()` both show; the Mac row lazy, with `alt` texts and sizes.
   - Verify: `uv run pytest -q tests/test_site.py`; a look at 390 and 1280 px, light and dark, by keyboard
   - Dependencies: 197 · Files: `site/index.html`, `site/de/index.html`, `site/style.css`, `tests/test_site.py`
