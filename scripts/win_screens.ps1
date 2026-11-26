@@ -8,8 +8,9 @@
 #
 # The sheet music (module `win-sheet`, W6) comes from the stand-in models of
 # scripts/bridge_stand_ins.py: a recent song is opened through UI Automation, the window is
-# captured once the pages are there, and the PDF is saved through Export's menu and the save
-# dialog into -Out (checked by scripts/check_pdf.py).
+# captured once the pages are there, and the PDF is saved through Export's menu into -Out
+# (checked by scripts/check_pdf.py): the app's save dialog answers from STICKLER_SAVE_AS, as
+# Windows' own dialog cannot be driven by a script (owner, 2026-11-26).
 param(
     [Parameter(Mandatory = $true)][string]$App,
     [Parameter(Mandatory = $true)][string]$Out,
@@ -27,7 +28,7 @@ param(
     [switch]$SheetOnly
 )
 $ErrorActionPreference = "Stop"
-Add-Type -AssemblyName System.Drawing, System.Windows.Forms, UIAutomationClient, UIAutomationTypes
+Add-Type -AssemblyName System.Drawing, UIAutomationClient, UIAutomationTypes
 Add-Type @"
 using System; using System.Runtime.InteropServices;
 public static class Screens {
@@ -101,28 +102,18 @@ function Invoke-Element($element, $seconds = 60) {
     throw "nothing to press"
 }
 
-# Windows' save dialog of the process: the file name typed into its box (1001), then Save (1)
-function Save-As($process, $path) {
+# every name the process's windows show now (a window's title, a note's words)
+function Get-Names($process) {
     $root = [System.Windows.Automation.AutomationElement]::RootElement
     $mine = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::ProcessIdProperty), $process.Id
-    $box = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::AutomationIdProperty), "1001"
-    $until = (Get-Date).AddSeconds(20)
-    do {
-        foreach ($window in $root.FindAll([System.Windows.Automation.TreeScope]::Children, $mine)) {
-            $name = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $box)
-            if ($name) {
-                $name.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($path)
-                # Enter in the name box, as a person saves (pressing Save through UI Automation
-                # left Windows 11's dialog open, 2026-11-26)
-                $name.SetFocus()
-                Start-Sleep -Milliseconds 300
-                [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
-                return
-            }
+    $names = @{}
+    foreach ($window in $root.FindAll([System.Windows.Automation.TreeScope]::Children, $mine)) {
+        $names["window: " + $window.Current.Name] = 1
+        foreach ($element in $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)) {
+            if ($element.Current.Name) { $names[$element.Current.Name] = 1 }
         }
-        Start-Sleep -Milliseconds 500
-    } while ((Get-Date) -lt $until)
-    throw "no save dialog"
+    }
+    $names
 }
 
 # the stand-in models and their song, set up once (uv, offline)
@@ -142,6 +133,8 @@ function Save-Sheet($look, $standIns) {
     [IO.File]::WriteAllText("$recent\recent.json", (ConvertTo-Json -InputObject $entry))  # UTF-8 without a BOM
     # STICKLER_ADAPTERS: the app's core takes the stand-ins as they are (no consent, no download)
     $env:STICKLER_ADAPTERS = $standIns.models
+    $pdf = Join-Path $Out "W6-sheet.pdf"
+    if ($look -eq "light") { $env:STICKLER_SAVE_AS = $pdf }
     $process = Start-Process -FilePath $App -PassThru
     try {
         Invoke-Element (Find-Named $process "Groove" 60)
@@ -153,7 +146,6 @@ function Save-Sheet($look, $standIns) {
         Start-Sleep -Seconds 10
         Save-Window $process "W6-sheet-$look"
         if ($look -eq "light") {
-            $pdf = Join-Path $Out "W6-sheet.pdf"
             # Export's menu, its PDF entry (opened again once if the menu was slow to come)
             $entry = $null
             foreach ($try in 1, 2) {
@@ -161,9 +153,15 @@ function Save-Sheet($look, $standIns) {
                 try { $entry = Find-Named $process $PdfEntry 10; break } catch { if ($try -eq 2) { throw } }
             }
             Invoke-Element $entry
-            Save-As $process $pdf
+            $before = Get-Names $process
             $until = (Get-Date).AddSeconds(90)  # WebView2's second view starts, prints, the file moves
-            while (-not (Test-Path $pdf) -and (Get-Date) -lt $until) { Start-Sleep -Seconds 1 }
+            while (-not (Test-Path $pdf) -and (Get-Date) -lt $until) {
+                Start-Sleep -Seconds 1
+                $now = Get-Names $process
+                foreach ($name in $now.Keys) {
+                    if (-not $before.ContainsKey($name)) { "after saving: $name"; $before[$name] = 1 }
+                }
+            }
             Start-Sleep -Seconds 2
             Save-Window $process "W7-pdf-saved-$look"  # the note after saving, or why it failed
             "saved W6-sheet.pdf: $(Test-Path $pdf)"
@@ -175,7 +173,7 @@ function Save-Sheet($look, $standIns) {
     }
     finally {
         Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-        Remove-Item Env:STICKLER_ADAPTERS -ErrorAction SilentlyContinue
+        Remove-Item Env:STICKLER_ADAPTERS, Env:STICKLER_SAVE_AS -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 2
     }
 }

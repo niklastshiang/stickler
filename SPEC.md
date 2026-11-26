@@ -4487,9 +4487,12 @@ Mac apps; nothing about the sheet is decided in C# that the core already decides
 6. **Texts:** "Zoom In", "Zoom Out", "Actual Size", "Sheet Music (PDF)…" and the label are in
    `po/` already (the label in `mac_texts.py`, whose translator comments then name Narrator
    too); new ones, if any, go into `win_texts.py` with German and Spanish.
-7. **CI and screenshots:** W6 in light and dark and the View menu from a fixed `pages` reply
-   (the groove of `tests/app/fakes.py`, as the Mac's screenshots); the PDF of a fixed
-   `a4_pages` reply written on the runner and checked (page count, A4 size, title).
+7. **CI and screenshots:** W6 in light and dark from the stand-in models'
+   (`scripts/bridge_stand_ins.py`) result, opened as a recent song; the PDF saved through
+   Export on the runner and checked (page count, A4 size, title). Windows' save dialog cannot
+   be driven by a script (UI Automation left it open, keys were refused): the app's save
+   dialog answers from `STICKLER_SAVE_AS` when it is set, for the screenshots only; the dialog
+   itself is the MusicXML's and is checked by hand (owner, 2026-11-26).
 
 **Not in this module:** the bar marker and a click on a bar (`win-playback`), corrections
 (`win-corrections`), printing on paper (the PDF covers it), a page view of A4 sheets in the

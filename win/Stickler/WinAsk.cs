@@ -16,8 +16,17 @@ internal sealed class WinAsk(Window window, Strings strings) : IAsk
 {
     private IntPtr Handle => WindowNative.GetWindowHandle(window);
 
+    /// <summary>Set, it answers every save dialog without a window: the runner's screenshots
+    /// save the PDF there (owner, 2026-11-26: Windows' dialog cannot be driven by a script;
+    /// the dialog itself is the same as the MusicXML's and is checked by hand).</summary>
+    public const string SaveAsVariable = "STICKLER_SAVE_AS";
+
     public async Task<string?> SaveFileAsync(string name, IReadOnlyList<string> endings)
     {
+        if (System.Environment.GetEnvironmentVariable(SaveAsVariable) is { Length: > 0 } given)
+        {
+            return given;
+        }
         var picker = new FileSavePicker { SuggestedFileName = Path.GetFileNameWithoutExtension(name) };
         string[] wanted = endings.Count > 0 ? [.. endings] : [Path.GetExtension(name).TrimStart('.')];
         foreach (var ending in wanted)

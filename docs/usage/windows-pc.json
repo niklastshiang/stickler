@@ -26,14 +26,14 @@
       }
     },
     "2026-11-26": {
-      "active_minutes": 235,
+      "active_minutes": 251,
       "models": {
         "claude-opus-5-5": {
-          "responses": 740,
-          "input": 1598,
-          "output": 554779,
-          "cache_read": 248563362,
-          "cache_write": 1295300
+          "responses": 773,
+          "input": 1672,
+          "output": 578085,
+          "cache_read": 268168762,
+          "cache_write": 1329168
         }
       }
     }
