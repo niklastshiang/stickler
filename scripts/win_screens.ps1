@@ -27,7 +27,7 @@ param(
     [switch]$SheetOnly
 )
 $ErrorActionPreference = "Stop"
-Add-Type -AssemblyName System.Drawing, UIAutomationClient, UIAutomationTypes
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms, UIAutomationClient, UIAutomationTypes
 Add-Type @"
 using System; using System.Runtime.InteropServices;
 public static class Screens {
@@ -112,8 +112,11 @@ function Save-As($process, $path) {
             $name = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $box)
             if ($name) {
                 $name.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($path)
-                $save = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::AutomationIdProperty), "1"
-                $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $save).GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+                # Enter in the name box, as a person saves (pressing Save through UI Automation
+                # left Windows 11's dialog open, 2026-11-26)
+                $name.SetFocus()
+                Start-Sleep -Milliseconds 300
+                [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
                 return
             }
         }
@@ -151,12 +154,24 @@ function Save-Sheet($look, $standIns) {
         Save-Window $process "W6-sheet-$look"
         if ($look -eq "light") {
             $pdf = Join-Path $Out "W6-sheet.pdf"
-            Invoke-Element (Find-Named $process $Export)
-            Invoke-Element (Find-Named $process $PdfEntry)
+            # Export's menu, its PDF entry (opened again once if the menu was slow to come)
+            $entry = $null
+            foreach ($try in 1, 2) {
+                Invoke-Element (Find-Named $process $Export)
+                try { $entry = Find-Named $process $PdfEntry 10; break } catch { if ($try -eq 2) { throw } }
+            }
+            Invoke-Element $entry
             Save-As $process $pdf
-            Start-Sleep -Seconds 10
+            $until = (Get-Date).AddSeconds(90)  # WebView2's second view starts, prints, the file moves
+            while (-not (Test-Path $pdf) -and (Get-Date) -lt $until) { Start-Sleep -Seconds 1 }
+            Start-Sleep -Seconds 2
+            Save-Window $process "W7-pdf-saved-$look"  # the note after saving, or why it failed
             "saved W6-sheet.pdf: $(Test-Path $pdf)"
         }
+    }
+    catch {
+        Save-Window $process "W6-sheet-$look-failed"
+        throw
     }
     finally {
         Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue

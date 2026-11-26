@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using Stickler.Core;
-using Windows.Storage.Streams;
 
 namespace Stickler;
 
@@ -125,13 +124,8 @@ public sealed partial class SheetView : UserControl
 
     private static void Serve(CoreWebView2 core, CoreWebView2WebResourceRequestedEventArgs e, byte[] page)
     {
-        var stream = new InMemoryRandomAccessStream();
-        using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
-        {
-            writer.WriteBytes(page);
-            writer.StoreAsync().AsTask().GetAwaiter().GetResult();
-            writer.DetachStream();
-        }
+        // the page from memory, without waiting on the window's thread for a write
+        var stream = new MemoryStream(page, writable: false).AsRandomAccessStream();
         e.Response = core.Environment.CreateWebResourceResponse(stream, 200, "OK", "Content-Type: text/html; charset=utf-8");
     }
 
@@ -198,8 +192,16 @@ public sealed partial class SheetView : UserControl
 
     /// <summary>Writes the PDF (scope 4): <paramref name="html"/>, the A4 document, printed to
     /// <paramref name="path"/> on A4 without margins, header or footer. False when WebView2
-    /// could not write it.</summary>
+    /// could not write it, or did not within a minute (the reader is told then, instead of a
+    /// flow that waits for ever).</summary>
     public async Task<bool> PrintAsync(string html, string path)
+    {
+        var work = PrintingAsync(html, path);
+        var finished = await Task.WhenAny(work, Task.Delay(TimeSpan.FromMinutes(1)));
+        return finished == work && await work;
+    }
+
+    private async Task<bool> PrintingAsync(string html, string path)
     {
         await Printer.EnsureCoreWebView2Async(await Environment());
         var core = Printer.CoreWebView2;
@@ -212,7 +214,9 @@ public sealed partial class SheetView : UserControl
             core.NavigationCompleted += (_, e) => printed?.TrySetResult(e.IsSuccess);
         }
         printDocument = Encoding.UTF8.GetBytes(html);
-        printed = new TaskCompletionSource<bool>();
+        // the print goes on after NavigationCompleted has returned, not inside it: WebView2 is
+        // not to be called back from within its own event
+        printed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         core.Navigate(PrintAddress);
         if (!await printed.Task)
         {
