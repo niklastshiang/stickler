@@ -1473,6 +1473,37 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AH
 - [ ] All success criteria of SPEC.md "Module `win-playback`" met (owner)
 
+## Phase 34: Release 11 (Windows app), module `win-corrections` (draft 2026-11-26, SPEC.md "Module `win-corrections`")
+
+- [x] **Task 228: Corrections in `SticklerCore`** (M): done 2026-11-26 (a Sonnet subagent; read and run again by the main session: 157 tests, 98.6 %). `Tempo` (`Halved`, `Normal`, `Doubled`: CA1720 refuses a member called `Double`; the wire names are unchanged), `CorrectionControls`, `ResultScreen.Controls` and `.Correcting`, `AppModel.Correct`, `CorrectionsPane`, `WindowView.CanExport`; `Flows.Result` gives no result while a correction is written. The wanted `corrections` are not decoded (nothing reads them on the Mac either).
+  - Acceptance: SPEC scope 1; the Mac's test cases ported.
+  - Verify: `dotnet run --project win/SticklerCore.Tests -c Release -- --coverage …`, the gate ≥ 95 %
+  - Dependencies: none · Files: `win/SticklerCore/`, `win/SticklerCore.Tests/`
+
+- [ ] **Task 229: W11 with the owner** (S, the owner's)
+  - 2026-11-26: a draft is on the Windows canvas (two boards, light and dark, and a note with the six decisions proposed).
+  - Acceptance: the owner approves W11 and answers the three questions; the boards copied to `docs/design/win/`, the decisions into SPEC.md "Module `win-design`".
+  - Verify: the owner's word
+  - Dependencies: none · Files: `docs/design/win/`, `SPEC.md`
+
+- [ ] **Task 230: The pane, the button, the View entry and the ring** (M)
+  - Acceptance: SPEC scopes 2–4.
+  - Verify: `win.yml`; by hand in the VM or on the owner's PC
+  - Dependencies: 228, 229 · Files: `win/Stickler/`
+
+- [ ] **Task 231: Screenshots** (S)
+  - Acceptance: SPEC scope 5: W11 light and dark from `scripts/win_screens.ps1`.
+  - Verify: `win.yml` green
+  - Dependencies: 230 · Files: `scripts/win_screens.ps1`
+
+- [ ] **Task 232: Review and a build for the owner** (S)
+  - Acceptance: a fresh-context review of 228–231, findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the corrections (Checkpoint AI)".
+  - Verify: the owner on the PC
+  - Dependencies: 228–231 · Files: `docs/win-development.md`
+
+### Checkpoint AI
+- [ ] All success criteria of SPEC.md "Module `win-corrections`" met (owner)
+
 ## Phase 32: Mac corrections, module `mac-corrections` (approved 2026-11-25, SPEC.md "Mac corrections"; release 11)
 
 - [x] **Task 190: Corrections in the core and the bridge** (M): done 2026-11-25. `corrections.Controls`/`controls()` (the shown values, moved out of the GTK panel, which now calls it) and `change()` (one control's change through the `with_*` rules); `Result.sheet`, the job that wrote the notation (set by `finished` and `corrected`, not by a correction's start); `result` sends `controls` and `sheet`; `correct` takes exactly one of `tempo`, `beats_per_bar`, `beats_per_bar_by`, `first_one`, `first_one_by`, `simplify`, `repeats`, `detected: true` (the `_by` steps added so a stepper's quick clicks are counted by the core from its newest values, not computed in Swift from a state that may be behind) (none or several: `bad_argument` named `change`), answers without a state when nothing changes. `docs/bridge.md` documents the three; the doc test checks `controls`' fields. Tests: 3 corrections, 1 session, 5 bridge. **Not run here:** the GTK widget tests (`scripts/gtk.sh test`; this Mac has no GTK); the panel's change is a one-for-one move of its rule.

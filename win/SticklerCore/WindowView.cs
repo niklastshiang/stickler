@@ -72,6 +72,17 @@ public static class WindowView
     public static bool ShowsHeader(AppModel model) =>
         Page(model) is Core.Page.Steps or Core.Page.Failed or Core.Page.Result;
 
+    /// <summary>Whether Export (and Print) can be used: the core allows it, and no correction's
+    /// notes are being written, when it would refuse (the old notes; the Mac's
+    /// <c>Exports.result</c>).</summary>
+    public static bool CanExport(AppModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        return model.Phase == Phase.Running
+            && model.State.Can.Export
+            && model.State.Screen is not ResultScreen { Correcting: true };
+    }
+
     /// <summary>A step row's state in words, as the other apps say it.</summary>
     public static string StepState(StepProgress state, Strings strings)
     {

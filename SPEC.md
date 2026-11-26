@@ -4705,6 +4705,82 @@ exclusive mode.
 3. **The menu's name in German and Spanish: as proposed.** "Wiedergabe" and "Reproducción" (Windows' Media
    Player says so). Proposal: these.
 
+### Module `win-corrections`
+
+> Status: **draft** (2026-11-26). The screens (W11) are drawn as a draft on the Windows canvas
+> and wait for the owner (three open questions at the end, each with Claude's proposal); the
+> part that needs no screen, the logic in `SticklerCore`, is built (task 228). Modelled on
+> "Mac corrections"; this section adds what Windows changes. Plan: `tasks/plan.md`
+> ("`win-corrections`"), tasks 228–232, on the branch `claude/win-playback`, checked at
+> checkpoint AI.
+
+**Objective.** The Windows app corrects what the GTK and Mac apps correct: tempo half or
+double, beats per bar, the first "one", Simplify and Repeat signs, each applied at once
+without running a model again, remembered per song, with "Back to Detected". A drummer on a PC
+fixes a wrong beat in a second.
+
+**Assumptions.**
+1. The core's side is done by `mac-corrections` (task 190): `result` sends `controls`,
+   `correcting` and `sheet`; `correct` takes one change; the exports answer `not_now` while a
+   correction is written (`docs/bridge.md`). Nothing in Python changes.
+2. `SticklerCore` (C#) writes `correct` already (`Command.Correct`, `Correction`), and its
+   `SheetModel` asks for pages on a new `sheet`, not when a correction starts (tested).
+3. Every text exists in `po/` and the Windows string tables ("Corrections", "Beat", "Tempo",
+   "Half", "As Detected", "Double", "Beats per bar", "First “one”", "Beats before it are a
+   pickup", "Easier to Read", "Simplify", "Nearly equal bars get one pattern", "Repeat signs",
+   "Equal bars are written once", "Back to Detected", "Show Corrections", "Hide Corrections";
+   checked 2026-11-26).
+4. WinUI's `NumberBox` shows a number only, not "Beat 2": the two steppers are a text and two
+   buttons, sending the core's `_by` steps as the Mac's do.
+
+**Where each decision lives:** Python decides everything shown and every range (as for the
+Mac); C# draws the pane from `controls`, sends one change per control action, remembers whether
+the pane is open, shows the ring while `correcting`.
+
+**Scope.**
+1. **`SticklerCore`** (done, task 228): `Tempo`, `CorrectionControls`; `ResultScreen.Controls`
+   (none in an older core's line) and `.Correcting`; `AppModel.Correct`; `CorrectionsPane`
+   (the controls to show, enabled, presented, the entry's words, correcting);
+   `WindowView.CanExport` and `Flows.Result`: no export while a correction is written.
+2. **The pane** (W11): at the window's right edge between the header and the playback bar,
+   320 effective pixels, on the header's layer; the sheet narrows beside it. Its title
+   "Corrections"; "Beat" as a card with Tempo (three joined toggle buttons, as Song · Hits ·
+   Both), Beats per bar and First “one” (value and two step buttons, off at their ends as
+   `controls` says); "Easier to Read" as a card with Simplify and Repeat signs (toggle switches
+   with their second line); "Back to Detected" under them, off while nothing is corrected.
+   Only with a result (not during an export's steps). Narrator names every control.
+3. **Opening it:** a toggle button right of Export (tooltip "Corrections", pressed while open)
+   and an entry in View (questions 1 and 2); open or closed is kept across starts in the
+   app's own settings file under `%LOCALAPPDATA%\Stickler` (question 3).
+4. **While a correction is written:** a small progress ring after the subtitle; the old
+   sheet, title and marker stay; playback goes on; Export is off.
+5. **CI and screenshots:** W11 in light and dark from the stand-in song.
+
+**Not in this module:** as "Mac corrections" (no other tempo, no undo beyond "Back to
+Detected", no single notes).
+
+**Testing.**
+- `SticklerCore` (done): the Mac's cases: decoding with and without `controls`, each kind of
+  change and its line, two quick steps as two commands in order, a refusal as the notice,
+  pages once per new `sheet`, the pane's logic in German too, the export rule. ≥ 95 %.
+- The app: `win.yml`'s build, format and screenshots.
+- By hand on the owner's PC: Eye of the Tiger at half tempo and with the first "one" moved,
+  by eye and by ear while playing; Simplify off and on; Back to Detected; the corrections
+  back after reopening the song; the pane still open after a restart.
+
+**Success criteria.** As "Mac corrections" 1–4 on the owner's PC with the Windows controls;
+5. the screens match W11 in light and dark; 6. `win.yml` and `scripts/check.sh task` green,
+`SticklerCore` and the app's logic types ≥ 95 %, the other apps unchanged.
+
+**Open questions** (each with Claude's proposal):
+1. **The View entry:** one entry "Corrections" with a check mark while the pane is open, as
+   Windows shows panes (File Explorer's View › Details pane), or the Mac's two wordings "Show
+   Corrections" / "Hide Corrections". Proposal: the check mark.
+2. **The key:** Windows has no usual key for such a pane. Proposal: Ctrl+Shift+C.
+3. **Where "open or closed" is kept:** the core's settings have no such field (the Mac keeps
+   it in macOS's own preferences). Proposal: a small `window.json` beside the core's data,
+   written by the app; the other way is a new field in the core's settings, for every app.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)

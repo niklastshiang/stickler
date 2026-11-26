@@ -276,6 +276,11 @@ public sealed class AppModel : INotifyPropertyChanged
 
     public void Restore(string src) => Send(Command.Restore(src));
 
+    /// <summary>One change from the corrections controls; the core shows the new values at once
+    /// and a refusal is the window's notice. A stepper sends steps (<c>BeatsPerBarBy</c>), which
+    /// the core counts from its newest values, so two quick clicks make two steps.</summary>
+    public void Correct(Correction change) => Send(Command.Correct(change));
+
     /// <summary>File › Open Recent › Clear Menu: every recent song forgotten.</summary>
     public void ClearRecent()
     {

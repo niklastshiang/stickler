@@ -42,9 +42,10 @@ public sealed class Flows
         this.strings = strings;
     }
 
-    /// <summary>The result being shown, if it can be exported.</summary>
+    /// <summary>The result being shown, if it can be exported (not while a correction's notes
+    /// are written).</summary>
     public ResultScreen? Result =>
-        model.State is { Screen: ResultScreen result, Can.Export: true } ? result : null;
+        model.State is { Screen: ResultScreen result, Can.Export: true } && !result.Correcting ? result : null;
 
     public async Task OpenSongAsync()
     {

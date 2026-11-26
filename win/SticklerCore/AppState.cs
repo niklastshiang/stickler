@@ -64,6 +64,54 @@ public sealed record SongBar(double Start, double End, int Bar, string Label)
         Json.Double(s, "start"), Json.Double(s, "end"), Json.Int(s, "bar"), Json.Str(s, "label"));
 }
 
+/// <summary>A tempo correction: halved, as detected, or doubled (the enum cannot say <c>Double</c>, CA1720; wire names <c>half</c>,
+/// <c>normal</c>, <c>double</c>).</summary>
+public enum Tempo
+{
+    Halved,
+    Normal,
+    Doubled,
+}
+
+/// <summary>What the corrections controls show (SPEC.md "Mac corrections", scope 1): the wanted
+/// values, the engraved ones where nothing is corrected, all decided by the core.</summary>
+/// <param name="Fewer">Whether the bar can lose a beat (1 to 12); <paramref name="More"/> whether it can gain one.</param>
+/// <param name="FirstOneLabel">"Beat 2", translated by the core.</param>
+/// <param name="Earlier">Whether the first "one" can move to an earlier beat; <paramref name="Later"/> to a later one.</param>
+/// <param name="Corrected">"Back to Detected" has something to undo.</param>
+public sealed record CorrectionControls(
+    Tempo Tempo,
+    int BeatsPerBar,
+    bool Fewer,
+    bool More,
+    int FirstOne,
+    string FirstOneLabel,
+    bool Earlier,
+    bool Later,
+    bool Simplify,
+    bool Repeats,
+    bool Corrected)
+{
+    internal static CorrectionControls Read(JsonElement s) => new(
+        Json.Str(s, "tempo") switch
+        {
+            "half" => Tempo.Halved,
+            "normal" => Tempo.Normal,
+            "double" => Tempo.Doubled,
+            var other => throw new UnreadableLineException($"a tempo \"{other}\""),
+        },
+        Json.Int(s, "beats_per_bar"),
+        Json.Bool(s, "fewer"),
+        Json.Bool(s, "more"),
+        Json.Int(s, "first_one"),
+        Json.Str(s, "first_one_label"),
+        Json.Bool(s, "earlier"),
+        Json.Bool(s, "later"),
+        Json.Bool(s, "simplify"),
+        Json.Bool(s, "repeats"),
+        Json.Bool(s, "corrected"));
+}
+
 /// <summary>What the window shows: one screen of the core's states.</summary>
 public abstract record Screen(string Kind);
 
@@ -89,7 +137,9 @@ public sealed record ResultScreen(
     string MusicXml,
     string? Clicks,
     IReadOnlyList<SongBar> Bars,
-    int Sheet = 0) : Screen("result");
+    int Sheet = 0,
+    CorrectionControls? Controls = null,
+    bool Correcting = false) : Screen("result");
 
 public sealed record ExportingScreen(
     string Song, string Title, string Subtitle, string Dest, IReadOnlyList<StepRow> Steps) : Screen("exporting");
@@ -153,7 +203,9 @@ public sealed record AppState(Screen Screen, Abilities Can)
                 Json.Str(s, "musicxml"),
                 Json.OptStr(s, "clicks"),
                 Json.OptList(s, "bars", SongBar.Read),
-                Json.OptInt(s, "sheet") ?? 0),
+                Json.OptInt(s, "sheet") ?? 0,
+                Json.Has(s, "controls") ? CorrectionControls.Read(Json.Field(s, "controls")) : null,
+                Json.Flag(s, "correcting")),
             "exporting" => new ExportingScreen(
                 Json.Str(s, "song"),
                 Json.Str(s, "title"),

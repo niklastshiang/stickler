@@ -247,7 +247,7 @@ public sealed partial class MainWindow : Window
         var running = model.Phase == Phase.Running;
         ZoomInItem.IsEnabled = ZoomOutItem.IsEnabled = ActualSizeItem.IsEnabled = running && model.Sheet.CanZoom;
         OpenItem.IsEnabled = OpenButton.IsEnabled = OpenSongButton.IsEnabled = running && state.Can.Open;
-        ExportMenu.IsEnabled = ExportButton.IsEnabled = running && state.Can.Export;
+        ExportMenu.IsEnabled = ExportButton.IsEnabled = WindowView.CanExport(model); // not while a correction is written
         CloseSongItem.IsEnabled = running && state.Can.Close;
         BackUpItem.IsEnabled = RestoreItem.IsEnabled = RemoveItem.IsEnabled = running && state.Can.RemoveModels;
         CancelButton.IsEnabled = state.Can.Cancel;

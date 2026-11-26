@@ -128,7 +128,7 @@ public sealed class Command
 
 /// <summary>One change of <c>correct</c> (as the Mac's <c>Correction</c>): a value, a stepper's
 /// step (counted by the core from its newest values, so quick clicks are never lost), or Back
-/// to Detected. The controls that send them come with <c>win-corrections</c>.</summary>
+/// to Detected.</summary>
 public sealed class Correction
 {
     private Correction(string key, object value)

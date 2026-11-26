@@ -842,3 +842,18 @@ in the window (225) → CI and screenshots (226) → review and a build for the 
 | The runner has no sound device | Low | The mixer is tested without one; the player's test says which case it ran |
 | NAudio 3 is young | Medium | Pinned to 3.3.0; only `Mix` and `Player` touch it |
 
+## Release 11 (Windows app): `win-corrections` (draft 2026-11-26, SPEC.md "Module `win-corrections`")
+
+The corrections pane, as `mac-corrections` built the Mac's inspector. Tasks 228–232 on the
+branch `claude/win-playback`. The logic (228) needed no screen and is built; the pane waits for
+the owner's word on W11.
+
+Order: the logic (228) → W11 approved and copied to `docs/design/win/` (229) → the pane, the
+button, the View entry and the ring (230) → screenshots (231) → review and a build for the
+owner (232).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| W11 changes after the owner's look | Low | Only the logic is built before it |
+| The pane leaves too little room for the sheet at 640 px | Low | The sheet engraves at any width; seen in the screenshots |
+
