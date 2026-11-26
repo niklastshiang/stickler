@@ -166,6 +166,20 @@ function Save-Sheet($look, $standIns) {
             Save-Window $process "W7-pdf-saved-$look"  # the note after saving, or why it failed
             "saved W6-sheet.pdf: $(Test-Path $pdf)"
         }
+        # W11: the corrections pane opened by its button; the sheet is engraved again beside it
+        Invoke-Element (Find-Named $process "Corrections")
+        Start-Sleep -Seconds 8
+        Save-Window $process "W11-corrections-$look"
+        # W10: playing. A runner without a sound device shows the notice instead; the log says which
+        $before = Get-Names $process
+        Invoke-Element (Find-Named $process "Play")
+        Start-Sleep -Seconds 3
+        $now = Get-Names $process
+        foreach ($name in $now.Keys) {
+            if (-not $before.ContainsKey($name)) { "after Play: $name" }
+        }
+        "playing: $($now.ContainsKey('Pause'))"
+        Save-Window $process "W10-playing-$look"
     }
     catch {
         Save-Window $process "W6-sheet-$look-failed"
