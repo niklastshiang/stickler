@@ -1637,6 +1637,24 @@
         }
       }
     },
+    "No sound output was found." : {
+      "comment" : "Translators: Windows app, the reason in \"The song cannot be played: {reason}\" on a PC without speakers, headphones or any other sound output",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wurde keine Tonausgabe gefunden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontró ninguna salida de sonido."
+          }
+        }
+      }
+    },
     "Not Now" : {
       "extractionState" : "manual",
       "localizations" : {

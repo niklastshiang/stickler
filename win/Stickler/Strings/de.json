@@ -86,6 +86,7 @@
   "Nearly equal bars get one pattern": "Fast gleiche Takte bekommen ein Muster",
   "Next Bar": "Nächster Takt",
   "No Software app opens Stickler’s page here. To remove Stickler, run in a terminal (without --delete-data its models, settings and recent songs stay):": "Hier öffnet keine Software-App die Seite von Stickler. Um Stickler zu entfernen, führe im Terminal aus (ohne --delete-data bleiben seine Modelle, Einstellungen und zuletzt geöffneten Songs):",
+  "No sound output was found.": "Es wurde keine Tonausgabe gefunden.",
   "Not Now": "Nicht jetzt",
   "Not all of Stickler’s data could be removed. You can delete the folder yourself: {folder}": "Nicht alle Daten von Stickler ließen sich entfernen. Du kannst diesen Ordner selbst löschen: {folder}",
   "Not an audio file": "Keine Audiodatei",

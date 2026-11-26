@@ -33,6 +33,9 @@ TEXTS = (
     # tooltip call the two step buttons beside "First “one”": the first "one" moves by a beat
     N_("One beat later"),
     N_("One beat earlier"),
+    # Translators: Windows app, the reason in "The song cannot be played: {reason}" on a PC
+    # without speakers, headphones or any other sound output
+    N_("No sound output was found."),
     # Translators: Windows installer, shown on Windows 10 or a PC with an ARM processor, where
     # it installs nothing (SPEC.md, module `win-package`)
     N_("Stickler needs Windows 11 on a PC with an Intel or AMD processor (x64)."),

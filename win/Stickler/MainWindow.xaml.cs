@@ -55,7 +55,7 @@ public sealed partial class MainWindow : Window
         var languages = GlobalizationPreferences.Languages.ToList();
         strings = Strings.Load(Path.Combine(AppContext.BaseDirectory, "Strings"), languages);
         var queue = DispatcherQueue.GetForCurrentThread();
-        player = Sound.Player(error => strings.Text("The song cannot be played: {reason}", ("reason", error.Message)));
+        player = Sound.Player(error => strings.Text("The song cannot be played: {reason}", ("reason", Reason(error))));
         model = new AppModel(languages, wanted => CoreLaunch.ForApp(Environment(), AppContext.BaseDirectory, windows: true, wanted, Build.Development), work => queue.TryEnqueue(() => work()), player);
         ask = new WinAsk(this, strings);
         flows = new Flows(model, ask, strings);
@@ -81,6 +81,13 @@ public sealed partial class MainWindow : Window
         model.Launch();
         Render();
     }
+
+    /// <summary>Why the player failed, in words: a PC without a sound output answers "Element
+    /// not found" (0x80070490, seen on GitHub's runner), which says nothing to a reader.</summary>
+    private string Reason(Exception error) =>
+        error is System.Runtime.InteropServices.COMException { HResult: unchecked((int)0x80070490) }
+            ? strings.Text("No sound output was found.")
+            : error.Message;
 
     private static Dictionary<string, string?> Environment() =>
         System.Environment.GetEnvironmentVariables()

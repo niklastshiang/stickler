@@ -86,6 +86,7 @@
   "Nearly equal bars get one pattern": "Los compases casi iguales reciben un mismo patrón",
   "Next Bar": "Compás siguiente",
   "No Software app opens Stickler’s page here. To remove Stickler, run in a terminal (without --delete-data its models, settings and recent songs stay):": "Aquí ninguna app de software abre la página de Stickler. Para quitar Stickler, ejecuta en una terminal (sin --delete-data se quedan sus modelos, ajustes y canciones recientes):",
+  "No sound output was found.": "No se encontró ninguna salida de sonido.",
   "Not Now": "Ahora no",
   "Not all of Stickler’s data could be removed. You can delete the folder yourself: {folder}": "No se pudieron quitar todos los datos de Stickler. Puedes borrar esta carpeta tú mismo: {folder}",
   "Not an audio file": "No es un archivo de audio",
