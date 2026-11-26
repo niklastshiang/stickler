@@ -31,6 +31,12 @@ VersionInfoProductName=Stickler
 ; per user only: never offered for all users (no administrator rights, no UAC prompt)
 PrivilegesRequired=lowest
 DefaultDirName={autopf}\Stickler
+; Setup's guard against junctions made by a non-administrator is inherited by the app when
+; "Start Stickler" launches it from a Setup that never asked for administrator rights (Inno
+; Setup 7.1.1's notes: "to be addressed in a future version"); uv then cannot make its Python's
+; link folder (error 448, seen in the VM on 2026-11-26: the first model download failed).
+; This Setup runs as the user and writes only into the user's own folders.
+RedirectionGuard=no
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 DisableWelcomePage=yes
