@@ -1704,6 +1704,76 @@
         }
       }
     },
+    "One beat earlier" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Schlag früher"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un tiempo antes"
+          }
+        }
+      }
+    },
+    "One beat fewer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Schlag weniger"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un tiempo menos"
+          }
+        }
+      }
+    },
+    "One beat later" : {
+      "comment" : "Translators: Windows app, corrections pane (design screen W11): what Narrator and the tooltip call the two step buttons beside \"First “one”\": the first \"one\" moves by a beat",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Schlag später"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un tiempo después"
+          }
+        }
+      }
+    },
+    "One beat more" : {
+      "comment" : "Translators: Windows app, corrections pane (design screen W11): what Narrator and the tooltip call the two step buttons beside \"Beats per bar\"",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Schlag mehr"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un tiempo más"
+          }
+        }
+      }
+    },
     "Only the drum track, without the band" : {
       "extractionState" : "manual",
       "localizations" : {

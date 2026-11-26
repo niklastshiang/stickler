@@ -842,7 +842,7 @@ in the window (225) → CI and screenshots (226) → review and a build for the 
 | The runner has no sound device | Low | The mixer is tested without one; the player's test says which case it ran |
 | NAudio 3 is young | Medium | Pinned to 3.3.0; only `Mix` and `Player` touch it |
 
-## Release 11 (Windows app): `win-corrections` (draft 2026-11-26, SPEC.md "Module `win-corrections`")
+## Release 11 (Windows app): `win-corrections` (being built from 2026-11-26, SPEC.md "Module `win-corrections`")
 
 The corrections pane, as `mac-corrections` built the Mac's inspector. Tasks 228–232 on the
 branch `claude/win-playback`. The logic (228) needed no screen and is built; the pane waits for

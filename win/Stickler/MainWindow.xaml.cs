@@ -3,6 +3,7 @@ using System.Globalization;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -15,8 +16,8 @@ using Page = Stickler.Core.Page;
 
 namespace Stickler;
 
-/// <summary>The window of design screens W1–W5, W7, W8 and W10 (SPEC.md, modules
-/// <c>win-shell</c> and <c>win-playback</c>).
+/// <summary>The window of design screens W1–W5, W7, W8, W10 and W11 (SPEC.md, modules
+/// <c>win-shell</c>, <c>win-playback</c> and <c>win-corrections</c>).
 /// It draws what <see cref="AppModel"/> and <see cref="WindowView"/> say and forwards every
 /// click as one action; it decides nothing itself. A pure view: checked by screenshots and by
 /// hand, not counted for coverage.</summary>
@@ -30,6 +31,8 @@ public sealed partial class MainWindow : Window
     private readonly Flows flows;
     private readonly WinAsk ask;
     private readonly Player player;
+    private readonly string windowSettings; // where "the corrections pane is open" is kept
+    private bool correctionsShown;
     private readonly DispatcherQueueTimer noticeTimer;
     private ContentDialog? setup;
     private SetupDialog shownSetup = SetupDialog.None;
@@ -65,6 +68,9 @@ public sealed partial class MainWindow : Window
         model.Playback.PropertyChanged += OnPlaybackChanged;
         SheetPane.Attach(model.Sheet, model.Playback, strings, reason => model.Tell(new Notice(reason, null)), key => PlaybackMenu.Press(model, key));
         PlayPane.Attach(model.Playback, strings);
+        CorrectionsPaneView.Attach(model, strings);
+        windowSettings = WindowSettings.PathFor(Environment());
+        correctionsShown = WindowSettings.Load(windowSettings).CorrectionsShown;
         Keys();
         Root.KeyDown += OnKey;
         Closed += OnClosed;
@@ -115,6 +121,9 @@ public sealed partial class MainWindow : Window
         ZoomInItem.Text = T("Zoom In");
         ZoomOutItem.Text = T("Zoom Out");
         ActualSizeItem.Text = T("Actual Size");
+        CorrectionsItem.Text = T("Corrections");
+        AutomationProperties.SetName(CorrectionsButton, T("Corrections"));
+        ToolTipService.SetToolTip(CorrectionsButton, T("Corrections"));
         PlaybackMenuBar.Title = PlaybackMenu.MenuTitle(strings);
         HelpMenu.Title = T("Help");
         HelpItem.Text = T("Stickler Help");
@@ -153,6 +162,33 @@ public sealed partial class MainWindow : Window
         {
             RenderPlayback();
         }
+    }
+
+    /// <summary>The corrections pane, its button and its View entry (W11) as
+    /// <see cref="CorrectionsPane"/> says them; the ring turns while the notes are written.</summary>
+    private void RenderCorrections()
+    {
+        var enabled = CorrectionsPane.Enabled(model);
+        var presented = CorrectionsPane.Presented(correctionsShown, model);
+        CorrectionsButton.IsEnabled = CorrectionsItem.IsEnabled = enabled;
+        CorrectionsButton.IsChecked = CorrectionsItem.IsChecked = presented;
+        CorrectionsPaneView.Visibility = Shown(presented);
+        if (CorrectionsPane.Controls(model) is { } controls)
+        {
+            CorrectionsPaneView.Show(controls);
+        }
+        var correcting = CorrectionsPane.Correcting(model);
+        CorrectingRing.IsActive = correcting;
+        CorrectingRing.Visibility = Shown(correcting);
+    }
+
+    /// <summary>The button and View › Corrections (Ctrl+Shift+C): open or closed, kept for the
+    /// next start.</summary>
+    private void OnCorrections(object sender, RoutedEventArgs e)
+    {
+        correctionsShown = !CorrectionsPane.Presented(correctionsShown, model);
+        new WindowSettings(correctionsShown).Save(windowSettings);
+        RenderCorrections();
     }
 
     /// <summary>The Playback menu (W10) as <see cref="PlaybackMenu"/> says it: the first entry
@@ -281,6 +317,7 @@ public sealed partial class MainWindow : Window
             StoppedDetailsExpander.IsExpanded = end.NeverStarted;
         }
         RenderPlayback();
+        RenderCorrections();
         Setup(WindowView.Dialog(model));
         Notice();
     }

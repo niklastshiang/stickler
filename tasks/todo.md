@@ -1474,20 +1474,20 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AH
 - [ ] All success criteria of SPEC.md "Module `win-playback`" met (owner)
 
-## Phase 34: Release 11 (Windows app), module `win-corrections` (draft 2026-11-26, SPEC.md "Module `win-corrections`")
+## Phase 34: Release 11 (Windows app), module `win-corrections` (being built from 2026-11-26, SPEC.md "Module `win-corrections`")
 
 - [x] **Task 228: Corrections in `SticklerCore`** (M): done 2026-11-26 (a Sonnet subagent; read and run again by the main session: 157 tests, 98.6 %). `Tempo` (`Halved`, `Normal`, `Doubled`: CA1720 refuses a member called `Double`; the wire names are unchanged), `CorrectionControls`, `ResultScreen.Controls` and `.Correcting`, `AppModel.Correct`, `CorrectionsPane`, `WindowView.CanExport`; `Flows.Result` gives no result while a correction is written. The wanted `corrections` are not decoded (nothing reads them on the Mac either).
   - Acceptance: SPEC scope 1; the Mac's test cases ported.
   - Verify: `dotnet run --project win/SticklerCore.Tests -c Release -- --coverage …`, the gate ≥ 95 %
   - Dependencies: none · Files: `win/SticklerCore/`, `win/SticklerCore.Tests/`
 
-- [ ] **Task 229: W11 with the owner** (S, the owner's)
-  - 2026-11-26: a draft is on the Windows canvas (two boards, light and dark, and a note with the six decisions proposed).
+- [x] **Task 229: W11 with the owner** (S, the owner's): done 2026-11-26. Two boards on the Windows canvas (light, dark) and a note with the six decisions; approved by the owner with the three questions as proposed ("Deine Vorschläge passen, bau die Oberfläche"); copied to `docs/design/win/`.
   - Acceptance: the owner approves W11 and answers the three questions; the boards copied to `docs/design/win/`, the decisions into SPEC.md "Module `win-design`".
   - Verify: the owner's word
   - Dependencies: none · Files: `docs/design/win/`, `SPEC.md`
 
 - [ ] **Task 230: The pane, the button, the View entry and the ring** (M)
+  - 2026-11-26, written on Linux: `CorrectionsView.xaml(.cs)`, the toggle button right of Export, View › Corrections (Ctrl+Shift+C) with its check mark, the ring after the subtitle, `WindowSettings` (`window.json` in the core's config folder; 12 tests) and four new texts for Narrator. Not yet tried by hand.
   - Acceptance: SPEC scopes 2–4.
   - Verify: `win.yml`; by hand in the VM or on the owner's PC
   - Dependencies: 228, 229 · Files: `win/Stickler/`

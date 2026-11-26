@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-26 11:06+0100\n"
+"POT-Creation-Date: 2026-11-26 14:29+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -523,6 +523,26 @@ msgstr "Ver"
 #: src/stickler_app/win_texts.py:27
 msgid "Playback"
 msgstr "Reproducción"
+
+#. Translators: Windows app, corrections pane (design screen W11): what Narrator and the
+#. tooltip call the two step buttons beside "Beats per bar"
+#: src/stickler_app/win_texts.py:30
+msgid "One beat more"
+msgstr "Un tiempo más"
+
+#: src/stickler_app/win_texts.py:31
+msgid "One beat fewer"
+msgstr "Un tiempo menos"
+
+#. Translators: Windows app, corrections pane (design screen W11): what Narrator and the
+#. tooltip call the two step buttons beside "First “one”": the first "one" moves by a beat
+#: src/stickler_app/win_texts.py:34
+msgid "One beat later"
+msgstr "Un tiempo después"
+
+#: src/stickler_app/win_texts.py:35
+msgid "One beat earlier"
+msgstr "Un tiempo antes"
 
 #. Translators: a percentage; German puts a no-break space before the sign
 #: src/stickler_app/zoom.py:36

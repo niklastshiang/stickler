@@ -50,6 +50,13 @@
                 <MenuFlyoutItem x:Name="ZoomInItem" Click="OnZoomIn" />
                 <MenuFlyoutItem x:Name="ZoomOutItem" Click="OnZoomOut" />
                 <MenuFlyoutItem x:Name="ActualSizeItem" Click="OnActualSize" />
+                <MenuFlyoutSeparator />
+                <!-- W11: the corrections pane, with a check mark while it is open -->
+                <ToggleMenuFlyoutItem x:Name="CorrectionsItem" Click="OnCorrections">
+                    <ToggleMenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control,Shift" Key="C" />
+                    </ToggleMenuFlyoutItem.KeyboardAccelerators>
+                </ToggleMenuFlyoutItem>
             </MenuBarItem>
             <!-- W10: playback (module win-playback); the keys are the window's (OnKey), shown here as text -->
             <MenuBarItem x:Name="PlaybackMenuBar">
@@ -78,7 +85,11 @@
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
                 <TextBlock x:Name="SongTitle" Style="{StaticResource SubtitleTextBlockStyle}" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="SongSubtitle" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock x:Name="SongSubtitle" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <!-- W11: turns while a correction's notes are written -->
+                    <ProgressRing x:Name="CorrectingRing" Width="14" Height="14" MinWidth="14" MinHeight="14" IsActive="False" Visibility="Collapsed" VerticalAlignment="Center" />
+                </StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button x:Name="OpenButton" Click="OnOpen" />
@@ -93,6 +104,9 @@
                         </MenuFlyout>
                     </DropDownButton.Flyout>
                 </DropDownButton>
+                <ToggleButton x:Name="CorrectionsButton" Width="32" Height="32" Padding="0" Click="OnCorrections">
+                    <FontIcon Glyph="&#xEA49;" FontSize="16" />
+                </ToggleButton>
             </StackPanel>
         </Grid>
 
@@ -138,14 +152,19 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- W6 and W10: the sheet music (module win-sheet) and the playback bar under it -->
+            <!-- W6, W10 and W11: the sheet music (module win-sheet), the corrections pane beside it and the playback bar under both -->
             <Grid x:Name="ResultPage" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
                 <local:SheetView x:Name="SheetPane" />
-                <local:Playbar x:Name="PlayPane" Grid.Row="1" />
+                <local:CorrectionsView x:Name="CorrectionsPaneView" Grid.Column="1" Visibility="Collapsed" />
+                <local:Playbar x:Name="PlayPane" Grid.Row="1" Grid.ColumnSpan="2" />
             </Grid>
 
             <!-- the core has ended -->

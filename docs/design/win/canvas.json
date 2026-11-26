@@ -1,39 +1,273 @@
 {
   "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-11-24T14:00:00Z"},
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-24T14:00:00Z"
+  },
   "title": "Stickler Windows screens",
-  "launch": {"view": "canvas"},
+  "launch": {
+    "view": "canvas"
+  },
   "pages": [],
   "boards": {
-    "Main.dc.html": {"x": 0, "y": 0, "w": 1000, "h": 700, "title": "W4 · Empty window (light)", "radius": 8},
-    "Sheet.dc.html": {"x": 1080, "y": 0, "w": 1000, "h": 700, "title": "W6 · Sheet music (light)", "radius": 8},
-    "Main-Dark.dc.html": {"x": 0, "y": 820, "w": 1000, "h": 700, "title": "W4 · Empty window (dark)", "radius": 8},
-    "Sheet-Dark.dc.html": {"x": 1080, "y": 820, "w": 1000, "h": 700, "title": "W6 · Sheet music (dark)", "radius": 8},
-    "SheetPage.dc.html": {"x": 2160, "y": 0, "w": 640, "h": 560, "title": "Engraved page (shared with the GTK and Mac mockups)"},
-    "Setup-Consent.dc.html": {"x": 0, "y": 1900, "w": 1000, "h": 700, "title": "W1 · First start: consent", "radius": 8},
-    "Setup-Download.dc.html": {"x": 1080, "y": 1900, "w": 1000, "h": 700, "title": "W2 · First start: download", "radius": 8},
-    "Setup-Error.dc.html": {"x": 2160, "y": 1900, "w": 1000, "h": 700, "title": "W3 · First start: a server is not answering", "radius": 8},
-    "Analysing.dc.html": {"x": 0, "y": 2960, "w": 1000, "h": 700, "title": "W5 · Analysis", "radius": 8},
-    "Export-Menu.dc.html": {"x": 1080, "y": 2960, "w": 1000, "h": 700, "title": "W7 · Export menu", "radius": 8},
-    "Export-Saved.dc.html": {"x": 2160, "y": 2960, "w": 1000, "h": 700, "title": "W7 · Saved", "radius": 8},
-    "Menu-File.dc.html": {"x": 0, "y": 4020, "w": 1000, "h": 700, "title": "W8 · Menu: File", "radius": 8},
-    "Menu-View.dc.html": {"x": 1080, "y": 4020, "w": 1000, "h": 700, "title": "W8 · Menu: View", "radius": 8},
-    "Menu-Help.dc.html": {"x": 2160, "y": 4020, "w": 1000, "h": 700, "title": "W8 · Menu: Help", "radius": 8},
-    "About.dc.html": {"x": 3240, "y": 4020, "w": 1000, "h": 700, "title": "W8 · About Stickler", "radius": 8},
-    "Playing.dc.html": {"x": 0, "y": 5080, "w": 1000, "h": 700, "title": "W10 · Playing (light)", "radius": 8},
-    "Playing-Dark.dc.html": {"x": 1080, "y": 5080, "w": 1000, "h": 700, "title": "W10 · Playing, only the hits (dark)", "radius": 8},
-    "Playing-Volume.dc.html": {"x": 2160, "y": 5080, "w": 1000, "h": 700, "title": "W10 · Volume", "radius": 8},
-    "Menu-Playback.dc.html": {"x": 3240, "y": 5080, "w": 1000, "h": 700, "title": "W10 · Menu: Playback", "radius": 8}
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1000,
+      "h": 700,
+      "title": "W4 · Empty window (light)",
+      "radius": 8
+    },
+    "Sheet.dc.html": {
+      "x": 1080,
+      "y": 0,
+      "w": 1000,
+      "h": 700,
+      "title": "W6 · Sheet music (light)",
+      "radius": 8
+    },
+    "Main-Dark.dc.html": {
+      "x": 0,
+      "y": 820,
+      "w": 1000,
+      "h": 700,
+      "title": "W4 · Empty window (dark)",
+      "radius": 8
+    },
+    "Sheet-Dark.dc.html": {
+      "x": 1080,
+      "y": 820,
+      "w": 1000,
+      "h": 700,
+      "title": "W6 · Sheet music (dark)",
+      "radius": 8
+    },
+    "SheetPage.dc.html": {
+      "x": 2160,
+      "y": 0,
+      "w": 640,
+      "h": 560,
+      "title": "Engraved page (shared with the GTK and Mac mockups)"
+    },
+    "Setup-Consent.dc.html": {
+      "x": 0,
+      "y": 1900,
+      "w": 1000,
+      "h": 700,
+      "title": "W1 · First start: consent",
+      "radius": 8
+    },
+    "Setup-Download.dc.html": {
+      "x": 1080,
+      "y": 1900,
+      "w": 1000,
+      "h": 700,
+      "title": "W2 · First start: download",
+      "radius": 8
+    },
+    "Setup-Error.dc.html": {
+      "x": 2160,
+      "y": 1900,
+      "w": 1000,
+      "h": 700,
+      "title": "W3 · First start: a server is not answering",
+      "radius": 8
+    },
+    "Analysing.dc.html": {
+      "x": 0,
+      "y": 2960,
+      "w": 1000,
+      "h": 700,
+      "title": "W5 · Analysis",
+      "radius": 8
+    },
+    "Export-Menu.dc.html": {
+      "x": 1080,
+      "y": 2960,
+      "w": 1000,
+      "h": 700,
+      "title": "W7 · Export menu",
+      "radius": 8
+    },
+    "Export-Saved.dc.html": {
+      "x": 2160,
+      "y": 2960,
+      "w": 1000,
+      "h": 700,
+      "title": "W7 · Saved",
+      "radius": 8
+    },
+    "Menu-File.dc.html": {
+      "x": 0,
+      "y": 4020,
+      "w": 1000,
+      "h": 700,
+      "title": "W8 · Menu: File",
+      "radius": 8
+    },
+    "Menu-View.dc.html": {
+      "x": 1080,
+      "y": 4020,
+      "w": 1000,
+      "h": 700,
+      "title": "W8 · Menu: View",
+      "radius": 8
+    },
+    "Menu-Help.dc.html": {
+      "x": 2160,
+      "y": 4020,
+      "w": 1000,
+      "h": 700,
+      "title": "W8 · Menu: Help",
+      "radius": 8
+    },
+    "About.dc.html": {
+      "x": 3240,
+      "y": 4020,
+      "w": 1000,
+      "h": 700,
+      "title": "W8 · About Stickler",
+      "radius": 8
+    },
+    "Playing.dc.html": {
+      "x": 0,
+      "y": 5080,
+      "w": 1000,
+      "h": 700,
+      "title": "W10 · Playing (light)",
+      "radius": 8
+    },
+    "Playing-Dark.dc.html": {
+      "x": 1080,
+      "y": 5080,
+      "w": 1000,
+      "h": 700,
+      "title": "W10 · Playing, only the hits (dark)",
+      "radius": 8
+    },
+    "Playing-Volume.dc.html": {
+      "x": 2160,
+      "y": 5080,
+      "w": 1000,
+      "h": 700,
+      "title": "W10 · Volume",
+      "radius": 8
+    },
+    "Menu-Playback.dc.html": {
+      "x": 3240,
+      "y": 5080,
+      "w": 1000,
+      "h": 700,
+      "title": "W10 · Menu: Playback",
+      "radius": 8
+    },
+    "Corrections.dc.html": {
+      "x": 0,
+      "y": 6140,
+      "w": 1000,
+      "h": 700,
+      "title": "W11 · Corrections (light, Simplify off)",
+      "radius": 8
+    },
+    "Corrections-Dark.dc.html": {
+      "x": 1080,
+      "y": 6140,
+      "w": 1000,
+      "h": 700,
+      "title": "W11 · Corrections, half tempo, writing the notes (dark)",
+      "radius": 8
+    }
   },
-  "order": ["Main.dc.html", "Sheet.dc.html", "Main-Dark.dc.html", "Sheet-Dark.dc.html", "SheetPage.dc.html", "Setup-Consent.dc.html", "Setup-Download.dc.html", "Setup-Error.dc.html", "Analysing.dc.html", "Export-Menu.dc.html", "Export-Saved.dc.html", "Menu-File.dc.html", "Menu-View.dc.html", "Menu-Help.dc.html", "About.dc.html", "Playing.dc.html", "Playing-Dark.dc.html", "Playing-Volume.dc.html", "Menu-Playback.dc.html"],
+  "order": [
+    "Main.dc.html",
+    "Sheet.dc.html",
+    "Main-Dark.dc.html",
+    "Sheet-Dark.dc.html",
+    "SheetPage.dc.html",
+    "Setup-Consent.dc.html",
+    "Setup-Download.dc.html",
+    "Setup-Error.dc.html",
+    "Analysing.dc.html",
+    "Export-Menu.dc.html",
+    "Export-Saved.dc.html",
+    "Menu-File.dc.html",
+    "Menu-View.dc.html",
+    "Menu-Help.dc.html",
+    "About.dc.html",
+    "Playing.dc.html",
+    "Playing-Dark.dc.html",
+    "Playing-Volume.dc.html",
+    "Menu-Playback.dc.html",
+    "Corrections.dc.html",
+    "Corrections-Dark.dc.html"
+  ],
   "notes": {
-    "row1": {"x": 0, "y": -300, "text": "Stickler for Windows · first screens", "kind": "title1", "maxW": 2080},
-    "assume": {"x": 2160, "y": 660, "w": 520, "size": "m", "fill": "orange", "text": "Approved by the owner on 2026-11-24 (draft 2). Checked against Microsoft's Windows 11 guidance. WinUI 3 defaults: Mica behind the title bar and the menu row, 8 px window, dialog and flyout corners, 4 px controls, the system's accent colour (shown: the default blue).\n1. A menu bar (File, View, Help) under the 32 px title bar; no hamburger, no Settings page.\n2. Open and Export sit beside the song's title.\n3. First start as dialogs in the middle of the window; the main button on the left, as Windows dialogs have it.\n4. Export menu with one line per entry (Windows menus have no second line); the Mac's second lines are the tooltips.\n5. After saving: a flyout under Export with \"Show in Folder\" (changed: Windows' status bar is not meant for confirming a save and may not float).\n6. \"Remove Downloaded Models…\" in File; \"About Stickler\" as a dialog, because there is no Settings page.\n7. View holds the three zoom entries only; no Full Screen.\n8. The app icon: the free-standing GNOME icon; Windows has no fixed shape.\nNo playback in the first Windows version, so no bar marker. Inter stands in for Segoe UI Variable where it is missing."},
-    "row3": {"x": 0, "y": 1640, "text": "First start", "kind": "title1", "maxW": 3160},
-    "row4": {"x": 0, "y": 2700, "text": "Analysis and export", "kind": "title1", "maxW": 3160},
-    "row5": {"x": 0, "y": 3760, "text": "Menus and About", "kind": "title1", "maxW": 4240},
-    "row6": {"x": 0, "y": 4820, "text": "Playback (a later release)", "kind": "title1", "maxW": 4240},
-    "playback": {"x": 4320, "y": 5080, "w": 520, "size": "m", "fill": "blue", "text": "Approved by the owner on 2026-11-24 (draft 1). Playback comes to Windows after the first version; the GTK app's behaviour (SPEC.md, module playback), drawn the Windows way.\n1. The playback bar at the window's bottom, on the same layer as the title header, in one row as in the GTK app: Previous Bar, Play/Pause, Next Bar (owner, 2026-11-24: the step buttons too, as in Windows' Media Player; the GTK app has only the keys), time, position slider, length, \"Bar 2 of 110\", Volume, Song · Hits · Both.\n2. Play/Pause is a round button in the accent colour, as in Windows' Media Player; the sliders are WinUI's (accent track, thumb with an accent dot).\n3. Song · Hits · Both as three joined toggle buttons, the chosen one in the accent colour. WinUI has no segmented control of its own (the Community Toolkit's is a NuGet package: ask first).\n4. Volume: a flyout above the button with two sliders, Song and Detected hits (70 % and 100 % at first, remembered per song, as in the GTK app).\n5. A Playback menu between View and Help: Play or Pause (the entry says what Space does now), Previous Bar, Next Bar, Go to the Start, then Song, Hits, Both as radio items. Windows shows keys in menus, and the app has no Keyboard Shortcuts window.\n6. The bar marker in the accent colour; a click on a bar jumps there.\nNew text for po/: \"Playback\". All others exist."}
+    "row1": {
+      "x": 0,
+      "y": -300,
+      "text": "Stickler for Windows · first screens",
+      "kind": "title1",
+      "maxW": 2080
+    },
+    "assume": {
+      "x": 2160,
+      "y": 660,
+      "w": 520,
+      "size": "m",
+      "fill": "orange",
+      "text": "Approved by the owner on 2026-11-24 (draft 2). Checked against Microsoft's Windows 11 guidance. WinUI 3 defaults: Mica behind the title bar and the menu row, 8 px window, dialog and flyout corners, 4 px controls, the system's accent colour (shown: the default blue).\n1. A menu bar (File, View, Help) under the 32 px title bar; no hamburger, no Settings page.\n2. Open and Export sit beside the song's title.\n3. First start as dialogs in the middle of the window; the main button on the left, as Windows dialogs have it.\n4. Export menu with one line per entry (Windows menus have no second line); the Mac's second lines are the tooltips.\n5. After saving: a flyout under Export with \"Show in Folder\" (changed: Windows' status bar is not meant for confirming a save and may not float).\n6. \"Remove Downloaded Models…\" in File; \"About Stickler\" as a dialog, because there is no Settings page.\n7. View holds the three zoom entries only; no Full Screen.\n8. The app icon: the free-standing GNOME icon; Windows has no fixed shape.\nNo playback in the first Windows version, so no bar marker. Inter stands in for Segoe UI Variable where it is missing."
+    },
+    "row3": {
+      "x": 0,
+      "y": 1640,
+      "text": "First start",
+      "kind": "title1",
+      "maxW": 3160
+    },
+    "row4": {
+      "x": 0,
+      "y": 2700,
+      "text": "Analysis and export",
+      "kind": "title1",
+      "maxW": 3160
+    },
+    "row5": {
+      "x": 0,
+      "y": 3760,
+      "text": "Menus and About",
+      "kind": "title1",
+      "maxW": 4240
+    },
+    "row6": {
+      "x": 0,
+      "y": 4820,
+      "text": "Playback (a later release)",
+      "kind": "title1",
+      "maxW": 4240
+    },
+    "playback": {
+      "x": 4320,
+      "y": 5080,
+      "w": 520,
+      "size": "m",
+      "fill": "blue",
+      "text": "Approved by the owner on 2026-11-24 (draft 1). Playback comes to Windows after the first version; the GTK app's behaviour (SPEC.md, module playback), drawn the Windows way.\n1. The playback bar at the window's bottom, on the same layer as the title header, in one row as in the GTK app: Previous Bar, Play/Pause, Next Bar (owner, 2026-11-24: the step buttons too, as in Windows' Media Player; the GTK app has only the keys), time, position slider, length, \"Bar 2 of 110\", Volume, Song · Hits · Both.\n2. Play/Pause is a round button in the accent colour, as in Windows' Media Player; the sliders are WinUI's (accent track, thumb with an accent dot).\n3. Song · Hits · Both as three joined toggle buttons, the chosen one in the accent colour. WinUI has no segmented control of its own (the Community Toolkit's is a NuGet package: ask first).\n4. Volume: a flyout above the button with two sliders, Song and Detected hits (70 % and 100 % at first, remembered per song, as in the GTK app).\n5. A Playback menu between View and Help: Play or Pause (the entry says what Space does now), Previous Bar, Next Bar, Go to the Start, then Song, Hits, Both as radio items. Windows shows keys in menus, and the app has no Keyboard Shortcuts window.\n6. The bar marker in the accent colour; a click on a bar jumps there.\nNew text for po/: \"Playback\". All others exist."
+    },
+    "row7": {
+      "x": 0,
+      "y": 5880,
+      "text": "Corrections",
+      "kind": "title1",
+      "maxW": 2080
+    },
+    "corrections": {
+      "x": 2160,
+      "y": 6140,
+      "w": 520,
+      "size": "m",
+      "fill": "blue",
+      "text": "Approved by the owner on 2026-11-26 (draft 1). The Mac's corrections (M11) and the GTK app's behaviour, drawn the Windows way.\n1. A pane at the window's right edge, 320 px, on the header's layer, between the header and the playback bar; the desk and the sheet narrow beside it. Only with a result; open or closed is remembered.\n2. Opened and closed by a toggle button right of Export (accent while open, tooltip \"Corrections\") and by View › Corrections, a menu entry with a check mark, as Windows shows panes (the Mac's entry changes its words instead). Key: Ctrl+Shift+C.\n3. Beat, as a card: Tempo as three joined toggle buttons (Half · As Detected · Double), like Song · Hits · Both; Beats per bar and First “one” with the value and two step buttons (WinUI's NumberBox cannot show \"Beat 2\").\n4. Easier to Read, as a card: Simplify and Repeat signs as toggle switches with On/Off, their second line under the name.\n5. Back to Detected as a standard button under the cards, off while nothing is corrected.\n6. Every change applies at once; while the notes are written a small progress ring turns after the subtitle and the old sheet stays.\nOpen or closed is kept in a small window.json beside the core's settings. New texts for po/: the four step buttons' names for Narrator (\"One beat more\", \"One beat fewer\", \"One beat later\", \"One beat earlier\"); On and Off are Windows' own."
+    }
   },
   "designSystems": []
 }

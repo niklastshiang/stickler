@@ -25,4 +25,12 @@ TEXTS = (
     # Translators: Windows app, the menu bar (design screen W10) with Play, Previous Bar and
     # what to hear; Windows' Media Player says "Wiedergabe" in German, "Reproducción" in Spanish
     N_("Playback"),
+    # Translators: Windows app, corrections pane (design screen W11): what Narrator and the
+    # tooltip call the two step buttons beside "Beats per bar"
+    N_("One beat more"),
+    N_("One beat fewer"),
+    # Translators: Windows app, corrections pane (design screen W11): what Narrator and the
+    # tooltip call the two step buttons beside "First “one”": the first "one" moves by a beat
+    N_("One beat later"),
+    N_("One beat earlier"),
 )

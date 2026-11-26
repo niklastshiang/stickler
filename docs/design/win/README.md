@@ -26,8 +26,9 @@ export.
 | `Playing.dc.html`, `Playing-Dark.dc.html` | W10 · Playing (light; dark with only the hits; a later release) |
 | `Playing-Volume.dc.html` | W10 · The volume flyout |
 | `Menu-Playback.dc.html` | W10 · Menu: Playback |
+| `Corrections.dc.html`, `Corrections-Dark.dc.html` | W11 · Corrections (light with Simplify off; dark at half tempo while the notes are written), approved 2026-11-26 |
 | `SheetPage.dc.html` | The engraved page, shared with the GTK and Mac mockups (Windows accent, marker off) |
 
 The dark boards import the light ones with `dark` on; the menu boards import `Sheet` with one
-menu's title marked, and the W10 boards import `Playing`. Inter stands in for Segoe UI Variable on the canvas where it is missing, and
+menu's title marked, and the W10 boards import `Playing`; `Corrections-Dark` imports `Corrections`. Inter stands in for Segoe UI Variable on the canvas where it is missing, and
 the icon in the title bar and in About is a simplified stand-in for the app icon.
