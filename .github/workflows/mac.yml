@@ -114,6 +114,15 @@ jobs:
           echo "4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806  xcodegen.zip" | shasum -a 256 -c
           unzip -q xcodegen.zip -d "$RUNNER_TEMP"
           "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate --spec mac/project.yml
+      - name: PROBE (temporary, claude/mac-site) screen recording on the runner
+        run: |
+          mkdir -p "$RUNNER_TEMP/screenshots"
+          csrutil status || true
+          sw_vers || true
+          db="/Library/Application Support/com.apple.TCC/TCC.db"
+          sudo sqlite3 "$db" "PRAGMA table_info(access)" | cut -d'|' -f2 | tr '\n' ' '; echo
+          sudo sqlite3 "$db" "SELECT client, client_type, auth_value FROM access WHERE service = 'kTCCServiceScreenCapture'" || true
+          screencapture -x "$RUNNER_TEMP/screenshots/probe-desktop.png"; echo "desktop from bash: exit $?"
       - name: Build and test
         env:
           TEST_RUNNER_STICKLER_SCREENSHOTS: ${{ runner.temp }}/screenshots
