@@ -258,7 +258,10 @@ jobs:
           if ! "$RUNNER_TEMP/inno.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- "/LOG=$log"; then
             tail -n 40 "$RUNNER_TEMP/inno-setup.log"; exit 1
           fi
-          iscc=$(ls "/c/Program Files/Inno Setup 7/ISCC.exe" "/c/Program Files (x86)/Inno Setup 7/ISCC.exe" 2>/dev/null | head -n 1)
+          iscc=""
+          for candidate in "/c/Program Files/Inno Setup 7/ISCC.exe" "/c/Program Files (x86)/Inno Setup 7/ISCC.exe"; do
+            if [ -f "$candidate" ]; then iscc=$candidate; break; fi
+          done
           test -n "$iscc" || { tail -n 40 "$RUNNER_TEMP/inno-setup.log"; exit 1; }
           echo "ISCC=$iscc" >> "$GITHUB_ENV"
           echo "ISCC: $iscc"
