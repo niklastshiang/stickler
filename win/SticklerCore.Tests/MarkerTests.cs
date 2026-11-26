@@ -154,6 +154,42 @@ public sealed class MarkerTests
     }
 
     [TestMethod]
+    public void AnAcceleratorMessageNamesWhatTheWindowDoes()
+    {
+        Assert.AreEqual(SheetAccelerator.ZoomIn, SheetHtml.AcceleratorOfMessage("accel:zoom_in"));
+        Assert.AreEqual(SheetAccelerator.ZoomOut, SheetHtml.AcceleratorOfMessage("accel:zoom_out"));
+        Assert.AreEqual(SheetAccelerator.ActualSize, SheetHtml.AcceleratorOfMessage("accel:actual_size"));
+        Assert.AreEqual(SheetAccelerator.Open, SheetHtml.AcceleratorOfMessage("accel:open"));
+        Assert.AreEqual(SheetAccelerator.Close, SheetHtml.AcceleratorOfMessage("accel:close"));
+        Assert.AreEqual(SheetAccelerator.Corrections, SheetHtml.AcceleratorOfMessage("accel:corrections"));
+        foreach (var message in new[] { "", "accel:", "accel:Open", "accel:zoom", "zoom_in", "key:space", "bar:0:1:2", "accel:open " })
+        {
+            Assert.IsNull(SheetHtml.AcceleratorOfMessage(message), message);
+        }
+    }
+
+    [TestMethod]
+    public void TheAcceleratorScriptTakesOnlyTheWindowsCtrlKeys()
+    {
+        var script = SheetHtml.AcceleratorScript;
+        Assert.Contains("addEventListener(\"keydown\"", script);
+        Assert.Contains("}, true);", script, "capture phase");
+        Assert.Contains("if (!event.ctrlKey || event.altKey || event.metaKey) { return; }", script, "Ctrl alone or with Shift, never AltGr");
+        Assert.Contains("event.preventDefault()", script);
+        Assert.Contains("window.chrome.webview.postMessage(\"accel:\" + name)", script);
+        foreach (var key in new[] { "\"+\": \"zoom_in\"", "\"=\": \"zoom_in\"", "\"-\": \"zoom_out\"", "\"0\": \"actual_size\"", "\"o\": \"open\"", "\"w\": \"close\"", "\"c\": \"corrections\"" })
+        {
+            Assert.Contains(key, script);
+        }
+        // every name the script can post is one the app reads
+        foreach (System.Text.RegularExpressions.Match name in System.Text.RegularExpressions.Regex.Matches(script, "\": \"([a-z_]+)\""))
+        {
+            Assert.IsNotNull(SheetHtml.AcceleratorOfMessage("accel:" + name.Groups[1].Value), name.Groups[1].Value);
+        }
+        Assert.DoesNotContain("\"c\": \"copy\"", script);
+    }
+
+    [TestMethod]
     public void TheKeyScriptTakesOnlyThoseFourPlainKeys()
     {
         var script = SheetHtml.KeyScript;

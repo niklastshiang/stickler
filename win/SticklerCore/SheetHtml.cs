@@ -5,6 +5,19 @@ using System.Text.Json;
 
 namespace Stickler.Core;
 
+/// <summary>The window's Ctrl keys that also work while the sheet has the focus
+/// (<see cref="SheetHtml.AcceleratorScript"/>): Ctrl+Plus, Ctrl+Minus, Ctrl+0, Ctrl+O, Ctrl+W and
+/// Ctrl+Shift+C.</summary>
+public enum SheetAccelerator
+{
+    ZoomIn,
+    ZoomOut,
+    ActualSize,
+    Open,
+    Close,
+    Corrections,
+}
+
 /// <summary>A colour as bytes.</summary>
 public readonly record struct Rgb(byte Red, byte Green, byte Blue);
 
@@ -187,6 +200,37 @@ public static class SheetHtml
           window.chrome.webview.postMessage("key:" + name);
         }, true);
         """;
+
+    /// <summary>The window's Ctrl keys from inside the sheet: while the page has the focus the
+    /// window's accelerators never see them (seen in the VM, 2026-11-26: Ctrl+Plus did nothing
+    /// after a click into the sheet). Each is posted as <c>accel:name</c> and kept from the
+    /// browser; <see cref="AcceleratorOfMessage"/> reads it. Every other key is left alone.</summary>
+    public const string AcceleratorScript = """
+        document.addEventListener("keydown", event => {
+          if (!event.ctrlKey || event.altKey || event.metaKey) { return; }
+          const plain = { "+": "zoom_in", "=": "zoom_in", "-": "zoom_out", "0": "actual_size", "o": "open", "w": "close" };
+          const shifted = { "c": "corrections" };
+          const keys = event.shiftKey && event.key !== "+" ? shifted : plain;
+          const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+          const name = Object.prototype.hasOwnProperty.call(keys, key) ? keys[key] : null;
+          if (name === null) { return; }
+          event.preventDefault();
+          if (!event.repeat || name.startsWith("zoom")) { window.chrome.webview.postMessage("accel:" + name); }
+        }, true);
+        """;
+
+    /// <summary>What an <see cref="AcceleratorScript"/> message asks for; <c>null</c> for any
+    /// other message.</summary>
+    public static SheetAccelerator? AcceleratorOfMessage(string message) => message switch
+    {
+        "accel:zoom_in" => SheetAccelerator.ZoomIn,
+        "accel:zoom_out" => SheetAccelerator.ZoomOut,
+        "accel:actual_size" => SheetAccelerator.ActualSize,
+        "accel:open" => SheetAccelerator.Open,
+        "accel:close" => SheetAccelerator.Close,
+        "accel:corrections" => SheetAccelerator.Corrections,
+        _ => null,
+    };
 
     /// <summary>The key a <see cref="KeyScript"/> message names; <c>null</c> for any other message.</summary>
     public static PlaybackKey? KeyOfMessage(string message) => message switch

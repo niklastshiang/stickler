@@ -69,7 +69,7 @@ public sealed partial class MainWindow : Window
         model.PropertyChanged += OnModelChanged;
         model.Sheet.PropertyChanged += OnSheetChanged;
         model.Playback.PropertyChanged += OnPlaybackChanged;
-        SheetPane.Attach(model.Sheet, model.Playback, strings, reason => model.Tell(new Notice(reason, null)), key => PlaybackMenu.Press(model, key));
+        SheetPane.Attach(model.Sheet, model.Playback, strings, reason => model.Tell(new Notice(reason, null)), key => PlaybackMenu.Press(model, key), OnSheetAccelerator);
         PlayPane.Attach(model.Playback, strings);
         CorrectionsPaneView.Attach(model, strings);
         windowSettings = WindowSettings.PathFor(Environment());
@@ -269,7 +269,8 @@ public sealed partial class MainWindow : Window
             return;
         }
         // a control that uses these keys itself keeps them, also where it leaves the event unhandled
-        var typing = KeepsItsKeys(FocusManager.GetFocusedElement(Root.XamlRoot) as DependencyObject);
+        var typing = KeepsItsKeys(e.OriginalSource as DependencyObject)
+            || KeepsItsKeys(FocusManager.GetFocusedElement(Root.XamlRoot) as DependencyObject);
         e.Handled = PlaybackMenu.Press(model, pressed, typing);
     }
 
@@ -285,6 +286,35 @@ public sealed partial class MainWindow : Window
             }
         }
         return false;
+    }
+
+    /// <summary>A Ctrl key pressed while the sheet has the focus (the window's accelerators do
+    /// not see it there): what its menu entry does, when that entry is enabled.</summary>
+    private async void OnSheetAccelerator(SheetAccelerator accelerator)
+    {
+        switch (accelerator)
+        {
+            case SheetAccelerator.ZoomIn when ZoomInItem.IsEnabled:
+                model.Sheet.ZoomIn();
+                break;
+            case SheetAccelerator.ZoomOut when ZoomOutItem.IsEnabled:
+                model.Sheet.ZoomOut();
+                break;
+            case SheetAccelerator.ActualSize when ActualSizeItem.IsEnabled:
+                model.Sheet.ActualSize();
+                break;
+            case SheetAccelerator.Open when OpenItem.IsEnabled:
+                await OneAtATime(() => flows.OpenSongAsync());
+                break;
+            case SheetAccelerator.Close when CloseSongItem.IsEnabled:
+                model.Close();
+                break;
+            case SheetAccelerator.Corrections when CorrectionsItem.IsEnabled:
+                OnCorrections(this, new RoutedEventArgs());
+                break;
+            default:
+                break;
+        }
     }
 
     private static bool Modified()

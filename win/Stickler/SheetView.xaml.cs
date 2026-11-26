@@ -41,6 +41,7 @@ public sealed partial class SheetView : UserControl
     private SheetModel? sheet;
     private PlaybackModel? playback;
     private Action<PlaybackKey> pressed = _ => { };
+    private Action<SheetAccelerator> asked = _ => { };
     private Marking? marking; // the marker as the page shows it; null after new pages
     private Strings strings = Strings.English;
     private string title = "";
@@ -74,8 +75,9 @@ public sealed partial class SheetView : UserControl
 
     /// <summary>Starts the view on <paramref name="model"/>'s pages; <paramref name="fail"/>
     /// tells the reader why WebView2 could not start (its own words), instead of a grey desk.</summary>
-    public void Attach(SheetModel model, PlaybackModel playing, Strings words, Action<string> fail, Action<PlaybackKey> key)
+    public void Attach(SheetModel model, PlaybackModel playing, Strings words, Action<string> fail, Action<PlaybackKey> key, Action<SheetAccelerator> accelerator)
     {
+        asked = accelerator;
         sheet = model;
         playback = playing;
         strings = words;
@@ -126,6 +128,7 @@ public sealed partial class SheetView : UserControl
         await core.AddScriptToExecuteOnDocumentCreatedAsync(WheelScript);
         await core.AddScriptToExecuteOnDocumentCreatedAsync(SheetHtml.ClickScript);
         await core.AddScriptToExecuteOnDocumentCreatedAsync(SheetHtml.KeyScript);
+        await core.AddScriptToExecuteOnDocumentCreatedAsync(SheetHtml.AcceleratorScript);
         core.AddWebResourceRequestedFilter(SheetHtml.Address + "*", CoreWebView2WebResourceContext.All);
         core.WebResourceRequested += (_, e) => Serve(core, e, document);
         core.NavigationStarting += (_, e) =>
@@ -277,6 +280,10 @@ public sealed partial class SheetView : UserControl
                 else if (SheetHtml.KeyOfMessage(message) is { } key)
                 {
                     pressed(key);
+                }
+                else if (SheetHtml.AcceleratorOfMessage(message) is { } accelerator)
+                {
+                    asked(accelerator);
                 }
                 break;
         }
