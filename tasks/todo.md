@@ -1134,7 +1134,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 - [x] **Task 153: Backup in the GTK app** (M): done 2026-11-22. The controller's `back_up` (any time, in a thread, the notice opens the file), `backup_summary` and `restore` (only when idle, as the removal: same folders; the recent songs show at once); the main menu's "Back Up…" and "Restore Backup…" above "Remove Downloaded Models…" in the installed app; the save dialog with `Stickler Backup <date>.zip`, the open dialog filtered to zips, the question with date, songs and size; 13 texts in German and Spanish (and the Mac catalogue). Tests: four for the controller, two widget tests. `scripts/gtk.sh test` on this computer: 50 passed, 3 failed that fail the same without this work: on the owner's Bluefin the host now has Python 3.15, GTK 4.24.1 and libadwaita 1.10.0 (the suite last ran on GTK 4.22 / libadwaita 1.9), and the narrow-window breakpoint and the sheet's scroll height do not change in the headless mutter (`test_a_time_marks_its_bar_and_scrolls_it_into_view`, `test_a_narrow_window_shows_the_playback_bar_in_two_rows`, `test_a_narrow_window_shows_the_corrections_in_a_bottom_sheet`); left for its own look (a new todo below). Found on the way: `uv sync` rebuilt `.venv-gtk` without the system's packages after the host's Python moved to 3.15; recreated.
 
-- [ ] **The three widget tests that fail with GTK 4.24 / libadwaita 1.10 (found 2026-11-22, task 153)**: see task 153; to find out whether the app or the headless test screen changed (the Fedora 44 Distrobox has GTK 4.22, the release's builds take theirs from the GNOME 51 runtime and the systems).
+- [x] **The three widget tests that fail with GTK 4.24 / libadwaita 1.10 (found 2026-11-22, task 153)**: see task 153; to find out whether the app or the headless test screen changed (the Fedora 44 Distrobox has GTK 4.22, the release's builds take theirs from the GNOME 51 runtime and the systems). Done 2026-11-25: the three pass on the owner's Bluefin with GTK 4.24.1 and libadwaita 1.10 (`scripts/gtk.sh test`: 56 passed); the headless test screen had changed, not the app: Fedora 45 ships no `dbus-run-session`, so `scripts/gtk.sh` had shown the window on the desktop, where it was not redrawn, until 7eaac80 started the headless mutter's own bus with `dbus-broker`.
   - Acceptance: "Back Up…" and "Restore Backup…" in the main menu of an installed app; the save and open dialogs (portals in the Flatpak); the restore's question with the summary; work in the worker with a toast at the end; texts in English, German, Spanish.
   - Verify: widget tests (`scripts/gtk.sh test`); `uv run pytest -q tests/gtk/test_translations.py`; by hand in the Flatpak
   - Dependencies: 152 · Files: `src/stickler_app/controller.py`, `src/stickler_gtk/ui/`, `po/`
@@ -1433,7 +1433,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `dotnet run --project win/SticklerCore.Tests -c Release -- --coverage …`, `scripts/cobertura_gate.py` ≥ 95 %, `dotnet format --verify-no-changes`
   - Dependencies: none · Files: `win/SticklerCore/`, `win/SticklerCore.Tests/`
 
-- [x] **Task 221: `SticklerAudio`, the mixer** (M): done 2026-11-26 (a Sonnet subagent; read and run again by the main session: 25 tests, 100 %). `Mix`, `ISeekableSamples`, `WaveStreamSamples`; NAudio.Core 3.3.0 (MIT; its only dependency is System.Numerics.Tensors 9.0.0) matched the facts read from its repository. Found: `WdlResamplingSampleProvider` gives its output 1–4 frames late; `Mix` measures that once and drops as many frames after every seek (tested for twice and half the rate; other ratios stay 1–3 frames off, under 0.1 ms). Gains change at a buffer's edge without a ramp: for the owner's ear at AH.
+- [x] **Task 221: `SticklerAudio`, the mixer** (M): done 2026-11-26 (a Sonnet subagent; read and run again by the main session: 25 tests, 100 %). `Mix`, `ISeekableSamples`, `WaveStreamSamples`; NAudio.Core 3.3.0 (MIT; its only dependency is System.Numerics.Tensors 9.0.0) matched the facts read from its repository. Found: `WdlResamplingSampleProvider` gives its output 1–4 frames late; `Mix` measures that once and drops as many frames after every seek (tested for twice and half the rate; other ratios stay 1–3 frames off, under 0.1 ms). Gains change at a buffer's edge without a ramp: for the owner's ear at AK.
   - Acceptance: SPEC scope 2: `win/SticklerAudio` (`net10.0`, `NAudio.Core` 3.3.0 only) with `Mix` over a seekable song and optional clicks: one lock, a seek on the same frame, gains from the next buffer, another sample rate, shorter or missing clicks, the end once; tested on Linux with generated WAV files.
   - Verify: `dotnet run --project win/SticklerAudio.Tests -c Release -- --coverage …`, the gate ≥ 95 %
   - Dependencies: none · Files: `win/SticklerAudio/`, `win/SticklerAudio.Tests/`, `win/Stickler.sln`
@@ -1467,11 +1467,11 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Dependencies: 225 · Files: `.github/workflows/win.yml`, `scripts/win_screens.ps1`, `CONSTRAINTS.md` (the gate's list)
 
 - [ ] **Task 227: Review and a build for the owner** (S)
-  - Acceptance: a fresh-context review of 220–226 against SPEC "Module `win-playback`", findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the playback (Checkpoint AH)"; the CI's zip ready.
+  - Acceptance: a fresh-context review of 220–226 against SPEC "Module `win-playback`", findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the playback (Checkpoint AK)"; the CI's zip ready.
   - Verify: the owner on the PC: SPEC success criteria 1–6
   - Dependencies: 220–226 · Files: `docs/win-development.md`
 
-### Checkpoint AH
+### Checkpoint AK
 - [ ] All success criteria of SPEC.md "Module `win-playback`" met (owner)
 
 ## Phase 34: Release 11 (Windows app), module `win-corrections` (being built from 2026-11-26, SPEC.md "Module `win-corrections`")
@@ -1498,11 +1498,11 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Dependencies: 230 · Files: `scripts/win_screens.ps1`
 
 - [ ] **Task 232: Review and a build for the owner** (S)
-  - Acceptance: a fresh-context review of 228–231, findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the corrections (Checkpoint AI)".
+  - Acceptance: a fresh-context review of 228–231, findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the corrections (Checkpoint AL)".
   - Verify: the owner on the PC
   - Dependencies: 228–231 · Files: `docs/win-development.md`
 
-### Checkpoint AI
+### Checkpoint AL
 - [ ] All success criteria of SPEC.md "Module `win-corrections`" met (owner)
 
 ## Phase 32: Mac corrections, module `mac-corrections` (approved 2026-11-25, SPEC.md "Mac corrections"; release 11)
@@ -1593,6 +1593,34 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ### Checkpoint AJ
 - [ ] All success criteria of SPEC.md "Module `win-package`" met on the owner's PC (owner)
+## Phase 33: Website, the Mac app in A look around (approved 2026-11-25, SPEC.md "Website", "Change 2026-11-25")
+
+- [x] **Task 195: The sheet of Eyesplit as a fixture** (S): done 2026-11-25. `scripts/site_mac.py fixture data/own/eyesplit/Eyesplit.mp3` runs the Fast analysis in private caches (as `site_story.py`; nothing is read from the user's cache) and writes `eyesplit_pages.json` (one page 976 × 2355 px, 85 written bars; numbers skip where a rest of several bars is one) and, instead of a song summary, `eyesplit_result.json`: the bridge's own `result` state (97 played bars with their times, "Shane Ivers · ♩ = 154 · 4/4") with the song in `/Users/me/Music` and the clicks' path set, so the Mac test sends what the core sends.
+  - Acceptance: `scripts/site_mac.py fixture` runs the core's `pages` request for the cached Fast analysis of `data/own/eyesplit/Eyesplit.mp3` at the website window's width (1000 points, the desk's 12 on each side: 976) and writes `mac/SticklerTests/Fixtures/eyesplit_pages.json` in the shape of `pages.json`; it fails clearly when the analysis is not cached.
+  - Verify: `uv run pytest -q tests/test_site_mac.py` (the fixture parses as the core's reply, its width is 976, every played bar is written, no folder of this computer in either file)
+  - Dependencies: none · Files: `scripts/site_mac.py`, `mac/SticklerTests/Fixtures/eyesplit_pages.json`, `tests/test_site_mac.py`
+
+- [x] **Task 196: The website's pictures in the `mac` workflow** (M): done 2026-11-26 (run 45829442145). `WebsiteScreenshotTests` takes the window server's picture with `screencapture -l`: a window drawn off screen leaves the toolbar's glass and the floating controls blank. The first runs found why it could not: the runner gives the right to record the screen only to `/bin/bash` (a probe: SIP off, three TCC entries); the workflow now copies that entry for `ng.tshia.Stickler` and `screencapture`. Also found: AppKit shortened the window to 677 points above the runner's Dock (a window class that keeps its size), the window looked inactive (the app activated with the macOS 14 calls), the runner showed scroll bars (no trackpad: `AppleShowScrollBars WhenScrolling`), and the light sheet once lacked the tempo mark's note (the test waits for `document.fonts`). The workflow prints the failure messages from the result bundle when tests fail (`-quiet` prints only names).
+  - Acceptance: `WebsiteScreenshotTests` draws the window at 1000 × 700 with Eyesplit (title, "Shane Ivers · ♩ = 154 · 4/4", recent songs only openly licensed), light and dark: `site-empty`, `site-analysing`, `site-sheet` (bar marked, playback bar); the toolbar as on screen; saved into the `screenshots` artifact.
+  - Verify: the `mac` workflow passes on `claude/mac-site` (the branch's name matches the workflow's `claude/mac-*`); the pictures looked at from the artifact
+  - Dependencies: 195 · Files: `mac/SticklerTests/WebsiteScreenshotTests.swift`, `mac/project.yml` if the fixture needs listing
+
+- [x] **Task 197: The pictures into the site** (S): done 2026-11-26. `scripts/site_mac.py fetch 45829442145` wrote the six pictures (1000 × 700, checked from the PNG header; a missing or wrongly sized one stops it) with WebPs as `demo.py` makes them; tests with made-up PNGs.
+  - Acceptance: `scripts/site_mac.py fetch <run>` downloads the artifact with `gh` into a new folder, writes `site/images/mac-*.png` and `.webp` (light and dark) and prints the run; `docs/website.md` has the steps.
+  - Verify: `uv run pytest -q tests/test_site_mac.py`
+  - Dependencies: 196 · Files: `scripts/site_mac.py`, `site/images/mac-*`, `docs/website.md`
+
+- [x] **Task 198: The switch and the Mac row** (M): done 2026-11-26. The switch is hidden where `:has()` is missing, so both rows show there; checked in Chromium at 1280 and 390 px, light and dark, the Mac chosen by arrow key; axe-core 0 violations.
+  - Acceptance: `#look` in English and German has the radio group "Linux | Mac" (`<fieldset>`, `<legend>` for screen readers) and two rows; `:has(:checked)` shows one, without `:has()` both show; the Mac row lazy, with `alt` texts and sizes.
+  - Verify: `uv run pytest -q tests/test_site.py`; a look at 390 and 1280 px, light and dark, by keyboard
+  - Dependencies: 197 · Files: `site/index.html`, `site/de/index.html`, `site/style.css`, `tests/test_site.py`
+
+- [ ] **Task 199: The owner's check and going online** (S)
+  - Acceptance: the owner compares the pictures with the app on the Mac and approves; the branch merged into `main`, the site deployed.
+  - Dependencies: 198
+
+### Checkpoint AH
+- [ ] All success criteria of SPEC.md "Change 2026-11-25: the Mac app in 'A look around'" met (owner)
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
@@ -1669,7 +1697,9 @@ Not planned yet, just recorded. Before starting each one, extend SPEC.md and bre
 
 - [x] **A rock or metal song as the example instead of "Fluffing a Duck" (owner, 2026-11-20: idea for later)**: an openly licensed song (e.g. CC BY, as Kevin MacLeod's) in the owner's genres for the screenshots, the website's clip and the README picture; licence and attribution checked on the web first, then the pictures recorded again (`docs/website.md`, `scripts/gtk.sh demo`). Done 2026-11-24: "Eyesplit" by Shane Ivers (silvermansound.com, CC BY 4.0, checked on the track's page), the owner's choice of three candidates after a Fast analysis of each (Silverman Sound's "Hard Sell Hotel" opens with hi-hat only; Soularflair's "Chaos ID" came out in 1/4 with almost only toms). Recorded again: the README's GIF and stills, the AppStream screenshots, the site's stills, videos, share picture, clip and the story's pictures; the credits on the site, in the README and in the Mac app's screenshot data. Found on the way: Fedora 45 (Bluefin) has no `dbus-run-session`, so `scripts/gtk.sh` silently showed the window on the desktop, where it was not redrawn (stale stills); it now starts the headless mutter's private bus with `dbus-broker` as a transient user service that names no service folders. `scripts/demo.py` moves the stills instead of renaming them (the frames' folder in /tmp is another file system).
 
-- [ ] **Mac screenshots in the website's "A look around" (owner, 2026-11-20: idea for later)**: the gallery (`site/index.html` `#look`, and `/de/`) shows only the GTK app; add the Mac app's windows, light and dark, e.g. from the `mac` workflow's screenshot artifacts. Best done together with the new example song (above), so all pictures are recorded once.
+- [x] **Mac screenshots in the website's "A look around" (owner, 2026-11-20: idea for later; 2026-11-25: wanted, and the Windows app's later)**: the gallery (`site/index.html` `#look`, and `/de/`) shows only the GTK app; add the Mac app's windows, light and dark, e.g. from the `mac` workflow's screenshot artifacts. Best done together with the new example song (above), so all pictures are recorded once. Found on 2026-11-25: the `mac` workflow's screenshots (`ScreenshotTests`, run 45581044634 on main) do not suit the site: they are drawn from a scripted core with a placeholder song title and a four-bar test sheet, at 900×620, and the toolbar's buttons come out as blank shapes off screen; the site needs the real app with "Eyesplit", as the GTK stills. The Windows app's pictures follow once `win-shell` is built (release 11). Specified 2026-11-25 (SPEC.md "Website", "Change 2026-11-25"), Phase 33.
+
+- [ ] **The README still shows the old song's video (owner, 2026-11-25)**: the owner sees the old example song ("Fluffing a Duck") in the README's animation. Found on 2026-11-25: `docs/screenshots/overview.gif` on `main` (re-recorded in 7eaac80) already shows "Eyesplit" in sampled frames, so first find where the old one is seen (GitHub's or the browser's image cache, another branch, a copy elsewhere such as the website or the release page) and replace or refresh it there.
 
 - [ ] **Back up settings and analysed songs (owner, 2026-11-20: idea for later)** (specified 2026-11-22 as a draft: SPEC.md "Release 10 (proposed): keep and remove"): one way in the app to save and restore what a user would miss after a new computer or a reinstall: the settings (`settings.json`), recent songs and corrections (`recent.json`, `corrections.json`), and the analyses (sheet music and hits under the cache folder, the models' results), without the models themselves (downloaded again). To work out first: one archive file or a folder, what an analysis needs to be found again (the song's path or its content's digest, as songs move), the same on Linux and the Mac (its folders differ), and whether the Flatpak's sandbox needs a file chooser portal for it.
   - Seen at TuxTalk (ronb1964/TuxTalk, MIT; owner, 2026-11-22: "ja"): Preferences, Updates & Backup saves the settings, the user's words, corrections and stats to one file and loads it on a new computer; besides, the app keeps its last 10 settings by itself, so a change or an update that went wrong can be taken back. For Stickler the analysed songs with their corrections belong in it too; the last few settings kept by themselves would fit `settings.json`. A spec could take this together with "Uninstall Stickler…" (below): both concern the same folders.

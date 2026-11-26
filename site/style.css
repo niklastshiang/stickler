@@ -808,6 +808,67 @@ audio {
   padding-top: 0.5rem;
 }
 
+/* one row of pictures per system (SPEC.md "Website", "Change 2026-11-25"): native radios drawn
+   as a segmented control, so arrow keys and screen readers work without script; where the
+   browser lacks :has(), the switch stays hidden and both rows show one after the other */
+.systems {
+  display: none;
+  position: relative;
+  align-self: flex-start; /* the section's column would stretch it */
+  width: fit-content;
+  gap: 0.25rem;
+  margin: 0 0 1.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.systems label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.systems input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.systems label:has(input:checked) {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.systems label:has(input:focus-visible) {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.carousel + .carousel {
+  margin-top: 1.5rem;
+}
+
+@supports selector(:has(*)) {
+  .systems {
+    display: inline-flex;
+  }
+
+  .band:has(.systems input[value="linux"]:checked) .carousel[data-system="mac"],
+  .band:has(.systems input[value="mac"]:checked) .carousel[data-system="linux"] {
+    display: none;
+  }
+
+  .carousel + .carousel {
+    margin-top: 0;
+  }
+}
+
 /* privacy */
 .centred {
   align-items: center;

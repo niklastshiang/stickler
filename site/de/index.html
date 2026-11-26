@@ -201,7 +201,12 @@
       <div class="wrap">
         <h2 id="look">Ein Blick hinein</h2>
         <p class="muted">Zur Seite wischen oder scrollen für mehr.</p>
-        <div class="carousel" tabindex="0" role="region" aria-label="Bildschirmfotos">
+        <fieldset class="systems">
+          <legend class="visually-hidden">System</legend>
+          <label><input type="radio" name="system" value="linux" checked> Linux</label>
+          <label><input type="radio" name="system" value="mac"> Mac</label>
+        </fieldset>
+        <div class="carousel" data-system="linux" tabindex="0" role="region" aria-label="Bildschirmfotos der Linux-App">
           <ul class="slides">
           <li>
             <figure>
@@ -266,6 +271,49 @@
                 </picture>
               </a>
               <figcaption>Passt auch in ein schmales Fenster.</figcaption>
+            </figure>
+          </li>
+          </ul>
+        </div>
+        <div class="carousel" data-system="mac" tabindex="0" role="region" aria-label="Bildschirmfotos der Mac-App">
+          <ul class="slides">
+          <li>
+            <figure>
+              <a href="../images/mac-empty.webp">
+                <picture>
+                  <source srcset="../images/mac-empty-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="../images/mac-empty.webp" type="image/webp">
+                  <img class="shot" src="../images/mac-empty.png" width="1000" height="700" loading="lazy"
+                    alt="Das leere Fenster der Mac-App: Song hier ablegen oder öffnen, darunter die letzten Songs">
+                </picture>
+              </a>
+              <figcaption>Song ins Fenster ziehen oder öffnen.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <a href="../images/mac-analysing.webp">
+                <picture>
+                  <source srcset="../images/mac-analysing-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="../images/mac-analysing.webp" type="image/webp">
+                  <img class="shot" src="../images/mac-analysing.png" width="1000" height="700" loading="lazy"
+                    alt="Die Schritte der Analyse in der Mac-App: Schläge gefunden, Takt wird gesucht, Noten warten">
+                </picture>
+              </a>
+              <figcaption>Jeder Schritt zeigt, wie weit er ist.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <a href="../images/mac-sheet.webp">
+                <picture>
+                  <source srcset="../images/mac-sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="../images/mac-sheet.webp" type="image/webp">
+                  <img class="shot" src="../images/mac-sheet.png" width="1000" height="700" loading="lazy"
+                    alt="Die Noten in der Mac-App, der gerade gespielte Takt ist markiert, darunter die Wiedergabe">
+                </picture>
+              </a>
+              <figcaption>Die Noten folgen dem Song, Takt für Takt.</figcaption>
             </figure>
           </li>
           </ul>

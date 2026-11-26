@@ -838,7 +838,7 @@ in the window (225) → CI and screenshots (226) → review and a build for the 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | The WinUI side cannot be built on Linux | Medium | Small pushes, `win.yml` on each; the XAML only draws what `SticklerCore` decides |
-| Media Foundation's seek is off the frame for MP3/AAC | Medium | The owner's ear at AH; then those formats play from `playable` too |
+| Media Foundation's seek is off the frame for MP3/AAC | Medium | The owner's ear at AK; then those formats play from `playable` too |
 | The runner has no sound device | Low | The mixer is tested without one; the player's test says which case it ran |
 | NAudio 3 is young | Medium | Pinned to 3.3.0; only `Mix` and `Player` touch it |
 
@@ -888,3 +888,22 @@ for the owner (219).
 | Panda holds back the new `Stickler.exe` and `unins000.exe` | Medium | The runner's start test carries the module; the owner's check waits, as in the spike |
 | The installer grows past 200 MB | Low | Supported trimming switches only (SPEC risks) |
 | Paths under `Programs\Stickler\core\python` too long | Low | Measured on the runner with `LongPathsEnabled=0`, as the spike did |
+## Website: the Mac app in A look around (approved 2026-11-25, SPEC.md "Website", "Change 2026-11-25")
+
+A switch "Linux | Mac" above the carousel and a row of the Mac app's windows, drawn by the `mac`
+workflow from Stickler's real transcription of "Eyesplit". Tasks 195–199.
+
+Design decisions:
+- **The sheet recorded once, on Linux** (195): the Mac test cannot run the models; the core's
+  `pages` reply for the window's width is stored as a fixture, as `pages.json` is today.
+- **Pictures from CI, fetched by a script** (196, 197): the workflow keeps them as an artifact;
+  the script names the run, so every picture can be traced and recorded again.
+- **Pictures before the page** (196 before 198): the switch is only worth building once the
+  runner draws the toolbar as a Mac does; if it cannot, the owner decides again.
+
+| Risk | Likelihood | What then |
+|---|---|---|
+| The runner cannot capture the window as the window server draws it (no screen-recording permission) | Medium | try `cacheDisplay` with the toolbar's glass turned off for the test, else `CGWindowListCreateImage`/ScreenCaptureKit; if neither works, back to the owner (pictures by hand) |
+| The fixture's sheet does not match the Mac's width | Low | the test asserts the `pages` request's width, as `M6-sheet` does |
+| `:has()` with radios is read oddly by a screen reader | Low | a `<fieldset>` with `<legend>`, checked with Orca and VoiceOver by the owner |
+

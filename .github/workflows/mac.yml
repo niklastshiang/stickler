@@ -114,6 +114,19 @@ jobs:
           echo "4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806  xcodegen.zip" | shasum -a 256 -c
           unzip -q xcodegen.zip -d "$RUNNER_TEMP"
           "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate --spec mac/project.yml
+      - name: Screen recording for the website's pictures (WebsiteScreenshotTests)
+        # The window server's picture of a window needs the right to record the screen. The
+        # runner has SIP off and gives it to /bin/bash; the test app and screencapture get the
+        # same entry (SPEC.md "Website", "Change 2026-11-25").
+        run: |
+          db="/Library/Application Support/com.apple.TCC/TCC.db"
+          for client in "ng.tshia.Stickler|0" "/usr/sbin/screencapture|1"; do
+            sudo sqlite3 "$db" "INSERT OR REPLACE INTO access SELECT service, '${client%|*}', ${client#*|}, auth_value, auth_reason, auth_version, NULL, policy_id, indirect_object_identifier_type, indirect_object_identifier, indirect_object_code_identity, flags, last_modified, pid, pid_version, boot_uuid, last_reminded FROM access WHERE service = 'kTCCServiceScreenCapture' AND client = '/bin/bash'"
+          done
+          sudo sqlite3 "$db" "SELECT client, auth_value FROM access WHERE service = 'kTCCServiceScreenCapture'"
+          sudo pkill -x tccd || true
+          # the runner has no trackpad, so scroll bars would stay; on a Mac they show when scrolling
+          defaults write -g AppleShowScrollBars -string WhenScrolling
       - name: Build and test
         env:
           TEST_RUNNER_STICKLER_SCREENSHOTS: ${{ runner.temp }}/screenshots
@@ -123,11 +136,21 @@ jobs:
             -resultBundlePath "$RUNNER_TEMP/test.xcresult" -quiet
           xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/test.xcresult" \
             | python3 -c 'import json, sys; r = json.load(sys.stdin); print(r["result"], r["passedTests"], "passed,", r["failedTests"], "failed,", r["skippedTests"], "skipped")'
-      - name: What the failed tests said (-quiet keeps it out of the log above)
+      - name: Why tests failed (xcodebuild -quiet prints only their names)
         if: failure()
         run: |
-          xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/test.xcresult" \
-            | python3 -c 'import json, sys; [print(f.get("testIdentifierString"), f.get("failureText"), sep="\n  ") for f in json.load(sys.stdin).get("testFailures", [])]'
+          xcrun xcresulttool get test-results tests --path "$RUNNER_TEMP/test.xcresult" \
+            | python3 -c '
+          import json, sys
+          def walk(node, path):
+              name = node.get("name", "")
+              if node.get("nodeType") == "Failure Message":
+                  print(" > ".join(path), "::", name)
+              for child in node.get("children", []):
+                  walk(child, path + [name])
+          for node in json.load(sys.stdin).get("testNodes", []):
+              walk(node, [])
+          '
       - name: The app's logic outside views is covered (CONSTRAINTS.md "Swift coverage")
         run: |
           xcrun xccov view --report --json "$RUNNER_TEMP/test.xcresult" > "$RUNNER_TEMP/coverage.json"

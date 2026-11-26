@@ -2737,7 +2737,8 @@ the Mac App Store, Quality, the GPU.
 6. **The models and your computer:** each model with what it does, its download size and its
    licence (from the setup assistant's texts); the time per song on a laptop CPU (the apps run
    Fast on the CPU; no GPU figure, as the Mac app has none); disk space.
-7. **A look around:** the screenshots (sheet, corrections, dark, the Mac app), each enlarging
+7. **A look around:** the screenshots (sheet, corrections, dark, the Mac app: a switch per
+   system, see "Change 2026-11-25"), each enlarging
    on click with `<a href>` to the image or `<dialog>` without script.
 8. **Privacy:** everything runs on the computer; the only network use is the model download.
 9. **Download Stickler** ("Stickler herunterladen"; owner, 2026-11-22, with a joke under it): one list, one row per download (owner, 2026-11-22, after TuxTalk's page;
@@ -2986,6 +2987,54 @@ only and with the screen reader (Orca or VoiceOver) once, before release 8.
    2026-11-18, no legal advice), linked from every page's footer. For now with name and email
    only, no postal address (owner, 2026-11-18), although § 18 Abs. 1 MStV asks for one; it and the privacy page follow the owner's own texts for tshia.ng, adapted
    to GitHub Pages as the host (no own server logs) and mailbox.org for mail.
+
+### Change 2026-11-25: the Mac app in "A look around"
+
+> Status: **approved** by the owner on 2026-11-25 (the Mac app's pictures belong in the
+> carousel, the Windows app's later; a switch per system; the pictures from the `mac` workflow
+> with real sheet music, not taken by hand). Plan: `tasks/plan.md` ("Website: the Mac app in A
+> look around"), tasks 195–199. Replaces the todo "Mac screenshots in the website's 'A look around'".
+
+**Objective.** A visitor on a Mac sees the app they would install, not only the GTK one, and the
+Windows app joins the same way with release 11.
+
+**Scope.**
+1. **A switch above the carousel:** "Linux | Mac" ("Linux | Mac" in German too), Linux chosen
+   first; release 11 adds "Windows". CSS only, as the carousel: a radio group (`<fieldset>` with
+   a hidden-to-the-eye `<legend>` "System", native radios styled as a segmented control, so the
+   arrow keys and screen readers work without script), and `:has(:checked)` shows the chosen
+   system's slides. A browser without `:has()` shows both rows one after the other. The choice is
+   not remembered (no script, no storage).
+2. **The Mac row**, in the order of the Linux one and with the same captions where the screen is
+   the same: the empty window with recent songs, the analysis steps, the sheet with the playing
+   bar marked and the playback bar, and the corrections once `mac-corrections` is in `main`
+   (release 11). No narrow window (a Mac window is not phone-sized). Light and dark, PNG and
+   WebP, 1000 × 700 like the GTK stills, the same `alt` texts adapted.
+3. **The pictures** come from a new test in the `mac` workflow (`WebsiteScreenshotTests`, kept in
+   the workflow's `screenshots` artifact as `site-*-light.png`/`-dark.png`): the real window
+   drawn from scripted core lines, with "Eyesplit" by Shane Ivers and Stickler's real
+   transcription of it. The sheet comes from a fixture `mac/SticklerTests/Fixtures/eyesplit_pages.json`,
+   the core's `pages` reply for the window's width, recorded on Linux from the Fast analysis by a
+   script (`scripts/site_mac.py fixture`). The recent songs name only openly licensed songs
+   (Eyesplit and the two other candidates of 2026-11-24). The toolbar must come out as on screen
+   (today its buttons are blank shapes off screen in dark): the test captures the window as the
+   window server draws it; if the runner cannot, the test fails rather than ship a wrong picture.
+4. **Into the site:** `scripts/site_mac.py fetch <run>` downloads the artifact with `gh`, crops
+   and converts the `site-*` pictures to `site/images/mac-*.png` and `.webp`; the commit names the
+   run. `docs/website.md` gets the steps.
+5. **Tests:** `tests/test_site.py` checks that both languages have the same systems and slides,
+   that every picture has its dark pair, its size in `width`/`height` and an `alt` text, and that
+   the page stays within the speed budget (the Mac row is `loading="lazy"`).
+
+**Success criteria.**
+1. On the English and the German page, "Mac" shows the Mac row and "Linux" the GTK row, by
+   mouse, keyboard and screen reader, without script; light and dark follow the browser.
+2. The Mac pictures show Eyesplit with its real sheet music and a toolbar as on a Mac.
+3. `scripts/check.sh task` passes; axe-core finds no new violation.
+4. The owner compares the pictures with the app on their Mac and approves them.
+
+**Out of scope.** Windows (added with `win-package`, release 11); pictures taken by hand;
+remembering the chosen system; choosing it by the visitor's system (needs script).
 
 ## Release 9: `.deb` and `.rpm`
 
@@ -4573,7 +4622,7 @@ window.
 > screens W10"), the audio library on 2026-11-26 (owner: "Ja, so"; `tasks/todo.md`, "Windows
 > playback library"). Modelled on "Mac playback"; this section adds what Windows changes.
 > Plan: `tasks/plan.md` ("`win-playback`"), tasks 220–227, on the branch `claude/win-playback`
-> (from `claude/win-shell` with `win-sheet`), checked at checkpoint AH.
+> (from `claude/win-shell` with `win-sheet`), checked at checkpoint AK.
 
 **Objective.** The Windows app plays what the GTK and Mac apps play: the song, the detected
 hits as clicks, or both, while the bar marker follows; drawn as W10 draws it. A drummer hears
@@ -4733,7 +4782,7 @@ exclusive mode.
 > (`Corrections.dc.html`, `Corrections-Dark.dc.html`). Modelled on
 > "Mac corrections"; this section adds what Windows changes. Plan: `tasks/plan.md`
 > ("`win-corrections`"), tasks 228–232, on the branch `claude/win-playback`, checked at
-> checkpoint AI.
+> checkpoint AL.
 
 **Objective.** The Windows app corrects what the GTK and Mac apps correct: tempo half or
 double, beats per bar, the first "one", Simplify and Repeat signs, each applied at once
