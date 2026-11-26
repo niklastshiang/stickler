@@ -34,6 +34,7 @@ public sealed partial class MainWindow : Window
     private readonly Player player;
     private readonly string windowSettings; // where "the corrections pane is open" is kept
     private bool correctionsShown;
+    private bool closed; // the window is gone: nothing of it is touched any more
     private bool renderingCorrections; // the button is being set from the state: not the reader's doing
     private readonly DispatcherQueueTimer noticeTimer;
     private ContentDialog? setup;
@@ -347,6 +348,10 @@ public sealed partial class MainWindow : Window
 
     private void Render()
     {
+        if (closed)
+        {
+            return; // a flow that ends after the window closed ("Uninstall Stickler…" does)
+        }
         var state = model.State;
         var page = WindowView.Page(model);
         EmptyPage.Visibility = Shown(page == Page.Empty);
@@ -880,6 +885,8 @@ public sealed partial class MainWindow : Window
     /// <summary>Quitting: the core ends politely, at most a few seconds.</summary>
     private void OnClosed(object sender, WindowEventArgs args)
     {
+        closed = true;
+        noticeTimer.Stop();
         model.PropertyChanged -= OnModelChanged;
         model.Sheet.PropertyChanged -= OnSheetChanged;
         model.Playback.PropertyChanged -= OnPlaybackChanged;

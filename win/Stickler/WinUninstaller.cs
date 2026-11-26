@@ -45,5 +45,11 @@ internal sealed class WinUninstaller(Window window, Strings strings) : IUninstal
         await dialog.ShowAsync();
     }
 
-    public void EndApp() => window.Close();
+    /// <summary>The window closes and the process ends for certain: the uninstaller waits for it
+    /// only so long, and what the app still held would stay behind in its folder.</summary>
+    public void EndApp()
+    {
+        window.Close();
+        Application.Current.Exit();
+    }
 }
