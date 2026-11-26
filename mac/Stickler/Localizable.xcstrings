@@ -816,6 +816,58 @@
         }
       }
     },
+    "Ctrl+0" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strg+0"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ctrl+0"
+          }
+        }
+      }
+    },
+    "Ctrl+Minus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strg+Minus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ctrl+Menos"
+          }
+        }
+      }
+    },
+    "Ctrl+Plus" : {
+      "comment" : "Translators: Windows app, View menu, the keys beside Zoom In, Zoom Out and Actual Size; Windows says \"Strg\" for Ctrl in German",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strg+Plus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ctrl+Más"
+          }
+        }
+      }
+    },
     "Cymbal" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1330,6 +1382,23 @@
         }
       }
     },
+    "Home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pos1"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicio"
+          }
+        }
+      }
+    },
     "If this is interrupted, Stickler picks up where it stopped the next time you open it." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1445,6 +1514,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Primer «uno» después"
+          }
+        }
+      }
+    },
+    "Left" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach-links"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flecha izquierda"
           }
         }
       }
@@ -2391,6 +2477,23 @@
         }
       }
     },
+    "Right" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach-rechts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flecha derecha"
+          }
+        }
+      }
+    },
     "Running" : {
       "comment" : "Translators: Mac app, a step that is running now (next to \"Done\" and \"Waiting\")",
       "extractionState" : "manual",
@@ -2774,6 +2877,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Canciones"
+          }
+        }
+      }
+    },
+    "Space" : {
+      "comment" : "Translators: Windows app, a key's name as menus show it beside an entry; Windows says \"Leertaste\", \"Nach-links\", \"Nach-rechts\" and \"Pos1\" in German, \"Espacio\", \"Flecha izquierda\", \"Flecha derecha\" and \"Inicio\" in Spanish",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leertaste"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espacio"
           }
         }
       }

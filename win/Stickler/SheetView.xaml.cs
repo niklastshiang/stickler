@@ -118,7 +118,11 @@ public sealed partial class SheetView : UserControl
         await Web.EnsureCoreWebView2Async(await Environment());
         var core = Web.CoreWebView2;
         Lock(core.Settings);
-        core.Settings.IsWebMessageEnabled = true; // the wheel script's steps
+        // The app's own listeners (the wheel, a click on a bar, the playback's keys) need scripts
+        // on: with them off the listeners are registered but never called (seen in the VM,
+        // 2026-11-26). The page's content still brings none: its policy has no script-src.
+        core.Settings.IsScriptEnabled = true;
+        core.Settings.IsWebMessageEnabled = true; // the listeners' messages
         await core.AddScriptToExecuteOnDocumentCreatedAsync(WheelScript);
         await core.AddScriptToExecuteOnDocumentCreatedAsync(SheetHtml.ClickScript);
         await core.AddScriptToExecuteOnDocumentCreatedAsync(SheetHtml.KeyScript);
@@ -157,7 +161,7 @@ public sealed partial class SheetView : UserControl
     /// <summary>What the page may do: nothing but show the pages.</summary>
     private static void Lock(CoreWebView2Settings settings)
     {
-        settings.IsScriptEnabled = false; // the app's own scripts still run
+        settings.IsScriptEnabled = false; // the sheet's view turns it on for the app's own listeners
         settings.IsWebMessageEnabled = false;
         settings.AreDefaultContextMenusEnabled = false;
         settings.AreDevToolsEnabled = false;

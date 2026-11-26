@@ -99,6 +99,12 @@ public sealed partial class MainWindow : Window
     {
         var scale = NativeMethods.Scale(this);
         AppWindow.Resize(new Windows.Graphics.SizeInt32((int)(1000 * scale), (int)(700 * scale)));
+        // Windows places a new window before it has this size: on a small screen the playback
+        // bar then lay below the screen's edge, so the window is moved back into the work area.
+        var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea;
+        var x = Math.Max(area.X, Math.Min(AppWindow.Position.X, area.X + area.Width - AppWindow.Size.Width));
+        var y = Math.Max(area.Y, Math.Min(AppWindow.Position.Y, area.Y + area.Height - AppWindow.Size.Height));
+        AppWindow.Move(new Windows.Graphics.PointInt32(x, y));
         if (AppWindow.Presenter is OverlappedPresenter presenter)
         {
             presenter.PreferredMinimumWidth = (int)(640 * scale);
@@ -227,7 +233,7 @@ public sealed partial class MainWindow : Window
         for (var i = 0; i < items.Length; i++)
         {
             items[i].Text = entries[i].Title;
-            items[i].KeyboardAcceleratorTextOverride = entries[i].KeyName;
+            items[i].KeyboardAcceleratorTextOverride = strings.Text(entries[i].KeyName); // the key's name in the reader's language
             items[i].IsEnabled = enabled;
         }
         RadioMenuFlyoutItem[] hearing = [HearSongItem, HearHitsItem, HearBothItem];
@@ -263,9 +269,22 @@ public sealed partial class MainWindow : Window
             return;
         }
         // a control that uses these keys itself keeps them, also where it leaves the event unhandled
-        var typing = FocusManager.GetFocusedElement(Root.XamlRoot)
-            is TextBox or PasswordBox or RichEditBox or AutoSuggestBox or Slider or ToggleSwitch or MenuBarItem;
+        var typing = KeepsItsKeys(FocusManager.GetFocusedElement(Root.XamlRoot) as DependencyObject);
         e.Handled = PlaybackMenu.Press(model, pressed, typing);
+    }
+
+    /// <summary>Whether the focus is in a control that uses Space or the arrows itself, or in a
+    /// part of one (the menu bar's focus is on a button inside its item).</summary>
+    private static bool KeepsItsKeys(DependencyObject? focused)
+    {
+        for (var at = focused; at is not null; at = VisualTreeHelper.GetParent(at))
+        {
+            if (at is TextBox or PasswordBox or RichEditBox or AutoSuggestBox or Slider or ToggleSwitch or MenuBarItem or MenuBar)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static bool Modified()
@@ -287,13 +306,13 @@ public sealed partial class MainWindow : Window
         };
         ZoomInItem.KeyboardAccelerators.Add(Key(187)); // the + key (VK_OEM_PLUS)
         ZoomInItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.Add));
-        ZoomInItem.KeyboardAcceleratorTextOverride = "Ctrl+Plus";
+        ZoomInItem.KeyboardAcceleratorTextOverride = strings.Text("Ctrl+Plus");
         ZoomOutItem.KeyboardAccelerators.Add(Key(189)); // the - key (VK_OEM_MINUS)
         ZoomOutItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.Subtract));
-        ZoomOutItem.KeyboardAcceleratorTextOverride = "Ctrl+Minus";
+        ZoomOutItem.KeyboardAcceleratorTextOverride = strings.Text("Ctrl+Minus");
         ActualSizeItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.Number0));
         ActualSizeItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.NumberPad0));
-        ActualSizeItem.KeyboardAcceleratorTextOverride = "Ctrl+0";
+        ActualSizeItem.KeyboardAcceleratorTextOverride = strings.Text("Ctrl+0");
     }
 
     private void Render()
@@ -808,6 +827,11 @@ public sealed partial class MainWindow : Window
         try
         {
             await flow();
+        }
+        catch (Exception error) when (error is System.Runtime.InteropServices.COMException or InvalidOperationException or UnauthorizedAccessException or IOException)
+        {
+            // a dialog Windows could not show, a file it could not hand over: said, not fatal
+            model.Tell(new Notice(error.Message, null));
         }
         finally
         {

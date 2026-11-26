@@ -2,8 +2,8 @@ using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Stickler.Core;
+using Microsoft.Windows.Storage.Pickers;
 using Windows.Storage;
-using Windows.Storage.Pickers;
 using Windows.System;
 using WinRT.Interop;
 
@@ -11,7 +11,9 @@ namespace Stickler;
 
 /// <summary>The questions only Windows answers (<see cref="IAsk"/>): its file dialogs, a
 /// ContentDialog for each question (W7's dialogs, Windows' button order: the main one on the
-/// left, Cancel on the right), Explorer and "Open with". A pure view: tested by hand.</summary>
+/// left, Cancel on the right), Explorer and "Open with". The file dialogs are the Windows App
+/// SDK's own pickers: Windows' older ones fail in an app started as administrator (the app
+/// ended with them in the VM, 2026-11-26). A pure view: tested by hand.</summary>
 internal sealed class WinAsk(Window window, Strings strings) : IAsk
 {
     private IntPtr Handle => WindowNative.GetWindowHandle(window);
@@ -29,20 +31,19 @@ internal sealed class WinAsk(Window window, Strings strings) : IAsk
         {
             return given;
         }
-        var picker = new FileSavePicker { SuggestedFileName = Path.GetFileNameWithoutExtension(name) };
+        var picker = new FileSavePicker(window.AppWindow.Id) { SuggestedFileName = Path.GetFileNameWithoutExtension(name) };
         string[] wanted = endings.Count > 0 ? [.. endings] : [Path.GetExtension(name).TrimStart('.')];
         foreach (var ending in wanted)
         {
             picker.FileTypeChoices.Add(ending.ToUpperInvariant(), ["." + ending]);
         }
-        InitializeWithWindow.Initialize(picker, Handle);
         var file = await picker.PickSaveFileAsync();
         return file?.Path;
     }
 
     public async Task<string?> OpenFileAsync(IReadOnlyList<string> endings)
     {
-        var picker = new FileOpenPicker();
+        var picker = new FileOpenPicker(window.AppWindow.Id);
         foreach (var ending in endings)
         {
             picker.FileTypeFilter.Add("." + ending);
@@ -51,7 +52,6 @@ internal sealed class WinAsk(Window window, Strings strings) : IAsk
         {
             picker.FileTypeFilter.Add("*");
         }
-        InitializeWithWindow.Initialize(picker, Handle);
         var file = await picker.PickSingleFileAsync();
         return file?.Path;
     }

@@ -36,6 +36,18 @@ TEXTS = (
     # Translators: Windows app, the reason in "The song cannot be played: {reason}" on a PC
     # without speakers, headphones or any other sound output
     N_("No sound output was found."),
+    # Translators: Windows app, a key's name as menus show it beside an entry; Windows says
+    # "Leertaste", "Nach-links", "Nach-rechts" and "Pos1" in German, "Espacio", "Flecha
+    # izquierda", "Flecha derecha" and "Inicio" in Spanish
+    N_("Space"),
+    N_("Left"),
+    N_("Right"),
+    N_("Home"),
+    # Translators: Windows app, View menu, the keys beside Zoom In, Zoom Out and Actual Size;
+    # Windows says "Strg" for Ctrl in German
+    N_("Ctrl+Plus"),
+    N_("Ctrl+Minus"),
+    N_("Ctrl+0"),
     # Translators: Windows installer, shown on Windows 10 or a PC with an ARM processor, where
     # it installs nothing (SPEC.md, module `win-package`)
     N_("Stickler needs Windows 11 on a PC with an Intel or AMD processor (x64)."),
