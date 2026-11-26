@@ -1426,6 +1426,51 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 - [ ] All success criteria of SPEC.md "Module `win-shell`" met (owner); questions 2–4 confirmed; then the spike's retry (task 179) and open question 1
 - [ ] All success criteria of SPEC.md "Module `win-sheet`" met (owner, 2026-11-26: checked together with `win-shell`)
 
+## Phase 33: Release 11 (Windows app), module `win-playback` (being built from 2026-11-26, SPEC.md "Module `win-playback`")
+
+- [ ] **Task 220: The playback model in `SticklerCore`** (L)
+  - Acceptance: SPEC scope 1, bullets 1–3: the replies `Seconds`, `Gains`, `Playable` and the settings' volumes; `Hear`; `Timeline` and `Marker` with the Python tests' cases; `IPlaying` and `PlaybackModel` as the Mac's, owned by `AppModel`; every test of the Mac's `PlaybackTests`, `PlaybackEdgeTests` and `TimelineTests` ported.
+  - Verify: `dotnet run --project win/SticklerCore.Tests -c Release -- --coverage …`, `scripts/cobertura_gate.py` ≥ 95 %, `dotnet format --verify-no-changes`
+  - Dependencies: none · Files: `win/SticklerCore/`, `win/SticklerCore.Tests/`
+
+- [ ] **Task 221: `SticklerAudio`, the mixer** (M)
+  - Acceptance: SPEC scope 2: `win/SticklerAudio` (`net10.0`, `NAudio.Core` 3.3.0 only) with `Mix` over a seekable song and optional clicks: one lock, a seek on the same frame, gains from the next buffer, another sample rate, shorter or missing clicks, the end once; tested on Linux with generated WAV files.
+  - Verify: `dotnet run --project win/SticklerAudio.Tests -c Release -- --coverage …`, the gate ≥ 95 %
+  - Dependencies: none · Files: `win/SticklerAudio/`, `win/SticklerAudio.Tests/`, `win/Stickler.sln`
+
+- [ ] **Task 222: The marker's scripts and the menu's logic** (M)
+  - Acceptance: SPEC scope 1, bullets 4–5: `SheetHtml.MarkScript`, `HitScript` and the marker's CSS as the Mac's `SheetHTML` (accent colour with alpha 0.2 light, 0.32 dark; scrolled into view above the bar); `PlaybackMenu` (titles, keys, enabled, the radio items); the Mac's `MarkerTests` and `ControlsMenuTests` cases.
+  - Verify: as 220
+  - Dependencies: 220 · Files: `win/SticklerCore/SheetHtml.cs`, `win/SticklerCore/PlaybackMenu.cs`, tests
+
+- [ ] **Task 223: "Playback" in `po/` and the tables** (S)
+  - Acceptance: SPEC scope 7: "Playback" in `win_texts.py`, German "Wiedergabe", Spanish "Reproducción" (owner, 2026-11-26); `po/` collected, `win/Stickler/Strings/*.json` and the Mac's String Catalog written by their scripts.
+  - Verify: `uv run pytest -q tests/test_winstrings.py tests/test_xcstrings.py`; `scripts/check.sh task`
+  - Dependencies: none · Files: `src/stickler_app/win_texts.py`, `po/*`, `win/Stickler/Strings/`
+
+- [ ] **Task 224: The player** (M)
+  - Acceptance: SPEC scope 3: `win/Stickler/Player.cs` implements `IPlaying` with `Mix`, `MediaFoundationReader` (WAV and AIFF through the managed readers), `WasapiPlayer` in shared mode with default device routing; unreadable reported for `playable`; the device freed on stop; a device that stops pauses.
+  - Verify: `win.yml` (build, format); the player's test of scope 8
+  - Dependencies: 220, 221 · Files: `win/Stickler/Player.cs`, `win/Stickler/Stickler.csproj`
+
+- [ ] **Task 225: The playback bar, the marker and the menu in the window** (L)
+  - Acceptance: SPEC scopes 4–6: the bar as W10 (`docs/design/win/Playing*.dc.html`), the volume flyout, the three joined toggle buttons, the narrow window's rule, Narrator's names; the marker and bar clicks in `SheetView`; the Playback menu with its keys.
+  - Verify: `win.yml`'s screenshots against the canvas; by hand in the VM or on the owner's PC
+  - Dependencies: 222–224 · Files: `win/Stickler/MainWindow.xaml(.cs)`, `win/Stickler/Playbar.xaml(.cs)`, `win/Stickler/SheetView.xaml.cs`
+
+- [ ] **Task 226: CI and screenshots** (M)
+  - Acceptance: SPEC scope 8: `win.yml` builds and tests `SticklerAudio` on Linux and Windows under the gate; W10 light, dark and the volume flyout from `scripts/win_screens.ps1`; the player's test prints whether a device was there.
+  - Verify: `win.yml` green on `claude/win-playback`
+  - Dependencies: 225 · Files: `.github/workflows/win.yml`, `scripts/win_screens.ps1`, `CONSTRAINTS.md` (the gate's list)
+
+- [ ] **Task 227: Review and a build for the owner** (S)
+  - Acceptance: a fresh-context review of 220–226 against SPEC "Module `win-playback`", findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the playback (Checkpoint AH)"; the CI's zip ready.
+  - Verify: the owner on the PC: SPEC success criteria 1–6
+  - Dependencies: 220–226 · Files: `docs/win-development.md`
+
+### Checkpoint AH
+- [ ] All success criteria of SPEC.md "Module `win-playback`" met (owner)
+
 ## Phase 32: Mac corrections, module `mac-corrections` (approved 2026-11-25, SPEC.md "Mac corrections"; release 11)
 
 - [x] **Task 190: Corrections in the core and the bridge** (M): done 2026-11-25. `corrections.Controls`/`controls()` (the shown values, moved out of the GTK panel, which now calls it) and `change()` (one control's change through the `with_*` rules); `Result.sheet`, the job that wrote the notation (set by `finished` and `corrected`, not by a correction's start); `result` sends `controls` and `sheet`; `correct` takes exactly one of `tempo`, `beats_per_bar`, `beats_per_bar_by`, `first_one`, `first_one_by`, `simplify`, `repeats`, `detected: true` (the `_by` steps added so a stepper's quick clicks are counted by the core from its newest values, not computed in Swift from a state that may be behind) (none or several: `bad_argument` named `change`), answers without a state when nothing changes. `docs/bridge.md` documents the three; the doc test checks `controls`' fields. Tests: 3 corrections, 1 session, 5 bridge. **Not run here:** the GTK widget tests (`scripts/gtk.sh test`; this Mac has no GTK); the panel's change is a one-for-one move of its rule.

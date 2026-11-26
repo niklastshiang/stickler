@@ -4545,6 +4545,166 @@ window.
    core writing the PDF itself (cairo or Verovio's own PDF, then the same file on every
    system). Claude's proposal: WebView2, as planned; the core's way is a change for all apps.
 
+### Module `win-playback`
+
+> Status: **being built** from 2026-11-26, at the owner's request to build the missing Windows
+> modules from the Linux computer; the three open questions at the end answered by the owner
+> with Claude's proposals (2026-11-26: "Geht klar"). The screens (W10) were approved on 2026-11-24 ("Module `win-design`", "Playback
+> screens W10"), the audio library on 2026-11-26 (owner: "Ja, so"; `tasks/todo.md`, "Windows
+> playback library"). Modelled on "Mac playback"; this section adds what Windows changes.
+> Plan: `tasks/plan.md` ("`win-playback`"), tasks 220–227, on the branch `claude/win-playback`
+> (from `claude/win-shell` with `win-sheet`), checked at checkpoint AH.
+
+**Objective.** The Windows app plays what the GTK and Mac apps play: the song, the detected
+hits as clicks, or both, while the bar marker follows; drawn as W10 draws it. A drummer hears
+on their PC whether the notes are right. Nothing is decided in C# that the core decides for the
+Mac app already.
+
+**Assumptions** (from the code and the web on 2026-11-26):
+1. The core's side is done by `mac-playback`: `result` sends `clicks` and `bars`; `jump`,
+   `step`, `volumes`, `playable` and `settings`' `song_volume`/`hits_volume` are in
+   `docs/bridge.md`. Nothing in Python changes except one new text.
+2. `SticklerCore` (C#) writes these commands already (`Command.Jump`, `StepBy`, `Volumes`,
+   `Playable`) and decodes `clicks`, `bars` and `sheet` (`ResultScreen`), but reads none of
+   the replies, and has no playback model, no lookups and no marker.
+3. **NAudio 3.3.0** (MIT; nuget.org, the repository at tag `v3.3.0`, read 2026-11-26):
+   `NAudio.Core` targets `net9.0` without Windows APIs (mixing, volume, the WAV and AIFF
+   readers; depends on `System.Numerics.Tensors`) and so runs in tests on Linux;
+   `NAudio.Wasapi` (the output `WasapiPlayer`, `MediaFoundationReader`) is Windows only.
+   `ISampleProvider.Read` takes a `Span<float>`. `WasapiPlayer` is made by
+   `WasapiPlayerBuilder`; `WithDefaultDeviceStreamRouting()` (Windows follows the default
+   output device) needs `BuildAsync()` and shared mode. The player calls the source's `Read`
+   on its own thread; `Pause()` stops the reading. `GetPosition()` counts what the device
+   rendered, not the source's position. `MediaFoundationReader`'s seek decodes forward to the
+   exact frame (3.3.0's release notes: "frame-aligned seeking").
+4. Media Foundation on Windows 11 reads MP3, AAC/M4A, WAV, FLAC and ALAC; Ogg Vorbis only
+   with the Store's extension, Opus unconfirmed, AIFF not: those play from the core's
+   `playable` FLAC copy, as on the Mac. Whether the `windows-2025` runner has Media
+   Foundation: unconfirmed (its image's feature list does not name it), so no test depends
+   on it.
+5. The sheet's WebView2 runs the app's own scripts (`ExecuteScriptAsync`) while the page's
+   are off, and the page can post a message to the app (`win-sheet` does both for
+   Ctrl+wheel). `SheetHtml`'s pages are `position: relative` with the paper inside, so a
+   marker placed on a page is not inverted with it in dark mode.
+
+**Where each decision lives** (as "Mac playback"):
+- **Python:** unchanged: the bars and their texts, the clicks, `jump`, `step`, `volumes`,
+  `playable`.
+- **`SticklerCore` (C#), lookups at 20 frames a second:** the bar sounding at the position,
+  its rectangle on the pages, the bar under a click, the time as "0:06": the Mac's
+  `Timeline` and `Marker`, with the Python tests' cases.
+- **`SticklerAudio` (C#, new, question 1):** one mixer that reads the song and the clicks in
+  one pull, so both stay on the same sample; no Windows API, tested on Linux.
+- **The app:** the device (`WasapiPlayer`), Media Foundation for the song's file, the
+  playback bar, the menu, the marker's and the click's scripts handed to WebView2.
+
+**Scope.**
+1. **`SticklerCore`** (Linux and Windows):
+   - the replies `Seconds` (`jump`, `step`), `Gains` (`volumes`), `Playable`, and
+     `song_volume`/`hits_volume` from `settings`; `Hear` (song, hits, both);
+   - `Timeline` (`Index`, `Written`, `Label`, `Clock`) and `Marker` (`Locate`, `BarAt`);
+   - `IPlaying` (load, play, pause, seek, position, gains, stop, and "paused by itself":
+     ended or interrupted) and `PlaybackModel` (owned by `AppModel` as `Playback`): what the
+     Mac's does, case by case: playing or paused, position and length, the label, the marked
+     bar, Song/Hits/Both, the two volumes from `settings`; a tick every 50 ms only while
+     playing; play, pause, seek, previous and next bar, go to the start, a bar click (stopped:
+     it moves without playing); the end stops and play starts over; another song, Close Song,
+     an export's steps, a new core or a stopped core stop the player; a correction of the
+     same song keeps playing with the new bars; questions to the core go one after the other
+     so quick presses add up; an overtaken `volumes` reply is dropped; a song the player
+     cannot read is asked for as `playable`; a failure is the window's notice;
+   - the marker's and the click's scripts as plain functions in `SheetHtml` (`MarkScript`,
+     `HitScript`, the marker's CSS), the Mac's logic: the marker on its page in the accent
+     colour (alpha 0.2 light, 0.32 dark), scrolled into view above the playback bar when it
+     leaves it; a click posts page and point, `Marker.BarAt` names the bar;
+   - `PlaybackMenu`: the entries' titles ("Play" or "Pause"), keys and enabled state, as the
+     Mac's `ControlsMenu`.
+2. **`SticklerAudio`** (new project `win/SticklerAudio`, `net10.0`, `NAudio.Core` only;
+   tested on Linux and Windows): `Mix`, an `ISampleProvider` over the song's and the clicks'
+   sample providers (resampled to the song's rate and channels where they differ): one lock
+   around read, seek and gains; a seek sets both sources to the same frame; gains apply from
+   the next buffer; the clicks may be missing or shorter than the song; the end is reported
+   once; the position is the frames read since the last seek plus its target.
+3. **The player** (app, `Player.cs`, implements `IPlaying`): the song through
+   `MediaFoundationReader` (WAV and AIFF through the managed readers), a refusal reported as
+   unreadable (then `playable`); the clicks through `WaveFileReader`; `WasapiPlayer` in
+   shared mode with default device routing, built once per song and disposed on stop, so
+   nothing holds the device afterwards; the position is the mixer's minus the device's
+   latency; a device that stops by itself pauses playback instead of losing it.
+4. **The playback bar** (W10): a row under the sheet on the header's layer, shown with a
+   result only: Previous Bar, Play/Pause (round, accent), Next Bar, the time, the position
+   slider, the length, "Bar 2 of 110", Volume (a flyout with the Song and Detected hits
+   sliders), Song · Hits · Both as three joined toggle buttons (no Community Toolkit, question
+   2). In a narrow window it leaves out, in turn, "Bar n of N", then the time and the length
+   (the Mac's rule). Narrator names every control ("Position" with the time and the bar as
+   its value).
+5. **The marker and bar clicks** in `SheetView`: the model's marked bar drawn through
+   `MarkScript` when it or the pages change; a click in the page posts its point, the app
+   asks `jump`. The page's own scripts stay off.
+6. **The Playback menu** between View and Help (W10): Play or Pause (Space), Previous Bar
+   (Left), Next Bar (Right), Go to the Start (Home), then Song, Hits and Both as radio items.
+   The keys work while the sheet has the focus and never while a text field or a slider has
+   it; enabled with a shown result.
+7. **Texts:** "Playback" new in `win_texts.py` with German "Wiedergabe" and Spanish
+   "Reproducción" (question 3); the others exist in `po/`.
+8. **CI and screenshots:** `win.yml` builds and tests `SticklerAudio` on Linux and Windows
+   under the coverage gate; W10 in light and dark and with the volume flyout from the
+   stand-in song (`scripts/win_screens.ps1`), stopped at a fixed position. A test on the
+   Windows runner plays the stand-in WAV through the real player if a sound device is there,
+   and says so in the log when none is (no silent pass: the step prints which it was).
+
+**Not in this module:** loops, slower playback, muting single drums, drum samples, Windows'
+media keys and the System Media Transport Controls, remembering the position per song,
+exclusive mode.
+
+**Testing.**
+- `SticklerCore` with the fake core and a fake player: the Mac's `PlaybackTests`,
+  `PlaybackEdgeTests` and `TimelineTests` case by case, the marker's script and CSS as
+  `MarkerTests`, the menu's titles and states; the document test reads the replies'
+  examples. Coverage ≥ 95 %.
+- `SticklerAudio` with generated WAV files, pulled without a device: both sources start on
+  the same sample; a seek lands both on its frame; a gain of 0 leaves only the other source
+  (measured in the samples); clicks shorter than the song or missing; another sample rate;
+  the end once. Coverage ≥ 95 %.
+- The app on the Windows runner: build, format, the screenshots, the player test of scope 8.
+- By hand on the owner's PC: Eye of the Tiger with clicks by ear; Song/Hits/Both and the
+  volumes without a gap; the marker in dark mode; a click inside repeats; Space, Left, Right,
+  Home; the menu's radio items; an MP3, an M4A and an Ogg file; headphones unplugged;
+  quitting while playing.
+
+**Success criteria.**
+1. On the owner's PC a song plays with its clicks in time with the drums (by ear); pause,
+   resume, the slider, Previous and Next Bar work.
+2. Song/Hits/Both and both volume sliders change what is heard without a gap; the volumes are
+   the same after a restart.
+3. The marker follows the sounding bar within 0.1 s in the accent colour, light and dark, and
+   keeps it in view; a click on a bar inside repeat signs jumps to its next pass.
+4. The Playback menu and its keys work as in scope 6; the entry says what Space does.
+5. Opening another song, Close Song and quitting stop the sound at once; no sound device is
+   held while nothing plays.
+6. The screens match W10 in light and dark (screenshots, the owner's check).
+7. `win.yml` and `scripts/check.sh task` green; `SticklerCore`, `SticklerAudio` and the app's
+   logic types ≥ 95 %; the Linux and Mac apps unchanged.
+
+**Risks.**
+- The clicks drift against the song when Media Foundation's seek lands off the frame (MP3,
+  AAC): heard at the owner's check; the way out is the `playable` FLAC for those formats too.
+- `WasapiPlayer`'s reported latency is wrong on some device, so the marker runs early or
+  late: heard and seen at the owner's check; a fixed offset would then be asked for.
+- The runner has no sound device or no Media Foundation: the mixer's tests need neither.
+- NAudio 3 is a new major version (3.1.0 in September 2026): pinned to 3.3.0; the fallback is
+  miniaudio through an own binding, as the library note says.
+
+**Open questions** (all answered by the owner on 2026-11-26 with Claude's proposal: "Geht klar"):
+1. **Where NAudio lives: a library of its own.** `SticklerCore` has no NuGet package (decision of `win-shell`).
+   Proposal: keep that, and put the mixer into a second library, `SticklerAudio`, with
+   `NAudio.Core` as its only package; the app adds `NAudio.Wasapi`. The other way is to let
+   `SticklerCore` take `NAudio.Core`.
+2. **Song · Hits · Both without the Community Toolkit: yes.** three joined toggle buttons of
+   WinUI's own, as W10 draws them. Proposal: yes, no further package.
+3. **The menu's name in German and Spanish: as proposed.** "Wiedergabe" and "Reproducción" (Windows' Media
+   Player says so). Proposal: these.
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)

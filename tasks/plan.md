@@ -813,3 +813,32 @@ the owner (205).
 | A precision touchpad's pinch does not arrive as Ctrl+wheel | Low | Ctrl+Plus/Minus/0 and the menu still work; noted for the owner's check |
 | `PrintToPdfAsync` takes no title from `<title>` | Low | The PDF's title then stays empty; a later fix through the core's PDF (question 3) |
 | The runner draws WebView2 blank | Low | The PDF and the HTML are checked as data; the owner's look counts |
+
+## Release 11 (Windows app): `win-playback` (being built from 2026-11-26, SPEC.md "Module `win-playback`")
+
+The Windows app plays the song and its clicks, as `mac-playback` built the Mac's. Tasks
+220–227 on the branch `claude/win-playback` (from `claude/win-shell` with `win-sheet`), built
+from the owner's Linux computer: what has no Windows API is tested there, the WinUI side on
+the runner (and in a Windows VM, if the owner sets one up).
+
+Design decisions:
+- **Nothing new in Python** but one text: `mac-playback` gave the bridge everything.
+- **The logic first, in `SticklerCore`** (220, 222): the Mac's model, lookups and scripts
+  with the Mac's test cases, tested on Linux.
+- **The mixer in a library of its own** (221, `SticklerAudio`, `NAudio.Core` 3.3.0 only), so
+  `SticklerCore` stays without a package and the mixing is tested on Linux without a device;
+  the app adds `NAudio.Wasapi` for the device and Media Foundation (owner, 2026-11-26).
+- **One pull for both sources:** the song and the clicks are read by one `Read` under one
+  lock, so they cannot drift apart.
+
+Order: the model (220) and the mixer (221) in parallel → the scripts and the menu's logic
+(222) → the text and the tables (223) → the player (224) → the bar, the marker and the menu
+in the window (225) → CI and screenshots (226) → review and a build for the owner (227).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The WinUI side cannot be built on Linux | Medium | Small pushes, `win.yml` on each; the XAML only draws what `SticklerCore` decides |
+| Media Foundation's seek is off the frame for MP3/AAC | Medium | The owner's ear at AH; then those formats play from `playable` too |
+| The runner has no sound device | Low | The mixer is tested without one; the player's test says which case it ran |
+| NAudio 3 is young | Medium | Pinned to 3.3.0; only `Mix` and `Player` touch it |
+
