@@ -3572,7 +3572,7 @@ the Mac app is: a thin interface over the shared Python core, reached through
 | `win-sheet` | Sheet music in WebView2 from the core's SVG pages (a virtual host mapped to the score folder), zoom, title, artist and tempo; the PDF from the A4 pages through WebView2's print to PDF | `win-shell` |
 | `win-playback` | Added 2026-11-25: what `mac-playback` does, drawn as W10: the song, the clicks or both in time, volumes, the bar marker, a click on a bar, the keys; the rules stay in `stickler_app.playback` and `marker`, the bridge's playback commands are reused; the Windows audio library (two sources from one clock, as `AVAudioEngine` on the Mac) chosen in its spec, maintenance and licence checked on the web | `win-sheet` |
 | `win-corrections` | Added 2026-11-25 (owner): what `mac-corrections` does, drawn on the Windows canvas first (W11, with the owner): tempo half or double, beats per bar, the first "one", Simplify, Repeat signs, Back to Detected, applied at once; the bridge's `correct`, `controls` and `sheet` (`mac-corrections` task 190) reused, nothing new in Python | `win-sheet`, `mac-corrections` (190) |
-| `win-package` | The installer (Inno Setup, per user, Start menu entry, an uninstall entry in Settings › Apps), "Uninstall Stickler…" as release 10 asks of every system, `uv`, ffmpeg and ffprobe pinned by SHA-256, refusing Windows 10 with a clear message, the release job, `docs/install-windows.md` and the website's download card and guide in English and German; the SignPath application | all |
+| `win-package` | The installer (Inno Setup, per user, Start menu entry, an uninstall entry in Settings › Apps), "Uninstall Stickler…" as release 10 asks of every system; the uninstall from Settings › Apps asks the same (owner, 2026-11-26: the spike's uninstaller left 2.35 GB under `%LOCALAPPDATA%\Stickler` without asking): the program, the models with their programs and downloads and the saved analyses go, one box "Also remove my settings, recent songs and corrections", off by default, in the user's language; a silent uninstall (`/SILENT`, `/VERYSILENT`, as the app's own "Uninstall Stickler…" starts it after removing the data itself) asks nothing and removes only the program, `uv`, ffmpeg and ffprobe pinned by SHA-256, refusing Windows 10 with a clear message, the release job, `docs/install-windows.md` and the website's download card and guide in English and German; the SignPath application | all |
 
 Build order: `win-design`, `win-core` (in parallel) → `win-spike` → `win-shell` → `win-sheet` →
 `win-playback` → `win-corrections` → `win-package`. The spike comes earlier than the Mac's did, because the risks are in the
@@ -3647,7 +3647,8 @@ docs/install-windows.md       # install guide with the SmartScreen pictures
 1. On the owner's Windows PC, the installer from a GitHub release installs without
    administrator rights after "Run anyway", the setup assistant downloads the Fast models, and
    a song becomes sheet music; export of MusicXML, PDF and the drum track works; the app is
-   listed under Settings › Apps and its uninstall removes the program; the song, the clicks
+   listed under Settings › Apps and its uninstall removes the program, the models and the
+   analyses, with the box ticked the settings, recent songs and corrections too; the song, the clicks
    and both play with the bar marker following; "Uninstall Stickler…" leaves nothing behind
    but what the user chose to keep.
 2. The app is in every language of `po/LINGUAS`, from the same `po/` files as the other apps.
@@ -3660,7 +3661,6 @@ docs/install-windows.md       # install guide with the SmartScreen pictures
    analysed before opens with its sheet music without a new analysis.
 
 ### Out of scope (deferred)
-- Corrections: they come to Windows and the Mac in the same later release.
 - CUDA: measured against the CPU first, as `mac-gpu` (owner, 2026-11-25: later).
 - Windows 10: out of Microsoft's support since 2025-10-14 (owner, 2026-11-24: Windows 11
   only).
@@ -3730,7 +3730,8 @@ on the design canvas, following Microsoft's design guidance for Windows 11 (WinU
 screens.
 
 **Screens** (the minimum of release 11, and W10 for the playback of a later release; corrections
-come later):
+come later. Since 2026-11-25 both are in release 11: W10 for `win-playback`, the corrections
+drawn as W11 with `win-corrections`):
 
 | # | Screen | Module |
 |---|---|---|
@@ -4397,6 +4398,144 @@ guide (`win-package`); corrections, Quality, CUDA; ARM64.
 Sources (read 2026-11-25): Microsoft Learn, "Save a file with Windows App SDK pickers" and
 "Using file and folder pickers"; GitHub's changelog on the `windows-2025` image's move to
 Visual Studio 2026 (2026-05-14).
+
+### Module `win-sheet`
+
+> Status: **draft** (2026-11-26, owner: "Ja, so": `win-sheet` next, in this session, while
+> `win-package` is built in a session of its own). Three questions for the owner at the end.
+> Modelled on `mac-sheet`, with the Windows screens W6 and W9 of `win-design`
+> (`docs/design/win/Sheet.dc.html`, `Sheet-Dark.dc.html`, `Menu-View.dc.html`). Builds on the
+> branch `claude/win-shell` before its checkpoint AF, unless the owner wants AF first.
+
+**Objective.** The Windows app shows the sheet music instead of `win-shell`'s grey desk: the
+result's pages, as wide as the window, light and dark, with the note size of the View menu,
+and saves the PDF. A drummer opens a song and reads its drums in the window, as in the GTK and
+Mac apps; nothing about the sheet is decided in C# that the core already decides.
+
+**Assumptions** (from the code and the web on 2026-11-26):
+1. The core engraves already: `pages` returns the result's pages as SVG at a width and note
+   size, with every written bar's rectangle; `settings`, `set_zoom`, `zoom_in`, `zoom_out` and
+   `actual_size` keep the note size for every song (0.5 to 3, ×1.25 a step); `a4_pages` gives
+   the A4 pages and the PDF's title (`docs/bridge.md`). `SticklerCore` sends these commands
+   already (`Command`), but does not decode `pages`, `a4_pages`, `zoom` or `settings` replies
+   yet, and `AppModel` does not ask for them.
+2. The Mac's sheet model (`mac/SticklerCore`, `SheetModel`: the newest width and size win, a
+   late reply is dropped, the old pages stay while new ones come, a refused `pages` keeps them)
+   and its page HTML (`mac/Stickler/SheetHTML.swift`: the pages one under the other, the
+   inversion in dark mode, no script of the core's) are the pattern; their tests give the
+   cases.
+3. **WebView2** (the Windows App SDK's control, Edge's engine; part of Windows 11) draws the
+   SVG sharp at every scale. Its `NavigateToString` takes at most 2 MB, measured as UTF-16
+   bytes (Microsoft Learn, "WebView2.NavigateToString"), and a whole song's SVG can be larger;
+   so the page is served from memory under a fixed host (`https://sheet.stickler.invalid/`,
+   `AddWebResourceRequestedFilter` and `WebResourceRequested`), without files on disk.
+   `SetVirtualHostNameToFolderMapping` (the release's first idea) would need the SVG written
+   to a folder first; not needed.
+4. A width in the core is in CSS pixels, which are WinUI's effective pixels; WebView2 applies
+   the display's scale itself.
+5. `CoreWebView2.PrintToPdfAsync(path, settings)` writes a PDF of the loaded page; page size
+   and margins are in inches (A4 is 8.27 × 11.69), the header and footer are off by default;
+   one PDF at a time (Microsoft Learn, "CoreWebView2PrintSettings", "Printing from WebView2
+   apps"). A hidden WebView2 with the A4 pages, one per printed page (`break-after: page`),
+   makes the PDF, as the Mac draws its pages with WebKit. Whether the PDF's title comes from
+   the page's `<title>`: unconfirmed, tried in the first task.
+6. WebView2's own zoom (Ctrl+Plus/Minus, Ctrl+wheel: `IsZoomControlEnabled`) and its pinch on
+   touch screens (`IsPinchZoomEnabled`) would scale the pages as a picture, not engrave them;
+   both are turned off, and the app handles the keys and the wheel itself (question 1).
+   Whether `IsPinchZoomEnabled` also covers a precision touchpad's pinch: unconfirmed.
+7. WebView2 keeps a user data folder; next to an unpackaged app's `.exe` it would land in the
+   program folder, so it is set to `%LOCALAPPDATA%\Stickler\WebView2` (development builds: the
+   same), which "Uninstall Stickler…" and `win-package`'s uninstall remove with the rest.
+
+**Scope.**
+1. **`SticklerCore`, the sheet's model** (tested on Linux and Windows, as `AppModel`):
+   - decodes `pages` and `a4_pages` (pages with their SVG, size and bars, the title), `zoom`
+     and `settings` replies into records, as `docs/bridge.md` shows them (the document test
+     reads its example lines);
+   - the note size and its percent from `settings` at start and from each zoom reply;
+   - `pages` for the shown result at the sheet's width: asked again when a result arrives (a
+     new song or a correction's new `sheet`), when the width changes (once it has settled for
+     0.3 s), and after every zoom change; a reply a newer request has overtaken is dropped;
+     the old pages stay while new ones come; a refused `pages` keeps them and shows the
+     core's message as a notice;
+   - the page HTML as a plain function (`SheetHtml`): the pages one under the other on the
+     desk, each white with the canvas's shadow (`0 1px 3px`, the page shared with the GTK
+     and Mac mockups), inverted in dark mode, no script of the core's (the
+     SVG placed as markup, the core's text escaped where it is text), and the A4 document
+     for the PDF with the Leipzig font as a data URL (Verovio embeds a subset; the whole font
+     keeps the tempo mark right if that changes, as on the Mac).
+2. **The sheet in the window** (replaces `ResultPage`'s grey desk): one WebView2 with the
+   pages, scrolling vertically only; the header (title, artist · tempo · meter) as
+   `win-shell` made it. Script in the page is off except the app's own (`ExecuteScriptAsync`
+   for the scroll position kept across new pages); navigation away from the page is refused;
+   the context menu, the developer tools, the status bar and WebView2's accelerator keys
+   (except copy) are off.
+3. **Note size:** View › Zoom In (Ctrl+Plus), Zoom Out (Ctrl+Minus), Actual Size (Ctrl+0)
+   (W8), enabled with a result; Ctrl+mouse wheel steps the size too (question 1). The size is
+   the core's setting, kept for every song and the next start.
+4. **Sheet Music (PDF)…** in Export's menu (W7), first entry: the save picker with
+   "<song>.pdf", then `a4_pages`, the hidden WebView2 and `PrintToPdfAsync` with A4, no
+   margins, no header and footer; the "Saved" flyout with "Show in Folder" as for MusicXML.
+   A failure shows the notice flyout with the reason; nothing half written stays.
+5. **Accessibility:** the WebView2 reads to Narrator as one image named with the song's title
+   and the page count ("Sheet music of Eye of the Tiger, 3 pages", the Mac's text), not as a
+   document to browse; the zoom entries carry their keys; Tab passes the sheet by.
+6. **Texts:** "Zoom In", "Zoom Out", "Actual Size", "Sheet Music (PDF)…" and the label are in
+   `po/` already (the label in `mac_texts.py`, whose translator comments then name Narrator
+   too); new ones, if any, go into `win_texts.py` with German and Spanish.
+7. **CI and screenshots:** W6 in light and dark and the View menu from a fixed `pages` reply
+   (the groove of `tests/app/fakes.py`, as the Mac's screenshots); the PDF of a fixed
+   `a4_pages` reply written on the runner and checked (page count, A4 size, title).
+
+**Not in this module:** the bar marker and a click on a bar (`win-playback`), corrections
+(`win-corrections`), printing on paper (the PDF covers it), a page view of A4 sheets in the
+window.
+
+**Testing.**
+- `SticklerCore` (Linux and Windows): the sheet model with a scripted core, with the Mac's
+  cases: the first pages at the width and stored size; a new result and a new `sheet` ask
+  again; a quick series of widths makes one request after the pause; zoom in, out and actual
+  size send their commands and ask for pages at the new size; a late reply is dropped; a
+  refused `pages` keeps the old pages and tells the notice. `SheetHtml`: no script, the
+  inversion only in dark mode, the pages in order, the core's text escaped. Coverage ≥ 95 %.
+- The app (windows runner): the PDF from a fixed reply; screenshots of W6 light and dark and
+  of the View menu, for the owner to compare with the canvas.
+- By hand on the owner's PC: Eye of the Tiger reads right at a narrow and a maximised window,
+  Ctrl+Plus/Minus/0 and Ctrl+wheel, dark mode, the PDF opened in the browser and printed,
+  Narrator's label.
+
+**Success criteria.**
+1. On the owner's PC an analysed song shows its sheet music in the window; it fills the
+   window's width after a resize and scrolls vertically; the tempo mark is drawn, not a box.
+2. Ctrl+Plus, Ctrl+Minus, Ctrl+0 (and Ctrl+wheel) change the note size; it is kept for the
+   next song and the next start.
+3. "Sheet Music (PDF)…" saves an A4 PDF with every page and the song's title; "Show in Folder"
+   shows it.
+4. In dark mode the page is inverted; W6's screenshots in both themes match the canvas.
+5. `win.yml` green; `SticklerCore` and the app's logic types ≥ 95 %; `scripts/check.sh task`
+   green; the Linux and Mac apps unchanged.
+
+**Risks.**
+- WebView2's first start takes a moment (its own processes): the desk stays grey until the
+  page is there, no spinner of its own.
+- Panda holds back WebView2's processes: unlikely (they are Microsoft's, signed), seen at the
+  first start on the owner's PC.
+- The runner draws WebView2 blank in screenshots (no GPU): the owner's look counts, as for
+  Mica.
+
+**Open questions for the owner.**
+1. **Pinch and Ctrl+wheel.** The GTK app changes the note size once the fingers rest, the Mac
+   app's picture follows the fingers and the core engraves when they lift. Claude's proposal
+   for Windows: Ctrl+wheel steps the size like Ctrl+Plus/Minus (Windows' usual way, Edge and
+   Word do it); a touchpad's pinch arrives as Ctrl+wheel in WebView2 and does the same, in
+   steps, with no picture following the fingers. A following picture as on the Mac would come
+   later if the steps feel wrong.
+2. **Before or after checkpoint AF?** Claude's proposal: build `win-sheet` now on
+   `claude/win-shell` and check both together at AF, so the owner's PC sees a song as sheet
+   music at the first check.
+3. **The PDF's way.** WebView2's print to PDF (assumption 5), as the release planned, or the
+   core writing the PDF itself (cairo or Verovio's own PDF, then the same file on every
+   system). Claude's proposal: WebView2, as planned; the core's way is a change for all apps.
 
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
