@@ -127,6 +127,24 @@ public sealed partial class ProtocolDocumentTests
     }
 
     [TestMethod]
+    public void ThePlaybackRepliesReadAsTheirPayloadsAndTheirCommandsAreTheDocumentsLines()
+    {
+        string[] Lines(string name) => Blocks().Single(b => b.Section == "Commands" && b.Heading == name).Lines;
+        Assert.AreEqual(new Seconds(2.51), Seconds.From(Reply.Parse(Lines("jump")[1])));
+        Assert.AreEqual(new Seconds(4.71), Seconds.From(Reply.Parse(Lines("step")[1])));
+        Assert.AreEqual(new Seconds(null), Seconds.From(Reply.Parse("{\"id\": 27, \"ok\": true, \"seconds\": null}")));
+        Assert.AreEqual(new Gains(0.0, 1.0), Gains.From(Reply.Parse(Lines("volumes")[1])));
+        Assert.StartsWith("/Users/me/Library/Caches/Stickler/playable/", Playable.From(Reply.Parse(Lines("playable")[1])).Path);
+        Assert.AreEqual(new PlaybackSettings(0.7, 1.0), PlaybackSettings.From(Reply.Parse(Lines("settings")[1])));
+
+        // the typed `volumes` writes the same line as the text one, for each wire name
+        Assert.AreEqual(Command.Volumes("hits", 0.6).Line(29), Command.Volumes(Hear.Hits, 0.6).Line(29));
+        Assert.AreEqual(Lines("volumes")[0].Replace(" ", "", StringComparison.Ordinal), Command.Volumes(Hear.Hits, 0.6).Line(29));
+        Assert.AreEqual(Command.Volumes("song", hits: 0.5).Line(1), Command.Volumes(Hear.Song, hits: 0.5).Line(1));
+        Assert.AreEqual(Command.Volumes("both").Line(1), Command.Volumes(Hear.Both).Line(1));
+    }
+
+    [TestMethod]
     public void TheErrorReplyOfTheLifetimeSectionReads()
     {
         var replies = Blocks().First(b => b.Section == "Lines and lifetime").Lines;

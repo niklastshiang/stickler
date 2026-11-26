@@ -83,6 +83,10 @@ public sealed class Command
         return new Command("volumes", [.. given]);
     }
 
+    /// <summary><c>volumes</c> for what to hear: its wire name is the lower-case one of <paramref name="hear"/>.</summary>
+    public static Command Volumes(Hear hear, double? song = null, double? hits = null) =>
+        Volumes(hear switch { Hear.Song => "song", Hear.Hits => "hits", _ => "both" }, song, hits);
+
     /// <summary>The command as one UTF-8 JSON line for <paramref name="id"/>, without the
     /// newline (the client adds <c>\n</c>, never <c>\r\n</c>).</summary>
     public string Line(int id)

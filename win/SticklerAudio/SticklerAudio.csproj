@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Windows app's playback mixer (SPEC.md, module `win-playback`, scope 1): the song and the
+       clicks read in one pull, so both stay on the same sample. NAudio.Core only, no Windows APIs
+       and no device, so it builds and is tested on Linux too. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Stickler.Audio</RootNamespace>
+    <AssemblyName>SticklerAudio</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NAudio.Core" Version="[3.3.0]" />
+  </ItemGroup>
+</Project>

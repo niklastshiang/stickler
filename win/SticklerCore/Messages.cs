@@ -200,3 +200,30 @@ public sealed record SheetSettings(double Zoom, string Percent)
     public static SheetSettings From(Reply reply) =>
         new(Json.Double(reply.Fields, "zoom"), Json.Str(reply.Fields, "percent"));
 }
+
+/// <summary><c>settings</c>: the two volume sliders' stored values, 0 to 1 (the sheet reads the
+/// note size from the same reply).</summary>
+public sealed record PlaybackSettings(double SongVolume, double HitsVolume)
+{
+    public static PlaybackSettings From(Reply reply) =>
+        new(Json.Double(reply.Fields, "song_volume"), Json.Double(reply.Fields, "hits_volume"));
+}
+
+/// <summary><c>jump</c>, <c>step</c>: the time to go to; <c>null</c> when the song never plays the bar.</summary>
+public sealed record Seconds(double? Value)
+{
+    public static Seconds From(Reply reply) => new(Json.OptDouble(reply.Fields, "seconds"));
+}
+
+/// <summary><c>volumes</c>: the gains to play the song and the clicks with, 0 to 1.</summary>
+public sealed record Gains(double Song, double Hits)
+{
+    public static Gains From(Reply reply) =>
+        new(Json.Double(reply.Fields, "song"), Json.Double(reply.Fields, "hits"));
+}
+
+/// <summary><c>playable</c>: a copy of the song the player can read.</summary>
+public sealed record Playable(string Path)
+{
+    public static Playable From(Reply reply) => new(Json.Str(reply.Fields, "path"));
+}

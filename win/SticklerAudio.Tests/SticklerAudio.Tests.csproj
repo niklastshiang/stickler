@@ -1,0 +1,14 @@
+<Project Sdk="MSTest.Sdk/4.5.3">
+  <!-- SticklerAudio's tests (SPEC.md, module `win-playback`, "Testing"): files generated in a
+       temp folder, no device; on Windows and Linux. Set up as SticklerCore.Tests. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Stickler.Audio.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <TestingExtensionsProfile>None</TestingExtensionsProfile>
+    <EnableMicrosoftTestingExtensionsCodeCoverage>true</EnableMicrosoftTestingExtensionsCodeCoverage>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SticklerAudio\SticklerAudio.csproj" />
+  </ItemGroup>
+</Project>

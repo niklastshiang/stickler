@@ -22,4 +22,7 @@ TEXTS = (
     # Translators: Windows app, the menu bar (design screen W8) with the note size's entries;
     # Windows says "Ansicht" in German, "Ver" in Spanish
     N_("View"),
+    # Translators: Windows app, the menu bar (design screen W10) with Play, Previous Bar and
+    # what to hear; Windows' Media Player says "Wiedergabe" in German, "Reproducción" in Spanish
+    N_("Playback"),
 )

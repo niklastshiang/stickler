@@ -1428,12 +1428,12 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ## Phase 33: Release 11 (Windows app), module `win-playback` (being built from 2026-11-26, SPEC.md "Module `win-playback`")
 
-- [ ] **Task 220: The playback model in `SticklerCore`** (L)
+- [x] **Task 220: The playback model in `SticklerCore`** (L): done 2026-11-26 (a Sonnet subagent; the code read and the tests run three times by the main session on Linux: 124 tests, `SticklerCore` 98.5 %). `Playback.cs` (`IPlaying`, `PlaybackModel`, `Ticker`), `Timeline.cs` (`Hear`, `Timeline`, `Marker`), the replies `Seconds`, `Gains`, `Playable`, `PlaybackSettings`; `AppModel.Playback` beside `Sheet`. The Mac's 27 tests ported, 8 more. Differences from the Mac: `IPlaying.Release` instead of `stop` (CA1716 refuses `Stop`); without a player the stored volumes are not asked for.
   - Acceptance: SPEC scope 1, bullets 1–3: the replies `Seconds`, `Gains`, `Playable` and the settings' volumes; `Hear`; `Timeline` and `Marker` with the Python tests' cases; `IPlaying` and `PlaybackModel` as the Mac's, owned by `AppModel`; every test of the Mac's `PlaybackTests`, `PlaybackEdgeTests` and `TimelineTests` ported.
   - Verify: `dotnet run --project win/SticklerCore.Tests -c Release -- --coverage …`, `scripts/cobertura_gate.py` ≥ 95 %, `dotnet format --verify-no-changes`
   - Dependencies: none · Files: `win/SticklerCore/`, `win/SticklerCore.Tests/`
 
-- [ ] **Task 221: `SticklerAudio`, the mixer** (M)
+- [x] **Task 221: `SticklerAudio`, the mixer** (M): done 2026-11-26 (a Sonnet subagent; read and run again by the main session: 25 tests, 100 %). `Mix`, `ISeekableSamples`, `WaveStreamSamples`; NAudio.Core 3.3.0 (MIT; its only dependency is System.Numerics.Tensors 9.0.0) matched the facts read from its repository. Found: `WdlResamplingSampleProvider` gives its output 1–4 frames late; `Mix` measures that once and drops as many frames after every seek (tested for twice and half the rate; other ratios stay 1–3 frames off, under 0.1 ms). Gains change at a buffer's edge without a ramp: for the owner's ear at AH.
   - Acceptance: SPEC scope 2: `win/SticklerAudio` (`net10.0`, `NAudio.Core` 3.3.0 only) with `Mix` over a seekable song and optional clicks: one lock, a seek on the same frame, gains from the next buffer, another sample rate, shorter or missing clicks, the end once; tested on Linux with generated WAV files.
   - Verify: `dotnet run --project win/SticklerAudio.Tests -c Release -- --coverage …`, the gate ≥ 95 %
   - Dependencies: none · Files: `win/SticklerAudio/`, `win/SticklerAudio.Tests/`, `win/Stickler.sln`
@@ -1443,7 +1443,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: as 220
   - Dependencies: 220 · Files: `win/SticklerCore/SheetHtml.cs`, `win/SticklerCore/PlaybackMenu.cs`, tests
 
-- [ ] **Task 223: "Playback" in `po/` and the tables** (S)
+- [x] **Task 223: "Playback" in `po/` and the tables** (S): done 2026-11-26. msgmerge had proposed "Abspielen"/"Reproducir" from "Play" as fuzzy; set to "Wiedergabe"/"Reproducción".
   - Acceptance: SPEC scope 7: "Playback" in `win_texts.py`, German "Wiedergabe", Spanish "Reproducción" (owner, 2026-11-26); `po/` collected, `win/Stickler/Strings/*.json` and the Mac's String Catalog written by their scripts.
   - Verify: `uv run pytest -q tests/test_winstrings.py tests/test_xcstrings.py`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler_app/win_texts.py`, `po/*`, `win/Stickler/Strings/`

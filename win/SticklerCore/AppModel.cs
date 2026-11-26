@@ -36,24 +36,40 @@ public sealed class AppModel : INotifyPropertyChanged
     private string? version;
 
     /// <summary><paramref name="makeCore"/> builds a core for the reader's languages;
-    /// <paramref name="post"/> runs work on the window's thread, in order (the dispatcher queue).</summary>
-    public AppModel(IReadOnlyList<string> languages, Func<IReadOnlyList<string>, ICore> makeCore, Action<Action> post)
-        : this(languages, makeCore, post, TimeSpan.FromSeconds(0.3))
+    /// <paramref name="post"/> runs work on the window's thread, in order (the dispatcher queue);
+    /// <paramref name="player"/> plays the shown result (<c>null</c>: nothing can play).</summary>
+    public AppModel(
+        IReadOnlyList<string> languages,
+        Func<IReadOnlyList<string>, ICore> makeCore,
+        Action<Action> post,
+        IPlaying? player = null)
+        : this(languages, makeCore, post, TimeSpan.FromSeconds(0.3), player)
     {
     }
 
     /// <summary><paramref name="settle"/>: how long the sheet's width must hold before its
-    /// pages are asked for again (<see cref="SheetModel"/>).</summary>
-    public AppModel(IReadOnlyList<string> languages, Func<IReadOnlyList<string>, ICore> makeCore, Action<Action> post, TimeSpan settle)
+    /// pages are asked for again (<see cref="SheetModel"/>); <paramref name="ticker"/> reads the
+    /// player's position while playing (default: every 50 ms, <see cref="PlaybackModel.Every"/>).</summary>
+    public AppModel(
+        IReadOnlyList<string> languages,
+        Func<IReadOnlyList<string>, ICore> makeCore,
+        Action<Action> post,
+        TimeSpan settle,
+        IPlaying? player = null,
+        Ticker? ticker = null)
     {
         this.languages = languages;
         this.makeCore = makeCore;
         this.post = post;
         Sheet = new SheetModel(post, settle, error => Notice = new Notice(error.Message, null));
+        Playback = new PlaybackModel(player, ticker ?? PlaybackModel.Every(TimeSpan.FromMilliseconds(50), post), post, Tell);
     }
 
     /// <summary>The sheet music of the shown result (module <c>win-sheet</c>).</summary>
     public SheetModel Sheet { get; }
+
+    /// <summary>Playing the shown result (module <c>win-playback</c>).</summary>
+    public PlaybackModel Playback { get; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -175,6 +191,7 @@ public sealed class AppModel : INotifyPropertyChanged
             how => post(() => Ended(how, next)));
         Send(Command.Start);
         Sheet.Attach(next);
+        Playback.Attach(next);
     }
 
     private void Handle(Incoming incoming, ICore source)
@@ -192,6 +209,7 @@ public sealed class AppModel : INotifyPropertyChanged
             case StateEvent e when Fresh(e.Seq):
                 State = e.State;
                 Sheet.Show(e.State.Screen);
+                Playback.Show(e.State.Screen);
                 break;
             case RecentEvent e when Fresh(e.Seq):
                 Recent = e.Rows;
@@ -225,6 +243,7 @@ public sealed class AppModel : INotifyPropertyChanged
         }
         LetGo();
         Sheet.Attach(null);
+        Playback.Attach(null);
         End = how;
         Phase = Phase.Stopped;
     }

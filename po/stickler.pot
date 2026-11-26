@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-26 10:15+0100\n"
+"POT-Creation-Date: 2026-11-26 11:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -500,6 +500,12 @@ msgstr ""
 #. Windows says "Ansicht" in German, "Ver" in Spanish
 #: src/stickler_app/win_texts.py:24
 msgid "View"
+msgstr ""
+
+#. Translators: Windows app, the menu bar (design screen W10) with Play, Previous Bar and
+#. what to hear; Windows' Media Player says "Wiedergabe" in German, "Reproducción" in Spanish
+#: src/stickler_app/win_texts.py:27
+msgid "Playback"
 msgstr ""
 
 #. Translators: a percentage; German puts a no-break space before the sign

@@ -1943,6 +1943,24 @@
         }
       }
     },
+    "Playback" : {
+      "comment" : "Translators: Windows app, the menu bar (design screen W10) with Play, Previous Bar and what to hear; Windows' Media Player says \"Wiedergabe\" in German, \"Reproducción\" in Spanish",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiedergabe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducción"
+          }
+        }
+      }
+    },
     "Position" : {
       "extractionState" : "manual",
       "localizations" : {
