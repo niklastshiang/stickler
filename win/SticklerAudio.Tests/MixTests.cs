@@ -19,6 +19,16 @@ public sealed class MixTests
     public void RemoveFolder() => Directory.Delete(folder, recursive: true);
 
     [TestMethod]
+    public void AStreamTheSampleProviderRefusesIsDisposed()
+    {
+        using RefusedStream stream = new();
+
+        Assert.ThrowsExactly<ArgumentException>(() => new WaveStreamSamples(stream));
+
+        Assert.IsTrue(stream.WasDisposed);
+    }
+
+    [TestMethod]
     public void AnImpulseOfTheClicksAppearsAtItsExactFrame()
     {
         using Mix mix = MakeMix(rate: 1000, channels: 2, frames: 1000, impulses: [300, 700]);
@@ -522,6 +532,26 @@ public sealed class MixTests
 
         public void Dispose()
         {
+        }
+    }
+
+    // A-law has no sample provider in NAudio's conversions: ToSampleProvider throws.
+    private sealed class RefusedStream : WaveStream
+    {
+        public bool WasDisposed { get; private set; }
+
+        public override WaveFormat WaveFormat { get; } = WaveFormat.CreateALawFormat(8000, 1);
+
+        public override long Length => 8;
+
+        public override long Position { get; set; }
+
+        public override int Read(byte[] buffer, int offset, int count) => 0;
+
+        protected override void Dispose(bool disposing)
+        {
+            WasDisposed = true;
+            base.Dispose(disposing);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace Stickler.Core.Tests;
@@ -12,7 +13,10 @@ internal sealed class FakePlayer : IPlaying
     private HashSet<string> unreadable = [];
     private PlayerException? loadFailure;
     private PlayerException? playFailure;
+    private PlayerException? seekFailure;
+    private bool positionFails;
     private bool endsAtOnce;
+    private readonly TaskCompletionSource ended = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private bool isPlaying;
     private double position;
     private int releases;
@@ -30,7 +34,8 @@ internal sealed class FakePlayer : IPlaying
     /// <summary>Whether it was told to play and not to pause since.</summary>
     public bool IsPlaying => Locked(() => isPlaying);
 
-    /// <summary>Plays from the end: it tells it ended inside <see cref="Play"/>, as an engine can.</summary>
+    /// <summary>Plays from the end: the device stops at once and says so from its own thread, after
+    /// <see cref="Play"/> returned.</summary>
     public bool EndsAtOnce
     {
         get => Locked(() => endsAtOnce);
@@ -40,9 +45,12 @@ internal sealed class FakePlayer : IPlaying
         });
     }
 
+    /// <summary>Done when the ending that <see cref="EndsAtOnce"/> causes was told (also when asked for before the play).</summary>
+    public Task EndTold => Locked(() => ended.Task);
+
     public double Position
     {
-        get => Locked(() => position);
+        get => Locked(() => positionFails ? throw new InvalidOperationException("no position") : position);
         set => Locked(() =>
         {
             position = value;
@@ -62,6 +70,19 @@ internal sealed class FakePlayer : IPlaying
     public void FailToPlay(PlayerException? failure) => Locked(() =>
     {
         playFailure = failure;
+    });
+
+    /// <summary>A seek while playing fails, as when the device cannot be opened again; the device is
+    /// closed then.</summary>
+    public void FailToSeek(PlayerException? failure) => Locked(() =>
+    {
+        seekFailure = failure;
+    });
+
+    /// <summary>Reading the position throws something that is not a player's failure.</summary>
+    public void FailToTellPosition(bool fails) => Locked(() =>
+    {
+        positionFails = fails;
     });
 
     public void Load(string song, string? clicks)
@@ -91,7 +112,11 @@ internal sealed class FakePlayer : IPlaying
             }
             if (endsAtOnce)
             {
-                Paused?.Invoke(PlayerPause.Ended);
+                _ = Task.Run(() =>
+                {
+                    Paused?.Invoke(PlayerPause.Ended);
+                    ended.TrySetResult();
+                });
                 return;
             }
             isPlaying = true;
@@ -105,6 +130,11 @@ internal sealed class FakePlayer : IPlaying
 
     public void Seek(double seconds) => Locked(() =>
     {
+        if (isPlaying && seekFailure is { } failure)
+        {
+            isPlaying = false;
+            throw failure;
+        }
         seeks.Add(seconds);
         position = seconds;
     });
@@ -117,7 +147,7 @@ internal sealed class FakePlayer : IPlaying
         isPlaying = false;
     });
 
-    /// <summary>The player pauses by itself.</summary>
+    /// <summary>The player pauses by itself (told from the calling thread, like a device's).</summary>
     public void Pauses(PlayerPause why)
     {
         Locked(() =>
@@ -159,7 +189,7 @@ internal sealed class PlaybackCore : ICore
     private readonly Lock gate = new();
     private readonly List<Command> commands = [];
     private readonly Dictionary<string, string> answers = [];
-    private readonly Dictionary<string, List<(string Fields, TimeSpan Delay)>> queued = [];
+    private readonly Dictionary<string, List<(string Fields, TimeSpan Delay, Task? Until)>> queued = [];
     private Action<Incoming> onEvent = _ => { };
     private Action<CoreEnd> onEnd = _ => { };
 
@@ -192,7 +222,13 @@ internal sealed class PlaybackCore : ICore
 
     /// <summary>The next <paramref name="command"/> gets <paramref name="fields"/> after
     /// <paramref name="delay"/>; later ones get <see cref="Answer"/>'s again.</summary>
-    public void Queue(string command, string fields, TimeSpan delay = default)
+    public void Queue(string command, string fields, TimeSpan delay = default) => Queue(command, fields, delay, null);
+
+    /// <summary>The next <paramref name="command"/> gets <paramref name="fields"/> once
+    /// <paramref name="until"/> is done.</summary>
+    public void Queue(string command, string fields, Task until) => Queue(command, fields, default, until);
+
+    private void Queue(string command, string fields, TimeSpan delay, Task? until)
     {
         lock (gate)
         {
@@ -200,7 +236,7 @@ internal sealed class PlaybackCore : ICore
             {
                 queued[command] = waiting = [];
             }
-            waiting.Add((fields, delay));
+            waiting.Add((fields, delay, until));
         }
     }
 
@@ -214,18 +250,23 @@ internal sealed class PlaybackCore : ICore
     {
         string fields;
         var delay = TimeSpan.Zero;
+        Task? until = null;
         lock (gate)
         {
             commands.Add(command);
             if (queued.TryGetValue(command.Name, out var waiting) && waiting.Count > 0)
             {
-                (fields, delay) = waiting[0];
+                (fields, delay, until) = waiting[0];
                 waiting.RemoveAt(0);
             }
             else
             {
                 fields = answers.GetValueOrDefault(command.Name, "\"ok\": true");
             }
+        }
+        if (until is not null)
+        {
+            await until.ConfigureAwait(false);
         }
         if (delay > TimeSpan.Zero)
         {
@@ -248,29 +289,87 @@ internal sealed class PlaybackCore : ICore
     private static string Name(string line) => JsonElement.Parse(line).GetProperty("cmd").GetString()!;
 }
 
-/// <summary>The window's thread: work posted to it runs one piece at a time, as the dispatcher
-/// queue does. A test calls the model through <see cref="Run"/>.</summary>
+/// <summary>The window's thread: one thread that runs the posted work one piece at a time, later
+/// than the post, as the dispatcher queue does. A test calls the model through <see cref="Run"/>
+/// and reads it through <see cref="Read"/>.</summary>
 internal sealed class Window
 {
-    private readonly Lock gate = new();
+    private readonly BlockingCollection<Action> queue = [];
+    private readonly Thread thread;
+    private Exception? fault;
 
-    public void Post(Action work)
+    public Window()
     {
-        lock (gate)
-        {
-            work();
-        }
+        thread = new Thread(Loop) { IsBackground = true, Name = "test window" };
+        thread.Start();
     }
 
-    public void Run(Action work) => Post(work);
+    /// <summary>Whether the caller is the window's thread.</summary>
+    public bool IsWindowThread => Environment.CurrentManagedThreadId == thread.ManagedThreadId;
 
+    public void Post(Action work) => queue.Add(work);
+
+    public void Run(Action work) => Read(() =>
+    {
+        work();
+        return true;
+    });
+
+    /// <summary>Runs <paramref name="read"/> on the window's thread, after what was posted before,
+    /// and waits for it.</summary>
     public T Read<T>(Func<T> read)
     {
-        lock (gate)
+        T result;
+        if (IsWindowThread)
         {
-            return read();
+            result = read();
+        }
+        else
+        {
+            var done = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            queue.Add(() =>
+            {
+                try
+                {
+                    done.SetResult(read());
+                }
+                catch (Exception failure)
+                {
+                    done.SetException(failure);
+                }
+            });
+            result = done.Task.GetAwaiter().GetResult();
+        }
+        return fault is { } posted ? throw new InvalidOperationException("posted work failed", posted) : result;
+    }
+
+    /// <summary>Returns when everything posted so far has run.</summary>
+    public void Flush() => Run(() => { });
+
+    private void Loop()
+    {
+        foreach (var work in queue.GetConsumingEnumerable())
+        {
+            try
+            {
+                work();
+            }
+            catch (Exception failure)
+            {
+                fault ??= failure;
+            }
         }
     }
+}
+
+/// <summary>Holds a reply back until the test lets it go.</summary>
+internal sealed class Gate
+{
+    private readonly TaskCompletionSource open = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public Task Opened => open.Task;
+
+    public void Release() => open.TrySetResult();
 }
 
 /// <summary>A ticker the test fires by hand; it keeps every callback it was given, so a tick after
@@ -312,7 +411,7 @@ internal sealed class PlaybackHarness
     private readonly Lock gate = new();
     private readonly List<PlaybackCore> cores = [];
     private readonly Dictionary<string, string> preset = [];
-    private readonly Dictionary<string, (string Fields, TimeSpan Delay)> late = [];
+    private readonly Dictionary<string, (string Fields, TimeSpan Delay, Task? Until)> late = [];
 
     public PlaybackHarness(IPlaying? player, Ticker? ticker = null)
     {
@@ -326,10 +425,20 @@ internal sealed class PlaybackHarness
                 {
                     core.Answer(command, fields);
                 }
-                foreach (var (command, (fields, delay)) in late)
+                foreach (var (command, (fields, delay, until)) in late)
                 {
-                    core.Queue(command, fields, delay);
-                    core.Queue(command, fields, delay); // the sheet asks for its note size too
+                    // the sheet asks for its note size too
+                    for (var asks = 0; asks < 2; asks++)
+                    {
+                        if (until is null)
+                        {
+                            core.Queue(command, fields, delay);
+                        }
+                        else
+                        {
+                            core.Queue(command, fields, until);
+                        }
+                    }
                 }
                 cores.Add(core);
             }
@@ -377,13 +486,32 @@ internal sealed class PlaybackHarness
     {
         lock (gate)
         {
-            late[command] = (fields, delay);
+            late[command] = (fields, delay, null);
+        }
+    }
+
+    /// <summary>Every core made from now on answers its first <paramref name="command"/> once <paramref name="gate"/> is released.</summary>
+    public void Preset(string command, string fields, Gate gate)
+    {
+        lock (this.gate)
+        {
+            late[command] = (fields, default, gate.Opened);
         }
     }
 
     public void Ui(Action work) => Window.Run(work);
 
     public T Read<T>(Func<T> read) => Window.Read(read);
+
+    /// <summary>Returns when everything the window was given so far has run.</summary>
+    public void Flush() => Window.Flush();
+
+    /// <summary>Returns when the questions the model asked so far are answered and acted on.</summary>
+    public async Task Quiet()
+    {
+        await Read(() => Playback.Idle);
+        Flush();
+    }
 
     /// <summary>Waits until <paramref name="condition"/> holds (read on the window's thread).</summary>
     public Task<bool> Settled(Func<bool> condition) => Recorder.Eventually(() => Window.Read(condition), 10);

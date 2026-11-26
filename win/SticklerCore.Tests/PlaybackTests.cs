@@ -37,7 +37,7 @@ public sealed class PlaybackTests
         var player = new FakePlayer();
         var harness = PlaybackHarness.Playing(player);
         var playback = harness.Playback;
-        Assert.IsFalse(playback.CanPlay);
+        Assert.IsFalse(harness.Read(() => playback.CanPlay));
         harness.Ui(() =>
         {
             playback.Toggle();
@@ -48,15 +48,15 @@ public sealed class PlaybackTests
         });
         Assert.IsTrue(await harness.Settled(() => harness.Core.Actions.SequenceEqual([Command.Start.Line(0)])));
         Assert.IsEmpty(player.Loads);
-        Assert.AreEqual(0, playback.Position);
-        Assert.AreEqual("", playback.Label);
-        Assert.IsNull(playback.Marked);
+        Assert.AreEqual(0, harness.Read(() => playback.Position));
+        Assert.AreEqual("", harness.Read(() => playback.Label));
+        Assert.IsNull(harness.Read(() => playback.Marked));
 
         var silent = new PlaybackHarness(null);
         silent.Ui(silent.Model.Launch);
         silent.Core.Emit(PlaybackHarness.PlayingResult(1));
         Assert.IsTrue(await silent.Settled(() => silent.Playback.Length == 12));
-        Assert.IsFalse(silent.Playback.CanPlay); // no player
+        Assert.IsFalse(silent.Read(() => silent.Playback.CanPlay)); // no player
         silent.Ui(silent.Playback.Toggle);
         Assert.AreEqual(0, silent.Core.Asked("settings").Count - 1); // only the sheet asked for the settings
     }
@@ -68,7 +68,7 @@ public sealed class PlaybackTests
         harness.Preset("settings", PlaybackHarness.SettingsReply);
         harness.Ui(harness.Model.Launch);
         Assert.IsTrue(await harness.Settled(() => harness.Playback.SongVolume == 0.4));
-        Assert.AreEqual(0.9, harness.Playback.HitsVolume);
+        Assert.AreEqual(0.9, harness.Read(() => harness.Playback.HitsVolume));
     }
 
     [TestMethod]
@@ -77,13 +77,13 @@ public sealed class PlaybackTests
         var player = new FakePlayer();
         var harness = await Ready(player);
         var playback = harness.Playback;
-        Assert.AreEqual(12, playback.Length);
-        Assert.AreEqual("0:12", playback.LengthText);
-        Assert.AreEqual("0:00", playback.Time);
-        Assert.AreEqual("Bar 1 of 6", playback.Label);
-        Assert.AreEqual(1, playback.Marked);
-        CollectionAssert.AreEqual(SongBars.ToList(), playback.Bars.ToList());
-        Assert.IsFalse(playback.Playing);
+        Assert.AreEqual(12, harness.Read(() => playback.Length));
+        Assert.AreEqual("0:12", harness.Read(() => playback.LengthText));
+        Assert.AreEqual("0:00", harness.Read(() => playback.Time));
+        Assert.AreEqual("Bar 1 of 6", harness.Read(() => playback.Label));
+        Assert.AreEqual(1, harness.Read(() => playback.Marked));
+        CollectionAssert.AreEqual(SongBars.ToList(), harness.Read(() => playback.Bars).ToList());
+        Assert.IsFalse(harness.Read(() => playback.Playing));
         Assert.IsEmpty(player.Loads); // loaded on the first play
     }
 
@@ -92,7 +92,7 @@ public sealed class PlaybackTests
     {
         var harness = PlaybackHarness.Playing(new FakePlayer());
         var playback = harness.Playback;
-        Assert.IsNull(playback.Marked);
+        Assert.IsNull(harness.Read(() => playback.Marked));
         harness.Core.Emit(PlaybackHarness.PlayingResult(1));
         Assert.IsTrue(await harness.Settled(() => playback.Marked == 1));
         var changed = new List<string?>();
@@ -104,13 +104,13 @@ public sealed class PlaybackTests
         CollectionAssert.DoesNotContain(changed, "Marked");
         harness.Ui(() => playback.Seek(2.5));
         CollectionAssert.Contains(changed, "Marked");
-        Assert.AreEqual(2, playback.Marked);
+        Assert.AreEqual(2, harness.Read(() => playback.Marked));
         harness.Ui(() => playback.Seek(12)); // after the last bar: nothing sounds
         Assert.IsTrue(await harness.Settled(() => playback.Marked is null));
         harness.Core.Emit(PlaybackHarness.EmptyEvent(2));
         harness.Ui(() => playback.Seek(0));
         Assert.IsTrue(await harness.Settled(() => playback.Length == 0));
-        Assert.IsNull(playback.Marked);
+        Assert.IsNull(harness.Read(() => playback.Marked));
     }
 
     [TestMethod]
@@ -133,19 +133,19 @@ public sealed class PlaybackTests
         Assert.AreEqual(1, ticker.Live);
         player.Position = 5;
         harness.Ui(ticker.Fire);
-        Assert.AreEqual(5, playback.Position);
-        Assert.AreEqual("Bar 3 of 6", playback.Label);
-        Assert.AreEqual(1, playback.Marked);
-        Assert.AreEqual("0:05", playback.Time);
+        Assert.AreEqual(5, harness.Read(() => playback.Position));
+        Assert.AreEqual("Bar 3 of 6", harness.Read(() => playback.Label));
+        Assert.AreEqual(1, harness.Read(() => playback.Marked));
+        Assert.AreEqual("0:05", harness.Read(() => playback.Time));
 
         harness.Ui(playback.Toggle); // pause
-        Assert.IsFalse(playback.Playing);
+        Assert.IsFalse(harness.Read(() => playback.Playing));
         Assert.IsFalse(player.IsPlaying);
-        Assert.AreEqual(5, playback.Position);
+        Assert.AreEqual(5, harness.Read(() => playback.Position));
         Assert.AreEqual(0, ticker.Live);
         player.Position = 7; // a tick after the pause changes nothing
         harness.Ui(ticker.Fire);
-        Assert.AreEqual(5, playback.Position);
+        Assert.AreEqual(5, harness.Read(() => playback.Position));
         harness.Ui(playback.Toggle); // on from where it paused, nothing loaded again
         Assert.IsTrue(await harness.Settled(() => playback.Playing));
         Assert.HasCount(1, player.Loads);
@@ -162,7 +162,7 @@ public sealed class PlaybackTests
         Assert.IsTrue(await harness.Settled(() => harness.Playback.Position == 3));
         harness.Ui(harness.Playback.Toggle);
         player.Position = 9;
-        await Task.Delay(40);
+        harness.Flush(); // what a tick posted before the pause could still do has run
         Assert.AreEqual(3, harness.Read(() => harness.Playback.Position));
     }
 
@@ -194,21 +194,25 @@ public sealed class PlaybackTests
         harness.Ui(() => playback.Jump(3)); // stopped: the position moves, nothing plays
         Assert.IsTrue(await harness.Settled(() => playback.Position == 8));
         CollectionAssert.Contains(harness.Core.Asked("jump").ToList(), Jump(3, 2));
-        Assert.IsFalse(playback.Playing);
+        Assert.IsFalse(harness.Read(() => playback.Playing));
         Assert.IsEmpty(player.Loads);
 
         harness.Core.Answer("jump", "\"ok\": true, \"seconds\": null");
         harness.Ui(() => playback.Jump(9)); // never played: nowhere to go
-        Assert.IsTrue(await harness.Settled(() => harness.Core.Asked("jump").Contains(Jump(9, 8))));
-        await Task.Delay(20);
-        Assert.AreEqual(8, playback.Position);
+        var held = new Gate();
+        harness.Core.Queue("step", "\"ok\": true, \"seconds\": 1.0", held.Opened);
+        harness.Ui(playback.NextBar); // asked only when the jump is done
+        Assert.IsTrue(await harness.Settled(() => harness.Count("step") == 3));
+        Assert.AreEqual(8, harness.Read(() => playback.Position));
+        held.Release();
+        Assert.IsTrue(await harness.Settled(() => playback.Position == 1));
 
         harness.Ui(playback.GoToStart);
-        Assert.AreEqual(0, playback.Position);
+        Assert.AreEqual(0, harness.Read(() => playback.Position));
         harness.Ui(() => playback.Seek(99)); // kept inside the song
-        Assert.AreEqual(12, playback.Position);
+        Assert.AreEqual(12, harness.Read(() => playback.Position));
         harness.Ui(() => playback.Seek(-3));
-        Assert.AreEqual(0, playback.Position);
+        Assert.AreEqual(0, harness.Read(() => playback.Position));
     }
 
     [TestMethod]
@@ -249,10 +253,18 @@ public sealed class PlaybackTests
         harness.Ui(() => harness.Playback.SetHear(Hear.Hits));
         harness.Ui(() => harness.Playback.Jump(2));
         Assert.IsTrue(await harness.Settled(() => harness.Count("step") + harness.Count("volumes") + harness.Count("jump") == 3));
-        await Task.Delay(30);
-        Assert.AreEqual(0, harness.Playback.Position);
-        Assert.IsNull(harness.Model.Notice);
-        Assert.AreEqual(Hear.Hits, harness.Playback.Hear);
+        // one more of each, held back: it is asked only when the one before is done with
+        var held = new Gate();
+        harness.Core.Queue("step", "\"ok\": true, \"seconds\": 5.0", held.Opened);
+        harness.Core.Queue("volumes", PlaybackHarness.GainsReply, held.Opened);
+        harness.Ui(harness.Playback.NextBar);
+        harness.Ui(() => harness.Playback.SetHear(Hear.Both));
+        Assert.IsTrue(await harness.Settled(() => harness.Count("step") == 2 && harness.Count("volumes") == 2));
+        Assert.AreEqual(0, harness.Read(() => harness.Playback.Position));
+        Assert.IsNull(harness.Read(() => harness.Model.Notice));
+        Assert.AreEqual(Hear.Both, harness.Read(() => harness.Playback.Hear));
+        held.Release();
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Position == 5));
     }
 
     [TestMethod]
@@ -261,13 +273,14 @@ public sealed class PlaybackTests
         var player = new FakePlayer();
         var harness = await Started(player);
         player.Position = 12;
-        harness.Ui(() => player.Pauses(PlayerPause.Ended));
-        Assert.IsFalse(harness.Playback.Playing);
-        Assert.AreEqual(12, harness.Playback.Position);
+        player.Pauses(PlayerPause.Ended); // from the device's thread
+        harness.Flush();
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
+        Assert.AreEqual(12, harness.Read(() => harness.Playback.Position));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
         Assert.AreEqual(0, player.Seeks[^1]);
-        Assert.AreEqual(0, harness.Playback.Position);
+        Assert.AreEqual(0, harness.Read(() => harness.Playback.Position));
     }
 
     [TestMethod]
@@ -276,9 +289,10 @@ public sealed class PlaybackTests
         var player = new FakePlayer();
         var harness = await Started(player);
         player.Position = 3;
-        harness.Ui(() => player.Pauses(PlayerPause.Interrupted));
-        Assert.IsFalse(harness.Playback.Playing);
-        Assert.AreEqual(3, harness.Playback.Position);
+        player.Pauses(PlayerPause.Interrupted);
+        harness.Flush();
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
+        Assert.AreEqual(3, harness.Read(() => harness.Playback.Position));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
         Assert.AreEqual(3, player.Seeks[^1]);
@@ -296,22 +310,22 @@ public sealed class PlaybackTests
         var corrected = SongBars.Take(3).ToList();
         harness.Core.Emit(PlaybackHarness.PlayingResult(2, bars: corrected));
         Assert.IsTrue(await harness.Settled(() => playback.Bars.Count == 3));
-        CollectionAssert.AreEqual(corrected, playback.Bars.ToList());
-        Assert.IsTrue(playback.Playing);
+        CollectionAssert.AreEqual(corrected, harness.Read(() => playback.Bars).ToList());
+        Assert.IsTrue(harness.Read(() => playback.Playing));
         Assert.AreEqual(0, player.Releases);
 
         harness.Core.Emit(PlaybackHarness.PlayingResult(3, song: "/m/other.flac"));
         Assert.IsTrue(await harness.Settled(() => player.Releases == 1));
-        Assert.IsFalse(playback.Playing);
-        Assert.AreEqual(0, playback.Position);
+        Assert.IsFalse(harness.Read(() => playback.Playing));
+        Assert.AreEqual(0, harness.Read(() => playback.Position));
         harness.Ui(playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => playback.Playing));
         Assert.AreEqual("/m/other.flac", player.Loads[^1].Song);
 
         harness.Core.Emit(PlaybackHarness.EmptyEvent(4));
         Assert.IsTrue(await harness.Settled(() => player.Releases == 2));
-        Assert.IsFalse(playback.Playing);
-        Assert.IsFalse(playback.CanPlay);
+        Assert.IsFalse(harness.Read(() => playback.Playing));
+        Assert.IsFalse(harness.Read(() => playback.CanPlay));
 
         harness.Core.Emit(PlaybackHarness.PlayingResult(5));
         Assert.IsTrue(await harness.Settled(() => playback.CanPlay));
@@ -319,8 +333,8 @@ public sealed class PlaybackTests
         Assert.IsTrue(await harness.Settled(() => playback.Playing));
         harness.Core.Stop(new CoreEnd(CoreEndReason.Exited, 9, "", []));
         Assert.IsTrue(await harness.Settled(() => player.Releases == 3));
-        Assert.IsFalse(playback.Playing);
-        Assert.IsFalse(playback.CanPlay);
+        Assert.IsFalse(harness.Read(() => playback.Playing));
+        Assert.IsFalse(harness.Read(() => playback.CanPlay));
     }
 
     [TestMethod]
@@ -330,7 +344,7 @@ public sealed class PlaybackTests
         var harness = await Started(player);
         harness.Core.Emit(PlaybackHarness.ExportingEvent(2));
         Assert.IsTrue(await harness.Settled(() => !harness.Playback.CanPlay));
-        Assert.IsFalse(harness.Playback.Playing);
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
         Assert.IsFalse(player.IsPlaying);
         Assert.AreEqual(0, player.Releases);
         harness.Core.Emit(PlaybackHarness.PlayingResult(3)); // back: the song is still loaded
@@ -381,19 +395,19 @@ public sealed class PlaybackTests
         Assert.IsTrue(await harness.Settled(() => harness.Playback.CanPlay));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Model.Notice?.Text == "“e.ogg” cannot be played."));
-        Assert.IsFalse(harness.Playback.Playing);
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
 
         player.Unreadable();
         player.FailToLoad(new PlayerFailedException("No sound device."));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Model.Notice?.Text == "No sound device."));
-        Assert.IsFalse(harness.Playback.Playing);
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
 
         player.FailToLoad(null);
         player.FailToPlay(new PlayerFailedException("The output is busy."));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Model.Notice?.Text == "The output is busy."));
-        Assert.IsFalse(harness.Playback.Playing);
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
     }
 
     [TestMethod]
@@ -407,9 +421,9 @@ public sealed class PlaybackTests
         harness.Core.Answer("playable", "not running");
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Count("playable") == 1));
-        await Task.Delay(30);
-        Assert.IsFalse(harness.Playback.Playing);
-        Assert.IsNull(harness.Model.Notice);
+        Assert.IsTrue(await harness.Settled(() => !harness.Playback.Starting)); // the answer is dealt with
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
+        Assert.IsNull(harness.Read(() => harness.Model.Notice));
         harness.Ui(() => harness.Playback.Toggle()); // not stuck: it tries again
         Assert.IsTrue(await harness.Settled(() => harness.Count("playable") == 2));
     }
@@ -423,14 +437,14 @@ public sealed class PlaybackTests
 
         harness.Core.Answer("volumes", "\"ok\": true, \"song\": 0.0, \"hits\": 1.0");
         harness.Ui(() => playback.SetHear(Hear.Hits));
-        Assert.AreEqual(Hear.Hits, playback.Hear);
+        Assert.AreEqual(Hear.Hits, harness.Read(() => playback.Hear));
         Assert.IsTrue(await harness.Settled(() => player.GainsSet[^1] == new Gains(0, 1)));
         harness.Core.Answer("volumes", "\"ok\": true, \"song\": 0.0, \"hits\": 0.5");
         harness.Ui(() => playback.SetHitsVolume(0.5));
-        Assert.AreEqual(0.5, playback.HitsVolume);
+        Assert.AreEqual(0.5, harness.Read(() => playback.HitsVolume));
         Assert.IsTrue(await harness.Settled(() => player.GainsSet[^1] == new Gains(0, 0.5)));
         harness.Ui(() => playback.SetSongVolume(0.3));
-        Assert.AreEqual(0.3, playback.SongVolume);
+        Assert.AreEqual(0.3, harness.Read(() => playback.SongVolume));
         Assert.IsTrue(await harness.Settled(() => harness.VolumesAsked().Count == 4));
         CollectionAssert.AreEqual(
             new[] { Volumes(Hear.Hits), Volumes(Hear.Hits, hits: 0.5), Volumes(Hear.Hits, song: 0.3) },
@@ -442,16 +456,18 @@ public sealed class PlaybackTests
     {
         var player = new FakePlayer();
         var harness = await Started(player);
-        harness.Core.Queue("volumes", "\"ok\": true, \"song\": 0.1, \"hits\": 0.1", TimeSpan.FromMilliseconds(80));
+        var late = new Gate();
+        harness.Core.Queue("volumes", "\"ok\": true, \"song\": 0.1, \"hits\": 0.1", late.Opened);
         harness.Core.Queue("volumes", "\"ok\": true, \"song\": 0.2, \"hits\": 0.2");
         harness.Ui(() =>
         {
             harness.Playback.SetSongVolume(0.1);
             harness.Playback.SetSongVolume(0.2);
         });
-        Assert.IsTrue(await harness.Settled(() => player.GainsSet[^1] == new Gains(0.2, 0.2)));
-        await Task.Delay(150);
+        late.Release();
+        await harness.Quiet(); // both answers are in; the older one came first
         Assert.AreEqual(new Gains(0.2, 0.2), player.GainsSet[^1]);
+        Assert.DoesNotContain(new Gains(0.1, 0.1), player.GainsSet);
     }
 
     [TestMethod]
@@ -478,9 +494,9 @@ public sealed class PlaybackTests
         harness.Ui(() => harness.Playback.Seek(12)); // the slider at its end
         player.EndsAtOnce = true;
         harness.Ui(harness.Playback.Toggle);
-        Assert.IsTrue(await harness.Settled(() => player.Loads.Count == 1));
-        await Task.Delay(30);
-        Assert.IsFalse(harness.Playback.Playing, "nothing was left to play");
+        await player.EndTold; // the device stopped, from its own thread, after Play returned
+        harness.Flush();
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing), "nothing was left to play");
         player.EndsAtOnce = false;
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
@@ -508,14 +524,16 @@ public sealed class PlaybackTests
         var player = new FakePlayer();
         player.Unreadable("/m/e.ogg");
         var harness = PlaybackHarness.Playing(player);
-        harness.Core.Queue("playable", "\"ok\": true, \"path\": \"/c/e.flac\"", TimeSpan.FromMilliseconds(60));
+        var making = new Gate();
+        harness.Core.Queue("playable", "\"ok\": true, \"path\": \"/c/e.flac\"", making.Opened);
         harness.Core.Emit(PlaybackHarness.PlayingResult(1, song: "/m/e.ogg"));
         Assert.IsTrue(await harness.Settled(() => harness.Playback.CanPlay));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Count("playable") == 1));
         harness.Ui(harness.Playback.Toggle); // the copy is still being made
-        await Task.Delay(150);
-        Assert.IsFalse(harness.Playback.Playing);
+        making.Release();
+        Assert.IsTrue(await harness.Settled(() => !harness.Playback.Starting));
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
         Assert.IsFalse(player.IsPlaying);
         harness.Ui(harness.Playback.Toggle); // the copy is loaded now: it plays at once
         Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
@@ -532,7 +550,7 @@ public sealed class PlaybackTests
         Assert.IsTrue(await harness.Settled(() => harness.Playback.CanPlay));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Model.Notice?.Text == "Cannot read e.flac."));
-        Assert.IsFalse(harness.Playback.Playing);
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
     }
 
     [TestMethod]
@@ -541,32 +559,42 @@ public sealed class PlaybackTests
         var player = new FakePlayer();
         player.Unreadable("/m/e.ogg");
         var harness = PlaybackHarness.Playing(player);
-        harness.Core.Queue("playable", "\"ok\": true, \"path\": \"/c/e.flac\"", TimeSpan.FromMilliseconds(60));
+        var making = new Gate();
+        harness.Core.Queue("playable", "\"ok\": true, \"path\": \"/c/e.flac\"", making.Opened);
         harness.Core.Emit(PlaybackHarness.PlayingResult(1, song: "/m/e.ogg"));
         Assert.IsTrue(await harness.Settled(() => harness.Playback.CanPlay));
         harness.Ui(harness.Playback.Toggle);
         Assert.IsTrue(await harness.Settled(() => harness.Count("playable") == 1));
-        harness.Core.Emit(PlaybackHarness.PlayingResult(2, song: "/m/f.flac"));
-        await Task.Delay(150);
+        harness.Core.Emit(PlaybackHarness.PlayingResult(2, song: "/m/f.flac", bars: SongBars.Take(3).ToList()));
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Bars.Count == 3)); // the other song is shown
+        making.Release();
+        Assert.IsTrue(await harness.Settled(() => !harness.Playback.Starting));
         Assert.IsEmpty(player.Loads);
-        Assert.IsFalse(harness.Playback.Playing);
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
     }
 
     [TestMethod]
     public async Task AnAnswerForASongThatIsGoneIsNotUsedAndNothingMoreIsAskedForIt()
     {
         var harness = await Ready(new FakePlayer());
-        harness.Core.Queue("step", "\"ok\": true, \"seconds\": 2.0", TimeSpan.FromMilliseconds(60));
+        var waiting = new Gate();
+        var afterwards = new Gate();
+        harness.Core.Queue("step", "\"ok\": true, \"seconds\": 2.0", waiting.Opened);
+        harness.Core.Queue("step", "\"ok\": true, \"seconds\": 3.0", afterwards.Opened);
         harness.Ui(() =>
         {
             harness.Playback.NextBar();
             harness.Playback.NextBar(); // waits for the first one
         });
         Assert.IsTrue(await harness.Settled(() => harness.Count("step") == 1));
-        harness.Core.Emit(PlaybackHarness.PlayingResult(2, song: "/m/f.flac"));
-        await Task.Delay(200);
+        harness.Core.Emit(PlaybackHarness.PlayingResult(2, song: "/m/f.flac", bars: SongBars.Take(3).ToList()));
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Bars.Count == 3));
+        waiting.Release();
+        harness.Ui(harness.Playback.NextBar); // of the new song: asked only when both older ones are done with
+        Assert.IsTrue(await harness.Settled(() => harness.Count("step") == 2));
         Assert.AreEqual(0, harness.Read(() => harness.Playback.Position));
-        Assert.AreEqual(1, harness.Count("step"));
+        afterwards.Release();
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Position == 3));
     }
 
     [TestMethod]
@@ -583,8 +611,8 @@ public sealed class PlaybackTests
             harness.Playback.SetSongVolume(0.2);
             harness.Playback.Toggle();
         });
-        await Task.Delay(30);
-        Assert.AreEqual(Hear.Song, harness.Playback.Hear);
+        await harness.Quiet();
+        Assert.AreEqual(Hear.Song, harness.Read(() => harness.Playback.Hear));
         Assert.AreEqual(asked, harness.Core.All.Count);
         Assert.IsEmpty(player.Loads);
     }
@@ -594,10 +622,12 @@ public sealed class PlaybackTests
     {
         var harness = new PlaybackHarness(new FakePlayer());
         harness.Preset("volumes", PlaybackHarness.GainsReply);
-        harness.Preset("settings", PlaybackHarness.SettingsReply, TimeSpan.FromMilliseconds(60));
+        var stored = new Gate();
+        harness.Preset("settings", PlaybackHarness.SettingsReply, stored);
         harness.Ui(harness.Model.Launch);
         harness.Ui(() => harness.Playback.SetSongVolume(0.2));
-        await Task.Delay(150);
+        stored.Release();
+        await harness.Quiet(); // the stored volumes are in
         Assert.IsTrue(await harness.Settled(() => harness.Core.Asked("settings").Count == 2));
         Assert.AreEqual(0.2, harness.Read(() => harness.Playback.SongVolume));
         Assert.AreEqual(1.0, harness.Read(() => harness.Playback.HitsVolume));
@@ -607,13 +637,162 @@ public sealed class PlaybackTests
     public async Task ASettingsAnswerForAReplacedCoreIsDropped()
     {
         var harness = new PlaybackHarness(new FakePlayer());
-        harness.Preset("settings", PlaybackHarness.SettingsReply, TimeSpan.FromMilliseconds(60));
+        var stored = new Gate();
+        harness.Preset("settings", PlaybackHarness.SettingsReply, stored);
         harness.Ui(harness.Model.Launch);
         harness.Ui(harness.Model.StartAgain); // the first core's answer is late
-        await Task.Delay(200);
+        stored.Release();
+        await harness.Quiet();
         Assert.IsTrue(await harness.Settled(() => harness.Playback.SongVolume == 0.4));
         harness.Ui(() => harness.Playback.SetSongVolume(0.6));
         Assert.AreEqual(0.6, harness.Read(() => harness.Playback.SongVolume));
+    }
+
+    // what the review of the Windows player found
+
+    [TestMethod]
+    public async Task ASeekThatCannotReopenTheDeviceTellsWhyAndStopsPlayingButPlayWorksAgain()
+    {
+        var player = new FakePlayer();
+        var ticker = new ManualTicker();
+        var harness = PlaybackHarness.Playing(player, ticker.Start);
+        harness.Core.Emit(PlaybackHarness.PlayingResult(1));
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.CanPlay));
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        player.Position = 4;
+        harness.Ui(harness.Playback.Toggle);
+        harness.Ui(harness.Playback.Toggle); // paused at 4 and playing again
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+
+        player.FailToSeek(new PlayerFailedException("No sound device."));
+        harness.Ui(() => harness.Playback.Seek(9));
+
+        Assert.AreEqual("No sound device.", harness.Read(() => harness.Model.Notice?.Text));
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
+        Assert.AreEqual(0, ticker.Live);
+        Assert.AreEqual(4, harness.Read(() => harness.Playback.Position));
+
+        player.FailToSeek(null);
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        Assert.AreEqual(4, player.Seeks[^1]);
+    }
+
+    [TestMethod]
+    public async Task AnArrowWhoseSeekFailsDoesNotBlockTheNextOne()
+    {
+        var player = new FakePlayer();
+        var harness = await Started(player);
+        player.FailToSeek(new PlayerFailedException("No sound device."));
+        harness.Core.Answer("step", "\"ok\": true, \"seconds\": 8.0");
+        harness.Ui(harness.Playback.NextBar);
+        Assert.IsTrue(await harness.Settled(() => harness.Model.Notice?.Text == "No sound device."));
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
+
+        player.FailToSeek(null);
+        harness.Core.Answer("step", "\"ok\": true, \"seconds\": 3.0");
+        harness.Ui(harness.Playback.NextBar);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Position == 3));
+        Assert.AreEqual(2, harness.Count("step"));
+    }
+
+    [TestMethod]
+    public async Task AJobThatFailsDoesNotStopTheOnesAfterIt()
+    {
+        var player = new FakePlayer();
+        var harness = PlaybackHarness.Playing(player, new ManualTicker().Start); // no ticks reading the position
+        harness.Core.Emit(PlaybackHarness.PlayingResult(1));
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.CanPlay));
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        player.FailToTellPosition(true);
+        harness.Ui(harness.Playback.NextBar); // asks from a position that cannot be read
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => harness.Read(() => harness.Playback.Idle));
+        player.FailToTellPosition(false);
+        harness.Core.Answer("step", "\"ok\": true, \"seconds\": 4.0");
+        harness.Ui(harness.Playback.NextBar);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Position == 4));
+
+        var lane = new PlaybackModel.Lane();
+        var ran = new List<string>();
+        var failing = lane.Run(() => throw new InvalidOperationException("broken"));
+        var after = lane.Run(() =>
+        {
+            ran.Add("after");
+            return Task.CompletedTask;
+        });
+        await after;
+        Assert.AreEqual("after", Assert.ContainsSingle(ran));
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => failing);
+    }
+
+    [TestMethod]
+    public async Task ASliderMovedWhileAPlayWaitsForTheGainsKeepsTheNewestGains()
+    {
+        var player = new FakePlayer();
+        var harness = await Ready(player);
+        var first = new Gate();
+        harness.Core.Queue("volumes", PlaybackHarness.GainsReply, first.Opened);
+        harness.Core.Queue("volumes", "\"ok\": true, \"song\": 0.3, \"hits\": 1.0");
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Count("volumes") == 1));
+        harness.Ui(() => harness.Playback.SetSongVolume(0.3)); // while the play waits
+        first.Release();
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        await harness.Quiet();
+        Assert.AreEqual(new Gains(0.3, 1.0), player.GainsSet[^1]);
+        Assert.DoesNotContain(new Gains(0.7, 1.0), player.GainsSet);
+    }
+
+    [TestMethod]
+    public async Task ALateEndedAfterASeekDoesNotMakeTheNextPlayStartAtTheBeginning()
+    {
+        var player = new FakePlayer();
+        var harness = await Started(player);
+        harness.Ui(() =>
+        {
+            player.Pauses(PlayerPause.Ended); // the device stopped just before ...
+            harness.Playback.Seek(5); // ... the reader's seek, in the same turn
+        });
+        harness.Flush();
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
+        Assert.AreEqual(5, harness.Read(() => harness.Playback.Position));
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        Assert.AreEqual(5, player.Seeks[^1]);
+    }
+
+    [TestMethod]
+    public async Task AnEndedThatReachedTheSongsEndStillStartsAgainAtTheBeginning()
+    {
+        var player = new FakePlayer();
+        var harness = await Started(player);
+        player.Position = 11.9; // the device's own position is a little short of the length
+        player.Pauses(PlayerPause.Ended);
+        harness.Flush();
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        Assert.AreEqual(0, player.Seeks[^1]);
+    }
+
+    [TestMethod]
+    public async Task APauseTheOldSongCausedDoesNotTouchTheNextOne()
+    {
+        var player = new FakePlayer();
+        var harness = await Started(player);
+        harness.Ui(() =>
+        {
+            harness.Core.Emit(PlaybackHarness.PlayingResult(2, song: "/m/other.flac"));
+            player.Pauses(PlayerPause.Ended); // told after the song was changed
+        });
+        harness.Flush();
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.CanPlay));
+        harness.Ui(() => harness.Playback.Seek(5));
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        Assert.AreEqual("/m/other.flac", player.Loads[^1].Song);
+        Assert.AreEqual(5, player.Seeks[^1]);
     }
 
     [TestMethod]

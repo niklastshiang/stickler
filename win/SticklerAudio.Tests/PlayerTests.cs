@@ -188,22 +188,24 @@ public sealed class PlayerTests
     }
 
     [TestMethod]
-    public void AFailureAfterTheSongLeavesNoFileOpen()
+    public void ClicksThatCannotBeOpenedLeaveTheSongPlayingAlone()
     {
         using Player player = Make();
         clicksFail = new IOException("clicks broken");
 
-        PlayerFailedException thrown = Assert.ThrowsExactly<PlayerFailedException>(
-            () => player.Load("song.wav", clicksPath));
+        player.Load("song.wav", clicksPath);
+        player.Play();
 
-        Assert.AreEqual("cannot: clicks broken", thrown.Message);
-        Assert.IsTrue(songs[0].Disposed);
-        Assert.AreEqual(0, player.Position);
+        Assert.IsFalse(songs[0].Disposed);
+        Assert.AreEqual(1, outputs.Count);
+        Assert.AreEqual(0, clicks.Count);
+        Assert.AreEqual(1f, outputs[0].Pull(1)[0]); // the song, no clicks added
     }
 
     [TestMethod]
-    public void AMixRefusingTheLayoutLeavesNoFileOpen()
+    public void ClicksTheMixRefusesAreClosedAndTheSongPlaysAlone()
     {
+        SixChannelSamples refused = new();
         Player player = new(
             _ =>
             {
@@ -211,13 +213,37 @@ public sealed class PlayerTests
                 songs.Add(song);
                 return song;
             },
-            _ => new SixChannelSamples(),
-            source => new FakeOutput(source),
+            _ => refused,
+            source =>
+            {
+                FakeOutput output = new(source);
+                outputs.Add(output);
+                return output;
+            },
             why => "cannot: " + why.Message);
 
-        Assert.ThrowsExactly<PlayerFailedException>(() => player.Load("song.wav", clicksPath));
+        player.Load("song.wav", clicksPath);
+        player.Play();
 
+        Assert.IsTrue(refused.Disposed);
+        Assert.IsFalse(songs[0].Disposed);
+        Assert.AreEqual(1f, outputs[0].Pull(1)[0]);
+        player.Dispose();
         Assert.IsTrue(songs[0].Disposed);
+    }
+
+    [TestMethod]
+    public void ASongTheMixCannotUseFailsAndLeavesNoFileOpen()
+    {
+        BrokenFormatSamples broken = new();
+        Player failing = new(_ => broken, _ => new RampSamples(SongFrames), source => new FakeOutput(source), why => "cannot: " + why.Message);
+
+        PlayerFailedException thrown = Assert.ThrowsExactly<PlayerFailedException>(
+            () => failing.Load("song.wav", clicksPath));
+
+        Assert.AreEqual("cannot: format broken", thrown.Message);
+        Assert.IsTrue(broken.Disposed);
+        Assert.AreEqual(0, failing.Position);
     }
 
     [TestMethod]
@@ -537,8 +563,25 @@ public sealed class PlayerTests
         {
         }
 
-        public void Dispose()
+        public bool Disposed { get; private set; }
+
+        public void Dispose() => Disposed = true;
+    }
+
+    private sealed class BrokenFormatSamples : ISeekableSamples
+    {
+        public WaveFormat WaveFormat => throw new InvalidOperationException("format broken");
+
+        public long Frames => 10;
+
+        public bool Disposed { get; private set; }
+
+        public int Read(Span<float> buffer) => 0;
+
+        public void Seek(long frame)
         {
         }
+
+        public void Dispose() => Disposed = true;
     }
 }

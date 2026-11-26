@@ -230,8 +230,8 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>Space, Left, Right and Home play and move (W10) wherever the focus is in the
-    /// window, unless the focused control used the key itself (a slider its arrows, a button
-    /// Space: those never arrive here) or a text is being typed.</summary>
+    /// window, unless the focused control uses the key itself: a button's Space never arrives
+    /// here, and a slider, a switch, the menu bar and a text field are left alone.</summary>
     private void OnKey(object sender, KeyRoutedEventArgs e)
     {
         PlaybackKey? key = e.Key switch
@@ -246,7 +246,14 @@ public sealed partial class MainWindow : Window
         {
             return;
         }
-        var typing = FocusManager.GetFocusedElement(Root.XamlRoot) is TextBox or PasswordBox or RichEditBox or AutoSuggestBox;
+        if (pressed == PlaybackKey.Space && e.KeyStatus.WasKeyDown)
+        {
+            e.Handled = true; // a held Space is one press, not a play and a pause per repeat
+            return;
+        }
+        // a control that uses these keys itself keeps them, also where it leaves the event unhandled
+        var typing = FocusManager.GetFocusedElement(Root.XamlRoot)
+            is TextBox or PasswordBox or RichEditBox or AutoSuggestBox or Slider or ToggleSwitch or MenuBarItem;
         e.Handled = PlaybackMenu.Press(model, pressed, typing);
     }
 

@@ -28,7 +28,7 @@ public sealed partial class Playbar : UserControl
         InitializeComponent();
         SizeChanged += (_, _) => Fit();
         // a slider handles the pointer itself, so these are asked for as handled events too
-        PositionSlider.AddHandler(PointerPressedEvent, new PointerEventHandler((_, _) => held = true), true);
+        PositionSlider.AddHandler(PointerPressedEvent, new PointerEventHandler(Pressed), true);
         PositionSlider.AddHandler(PointerReleasedEvent, new PointerEventHandler((_, _) => Dropped()), true);
         PositionSlider.AddHandler(PointerCaptureLostEvent, new PointerEventHandler((_, _) => Dropped()), true);
     }
@@ -68,42 +68,75 @@ public sealed partial class Playbar : UserControl
         ToolTipService.SetToolTip(button, name);
     }
 
-    private void OnPlaybackChanged(object? sender, PropertyChangedEventArgs e) => Show();
+    // Only what changed is set: the position comes twenty times a second, and a tooltip set
+    // anew each time would never stay open.
+    private void OnPlaybackChanged(object? sender, PropertyChangedEventArgs e) => Show(e.PropertyName);
 
-    private void Show()
+    /// <summary>The model's values in the controls; all of them without a
+    /// <paramref name="changed"/> property.</summary>
+    private void Show(string? changed = null)
     {
         if (playback is not { } model)
         {
             return;
         }
+        bool Is(string name) => changed is null || changed == name;
         showing = true;
         try
         {
-            IsEnabled = model.CanPlay;
-            PlayIcon.Glyph = model.Playing ? "" : "";
-            Call(PlayButton, strings.Text(model.Playing ? "Pause" : "Play"));
-            PositionSlider.Maximum = Math.Max(model.Length, 0.01);
-            if (!held)
+            if (Is(nameof(PlaybackModel.CanPlay)))
+            {
+                IsEnabled = model.CanPlay;
+            }
+            if (Is(nameof(PlaybackModel.Playing)))
+            {
+                PlayIcon.Glyph = model.Playing ? "\uE769" : "\uE768";
+                Call(PlayButton, strings.Text(model.Playing ? "Pause" : "Play"));
+            }
+            if (Is(nameof(PlaybackModel.Length)))
+            {
+                PositionSlider.Maximum = Math.Max(model.Length, 0.01);
+                LengthText.Text = model.LengthText;
+            }
+            if ((Is(nameof(PlaybackModel.Position)) || Is(nameof(PlaybackModel.Length))) && !held)
             {
                 PositionSlider.Value = model.Position;
                 TimeText.Text = model.Time;
             }
-            LengthText.Text = model.LengthText;
-            if (BarText.Text != model.Label)
+            if (Is(nameof(PlaybackModel.Label)) && BarText.Text != model.Label)
             {
                 BarText.Text = model.Label;
                 // Narrator reads the position as the time and the bar, told once per bar
                 AutomationProperties.SetHelpText(PositionSlider, $"{model.Time}, {model.Label}");
             }
-            SongVolumeSlider.Value = Math.Round(model.SongVolume * 100);
-            HitsVolumeSlider.Value = Math.Round(model.HitsVolume * 100);
-            HearSongButton.IsChecked = model.Hear == Hear.Song;
-            HearHitsButton.IsChecked = model.Hear == Hear.Hits;
-            HearBothButton.IsChecked = model.Hear == Hear.Both;
+            if (Is(nameof(PlaybackModel.SongVolume)))
+            {
+                SongVolumeSlider.Value = Math.Round(model.SongVolume * 100);
+            }
+            if (Is(nameof(PlaybackModel.HitsVolume)))
+            {
+                HitsVolumeSlider.Value = Math.Round(model.HitsVolume * 100);
+            }
+            if (Is(nameof(PlaybackModel.Hear)))
+            {
+                HearSongButton.IsChecked = model.Hear == Hear.Song;
+                HearHitsButton.IsChecked = model.Hear == Hear.Hits;
+                HearBothButton.IsChecked = model.Hear == Hear.Both;
+            }
         }
         finally
         {
             showing = false;
+        }
+    }
+
+    // Only the primary button drags: a right click takes no capture, so nothing would end it.
+    private void Pressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (e.Pointer.PointerDeviceType != Microsoft.UI.Input.PointerDeviceType.Mouse
+            || e.GetCurrentPoint(PositionSlider).Properties.IsLeftButtonPressed)
+        {
+            held = true;
         }
     }
 

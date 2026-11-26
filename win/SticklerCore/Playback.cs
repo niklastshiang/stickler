@@ -81,6 +81,7 @@ public sealed class PlaybackModel : INotifyPropertyChanged
     private readonly Action<Notice> tell;
     private readonly Lane moves = new(); // the `step`s and `jump`s, sent in order
     private readonly Lane volumes = new(); // the `volumes` commands, sent in order
+    private readonly Lane reads = new(); // the stored volumes' reads, one per core
     private ICore? core;
     private string? song;
     private string? clicks;
@@ -101,6 +102,10 @@ public sealed class PlaybackModel : INotifyPropertyChanged
     private double songVolume = 0.7;
     private double hitsVolume = 1.0;
     private int? marked;
+
+    /// <summary>How close to the length the position must be for an end to count (seconds): the
+    /// player's length and the core's can differ by a few frames.</summary>
+    private const double EndMargin = 0.25;
 
     /// <summary><paramref name="player"/> is <c>null</c> when nothing can play (the controls stay
     /// off). <paramref name="ticker"/> reads the position while playing (GTK: every 50 ms,
@@ -186,6 +191,13 @@ public sealed class PlaybackModel : INotifyPropertyChanged
     /// when the bar does, so the sheet is not drawn again at every tick.</summary>
     public int? Marked { get => marked; private set => Set(ref marked, value); }
 
+    /// <summary>A play waits for the core (for the tests).</summary>
+    internal bool Starting => starting;
+
+    /// <summary>Done when the questions asked so far have been answered and acted on (for the tests;
+    /// the work they post to the window is queued by then).</summary>
+    internal Task Idle => Task.WhenAll(moves.Last, volumes.Last, reads.Last);
+
     private double Now => loaded && player is not null ? player.Position : position;
 
     /// <summary>A ticker that runs <c>tick</c> through <paramref name="post"/> every
@@ -206,7 +218,7 @@ public sealed class PlaybackModel : INotifyPropertyChanged
             return; // nothing can play: the volumes would not be heard
         }
         var asked = volumeRequest;
-        _ = Task.Run(async () =>
+        _ = reads.Run(async () =>
         {
             if (await Request(next, Command.Settings, PlaybackSettings.From).ConfigureAwait(false) is { } settings)
             {
@@ -285,9 +297,13 @@ public sealed class PlaybackModel : INotifyPropertyChanged
         }
         var target = Math.Min(Math.Max(seconds, 0), length);
         atEnd = false;
-        if (loaded)
+        if (loaded && !Try(() => player?.Seek(target)))
         {
-            player?.Seek(target);
+            // the device could not be opened again: stopped, where the player is now
+            Playing = false;
+            StopTicking();
+            Position = Now;
+            return;
         }
         Position = target;
     }
@@ -368,7 +384,9 @@ public sealed class PlaybackModel : INotifyPropertyChanged
             }
             if (await OnWindow(() => gains is null).ConfigureAwait(false))
             {
-                await ChangeVolumes(null, null).ConfigureAwait(false);
+                // started on the window's thread: it counts the requests and queues the command
+                var changing = await OnWindow(() => ChangeVolumes(null, null)).ConfigureAwait(false);
+                await changing.ConfigureAwait(false);
             }
             await OnWindow(() => Begin(wanted, player)).ConfigureAwait(false);
         }
@@ -393,19 +411,14 @@ public sealed class PlaybackModel : INotifyPropertyChanged
             atEnd = false;
             Position = 0;
         }
-        player.Seek(position);
-        try
+        // An end told at once (nothing was left to play) comes through post, after this turn.
+        if (!Try(() =>
         {
+            player.Seek(position);
             player.Play();
-        }
-        catch (PlayerException failure)
+        }))
         {
-            Failed(failure);
             return;
-        }
-        if (atEnd)
-        {
-            return; // nothing was left to play: it ended at once
         }
         Playing = true;
         StartTicking();
@@ -455,25 +468,33 @@ public sealed class PlaybackModel : INotifyPropertyChanged
         loaded = true;
         if (gains is { } known)
         {
-            player.SetGains(known);
+            _ = Try(() => player.SetGains(known));
         }
         return true;
     }
 
     private void Pause()
     {
-        player?.Pause();
+        _ = Try(() => player?.Pause());
         Position = Now;
         Playing = false;
         StopTicking();
     }
 
+    /// <summary>The player stopped by itself. Told through <c>post</c>, so it can come after the
+    /// reader moved on: a stop with nothing playing (the song was closed or changed, the reader
+    /// paused) is not about what is shown now, and an end counts only where the song ends (not
+    /// when the reader seeked in the same turn).</summary>
     private void PausedByItself(PlayerPause why)
     {
+        if (!loaded || !playing)
+        {
+            return;
+        }
         Position = Now;
         Playing = false;
         StopTicking();
-        if (why == PlayerPause.Ended)
+        if (why == PlayerPause.Ended && position >= length - EndMargin)
         {
             atEnd = true;
         }
@@ -485,7 +506,7 @@ public sealed class PlaybackModel : INotifyPropertyChanged
         StopTicking();
         if (loaded || playing)
         {
-            player?.Release();
+            _ = Try(() => player?.Release());
         }
         loaded = false;
         Playing = false;
@@ -579,7 +600,7 @@ public sealed class PlaybackModel : INotifyPropertyChanged
                         gains = reply;
                         if (loaded)
                         {
-                            player?.SetGains(reply);
+                            _ = Try(() => player?.SetGains(reply));
                         }
                     }
                 }).ConfigureAwait(false);
@@ -613,11 +634,36 @@ public sealed class PlaybackModel : INotifyPropertyChanged
 
     private void Failed(PlayerException failure) => tell(new Notice(failure.Message, null));
 
+    /// <summary>Does <paramref name="call"/> on the player; false when it failed (the reader is told).</summary>
+    private bool Try(Action call)
+    {
+        try
+        {
+            call();
+            return true;
+        }
+        catch (PlayerException failure)
+        {
+            Failed(failure);
+            return false;
+        }
+    }
+
     /// <summary>Runs <paramref name="work"/> on the window's thread and gives its result back.</summary>
     private Task<T> OnWindow<T>(Func<T> work)
     {
         var done = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-        post(() => done.SetResult(work()));
+        post(() =>
+        {
+            try
+            {
+                done.SetResult(work());
+            }
+            catch (Exception failure)
+            {
+                done.SetException(failure); // whoever waits sees it, and its `finally` runs
+            }
+        });
         return done.Task;
     }
 
@@ -642,16 +688,25 @@ public sealed class PlaybackModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     /// <summary>Runs jobs one after another, each after the one before has finished.</summary>
-    private sealed class Lane
+    internal sealed class Lane
     {
         private Task last = Task.CompletedTask;
+
+        public Task Last => last;
 
         public Task Run(Func<Task> job)
         {
             var before = last;
             last = Task.Run(async () =>
             {
-                await before.ConfigureAwait(false);
+                try
+                {
+                    await before.ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
+                    // the job before failed; its own caller sees that, this one still runs
+                }
                 await job().ConfigureAwait(false);
             });
             return last;

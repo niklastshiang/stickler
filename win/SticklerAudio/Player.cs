@@ -76,11 +76,9 @@ public sealed class Player : IPlaying, IDisposable
             throw new PlayerUnreadableException(cannotPlay(unreadable));
         }
 
-        ISeekableSamples? hits = null;
         try
         {
-            hits = clicks is not null && File.Exists(clicks) ? openClicks(clicks) : null;
-            Mix next = new(music, hits);
+            Mix next = Combine(music, clicks);
             next.SetGains(songGain, hitsGain);
             lock (gate)
             {
@@ -92,9 +90,29 @@ public sealed class Player : IPlaying, IDisposable
         catch (Exception broken)
         {
             music.Dispose();
-            hits?.Dispose();
             throw new PlayerFailedException(cannotPlay(broken));
         }
+    }
+
+    /// <summary>The song with its clicks; clicks that cannot be read or mixed are left out and
+    /// the song plays alone (as on the Mac). Only a failure of the song itself is thrown.</summary>
+    private Mix Combine(ISeekableSamples music, string? clicks)
+    {
+        if (clicks is not null && File.Exists(clicks))
+        {
+            ISeekableSamples? hits = null;
+            try
+            {
+                hits = openClicks(clicks);
+                return new Mix(music, hits);
+            }
+            catch (Exception)
+            {
+                hits?.Dispose();
+            }
+        }
+
+        return new Mix(music, null);
     }
 
     public void Play()

@@ -13,7 +13,16 @@ public sealed class WaveStreamSamples : ISeekableSamples
     public WaveStreamSamples(WaveStream stream)
     {
         this.stream = stream;
-        samples = stream.ToSampleProvider();
+        try
+        {
+            samples = stream.ToSampleProvider();
+        }
+        catch
+        {
+            stream.Dispose(); // an encoding the sample provider refuses: nothing else owns the file
+            throw;
+        }
+
         Frames = stream.Length / stream.WaveFormat.BlockAlign;
     }
 

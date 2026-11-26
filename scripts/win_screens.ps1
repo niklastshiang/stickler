@@ -173,7 +173,9 @@ function Save-Sheet($look, $standIns) {
         Save-Window $process "W11-corrections-$look"
         # W10: playing. A runner without a sound device shows the notice instead; the log says which
         $before = Get-Names $process
-        Invoke-Element (Find-Named $process "Play")
+        try { $play = Find-Named $process "Play" }
+        catch { "names now: " + (((Get-Names $process).Keys | Sort-Object) -join " | "); throw }
+        Invoke-Element $play
         Start-Sleep -Seconds 3
         $now = Get-Names $process
         foreach ($name in $now.Keys) {
