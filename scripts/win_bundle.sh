@@ -34,10 +34,14 @@ UV_APACHE_SHA256=c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab
 layout=${1:?usage: scripts/win_bundle.sh <layout folder>}
 rm -rf "$layout"
 mkdir -p "$layout"
-layout=$(cd "$layout" && pwd)
+# mixed paths (D:/a/...) work for Git's bash and for the Windows programs it starts (dotnet,
+# curl, Python) alike, whether or not MSYS converts arguments (the release job sets
+# MSYS_NO_PATHCONV=1, and /d/a/... then reached dotnet as D:\d\a\..., run 45804848973)
+native() { if command -v cygpath >/dev/null; then cygpath -m "$1"; else echo "$1"; fi; }
+layout=$(native "$(cd "$layout" && pwd)")
 core="$layout/core"
 mkdir -p "$core/bin"
-work=$(mktemp -d)
+work=$(native "$(mktemp -d)")
 trap 'rm -rf "$work"' EXIT
 
 fetch() { # url, file, sha256
@@ -53,7 +57,7 @@ echo "== the app"
 echo "== Python $PYTHON_VERSION"
 fetch "https://github.com/astral-sh/python-build-standalone/releases/download/$PYTHON_BUILD/cpython-$PYTHON_VERSION+$PYTHON_BUILD-x86_64-pc-windows-msvc-install_only_stripped.tar.gz" \
   "$work/python.tar.gz" "$PYTHON_SHA256"
-tar -xzf "$work/python.tar.gz" -C "$core" # unpacks to python/
+tar --force-local -xzf "$work/python.tar.gz" -C "$core" # unpacks to python/ (a D: path is no host)
 py="$core/python/python.exe"
 unzip_to() { "$py" -I -B -m zipfile -e "$1" "$2"; } # archive, folder
 
