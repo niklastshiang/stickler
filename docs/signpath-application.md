@@ -47,6 +47,7 @@ runners, by the workflow `.github/workflows/release.yml` (job `windows`), from a
 | Windows App SDK runtime (self-contained: WinUI, its resources) | **Microsoft Software License Terms** (not OSI) | Microsoft, NuGet `Microsoft.WindowsAppSDK` 2.7.0 |
 | Windows ML runtime (`onnxruntime.dll`, `DirectML.dll`, pulled in by the SDK, unused) | **Microsoft Software License Terms** (not OSI) | Microsoft, NuGet `Microsoft.Windows.AI.MachineLearning` |
 | WebView2 loader | BSD-3-Clause | Microsoft, NuGet `Microsoft.Web.WebView2` |
+| NAudio (`NAudio.Core`, `NAudio.Wasapi` 3.3.0: playback) and `System.Numerics.Tensors` | MIT | naudio/NAudio and Microsoft, NuGet |
 | Windows SDK projection (`Microsoft.Windows.SDK.NET.dll`, `WinRT.Runtime.dll`) | Windows SDK licence (a link only, <https://aka.ms/WinSDKLicenseURL>) | Microsoft, NuGet `Microsoft.Windows.SDK.NET.Ref` |
 | CPython (python-build-standalone) | PSF-2.0 | astral-sh/python-build-standalone |
 | uv | MIT or Apache-2.0 | astral-sh/uv (signed by its makers) |

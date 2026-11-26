@@ -117,11 +117,14 @@ tool prune "$core/python"
 echo "Python: $before MB → $(du -sm "$core/python" | cut -f1) MB"
 
 echo "== licences"
-# the app's runtimes too: .NET, the Windows App SDK (Microsoft's own terms), WebView2's loader
+# the app's runtimes too: .NET, the Windows App SDK (Microsoft's own terms), WebView2's loader;
+# NAudio's packages carry only a link to the MIT licence, so its text (with the copyright line
+# the licence asks to keep) comes from this repository, copied from NAudio's at tag v3.3.0
 packages=$("${DOTNET:-dotnet}" nuget locals global-packages --list | sed -n 's/^global-packages: //p' | tr -d '\r')
 mapfile -t runtimes < <(tool app-licences "$layout/Stickler.deps.json" "$packages" "$work/notes" | tr -d '\r')
 tool licenses "$core" "uv=$work/uv-LICENSE-MIT" "uv=$work/uv-LICENSE-APACHE" \
   "ffmpeg=$work/ffmpeg-LICENSE.txt" "ffmpeg=$work/ffmpeg-README.txt" "stickler=LICENSE" \
+  "naudio=win/SticklerAudio/NAudio-LICENSE.txt" \
   "${runtimes[@]}"
 
 echo "== nothing missing, nothing too much"
