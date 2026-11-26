@@ -118,13 +118,116 @@ public sealed class CoreLaunchTests
     [TestMethod]
     public void TheAppsCoreIsTheCheckoutOrOneThatSaysWhatIsMissing()
     {
-        var found = CoreLaunch.ForApp(Repo.Environment, Repo.Root, Repo.Windows, ["en"]);
+        var found = CoreLaunch.ForApp(Repo.Environment, Repo.Root, Repo.Windows, ["en"], development: true);
         Assert.AreEqual(Repo.Root, found.Directory);
-        var lost = CoreLaunch.ForApp(new Dictionary<string, string?>(), Path.GetPathRoot(Path.GetTempPath())!, Repo.Windows, ["en"]);
+        var lost = CoreLaunch.ForApp(new Dictionary<string, string?>(), Path.GetPathRoot(Path.GetTempPath())!, Repo.Windows, ["en"], development: true);
         var recorder = new Recorder();
         recorder.Start(lost);
         Assert.IsTrue(recorder.Ended!.NeverStarted);
         Assert.HasCount(2, recorder.Ended.Details);
         Assert.Contains(CoreLaunch.CheckoutVariable, recorder.Ended.Details[0]);
+    }
+
+    /// <summary>The parts of the installer's layout the core needs (SPEC.md, module
+    /// <c>win-package</c>, scope 1), as paths below the app's folder.</summary>
+    private static readonly string[][] Parts =
+    [
+        ["core", "python", "python.exe"],
+        ["core", "bin", "uv.exe"],
+        ["core", "bin", "ffmpeg.exe"],
+        ["core", "bin", "ffprobe.exe"],
+        ["core", "python", "share", "stickler", "adapters"],
+    ];
+
+    /// <summary>A made-up install folder without the part <paramref name="leaveOut"/> (an index
+    /// into <see cref="Parts"/>, or -1 for none).</summary>
+    private static string Installed(int leaveOut = -1)
+    {
+        var app = Path.Combine(Path.GetTempPath(), $"stickler-app-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(app, CoreLaunch.CoreFolder));
+        for (var i = 0; i < Parts.Length; i++)
+        {
+            if (i == leaveOut)
+            {
+                continue;
+            }
+            var path = Path.Combine([app, .. Parts[i]]);
+            if (Parts[i][^1].EndsWith(".exe", StringComparison.Ordinal))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllBytes(path, []);
+            }
+            else
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+        return app;
+    }
+
+    [TestMethod]
+    public void TheInstalledCoreRunsItsOwnPythonWithItsOwnProgramsFirst()
+    {
+        var app = Installed();
+        var environment = new Dictionary<string, string?> { ["SystemRoot"] = "W", ["PATH"] = "elsewhere" };
+        var core = CoreLaunch.Installed(app, environment, ["de-DE", "en-GB"]);
+        var folder = Path.Combine(app, "core");
+        Assert.AreEqual(Path.Combine(folder, "python", "python.exe"), core.Executable);
+        Assert.AreEqual("-m stickler_app.bridge", string.Join(" ", core.Arguments));
+        Assert.AreEqual(folder, core.Directory);
+        Assert.AreEqual("windows", core.Environment["STICKLER_PACKAGED"]);
+        Assert.AreEqual("de_DE:en", core.Environment["LANGUAGE"]);
+        Assert.AreEqual("1", core.Environment["UV_SYSTEM_CERTS"]);
+        Assert.AreEqual("1", core.Environment["PYTHONUTF8"]);
+        // Stickler's own uv and ffmpeg first, then only Windows' folders: never the user's
+        var path = core.Environment["PATH"].Split(';');
+        Assert.AreEqual(Path.Combine(folder, "bin"), path[0]);
+        Assert.AreEqual(string.Join(";", Path.Combine("W", "System32"), "W", Path.Combine("W", "System32", "Wbem")), string.Join(";", path[1..]));
+        Assert.AreEqual("PYTHON VIRTUAL_ENV CONDA UV_", string.Join(" ", core.Drops));
+        Assert.HasCount(0, CoreClient.Missing(core.Needs));
+        Assert.IsFalse(core.Environment.ContainsKey("STICKLER_ADAPTER_SOURCES")); // the core finds them
+        Assert.StartsWith(@"C:\Windows", CoreLaunch.Installed(app, new Dictionary<string, string?>(), ["en"]).Environment["PATH"].Split(';')[2]);
+        Directory.Delete(app, recursive: true);
+    }
+
+    [TestMethod]
+    public void EachMissingPartOfTheInstalledCoreIsNamed()
+    {
+        for (var i = 0; i < Parts.Length; i++)
+        {
+            var app = Installed(leaveOut: i);
+            var recorder = new Recorder();
+            recorder.Start(CoreLaunch.Installed(app, new Dictionary<string, string?>(), ["en"]));
+            Assert.IsTrue(recorder.Ended!.NeverStarted);
+            Assert.HasCount(1, recorder.Ended.Details);
+            Assert.EndsWith(Path.Combine(Parts[i]), recorder.Ended.Details[0]);
+            Directory.Delete(app, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void TheAppTakesItsInstalledCoreBeforeAnyCheckout()
+    {
+        var app = Installed();
+        var named = new Dictionary<string, string?> { [CoreLaunch.CheckoutVariable] = Repo.Root };
+        foreach (var development in new[] { true, false })
+        {
+            var core = CoreLaunch.ForApp(named, app, windows: true, ["en"], development);
+            Assert.AreEqual(Path.Combine(app, "core"), core.Directory);
+        }
+        Directory.Delete(app, recursive: true);
+    }
+
+    [TestMethod]
+    public void TheInstallersBuildWithoutItsCoreNeverLooksForACheckout()
+    {
+        var empty = Path.Combine(Path.GetTempPath(), $"stickler-app-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(empty);
+        var named = new Dictionary<string, string?> { [CoreLaunch.CheckoutVariable] = Repo.Root };
+        var recorder = new Recorder();
+        recorder.Start(CoreLaunch.ForApp(named, empty, windows: true, ["en"], development: false));
+        Assert.IsTrue(recorder.Ended!.NeverStarted);
+        Assert.Contains("install Stickler again", recorder.Ended.Details[0]);
+        Directory.Delete(empty);
     }
 }

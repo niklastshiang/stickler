@@ -4,7 +4,9 @@ its build that do not need a Mac. `scripts/mac_bundle.sh` runs them on the runne
 import gettext
 import importlib.util
 import io
+import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -265,6 +267,14 @@ def test_uv_is_one_version_in_every_package_and_every_download_is_pinned():
         # nothing is fetched without a checksum: every curl goes through fetch or a check
         assert script.count("curl ") == script.count("shasum -a 256 -c")
     assert "brew" not in mac  # the runner's Homebrew is not a pinned source
+    # the Windows installer's core (module `win-package`): the same uv and Python build
+    windows = (ROOT / "scripts" / "win_bundle.sh").read_text(encoding="utf-8")
+    for name in ("UV_VERSION", "PYTHON_VERSION", "PYTHON_BUILD"):
+        pattern = rf"^{name}=(\S+)"
+        assert re.search(pattern, windows, re.M).group(1) == re.search(pattern, mac, re.M).group(1)
+    pins = re.findall(r"^[A-Z_]+_SHA256=(\S+)", windows, re.MULTILINE)
+    assert len(pins) == 5 and all(re.fullmatch(r"[0-9a-f]{64}", pin) for pin in pins)
+    assert windows.count("curl ") == windows.count("sha256sum -c") == 1
 
 
 def test_the_check_names_files_the_repository_really_has():
@@ -273,3 +283,135 @@ def test_the_check_names_files_the_repository_really_has():
         assert (ROOT / "adapters" / adapter / "pyproject.toml").is_file()
         assert (ROOT / "adapters" / adapter / "uv.lock").is_file()
     assert (ROOT / "adapters" / "_common" / "pyproject.toml").is_file()
+
+
+def _windows_core(root: Path) -> Path:
+    """A made-up core folder of the Windows installer (SPEC.md, module `win-package`, scope 1):
+    python-build-standalone's Windows layout, programs as `.exe` without an executable bit."""
+    core = root / "core"
+    site = core / "python" / "Lib" / "site-packages"
+    for program in tools.WINDOWS_PROGRAMS:
+        _file(core / program)
+    for package in ("stickler", "stickler_app", "numpy"):
+        _file(site / package / "__init__.py")
+    _file(site / "stickler-11.dist-info" / "METADATA", "Name: stickler\nVersion: 11\n")
+    _file(site / "numpy-2.5.4.dist-info" / "METADATA", "Name: numpy\nVersion: 2.5.4\n")
+    _file(site / "numpy-2.5.4.dist-info" / "LICENSE.txt", "BSD")
+    _file(core / "python" / "LICENSE.txt", "PSF")  # next to python.exe, not in Lib
+    share = core / "python" / "share"
+    for adapter in tools.APP_ADAPTERS:
+        _file(share / "stickler" / "adapters" / adapter / "pyproject.toml")
+        _file(share / "stickler" / "adapters" / adapter / "uv.lock")
+    _file(share / "stickler" / "adapters" / "_common" / "pyproject.toml")
+    for language in ("de", "es"):
+        _file(share / "locale" / language / "LC_MESSAGES" / "stickler.mo")
+    return core
+
+
+def test_a_complete_windows_core_passes_without_executable_bits(tmp_path):
+    core = _windows_core(tmp_path)
+    assert tools.is_windows(core) and not tools.is_windows(_core(tmp_path / "mac"))
+    _licensed(core, tmp_path)
+    assert (core / "licenses" / "python" / "LICENSE.txt").read_text(encoding="utf-8") == "PSF"
+    assert tools.problems(core, languages=["de", "es"]) == []
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [
+        "bin/uv.exe",
+        "bin/ffmpeg.exe",
+        "python/python.exe",
+        "python/Lib/site-packages/stickler/__init__.py",
+        "python/share/stickler/adapters/beats/beat_this/uv.lock",
+    ],
+)
+def test_a_missing_part_of_the_windows_core_is_named(tmp_path, missing):
+    core = _windows_core(tmp_path)
+    _licensed(core, tmp_path)
+    (core / missing).unlink()
+    found = tools.problems(core, languages=["de", "es"])
+    assert found and any(missing in line for line in found), found
+
+
+def test_a_windows_core_without_packages_is_named(tmp_path):
+    core = _windows_core(tmp_path)
+    shutil.rmtree(core / "python" / "Lib")
+    assert "missing: python/Lib/site-packages" in tools.problems(core, languages=[])
+
+
+def test_windows_python_loses_what_the_core_never_runs(tmp_path):
+    python = tmp_path / "python"
+    kept = [
+        python / "python.exe",
+        python / "python314.dll",
+        python / "DLLs" / "_ctypes.pyd",
+        python / "Lib" / "json" / "__init__.py",
+        python / "Lib" / "site-packages" / "numpy" / "__init__.py",
+        # the Mac's `lib/thread*` (Tcl) must not take these on a file system without case
+        python / "Lib" / "threading.py",
+        python / "Lib" / "tomllib" / "__init__.py",
+    ]
+    gone = [
+        python / "Lib" / "test" / "test_os.py",
+        python / "Lib" / "idlelib" / "idle.py",
+        python / "Lib" / "tkinter" / "__init__.py",
+        python / "Lib" / "turtledemo" / "clock.py",
+        python / "Lib" / "ensurepip" / "__init__.py",
+        python / "Lib" / "site-packages" / "pip" / "__init__.py",
+        python / "Lib" / "site-packages" / "pip-26.0.dist-info" / "METADATA",
+        python / "Lib" / "site-packages" / "numpy" / "_core" / "tests" / "test_a.py",
+        python / "Lib" / "__pycache__" / "os.cpython-314.pyc",
+        python / "DLLs" / "_tkinter.pyd",
+        python / "DLLs" / "tcl86t.dll",
+        python / "DLLs" / "tk86t.dll",
+        python / "tcl" / "tcl8.6" / "init.tcl",
+        python / "libs" / "python314.lib",
+        python / "include" / "Python.h",
+        python / "Scripts" / "pip.exe",
+    ]
+    for path in kept + gone:
+        _file(path)
+    tools.prune(python)
+    assert all(path.exists() for path in kept)
+    assert not any(path.exists() for path in gone)
+
+
+def test_the_windows_apps_runtimes_bring_their_licences(tmp_path):
+    """Module `win-package`: the .NET runtime and the Windows App SDK the self-contained app
+    carries are named in its deps.json; each one's licence goes into `licenses`."""
+    deps = tmp_path / "Stickler.deps.json"
+    libraries = {
+        "Stickler/1.0.0": {"type": "project"},
+        "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.15": {"type": "runtimepack"},
+        "Microsoft.WindowsAppSDK.WinUI/2.7.0": {"type": "package"},
+        "Microsoft.Web.WebView2.Core.Projection/1.0.3719.77": {"type": "reference"},
+    }
+    deps.write_text(json.dumps({"libraries": libraries}), encoding="utf-8")
+    packages = tmp_path / "packages"
+    runtime = packages / "microsoft.netcore.app.runtime.win-x64" / "10.0.15"
+    _file(runtime / "LICENSE.TXT", "MIT")
+    _file(runtime / "THIRD-PARTY-NOTICES.TXT", "notices")
+    _file(runtime / "PACKAGE.md", "not a licence")
+    winui = packages / "microsoft.windowsappsdk.winui" / "2.7.0"
+    _file(winui / "license.txt", "Microsoft Software License Terms")
+    pairs = tools.app_licences(deps, packages, tmp_path / "notes")
+    assert sorted(pairs) == [
+        f"microsoft.netcore.app.runtime.win-x64={runtime / 'LICENSE.TXT'}",
+        f"microsoft.netcore.app.runtime.win-x64={runtime / 'THIRD-PARTY-NOTICES.TXT'}",
+        f"microsoft.windowsappsdk.winui={winui / 'license.txt'}",
+    ]
+    # only a link in its .nuspec (the Windows SDK's projection): a note with the link
+    (winui / "license.txt").unlink()
+    link = "<licenseUrl>https://aka.ms/WinSDKLicenseURL</licenseUrl>"
+    _file(
+        winui / "x.nuspec",
+        f"<package><licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>{link}</package>",
+    )
+    pairs = tools.app_licences(deps, packages, tmp_path / "notes")
+    note = tmp_path / "notes" / "microsoft.windowsappsdk.winui-LICENSE-LINK.txt"
+    assert f"microsoft.windowsappsdk.winui={note}" in pairs
+    assert "https://aka.ms/WinSDKLicenseURL" in note.read_text(encoding="utf-8")
+    (winui / "x.nuspec").unlink()
+    with pytest.raises(ValueError, match="WinUI 2.7.0 ships no licence"):
+        tools.app_licences(deps, packages, tmp_path / "notes")

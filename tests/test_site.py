@@ -193,7 +193,7 @@ def test_everything_the_site_uses_is_in_git():
 def test_downloads_point_at_the_newest_release_until_the_workflow_fills_them():
     page = _page(SITE / "index.html")
     assets = {a["data-asset"]: a for a in page.all("a") if "data-asset" in a}
-    assert set(assets) == {"dmg", "flatpak", "appimage", "deb", "rpm"}
+    assert set(assets) == {"dmg", "exe", "flatpak", "appimage", "deb", "rpm"}
     for attrs in assets.values():
         assert attrs["href"] == "https://github.com/niklastshiang/stickler/releases/latest"
 
@@ -205,12 +205,21 @@ PAIRS = (
     "privacy.html",
     "imprint.html",
     "install-mac.html",
+    "install-windows.html",
 )
 # outside pages that exist in German too: the German page links the German one
 LOCALISED = {
     "https://mailbox.org/en/data-protection-privacy-policy/": "https://mailbox.org/de/datenschutz/",
     "https://support.apple.com/guide/mac-help/mh40616/mac": (
         "https://support.apple.com/de-de/guide/mac-help/mh40616/mac"
+    ),
+    "https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation": (
+        "https://learn.microsoft.com/de-de/windows/apps/package-and-deploy/smartscreen-reputation"
+    ),
+    "https://support.microsoft.com/en-us/windows/security/threat-malware-protection/"
+    "smart-app-control-frequently-asked-questions": (
+        "https://support.microsoft.com/de-de/topic/"
+        "was-ist-smart-app-control-285ea03d-fa88-4d56-882e-6698afdb7003"
     ),
 }
 
@@ -388,12 +397,13 @@ def test_get_stickler_is_one_row_per_download_with_its_line_to_copy(folder):
     rows = section.split('<li class="get-row')[1:]
     assert [re.search(r'data-asset="(\w+)"', row)[1] for row in rows] == [
         "dmg",
+        "exe",
         "deb",
         "rpm",
         "flatpak",
         "appimage",
     ]
-    for row in rows[1:]:
+    for row in rows[2:]:  # the Linux rows; the Mac's and Windows' lead to their guides
         kind = re.search(r'data-asset="(\w+)"', row)[1]
         assert f'<code id="{kind}-command">' in row and f'data-copy="{kind}-command"' in row
         assert f'<span data-name="{kind}">' in row
@@ -445,3 +455,18 @@ def test_the_mac_guide_leads_to_apples_own_for_the_windows_macos_shows(folder):
     allow = steps[steps.index('id="step-allow"') : steps.index('id="step-confirm"')]
     assert f'href="{APPLE_GUIDE[folder]}"' in allow
     assert html.count("support.apple.com") == 1, "one link, in the page's language"
+
+
+@pytest.mark.parametrize("folder", ["", "de/"])
+def test_the_windows_row_leads_to_its_guide_with_microsofts_pages(folder):
+    """SPEC.md, module `win-package`, scope 10: the download keeps one sentence and the link;
+    the steps in words, as for the Mac, with Microsoft's own pages in the page's language."""
+    html = (SITE / folder / "index.html").read_text(encoding="utf-8")
+    row = html[html.index('data-asset="exe"') - 600 : html.index('data-asset="exe"')]
+    assert 'href="install-windows.html"' in row
+    guide = (SITE / folder / "install-windows.html").read_text(encoding="utf-8")
+    assert 'class="placeholder"' not in guide and "<picture" not in guide
+    assert guide[guide.index('<ol class="steps">') : guide.index("</ol>")].count("<li>") == 3
+    language = "de-de" if folder else "en-us"
+    assert f"learn.microsoft.com/{language}/windows/apps/package-and-deploy" in guide
+    assert f"support.microsoft.com/{language}/" in guide

@@ -19,4 +19,19 @@ TEXTS = (
     # Translators: Windows app, the menu bar (design screen W8); Windows says "Hilfe" in
     # German, "Ayuda" in Spanish
     N_("Help"),
+    # Translators: Windows installer, shown on Windows 10 or a PC with an ARM processor, where
+    # it installs nothing (SPEC.md, module `win-package`)
+    N_("Stickler needs Windows 11 on a PC with an Intel or AMD processor (x64)."),
+    # Translators: Windows uninstaller (Settings › Apps), below "Uninstall Stickler?"; "Yes"
+    # uninstalls, "No" changes nothing
+    N_("This removes Stickler, its models and the saved analyses. Your songs and exports stay."),
+    # Translators: Windows uninstaller, the second question after "Uninstall Stickler?"; "No"
+    # (the default) keeps them, so a new install picks up where the user left off
+    N_("Also remove your settings, recent songs and corrections?"),
+    # Translators: Windows uninstaller, when a file of Stickler's could not be deleted (it is
+    # in use); {folder} is the folder under AppData
+    N_("Not all of Stickler’s data could be removed. You can delete the folder yourself: {folder}"),
+    # Translators: Windows app, after "Uninstall Stickler…" removed the data but Windows (or an
+    # antivirus) did not let the uninstaller start; Settings › Apps is Windows' own page
+    N_("Stickler’s data is removed. Remove the program later in Settings › Apps."),
 )

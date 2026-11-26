@@ -1,10 +1,62 @@
 namespace Stickler.Core;
 
-/// <summary>Which core the Windows app starts and with what (SPEC.md, module <c>win-shell</c>,
-/// "Where the core is"). Until <c>win-package</c> the app runs <c>uv run stickler-bridge</c>
-/// in a Stickler checkout; the installer's own core comes with that module.</summary>
+/// <summary>Which core the Windows app starts and with what: the core the installer put next
+/// to the app (SPEC.md, module <c>win-package</c>, scope 2), or in a Debug build the bridge
+/// in a Stickler checkout (module <c>win-shell</c>, "Where the core is").</summary>
 public static class CoreLaunch
 {
+    /// <summary>The installed core's folder next to <c>Stickler.exe</c>.</summary>
+    public const string CoreFolder = "core";
+
+    /// <summary>Variables of the user's that would make the installed core's Python or uv use
+    /// something else than what the app brings: dropped before the core starts.</summary>
+    public static readonly IReadOnlyList<string> Drops = ["PYTHON", "VIRTUAL_ENV", "CONDA", "UV_"];
+
+    /// <summary>Whether <paramref name="appFolder"/> holds an installed core.</summary>
+    public static bool HasInstalledCore(string appFolder) =>
+        System.IO.Directory.Exists(Path.Combine(appFolder, CoreFolder));
+
+    /// <summary>The installed core in <paramref name="appFolder"/> (the installer's layout,
+    /// SPEC.md, module <c>win-package</c>, scope 1): its Python runs the bridge as a module,
+    /// with Stickler's own <c>uv</c>, ffmpeg and ffprobe first on the <c>PATH</c> and then
+    /// only Windows' own folders, so a <c>uv</c> or ffmpeg of the user's is never taken. The
+    /// core finds its adapters' sources below its Python itself (module <c>win-spike</c>).
+    /// A missing part is named and the core not started.</summary>
+    public static CoreClient Installed(
+        string appFolder, IReadOnlyDictionary<string, string?> environment, IEnumerable<string> languages)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        var core = Path.Combine(appFolder, CoreFolder);
+        var bin = Path.Combine(core, "bin");
+        var python = Path.Combine(core, "python", "python.exe");
+        var system = environment.TryGetValue("SystemRoot", out var root) && !string.IsNullOrEmpty(root)
+            ? root
+            : @"C:\Windows";
+        var path = string.Join(';', bin, Path.Combine(system, "System32"), system,
+            Path.Combine(system, "System32", "Wbem"));
+        return new CoreClient(
+            python,
+            ["-m", "stickler_app.bridge"],
+            core,
+            new Dictionary<string, string>
+            {
+                ["STICKLER_PACKAGED"] = "windows",
+                ["LANGUAGE"] = GettextLanguages(languages),
+                ["UV_SYSTEM_CERTS"] = "1",
+                ["PYTHONUTF8"] = "1",
+                ["PATH"] = path,
+            },
+            needs:
+            [
+                python,
+                Path.Combine(bin, "uv.exe"),
+                Path.Combine(bin, "ffmpeg.exe"),
+                Path.Combine(bin, "ffprobe.exe"),
+                Path.Combine(core, "python", "share", "stickler", "adapters"),
+            ],
+            drops: Drops);
+    }
+
     /// <summary>The variable a development build reads the Stickler checkout from.</summary>
     public const string CheckoutVariable = "STICKLER_CHECKOUT";
 
@@ -94,11 +146,28 @@ public static class CoreLaunch
             needs: [uv, adapters]);
     }
 
-    /// <summary>The app's core for this process: the checkout it finds, or a core that ends at
-    /// once and says what is missing.</summary>
+    /// <summary>The app's core for this process: the installed core next to the app; else, in a
+    /// Debug build (<paramref name="development"/>), the checkout it finds; else a core that
+    /// ends at once and says what is missing. A Release build never reads
+    /// <c>STICKLER_CHECKOUT</c>.</summary>
     public static CoreClient ForApp(
-        IReadOnlyDictionary<string, string?> environment, string start, bool windows, IEnumerable<string> languages)
+        IReadOnlyDictionary<string, string?> environment,
+        string start,
+        bool windows,
+        IEnumerable<string> languages,
+        bool development)
     {
+        if (HasInstalledCore(start))
+        {
+            return Installed(start, environment, languages);
+        }
+        if (!development)
+        {
+            return new CoreClient(
+                Path.Combine(start, CoreFolder, "python", "python.exe"),
+                [],
+                needs: [$"this Stickler is incomplete: its folder \"{CoreFolder}\" is missing next to Stickler.exe; install Stickler again"]);
+        }
         var checkout = FindCheckout(environment, start);
         var uv = FindUv(environment, windows);
         if (checkout is null || uv is null)

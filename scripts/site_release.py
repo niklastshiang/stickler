@@ -25,6 +25,7 @@ KINDS = {  # a card's data-asset → how its file's name ends
     "appimage": "-x86_64.AppImage",
     "deb": "_amd64.deb",
     "rpm": ".x86_64.rpm",
+    "exe": "-setup.exe",  # the Windows installer (module `win-package`)
 }
 
 

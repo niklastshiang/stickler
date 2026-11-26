@@ -40,6 +40,7 @@
                 <MenuFlyoutItem x:Name="BackUpItem" Click="OnBackUp" />
                 <MenuFlyoutItem x:Name="RestoreItem" Click="OnRestore" />
                 <MenuFlyoutItem x:Name="RemoveItem" Click="OnRemoveModels" />
+                <MenuFlyoutItem x:Name="UninstallItem" Click="OnUninstall" />
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem x:Name="ExitItem" Click="OnExit" />
             </MenuBarItem>

@@ -2,6 +2,9 @@
 keep and remove", scope B)."""
 
 import hashlib
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -247,9 +250,8 @@ def test_packagekit_is_told_that_a_person_may_be_asked_for_the_password():
 
 
 def test_the_windows_app_gets_its_folders_and_no_program_to_remove(tmp_path):
-    """The first Windows version has no "Uninstall Stickler…" (SPEC.md "Release 11"): Windows'
-    own Settings remove the program. The plan still names Stickler's folders, as for the Mac
-    app, for the release in which Windows catches up."""
+    """The Windows app's uninstaller removes the program itself (SPEC.md, module
+    `win-package`); the plan names Stickler's folders, as for the Mac app."""
     env = {"STICKLER_PACKAGED": "windows", "LOCALAPPDATA": str(tmp_path / "AppData" / "Local")}
     _stored(env)
     plan = uninstall.plan(env, keep_settings=True)
@@ -257,3 +259,63 @@ def test_the_windows_app_gets_its_folders_and_no_program_to_remove(tmp_path):
     assert plan.kind == "windows" and plan.program == "" and plan.files == []
     assert plan.folders == [local / "data" / "adapters", local / "data" / "python", local / "cache"]
     assert plan.size >= 100
+
+
+def _windows(tmp_path: Path) -> dict[str, str]:
+    return {"STICKLER_PACKAGED": "windows", "LOCALAPPDATA": str(tmp_path / "AppData" / "Local")}
+
+
+def test_the_windows_uninstaller_removes_the_models_and_keeps_the_settings_by_default(tmp_path):
+    """SPEC.md, module `win-package`, scope 4: the box not ticked."""
+    env = _windows(tmp_path)
+    _stored(env)
+    settings.save(settings.store_path(env), settings.Settings(setup_agreed=True))
+    assert uninstall.main([], env) == 0
+    assert not (paths.data_home(env) / "adapters").exists()
+    assert not paths.cache_home(env).exists()
+    assert recent.store_path(env).exists() and corrections.store_path(env).exists()
+    # a new install asks again before it downloads the models
+    assert settings.load(settings.store_path(env)).setup_agreed is False
+
+
+def test_the_windows_uninstaller_with_the_box_ticked_removes_everything(tmp_path):
+    env = _windows(tmp_path)
+    _stored(env)
+    assert uninstall.main(["--everything"], env) == 0
+    for folder in (paths.data_home(env), paths.cache_home(env), paths.config_home(env)):
+        assert not folder.exists()
+    assert uninstall.main(["--everything"], env) == 0  # again: nothing left, no error
+
+
+def test_the_uninstall_entry_removes_nothing_outside_an_installed_app(tmp_path, capsys):
+    env = {"HOME": str(tmp_path)}
+    _stored(env)
+    assert uninstall.main(["--everything"], env) == 2
+    assert settings.store_path(env).exists() and paths.cache_home(env).exists()
+    assert "nothing removed" in capsys.readouterr().err
+
+
+def test_the_uninstall_entry_says_when_a_folder_cannot_be_removed(tmp_path, monkeypatch, capsys):
+    env = _windows(tmp_path)
+    _stored(env)
+
+    def refuse(_folder):
+        raise PermissionError("in use")
+
+    monkeypatch.setattr(shutil, "rmtree", refuse)
+    assert uninstall.main([], env) == 1
+    assert "in use" in capsys.readouterr().err
+
+
+def test_the_uninstaller_starts_the_entry_as_a_module(tmp_path):
+    """As the Windows uninstaller runs it: `python -m stickler_app.uninstall`."""
+    env = {k: v for k, v in os.environ.items() if k != "STICKLER_PACKAGED"}
+    env |= {"HOME": str(tmp_path), "USERPROFILE": str(tmp_path), "XDG_CONFIG_HOME": str(tmp_path)}
+    done = subprocess.run(
+        [sys.executable, "-m", "stickler_app.uninstall", "--everything"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert done.returncode == 2, done.stderr

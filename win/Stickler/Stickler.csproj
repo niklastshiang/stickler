@@ -17,6 +17,13 @@
     <SelfContained>true</SelfContained>
     <!-- LibraryImport generates its marshalling code (NativeMethods: GetDpiForWindow) -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- scripts/win_icon.py (SPEC.md, module `win-package`, scope 7) -->
+    <ApplicationIcon>Stickler.ico</ApplicationIcon>
+  </PropertyGroup>
+  <!-- The build the installer ships (scripts/win_bundle.sh: -p:SticklerInstalled=true) runs only
+       the core installed next to it, never a checkout (SPEC.md, module `win-package`, scope 2). -->
+  <PropertyGroup Condition="'$(SticklerInstalled)' == 'true'">
+    <DefineConstants>$(DefineConstants);INSTALLED</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.7.0" />
@@ -26,5 +33,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Strings\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Stickler.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

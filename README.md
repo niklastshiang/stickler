@@ -89,13 +89,13 @@ Stickler only uses open-source models from actively maintained projects.
 ## `> INSTALL THE APP`
 
 Every [release](https://github.com/niklastshiang/stickler/releases) has the app for Linux on
-x86_64, in four forms, and for a Mac with Apple silicon. On first start it asks to
+x86_64, in four forms, for a Mac with Apple silicon, and for Windows 11 (from release 11). On first start it asks to
 download its two models once; after that it runs offline. Stickler ships no model itself, and each comes with its own licence, which the app names
 before the download; some are for non-commercial use only (see [`> LICENSE`](#-license)).
 
 | What | How much |
 |---|---|
-| System | Linux on x86_64 (the `.deb`: Ubuntu 26.04 or newer; the `.rpm`: Fedora 44 or newer), or a Mac with Apple silicon and macOS 26 |
+| System | Linux on x86_64 (the `.deb`: Ubuntu 26.04 or newer; the `.rpm`: Fedora 44 or newer), a Mac with Apple silicon and macOS 26, or Windows 11 on x64 |
 | Download on first start | about 2.2 GB on Linux (ADTOF and Beat This!); the app names the size before it downloads |
 | First drum-track export | about 1.2 GB more (Demucs) |
 | Memory | about 1 GB while a song is analysed |
@@ -132,23 +132,31 @@ Applications. macOS blocks the first start of an app that is not from the App St
 once under **System Settings › Privacy & Security › Open Anyway**. The steps one by one, and
 what to do when that button is missing: [Installing Stickler on a Mac](docs/install-macos.md).
 
+**Windows 11**: download `Stickler-<version>-setup.exe` and open it. Windows warns before the
+first start of a program it does not know yet: choose **More info**, then **Run anyway**. The
+installer needs no administrator rights and puts Stickler in the Start menu and on the desktop.
+The steps one by one, and what to do on a company PC: [Installing Stickler on Windows](docs/install-windows.md).
+
 ### Moving to another computer
 
 **Back Up…** in the app's main menu (the Stickler menu on a Mac) saves your settings, recent
 songs, corrections and analyses in one file; **Restore Backup…** on the new computer brings
-them back, on Linux or a Mac. Songs open with their corrections without a new analysis, even
+them back, on Linux, a Mac or Windows. Songs open with their corrections without a new analysis, even
 from another folder. The models are downloaded again.
 
 ### Removing it
 
-Choose **Uninstall Stickler…** in the app's main menu (the Stickler menu on a Mac). It removes
-the app with its models and analyses; a box removes your settings, recent songs and
-corrections too. The AppImage and the Mac app move themselves to the Bin, the `.deb` and the
-`.rpm` ask for your password; the Flatpak opens the Software app on Stickler's page, where you
+Choose **Uninstall Stickler…** in the app's main menu (the Stickler menu on a Mac, File on
+Windows). It removes the app with its models and analyses; a box removes your settings, recent
+songs and corrections too. The AppImage and the Mac app move themselves to the Bin, the `.deb`
+and the `.rpm` ask for your password, Windows' own uninstaller removes the program; the Flatpak opens the Software app on Stickler's page, where you
 press Uninstall and choose whether its data goes too. To free the models' space but keep the app, choose
 **Remove Downloaded Models…** instead.
 
 Without the app:
+
+**Windows:** **Settings › Apps › Installed apps**, then **Uninstall** next to Stickler: it asks
+the same question.
 
 **Mac:** choose **Remove Downloaded Models…** in the Stickler menu with its box ticked, then
 drag Stickler from Applications to the Bin.

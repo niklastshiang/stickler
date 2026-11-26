@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; media-src 'self'; font-src 'self'; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Installing on Windows – Stickler</title>
+  <meta name="description" content="Install Stickler on Windows 11, step by step: start the download, get past Windows' warning once, and install without administrator rights.">
+  <link rel="canonical" href="https://stickler.tshia.ng/install-windows.html">
+  <link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/install-windows.html">
+  <link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/install-windows.html">
+  <link rel="alternate" hreflang="x-default" href="https://stickler.tshia.ng/install-windows.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://stickler.tshia.ng/install-windows.html">
+  <meta property="og:title" content="Installing on Windows – Stickler">
+  <meta property="og:description" content="Install Stickler on Windows 11, step by step: start the download, get past Windows' warning once, and install without administrator rights.">
+  <meta property="og:image" content="https://stickler.tshia.ng/images/share.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Stickler showing drum sheet music">
+  <meta property="og:locale" content="en_GB">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="images/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="images/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="images/icon-180.png">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="wrap site-nav" aria-label="Main">
+      <a class="brand" href="index.html">
+        <img src="images/icon.svg" alt="" width="32" height="32">
+        <span class="brand-name">Stickler</span>
+      </a>
+      <span class="spacer"></span>
+      <a class="quiet" href="de/install-windows.html" hreflang="de" lang="de">Deutsch</a>
+      <a class="button small" href="index.html#get">Download</a>
+    </nav>
+  </header>
+
+  <main id="content" class="band">
+    <div class="wrap prose">
+      <h1>Installing Stickler on Windows</h1>
+
+      <section aria-labelledby="short">
+        <h2 id="short">In short</h2>
+        <p>You need Windows 11 on a PC with an Intel or AMD processor. Download the installer,
+          get past Windows’ warning once, and install. No administrator rights are needed. It
+          takes about two minutes.</p>
+        <p>Windows warns because Stickler’s installer is not signed yet: signing costs developers
+          a yearly fee, and Stickler is free. A free signature for open-source projects is
+          applied for.</p>
+      </section>
+
+      <section aria-labelledby="steps">
+        <h2 id="steps">Step by step</h2>
+        <ol class="steps">
+          <li>
+            <h3 id="step-download">Download it</h3>
+            <p>Choose <a href="index.html#get">Download for Windows</a>. The installer, a file
+              ending in <code>-setup.exe</code>, lands in your Downloads folder. If the browser
+              says the file is not commonly downloaded, choose to keep it.</p>
+          </li>
+          <li>
+            <h3 id="step-warning">Get past the warning</h3>
+            <p>Open the downloaded file. Windows shows <strong>Windows protected your PC</strong>.
+              Choose <strong>More info</strong>, then <strong>Run anyway</strong>. Nothing is
+              wrong: Windows has not seen this new file often enough yet.</p>
+            <p>Microsoft explains the warning on its page <a href="https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation">SmartScreen reputation</a>.</p>
+          </li>
+          <li>
+            <h3 id="step-install">Install</h3>
+            <p>The installer speaks the language of Windows and asks for no folder and no
+              password. Choose <strong>Install</strong>, then <strong>Finish</strong> with
+              <strong>Start Stickler</strong> ticked. Stickler is now in the Start menu and on
+              the desktop.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section aria-labelledby="first">
+        <h2 id="first">The first start</h2>
+        <p>Stickler needs trained models to hear the drums. It shows which ones, their licences
+          and their size, and downloads them only after you agree. After that it works without
+          the internet; <a href="privacy.html">your songs stay on your PC</a>.</p>
+      </section>
+
+      <section aria-labelledby="no">
+        <h2 id="no">When Windows says no</h2>
+        <p><strong>Only “Don’t run”, no “Run anyway”:</strong> Smart App Control is on. It runs
+          only signed programs, so it starts Stickler once Stickler is signed. Microsoft explains
+          it in <a href="https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions">Smart App Control: frequently asked questions</a>.</p>
+        <p><strong>A company PC:</strong> its antivirus may hold back a new program the first
+          time it starts (“Access is denied”). Try again half an hour later, or ask your IT
+          department to allow Stickler.</p>
+        <p><strong>Windows 10, or a PC with an ARM processor:</strong> the installer says that
+          Stickler needs Windows 11 with an Intel or AMD processor, and installs nothing.</p>
+      </section>
+
+      <section aria-labelledby="remove">
+        <h2 id="remove">Removing it again</h2>
+        <p>Choose <strong>File › Uninstall Stickler…</strong> in the app, or Stickler’s
+          <strong>Uninstall</strong> in <strong>Settings › Apps › Installed apps</strong>. Both
+          remove the program, its models and the saved analyses, and ask whether your settings,
+          recent songs and corrections go too. Your songs and exports stay.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <span>Stickler · GPL-3.0-or-later</span>
+      <ul>
+        <li><a class="quiet" href="https://github.com/niklastshiang/stickler">GitHub</a></li>
+        <li><a class="quiet" href="https://github.com/niklastshiang/stickler/releases">Release notes</a></li>
+        <li><a class="quiet" href="privacy.html">Privacy</a></li>
+        <li><a class="quiet" href="about.html">About</a></li>
+        <li><a class="quiet" href="imprint.html">Legal notice</a></li>
+        <li><a class="quiet" href="de/install-windows.html" hreflang="de" lang="de">Deutsch</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

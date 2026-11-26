@@ -70,12 +70,15 @@ def test_the_tables_are_stable_json_ending_in_a_newline():
 def test_check_reports_stale_tables_and_writing_fixes_them(tmp_path):
     out = tmp_path / "Strings"
     po = ROOT / "po"
-    assert winstrings.main(["--po", str(po), "--out", str(out), "--check"]) == 1
+    paths = ["--po", str(po), "--out", str(out), "--installer", str(tmp_path / "Messages.iss")]
+    assert winstrings.main([*paths, "--check"]) == 1
     (out / "old.json").parent.mkdir(parents=True)
     (out / "old.json").write_text("{}\n", encoding="utf-8")
-    assert winstrings.main(["--po", str(po), "--out", str(out)]) == 0
+    assert winstrings.main(paths) == 0
     assert not (out / "old.json").exists()  # a language no longer in po/LINGUAS goes
-    assert winstrings.main(["--po", str(po), "--out", str(out), "--check"]) == 0
+    assert winstrings.main([*paths, "--check"]) == 0
+    (tmp_path / "Messages.iss").write_text("old", encoding="utf-8")
+    assert winstrings.main([*paths, "--check"]) == 1  # the installer's texts count too
 
 
 def test_the_committed_tables_are_current():
@@ -95,3 +98,41 @@ def test_the_projects_po_files_give_every_language_every_text():
     keys = {e.msgid for e in winstrings._xcstrings().read_po(pot)[1] if e.msgid}
     for lang in languages:
         assert set(t[lang]) == keys, lang
+
+
+def test_the_installer_gets_inno_messages_for_every_language_english_where_missing():
+    """SPEC.md, module `win-package`, scopes 3 and 4."""
+    languages = {
+        "en": {},
+        "de": {
+            "Uninstall Stickler?": "Stickler deinstallieren?",
+            winstrings.WINDOWS_11: "Stickler braucht Windows 11.",
+        },
+    }
+    text = winstrings.installer_messages(languages)
+    assert text.startswith("\ufeff;") and text.endswith("\n")  # UTF-8 with its mark for Inno
+    lines = text.splitlines()
+    assert lines.index("[Messages]") < lines.index("[CustomMessages]")
+    assert "german.WindowsVersionNotSupported=Stickler braucht Windows 11." in lines
+    assert "german.OnlyOnTheseArchitectures=Stickler braucht Windows 11." in lines
+    confirm = next(line for line in lines if line.startswith("german.ConfirmUninstall="))
+    # the question and its explanation as one message, the explanation still English
+    assert confirm.startswith("german.ConfirmUninstall=Stickler deinstallieren?%n%nThis removes")
+    assert any(line.startswith("english.RemoveSettings=Also remove") for line in lines)
+    with pytest.raises(ValueError, match="Inno Setup language"):
+        winstrings.installer_messages({"fr": {}})
+
+
+def test_placeholders_become_inno_numbers_in_the_english_order():
+    assert winstrings.inno_text("Delete {folder}", "Delete {folder}") == "Delete %1"
+    assert winstrings.inno_text("{b}: {a:n}", "{a} of {b}") == "%2: %1"
+    assert winstrings.inno_text("one\ntwo", "x") == "one%ntwo"
+
+
+def test_every_language_has_an_inno_name_and_the_script_includes_the_messages():
+    languages = (ROOT / "po" / "LINGUAS").read_text(encoding="utf-8").split()
+    assert set(languages) | {"en"} <= set(winstrings.INNO_LANGUAGES)
+    script = (ROOT / "win" / "installer" / "Stickler.iss").read_text(encoding="utf-8")
+    for name in winstrings.INNO_LANGUAGES.values():
+        assert f'Name: "{name}"' in script
+    assert '#include "Messages.iss"' in script

@@ -4537,6 +4537,318 @@ window.
    core writing the PDF itself (cairo or Verovio's own PDF, then the same file on every
    system). Claude's proposal: WebView2, as planned; the core's way is a change for all apps.
 
+### Module `win-package`
+
+> Status: **built, being checked** (2026-11-26: tasks 210–218 built, the release job's run and
+> Checkpoint AJ to come). Approved by the owner on 2026-11-26 ("Ja, alle so": the six proposals at the end
+> taken, question 5 changed: the desktop icon comes along). Written in a session of its own
+> while `win-sheet` is built on `claude/win-shell` (owner, 2026-11-26: "Ja, so"); built on the
+> branch `claude/win-package` (CI runs on `claude/win-*`), merged with the other Windows modules at the end of
+> release 11. Plan: `tasks/plan.md` ("`win-package`"), tasks 210–219 (195–209 are taken by
+> `mac-site` and `win-sheet`). Modelled on `mac-package`, from `win-spike`'s
+> installer, launcher and findings (branch `claude/win-spike`, kept as the reference until this
+> module is done). Facts checked on the web on 2026-11-26 (sources at the end).
+
+**Objective.** A drummer downloads `Stickler-11-setup.exe` from the release, installs it
+without administrator rights (past SmartScreen with the guide), finds Stickler in the Start
+menu, agrees to the models' download and gets sheet music for a song: no terminal, no `uv` of
+their own, no checkout. Stickler leaves the same way it does on the other systems: "Uninstall
+Stickler…" in the app and the uninstall from Settings › Apps both ask release 10's question, and
+nothing stays but what the user chose to keep. `win-shell`'s search for a checkout and `uv` is
+then a development build's only.
+
+**Assumptions** (from the code, the spike and the web on 2026-11-26):
+1. The core knows the installed Windows app (`STICKLER_PACKAGED=windows`, module `win-core`):
+   its folders under `%LOCALAPPDATA%\Stickler\{data,cache,config}`, the adapters' sources
+   found below the shipped Python (`python\share\stickler\adapters`, no
+   `STICKLER_ADAPTER_SOURCES` needed: `win-spike`, question 1), uv's Python and cache in
+   Stickler's folders and `UV_SYSTEM_CERTS=1` from `paths.packaged_env` (task 181). The saved
+   analyses are in `cache\results`; recent songs and corrections in `data`, the settings in
+   `config`.
+2. **The spike's installer worked** on the runner and on the owner's PC (98 MB, the whole
+   Python unpruned, no app): per user under `%LOCALAPPDATA%\Programs\Stickler`, an entry in
+   Settings › Apps and the Start menu, the uninstaller removed the program and left the data.
+   Its Python was fetched by `uv` at build time and not pinned by SHA-256 there.
+3. **One version of `uv` and Python in every package:** the AppImage and the Mac app pin uv
+   0.13.9 and python-build-standalone 20261110 (CPython 3.14.10); `tests/test_mac_bundle.py`
+   keeps uv's version equal. The Windows assets of the same releases are
+   `uv-x86_64-pc-windows-msvc.zip` (its `.sha256` published next to it; the spike's digest
+   `edd61f7f…1beb`) and `cpython-3.14.10+20261110-x86_64-pc-windows-msvc-install_only_stripped.tar.gz`
+   (python-build-standalone publishes a `SHA256SUMS` file with every release; its lines match
+   GitHub's asset digests, checked on the 20261124 release). Newer ones exist (uv 0.13.10 of
+   2026-11-24, python-build-standalone 20261124 with 3.14.10 too); they are moved to in all
+   packages at once, not here.
+4. **Inno Setup 7.1.1** (2026-10-28) is the recommended version (jrsoftware.org; 7.2.0 is a
+   preview, 6.7.4 still offered). The runner has 6.7.1 from Chocolatey, which has no 7.x;
+   winget's `JRSoftware.InnoSetup.7` points to the GitHub release `is-7_1_1`,
+   `innosetup-7.1.1-x64.exe`, SHA-256 `8a5a6711…b3f0` (GitHub's digest the same). From the
+   documentation and the source (`issrc`, read 2026-11-26):
+   - `PrivilegesRequired=lowest` always installs per user; `{autopf}` is then
+     `%LOCALAPPDATA%\Programs`. `SetupArchitecture=x64` (new in 7) builds a 64-bit Setup.
+   - `MinVersion=10.0.22000` refuses every Windows 10 (all below build 22000; Windows 11 is
+     10.0 with build 22000 and up, 25H2 is 26200). The check runs before any script; its
+     message `WindowsVersionNotSupported` ("This program does not support the version of
+     Windows your computer is running.") can be replaced per language in `[Messages]`. A failed
+     `ArchitecturesAllowed` shows the same message, so one text can name both.
+   - The uninstaller runs `[Code]`: `InitializeUninstall` (False aborts with nothing
+     removed), `CurUninstallStepChanged` with `usUninstall` (before the files go) and
+     `usPostUninstall`, and `UninstallSilent()`. `TaskDialogMsgBox` has no checkbox; a question
+     with a box needs `CreateCustomForm` with a `TNewCheckBox`, which the documentation does
+     not forbid in the uninstaller but no example shows (tried in the first task).
+   - The uninstaller speaks the language chosen at the install; the language follows
+     Windows' display language (`LanguageDetectionMethod=uilanguage`, the default). German and
+     Spanish are official translations.
+   - Signing: `SignTool` signs Setup and the uninstaller during the compile; a Setup signed
+     only afterwards leaves its uninstaller unsigned (7.1.1's notes).
+5. **ffmpeg and ffprobe: gyan.dev's essentials build 9.1** (ffmpeg 9.1 released 2026-11-20;
+   static, GPLv3): a versioned URL
+   (`https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.1-essentials_build.zip`) with a
+   published `.sha256` next to it (`b9bbbb3a…58fd`, the digest the spike used from the
+   GitHub mirror `GyanD/codexffmpeg`, same file). BtbN's builds are daily snapshots of
+   branches, not of releases, kept 14 days (a month's last one two years): no stable URL. The
+   Mac app builds its own 9.0.2; the versions need not match (the core only decodes audio).
+6. **Panda Adaptive Defense on the owner's PC** holds back each new unsigned program on its
+   first start: the installer's helper and the environment's launcher for about half an hour,
+   the uninstaller `unins000.exe` between 2 h 10 min and 20 h (`win-spike`, question 5). Every
+   release brings a new `Stickler.exe` and a new uninstaller (new hashes), so each release
+   meets that wait again on such a PC until it is signed. What a PC with Defender, SmartScreen
+   and Smart App Control does is still unseen (no such PC; `win-spike`, decision 1).
+7. **The app's folder:** `win-shell` builds an unpackaged, self-contained WinUI 3 app (the .NET
+   runtime and the Windows App SDK next to `Stickler.exe`). Published on this PC
+   (2026-11-26, `dotnet publish -c Release`): 233 MB in 434 files, 94 MB zipped; 41 MB of it
+   are `onnxruntime.dll` and `DirectML.dll` (the Windows App SDK's machine learning, unused by
+   Stickler) and 88 folders of the SDK's own translations. With the spike's core (98 MB as an
+   installer) the setup would be about 170 MB before trimming. WebView2's user data goes to `%LOCALAPPDATA%\Stickler\WebView2`
+   (`win-sheet`, assumption 7), which `removal.targets` does not name (scope 6).
+8. The texts the uninstall asks with are in `po/` already, in English, German and Spanish
+   (`po/LINGUAS`): "Uninstall Stickler?", "Also remove my settings, recent songs and
+   corrections", "Uninstall", the size text of `uninstall_sizes`.
+
+**Scope.**
+1. **The installed folder** (`%LOCALAPPDATA%\Programs\Stickler\`, as the spike):
+   - `Stickler.exe` with the app's self-contained runtime (`dotnet publish` of `win-shell`'s
+     project, Release, x64), `Stickler.ico`;
+   - `core\bin\uv.exe`, `core\bin\ffmpeg.exe`, `core\bin\ffprobe.exe`, each pinned by version
+     and SHA-256 at build time;
+   - `core\python\`: python-build-standalone's CPython (assumption 3, pinned by SHA-256) with
+     the core's wheels from `uv.lock` (`--require-hashes --only-binary :all:`) and the core
+     itself installed, not editable; pruned as `scripts/mac_bundle_tools.py prune` prunes the
+     Mac's (tests, `idlelib`, `tkinter`, `ensurepip`, headers, pip, the entry-point `.exe`
+     files that hold the build's paths); the `.mo` files built from `po/` and the Leipzig
+     font as on the Mac;
+   - `core\python\share\stickler\adapters\`: the sources of ADTOF, Beat This!, Demucs and
+     `_common` with their locks (tracked files only), never environments or weights;
+   - `core\licenses\`: Stickler's, uv's, ffmpeg's, Python's and the wheels' licences, and those
+     of the app's runtimes (.NET, the Windows App SDK and what it pulls in, the Windows SDK's
+     projection, WebView2's loader: each NuGet package `Stickler.deps.json` names, a link where
+     the package has only a link); Help › Licences opens the folder (until now the
+     repository's licence page).
+2. **The installed core** (`win/SticklerCore/CoreLaunch.cs`, "where the core is"): the app
+   starts `core\python\python.exe -m stickler_app.bridge` from its own folder, with
+   `STICKLER_PACKAGED=windows`, `LANGUAGE`, `PYTHONUTF8=1` and a `PATH` that starts with
+   `core\bin`, without `PYTHONPATH` and `PYTHONHOME`. Before each start it looks for the
+   Python, `uv`, ffmpeg, ffprobe and the adapters' folder; with one missing the core is not
+   started and "Stickler Stopped Unexpectedly" names it (as the Mac app). Without a `core`
+   folder next to it, a development build reads `STICKLER_CHECKOUT` and searches for a
+   checkout and `uv` as before; the build the installer ships (`-p:SticklerInstalled=true`)
+   never does and says that it is incomplete and asks for a reinstall. (Changed while
+   building, 2026-11-26: the proposal was "only a Debug build", but `win.yml`'s screenshots,
+   its app zip and the builds on the owner's PC are Release builds over the checkout.)
+3. **The installer**, `win/installer/Stickler.iss` (Inno Setup 7.1.1, installed on the runner
+   from its GitHub release and checked against its SHA-256; a 64-bit Setup):
+   - per user only (`PrivilegesRequired=lowest`, no switch to all users), into
+     `{autopf}\Stickler` = `%LOCALAPPDATA%\Programs\Stickler`, without asking for a folder;
+   - a new `AppId` (not the spike's), `AppName=Stickler`, the release's number as its version
+     (from `pyproject.toml`), publisher and links (question 1), the icon for the setup, the
+     Start menu entry and Settings › Apps (`UninstallDisplayIcon`);
+   - x64 Windows 11 only (`MinVersion=10.0.22000`, `ArchitecturesAllowed=x64os`): on
+     Windows 10 and on ARM64 (question 4) it stops before anything is written, with Inno's
+     `WindowsVersionNotSupported` replaced in each language by "Stickler needs Windows 11 on a
+     PC with an Intel or AMD processor (x64)." (from `po/`, `win_texts.py`);
+   - English, German or Spanish after Windows' display language, without a language question;
+     the uninstaller keeps the language of the install;
+   - pages: none but "Ready to install", the progress and "Finished" with "Start Stickler"
+     ticked; no licence page (GPL asks for no acceptance);
+   - one Start menu entry "Stickler" and a desktop icon, both made without asking (owner,
+     question 5) and removed by the uninstaller; the entry in Settings › Apps with name,
+     publisher, version and icon;
+   - a running Stickler is closed first (Inno's `AppMutex`, a named mutex the app holds; Inno
+     asks the user to close it); an update installs over the old version and removes the old
+     `core\` first, so no file of an older release stays;
+   - the uninstaller removes the whole program folder (`[UninstallDelete]`: Python writes
+     `__pycache__` there, as in the spike).
+4. **The uninstall from Settings › Apps asks release 10's question** (owner, 2026-11-26), in
+   the language of the install, before anything is removed, as **two plain questions**
+   (changed while building, 2026-11-26: Inno's uninstaller always asks its own Yes/No question
+   after `InitializeUninstall` unless it runs silently, `Setup.Uninstall.pas` of 7.1.1, so a
+   form of our own would have been a second dialog before it). Inno's question gets Stickler's
+   text ("Uninstall Stickler?" and what goes; No cancels and removes nothing); then "Also remove
+   your settings, recent songs and corrections?", **No** by default. The texts come from `po/`
+   through `scripts/winstrings.py` into `win/installer/Messages.iss` (Inno's
+   `ConfirmUninstall` and Stickler's custom messages). What the first question names:
+   "Uninstall Stickler?", what goes (the program, the models with their programs and
+   downloads, the saved analyses; "Your songs and exports stay."), the box "Also remove my
+   settings, recent songs and corrections" off, "Uninstall" and "Cancel". Cancel removes
+   nothing. On "Uninstall" the uninstaller first runs the installed core's own removal
+   (`python -m stickler_app.uninstall`, a small entry point over `uninstall.plan` and
+   `uninstall.remove`, with `--everything` when the box is ticked: the same folders as the
+   app's, kept settings forget the consent to download), then removes the program. A silent
+   uninstall (`/SILENT`, `/VERYSILENT`) asks nothing and removes only the program, as the app's
+   own "Uninstall Stickler…" starts it after removing the data itself; it first waits up to
+   20 s for the app to end (the app's mutex), since Inno would otherwise stop at once while the
+   app still runs.
+5. **"Uninstall Stickler…" in the app** (File menu, below "Remove Downloaded Models…", only in
+   an installed build; release 10, scope B1): the sizes from `uninstall_sizes`, the same
+   ContentDialog as "Remove Downloaded Models…" with the box off, then `uninstall` (the core
+   removes Stickler's folders and replies once they are gone), the core stopped, the
+   uninstaller started silently (`unins000.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`,
+   which waits for the app to end), and the app ends. If Windows refuses to start the
+   uninstaller (Panda, assumption 6), the app says that Stickler's data is removed and that the
+   program can be removed later under Settings › Apps, then ends (the Mac's text for a
+   translocated app, worded for Windows, in `win_texts.py`).
+6. **WebView2's folder and the empty `%LOCALAPPDATA%\Stickler`** (changed while building,
+   2026-11-26): the running app holds `WebView2` open (WebView2 locks its files), so the
+   core's lists, which "Remove Downloaded Models…" also uses while the app runs, do not name
+   it; `removal.targets` stays as it is on every system. The uninstaller removes
+   `%LOCALAPPDATA%\Stickler\WebView2` after the program, when the app has ended (it is the
+   program's browser cache, so a silent uninstall removes it too), and then
+   `%LOCALAPPDATA%\Stickler` itself if it is empty. Files no Stickler wrote stay (the spike's
+   `spike-log.txt` and `spike-out` on the owner's PC: removed by hand).
+7. **The `.ico`:** `scripts/win_icon.py` makes `win/Stickler/Stickler.ico` (16, 20, 24, 32,
+   40, 48, 64 and 256 pixels, PNG inside) from the GTK icon's SVG with `rsvg-convert`; the
+   file is committed, as the Mac's icon is. The app's `.exe`, its window, the installer, the
+   Start menu and Settings › Apps show it.
+8. **The build and the release:** `scripts/win_bundle.ps1` assembles the folder (each download
+   checked against its SHA-256 before use) and runs `ISCC`. `release.yml` gets a `windows` job
+   on `windows-2025`: build, bundle, installer, then a start test (scope "Testing"), and
+   `Stickler-<version>-setup.exe` goes to the release with the other packages; a manual run
+   gives it as an artifact to try (as the Mac's image). `win.yml` stays the check of every
+   push and keeps its app zip for development.
+9. **The guide** `docs/install-windows.md` and the README's install section: download, the
+   browser's and SmartScreen's warnings ("More info" → "Run anyway"), a company PC whose
+   antivirus holds a new program back for a while, the first start, updating, removing
+   (question 3 for pictures).
+10. **The website:** a Windows card in "Download Stickler" ("Windows 11 · x64", the setup's
+    size filled in by `scripts/site_release.py` as the others), `install-windows.html` in
+    English and German, the uninstall line in "Remove Stickler", "Windows" where the page
+    today says only Linux and the Mac.
+11. **SignPath:** the application text for the owner (`docs/signpath-application.md`) and the
+    code signing policy page the foundation asks for (question 6). Signing itself starts once
+    the foundation approves; it is not part of this module.
+
+**Not in this module:** signing (SignPath's approval first), winget, Scoop, the Microsoft
+Store, `.msi`, an installer for all users, updates from inside the app (a new release is a new
+download, as on the Mac), ARM64, CUDA.
+
+**Testing.**
+- Python: `uninstall.plan` for Windows (kept settings without consent); `python -m stickler_app.uninstall` with and
+  without `--everything`, outside an installed app a refusal that removes nothing.
+- C# (`SticklerCore`, Linux and Windows): the installed core's command line and environment
+  from a made-up install folder; each missing part named; a Release build never reads
+  `STICKLER_CHECKOUT`; the uninstall flow with a fake core and a fake launcher (sizes →
+  question → `uninstall` → uninstaller started → end; Cancel sends nothing; a refused start
+  tells the text).
+- The installer's texts: a test that the uninstaller's and the Windows 10 message's texts are
+  in `po/` in every language and match the script's generated messages.
+- CI (`release.yml`, the `windows` job): every download checked against its SHA-256; the
+  installer installs silently for the runner's user; files, Start menu entry and the
+  Settings › Apps key (name, version, publisher, icon) are there; the installed core answers
+  `hello` and engraves the test groove with the network refused (no models); the installed
+  `Stickler.exe` starts and shows its window (a screenshot); a silent uninstall removes the
+  program and the key and leaves `%LOCALAPPDATA%\Stickler`; the core's removal as the
+  uninstaller runs it empties the folders. The Windows 10 refusal on a runner below build
+  22000 (`windows-2022`, Windows Server 2022, build 20348) if GitHub still offers that image.
+- By hand on the owner's PC: the success criteria below, the uninstaller's question in German.
+
+**Success criteria.**
+1. On the owner's PC the installer from a manual `release.yml` run (downloaded with the
+   browser) installs without administrator rights, Stickler starts from the Start menu, sets
+   up the models after the consent and turns a song into sheet music, with no checkout and no
+   `uv` of the user's in use.
+2. Settings › Apps lists "Stickler" with its icon, version 11 and publisher; its uninstall asks
+   the question in German, removes the program, the models and the analyses, with the box
+   ticked the settings, recent songs and corrections too, and with Cancel nothing.
+3. "Uninstall Stickler…" in the app does the same and leaves nothing but what the user chose
+   to keep (checked with `dir %LOCALAPPDATA%\Stickler` and Settings › Apps).
+4. On Windows 10 the installer refuses with its message and writes nothing (runner or by
+   reading the script, if no image below build 22000 is offered).
+5. `release.yml` attaches `Stickler-11-setup.exe`; the website offers it with the guide in
+   English and German; `docs/install-windows.md` is written.
+6. `win.yml`, `check.yml` and `mac.yml` green; coverage as CONSTRAINTS.md; the Linux and Mac
+   packages unchanged but for the removal's list on Windows.
+
+**Risks.**
+- Panda holds back `Stickler.exe` and the uninstaller of every new release (assumption 6):
+  the owner's checks wait for its release, as in the spike; signing is what spares it.
+- A PC with Defender and SmartScreen is not tried: the guide's SmartScreen steps follow
+  Microsoft's documentation, not our own check.
+- The installer's size, about 170 MB untrimmed (assumption 7): the first task tries to leave
+  out the SDK's machine-learning DLLs and its translations other than English, German and
+  Spanish by a supported setting (`SatelliteResourceLanguages` and the SDK's own switches);
+  if there is none, they stay rather than being deleted by hand after the build.
+- **Found while building (2026-11-26): the Windows App SDK's runtime is not open source.** The
+  self-contained app carries Microsoft's Windows App SDK and the Windows ML runtime it pulls in
+  under the "Microsoft Software License Terms" (redistributable, not OSI), and the Windows
+  SDK's projection under the Windows SDK's licence. SignPath's terms ask for no proprietary
+  components; whether a platform runtime counts is not stated (question 6,
+  `docs/signpath-application.md`). The release's decision for WinUI 3 (2026-11-24) stands; the
+  ways out are the owner's: ask SignPath first, ship the app framework-dependent (Microsoft's
+  own runtime installer then brings the SDK), or drop the ML runtime by the SDK's component
+  packages.
+- **No supported switch trims the app** (assumption 7, tried 2026-11-26):
+  `SatelliteResourceLanguages` leaves the SDK's 88 translation folders, and the ML runtime has
+  no opt-out but the component packages; both stay. The core's Python is pruned (128 to 87 MB);
+  ffmpeg's and ffprobe's static builds are 106 MB each before compression.
+- Paths below `%LOCALAPPDATA%\Programs\Stickler\core\python\Lib\site-packages` are longer
+  than in the spike (`core\` and `Programs\Stickler` in front); measured on the runner with
+  `LongPathsEnabled=0` and a 50-character profile name, as the spike did.
+
+**Decided (owner, 2026-11-26: "Ja, alle so"; question 5 changed afterwards: "Doch, Icon direkt
+mitnehmen")**, the questions as they were asked, with Claude's proposals:
+1. **Publisher in Settings › Apps and in the installer.** The spike showed "Stickler".
+   Proposal: "Stickler" again, with the website as its link; no person's name. (Once signed
+   through SignPath, Windows' own prompts show the certificate's publisher, "SignPath
+   Foundation"; Settings › Apps keeps the installer's name.)
+2. **One `uv` and Python for all packages:** the Windows installer pins the same uv 0.13.9 and
+   python-build-standalone 20261110 as the AppImage and the Mac app (both ran on the owner's PC
+   in the spike). Proposal: so; moving all packages to uv 0.13.10 and 20261124 is a task of its
+   own after release 11, not mixed into this module.
+3. **SmartScreen pictures in the guide.** No PC here shows SmartScreen (Panda instead).
+   Proposal: as for the Mac, the steps in words and a link to Microsoft's own page about the
+   warning; pictures later, if someone with a Defender PC sends them.
+4. **ARM64 Windows 11:** Windows 11 on ARM runs x64 programs emulated, but torch's and the
+   models' wheels are untested there. Proposal: refuse ARM64 with a message, as Windows 10.
+5. **Desktop icon:** proposed none, the Start menu entry only. **Changed by the owner:** the
+   desktop icon is made too, without a question in the installer (Claude's reading of "direkt
+   mitnehmen"); "Start Stickler" stays ticked on the last page.
+6. **SignPath** (signpath.org/terms, read 2026-11-26): every shipped component under an
+   OSI licence without proprietary parts (unsigned upstream programs such as ffmpeg may be
+   bundled); the project already released in the form to be signed; an uninstall provided; a
+   "Code signing policy" on the home and download pages with the line "Free code signing
+   provided by SignPath.io, certificate by SignPath Foundation", the team's roles (authors,
+   reviewers, approvers: today the owner alone) and the privacy statement (the site's privacy
+   page says Stickler sends nothing); MFA on GitHub and SignPath; each release approved by hand;
+   builds only on GitHub's own runners (`signpath/github-action-submit-signing-request`). The
+   form is at signpath.org/apply; how long approval takes is not published. The model weights
+   (non-commercial) are not shipped, so they do not count. Proposal: Claude writes the
+   application text (`docs/signpath-application.md`) and the policy section now; the section
+   goes online with release 11, and the owner submits the form after release 11 is out (it
+   must be released first). How Inno's uninstaller is signed through SignPath (no official
+   guide; other projects call SignPath from `SignTool` during the compile) is worked out once
+   approved.
+
+Sources (read 2026-11-26): jrsoftware.org (download page, "What's new" for 7.x, the help
+topics `PrivilegesRequired`, `MinVersion`, `ArchitecturesAllowed`, `SignTool`,
+`SignedUninstaller`, `[Messages]`, Pascal scripting event functions, `UninstallSilent`), the
+`issrc` source (`Setup.MainFunc.pas`, `Default.isl`, `Files/Languages`); winget's manifest
+`JRSoftware.InnoSetup.7`; GitHub `actions/runner-images` (Windows 2025, image 20261116.335.1);
+GitHub releases of `astral-sh/uv` (0.13.9, 0.13.10) and `astral-sh/python-build-standalone`
+(20261110, 20261124, `SHA256SUMS`); gyan.dev's builds page and `.sha256`, `GyanD/codexffmpeg`,
+`BtbN/FFmpeg-Builds` (README on retention); ffmpeg.org's download page; signpath.org (terms,
+apply) and docs.signpath.io (trusted build systems, GitHub); Microsoft Learn (operating system
+version, Windows 11 release information, KNOWNFOLDERID). Measured here: the app's published
+folder (2026-11-26).
+
 ## Decisions (ADRs)
 - [0001 Demucs via the fork adefossez/demucs](docs/adr/0001-demucs-fork.md)
 - [0002 NC licenses allowed](docs/adr/0002-nc-lizenzen.md)
