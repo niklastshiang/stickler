@@ -107,8 +107,11 @@ extension ScreenshotTests {
             window.contentViewController = NSHostingController(rootView: ContentView(model: model))
             window.setFrame(NSRect(origin: .zero, size: Self.siteSize), display: true)
             // the active window, as a visitor would see it: coloured buttons, a dark title
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.setActivationPolicy(.regular)
+            NSRunningApplication.current.activate(options: [.activateAllWindows])
+            NSApp.activate()
             window.makeKeyAndOrderFront(nil)
+            try await wait(3) { NSApp.isActive && window.isKeyWindow }
             try await Task.sleep(for: .milliseconds(500))
             if sheet {
                 let frame = try XCTUnwrap(window.contentView?.superview, "the frame view")
@@ -117,6 +120,7 @@ extension ScreenshotTests {
                 // a first width that did not hold is asked for again after the model's pause
                 try await Task.sleep(for: .milliseconds(500))
                 try await wait(5) { !web.isLoading }
+                try await fontsLoaded(in: web)
             }
             try await Task.sleep(for: .milliseconds(700))
             let file = Self.folder.appendingPathComponent("site-\(name)-\(look).png")
@@ -128,6 +132,18 @@ extension ScreenshotTests {
             XCTAssertEqual(bitmap.pixelsWide, Int(Self.siteSize.width * scale), "\(name) \(look)")
             XCTAssertEqual(bitmap.pixelsHigh, Int(Self.siteSize.height * scale), "\(name) \(look)")
             XCTAssertGreaterThan(colours(in: bitmap), 2, "\(name) \(look) is blank")
+        }
+    }
+
+    /// Waits up to 5 seconds until the page's fonts are in: the SVG brings its music font as
+    /// data, and the first picture was once taken before the tempo mark's note had it.
+    func fontsLoaded(in web: SheetWebView) async throws {
+        for _ in 0..<50 {
+            let status = try? await web.evaluateJavaScript("document.fonts.status") as? String
+            if status == "loaded" {
+                return
+            }
+            try await Task.sleep(for: .milliseconds(100))
         }
     }
 
@@ -155,6 +171,8 @@ extension ScreenshotTests {
 /// A window that keeps the size it is given: the runner's screen is smaller than a Mac's, and
 /// AppKit would shorten the window to fit above its Dock.
 final class SiteWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+
     override func constrainFrameRect(_ frameRect: NSRect, to _: NSScreen?) -> NSRect {
         frameRect
     }
