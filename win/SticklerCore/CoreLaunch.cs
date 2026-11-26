@@ -76,21 +76,23 @@ public static class CoreLaunch
     /// <c>python.exe</c> is the same file in every environment of one uv release (found
     /// 2026-11-25). uv trusts the system's certificates, so a company network that inspects
     /// TLS does not stop it (SPEC.md, module <c>win-shell</c>, assumption 3).
-    /// <para><paramref name="shipAdapters"/> false: the models are set up elsewhere already
-    /// (<c>STICKLER_ADAPTERS</c>, such as the stand-ins of the screenshots), and the checkout's
-    /// adapters are not copied over them.</para></summary>
-    public static CoreClient Checkout(string checkout, string uv, IEnumerable<string> languages, bool shipAdapters = true)
+    /// <para><paramref name="ownModels"/>: the models are set up elsewhere already
+    /// (<c>STICKLER_ADAPTERS</c>, such as the stand-ins of the screenshots). The core then runs
+    /// as the checkout's tests run it, not as an installed one: an installed core copies the
+    /// checkout's adapters over those models and wants uv's Python in its own folders, which
+    /// models set up elsewhere were not made with (found 2026-11-26 on the runner).</para></summary>
+    public static CoreClient Checkout(string checkout, string uv, IEnumerable<string> languages, bool ownModels = false)
     {
         var adapters = Path.Combine(checkout, "adapters");
         var environment = new Dictionary<string, string>
         {
-            ["STICKLER_PACKAGED"] = "windows",
             ["LANGUAGE"] = GettextLanguages(languages),
             ["UV_SYSTEM_CERTS"] = "1",
             ["PYTHONUTF8"] = "1",
         };
-        if (shipAdapters)
+        if (!ownModels)
         {
+            environment["STICKLER_PACKAGED"] = "windows";
             environment["STICKLER_ADAPTER_SOURCES"] = adapters;
         }
         return new CoreClient(
@@ -122,6 +124,6 @@ public static class CoreLaunch
             return new CoreClient(uv ?? "uv", ["run", "stickler-bridge"], needs: missing);
         }
         var ownModels = environment.TryGetValue("STICKLER_ADAPTERS", out var models) && !string.IsNullOrEmpty(models);
-        return Checkout(checkout, uv, languages, shipAdapters: !ownModels);
+        return Checkout(checkout, uv, languages, ownModels);
     }
 }

@@ -91,7 +91,8 @@ public sealed class CoreLaunchTests
         environment["STICKLER_ADAPTERS"] = Path.Combine(Path.GetTempPath(), "stand-ins");
         using var standIns = CoreLaunch.ForApp(environment, Repo.Root, windows, ["en"]);
         Assert.IsFalse(standIns.Environment.ContainsKey("STICKLER_ADAPTER_SOURCES"));
-        Assert.AreEqual("windows", standIns.Environment["STICKLER_PACKAGED"]);
+        Assert.IsFalse(standIns.Environment.ContainsKey("STICKLER_PACKAGED")); // as the tests run the core
+        Assert.AreEqual("windows", shipping.Environment["STICKLER_PACKAGED"]);
     }
 
     [TestMethod]
