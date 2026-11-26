@@ -4401,11 +4401,12 @@ Visual Studio 2026 (2026-05-14).
 
 ### Module `win-sheet`
 
-> Status: **draft** (2026-11-26, owner: "Ja, so": `win-sheet` next, in this session, while
-> `win-package` is built in a session of its own). Three questions for the owner at the end.
+> Status: **approved** by the owner on 2026-11-26 ("Ja, so": `win-sheet` next, while
+> `win-package` is built in a session of its own; the three open questions answered with
+> Claude's proposals, at the end). Plan: `tasks/plan.md` ("`win-sheet`"), tasks 200–205, on
+> the branch `claude/win-shell`, checked with `win-shell` at checkpoint AF.
 > Modelled on `mac-sheet`, with the Windows screens W6 and W9 of `win-design`
-> (`docs/design/win/Sheet.dc.html`, `Sheet-Dark.dc.html`, `Menu-View.dc.html`). Builds on the
-> branch `claude/win-shell` before its checkpoint AF, unless the owner wants AF first.
+> (`docs/design/win/Sheet.dc.html`, `Sheet-Dark.dc.html`, `Menu-View.dc.html`).
 
 **Objective.** The Windows app shows the sheet music instead of `win-shell`'s grey desk: the
 result's pages, as wide as the window, light and dark, with the note size of the View menu,
@@ -4445,7 +4446,10 @@ Mac apps; nothing about the sheet is decided in C# that the core already decides
    Whether `IsPinchZoomEnabled` also covers a precision touchpad's pinch: unconfirmed.
 7. WebView2 keeps a user data folder; next to an unpackaged app's `.exe` it would land in the
    program folder, so it is set to `%LOCALAPPDATA%\Stickler\WebView2` (development builds: the
-   same), which "Uninstall Stickler…" and `win-package`'s uninstall remove with the rest.
+   same). It is the browser's cache, not the reader's data, and it is locked while the app
+   runs, so the core's removal (`removal.targets`: `cache`, `data`, `config`) leaves it;
+   `win-package`'s uninstaller removes it after the app has quit, also when silent (checked
+   2026-11-26 in `removal.py`; the first draft said the core removed it).
 
 **Scope.**
 1. **`SticklerCore`, the sheet's model** (tested on Linux and Windows, as `AppModel`):
@@ -4523,17 +4527,18 @@ window.
 - The runner draws WebView2 blank in screenshots (no GPU): the owner's look counts, as for
   Mica.
 
-**Open questions for the owner.**
-1. **Pinch and Ctrl+wheel.** The GTK app changes the note size once the fingers rest, the Mac
+**Open questions** (all answered by the owner on 2026-11-26 with Claude's proposal: "In Stufen",
+"Jetzt bauen", "WebView2").
+1. **Pinch and Ctrl+wheel: in steps.** The GTK app changes the note size once the fingers rest, the Mac
    app's picture follows the fingers and the core engraves when they lift. Claude's proposal
    for Windows: Ctrl+wheel steps the size like Ctrl+Plus/Minus (Windows' usual way, Edge and
    Word do it); a touchpad's pinch arrives as Ctrl+wheel in WebView2 and does the same, in
    steps, with no picture following the fingers. A following picture as on the Mac would come
    later if the steps feel wrong.
-2. **Before or after checkpoint AF?** Claude's proposal: build `win-sheet` now on
+2. **Before or after checkpoint AF: before.** Claude's proposal: build `win-sheet` now on
    `claude/win-shell` and check both together at AF, so the owner's PC sees a song as sheet
    music at the first check.
-3. **The PDF's way.** WebView2's print to PDF (assumption 5), as the release planned, or the
+3. **The PDF's way: WebView2.** WebView2's print to PDF (assumption 5), as the release planned, or the
    core writing the PDF itself (cairo or Verovio's own PDF, then the same file on every
    system). Claude's proposal: WebView2, as planned; the core's way is a change for all apps.
 

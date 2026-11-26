@@ -16,6 +16,8 @@ on:
       - "scripts/cobertura_gate.py"
       - "scripts/win_screens.ps1"
       - "scripts/bridge_stand_ins.py"
+      - "scripts/check_pdf.py"
+      - "packaging/fonts/Leipzig.ttf"
       - ".github/workflows/win.yml"
   workflow_dispatch:
 
@@ -92,6 +94,8 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/win_screens.ps1
           -App "win/Stickler/bin/x64/Release/net10.0-windows10.0.26100.0/win-x64/Stickler.exe"
           -Out "$env:RUNNER_TEMP/screens"
+      - name: The PDF saved through Export (module win-sheet)
+        run: uv run python scripts/check_pdf.py "$RUNNER_TEMP/screens/W6-sheet.pdf" --pages 1 --title Groove
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

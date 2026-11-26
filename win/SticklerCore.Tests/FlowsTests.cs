@@ -169,6 +169,89 @@ public sealed class FlowsTests
         await flows.RemoveModelsAsync();
         Assert.HasCount(2, ask.Asked);
     }
+
+    private const string A4 = "\"ok\": true, \"title\": \"Eye of the Tiger\", \"pages\": [{\"svg\": \"<svg/>\", \"width\": 1050.0, \"height\": 1485.0, \"bars\": []}]";
+
+    /// <summary>A folder of its own with an older <c>out.pdf</c> the save dialog points at.</summary>
+    private string OldPdf()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), $"stickler-pdf-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(folder);
+        var dest = Path.Combine(folder, "out.pdf");
+        File.WriteAllText(dest, "old");
+        ask.Save = dest;
+        return dest;
+    }
+
+    [TestMethod]
+    public async Task ThePdfIsPrintedToAFileOfItsOwnThatThenTakesTheChosenPlace()
+    {
+        ShowResult();
+        core.Answer("a4_pages", A4);
+        var dest = OldPdf();
+        string? part = null;
+        A4Pages? printed = null;
+        await flows.ExportPdfAsync(async (pages, path) =>
+        {
+            printed = pages;
+            part = path;
+            Assert.AreEqual("old", await File.ReadAllTextAsync(dest)); // untouched while printing
+            await File.WriteAllTextAsync(path, "new");
+            return true;
+        });
+        Assert.AreEqual("save Eye of the Tiger.pdf [pdf]", ask.Asked.Single());
+        Assert.AreEqual("Eye of the Tiger", printed!.Title);
+        Assert.AreNotEqual(dest, part);
+        Assert.IsFalse(File.Exists(part));
+        Assert.AreEqual("new", await File.ReadAllTextAsync(dest));
+        Assert.AreEqual(new Notice("Saved “out.pdf”", dest), model.Notice);
+    }
+
+    [TestMethod]
+    public async Task AFailedPrintLeavesNoHalfFileKeepsTheOldOneAndSaysWhy()
+    {
+        ShowResult();
+        core.Answer("a4_pages", A4);
+        var dest = OldPdf();
+        string? part = null;
+        await flows.ExportPdfAsync(async (_, path) =>
+        {
+            part = path;
+            await File.WriteAllTextAsync(path, "half");
+            return false;
+        });
+        Assert.AreEqual("old", await File.ReadAllTextAsync(dest));
+        Assert.IsFalse(File.Exists(part));
+        Assert.StartsWith("Could not save: ", model.Notice!.Text);
+        Assert.IsNull(model.Notice.Opens);
+        // a print that throws is told the same way, with its own reason
+        await flows.ExportPdfAsync((_, _) => throw new IOException("The disk is full."));
+        Assert.AreEqual(new Notice("Could not save: The disk is full.", null), model.Notice);
+        Assert.AreEqual("old", await File.ReadAllTextAsync(dest));
+    }
+
+    [TestMethod]
+    public async Task NoPdfWithoutAResultAPlaceOrThePages()
+    {
+        var calls = 0;
+        Task<bool> Print(A4Pages pages, string path)
+        {
+            calls++;
+            return Task.FromResult(true);
+        }
+        await flows.ExportPdfAsync(Print); // no result
+        Assert.IsEmpty(ask.Asked);
+        ShowResult();
+        ask.Save = null; // the save dialog cancelled
+        await flows.ExportPdfAsync(Print);
+        Assert.IsFalse(core.Sent.Any(line => line.Contains("a4_pages", StringComparison.Ordinal)));
+        ask.Save = @"C:\Out\file.pdf";
+        core.Answer("a4_pages", "\"ok\": false, \"error\": {\"code\": \"not_now\", \"message\": \"This is not possible right now.\"}");
+        await flows.ExportPdfAsync(Print); // the core refuses: its reason is the notice
+        Assert.AreEqual(0, calls);
+        Assert.AreEqual("This is not possible right now.", model.Notice!.Text);
+        await Assert.ThrowsExactlyAsync<ArgumentNullException>(() => flows.ExportPdfAsync(null!));
+    }
 }
 
 [TestClass]
@@ -237,5 +320,6 @@ public sealed class WindowViewTests
         Assert.AreEqual("song.musicxml", WindowView.MusicXmlName("/m/song.mp3"));
         Assert.EndsWith(".flac", WindowView.DrumTrackName("/m/song.mp3", german));
         Assert.AreNotEqual("song (drums).flac", WindowView.DrumTrackName("/m/song.mp3", german));
+        Assert.AreEqual("song.pdf", WindowView.PdfName(@"C:\m\song.mp3"));
     }
 }

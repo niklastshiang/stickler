@@ -19,6 +19,9 @@ TEXTS = (
     # Translators: Windows app, the menu bar (design screen W8); Windows says "Hilfe" in
     # German, "Ayuda" in Spanish
     N_("Help"),
+    # Translators: Windows app, the menu bar (design screen W8) with the note size's entries;
+    # Windows says "Ansicht" in German, "Ver" in Spanish
+    N_("View"),
     # Translators: Windows installer, shown on Windows 10 or a PC with an ARM processor, where
     # it installs nothing (SPEC.md, module `win-package`)
     N_("Stickler needs Windows 11 on a PC with an Intel or AMD processor (x64)."),

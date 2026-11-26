@@ -127,22 +127,29 @@ public static class CoreLaunch
     /// antivirus like the owner's holds back for a while, while the environment's
     /// <c>python.exe</c> is the same file in every environment of one uv release (found
     /// 2026-11-25). uv trusts the system's certificates, so a company network that inspects
-    /// TLS does not stop it (SPEC.md, module <c>win-shell</c>, assumption 3).</summary>
-    public static CoreClient Checkout(string checkout, string uv, IEnumerable<string> languages)
+    /// TLS does not stop it (SPEC.md, module <c>win-shell</c>, assumption 3).
+    /// <para><paramref name="shipAdapters"/> false: the models are set up elsewhere already
+    /// (<c>STICKLER_ADAPTERS</c>, such as the stand-ins of the screenshots), and the checkout's
+    /// adapters are not copied over them.</para></summary>
+    public static CoreClient Checkout(string checkout, string uv, IEnumerable<string> languages, bool shipAdapters = true)
     {
         var adapters = Path.Combine(checkout, "adapters");
+        var environment = new Dictionary<string, string>
+        {
+            ["STICKLER_PACKAGED"] = "windows",
+            ["LANGUAGE"] = GettextLanguages(languages),
+            ["UV_SYSTEM_CERTS"] = "1",
+            ["PYTHONUTF8"] = "1",
+        };
+        if (shipAdapters)
+        {
+            environment["STICKLER_ADAPTER_SOURCES"] = adapters;
+        }
         return new CoreClient(
             uv,
             ["run", "--project", checkout, "python", "-m", "stickler_app.bridge"],
             checkout,
-            new Dictionary<string, string>
-            {
-                ["STICKLER_PACKAGED"] = "windows",
-                ["STICKLER_ADAPTER_SOURCES"] = adapters,
-                ["LANGUAGE"] = GettextLanguages(languages),
-                ["UV_SYSTEM_CERTS"] = "1",
-                ["PYTHONUTF8"] = "1",
-            },
+            environment,
             needs: [uv, adapters]);
     }
 
@@ -183,6 +190,7 @@ public static class CoreLaunch
             }
             return new CoreClient(uv ?? "uv", ["run", "stickler-bridge"], needs: missing);
         }
-        return Checkout(checkout, uv, languages);
+        var ownModels = environment.TryGetValue("STICKLER_ADAPTERS", out var models) && !string.IsNullOrEmpty(models);
+        return Checkout(checkout, uv, languages, shipAdapters: !ownModels);
     }
 }

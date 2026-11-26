@@ -78,6 +78,23 @@ public sealed class CoreLaunchTests
     }
 
     [TestMethod]
+    public void ModelsSetUpElsewhereAreNotOverwrittenWithTheCheckoutsAdapters()
+    {
+        var environment = System.Environment.GetEnvironmentVariables()
+            .Cast<System.Collections.DictionaryEntry>()
+            .ToDictionary(e => (string)e.Key, e => (string?)e.Value, StringComparer.OrdinalIgnoreCase);
+        environment[CoreLaunch.CheckoutVariable] = Repo.Root;
+        environment.Remove("STICKLER_ADAPTERS");
+        var windows = OperatingSystem.IsWindows();
+        using var shipping = CoreLaunch.ForApp(environment, Repo.Root, windows, ["en"], development: true);
+        Assert.AreEqual(Path.Combine(Path.GetFullPath(Repo.Root), "adapters"), shipping.Environment["STICKLER_ADAPTER_SOURCES"]);
+        environment["STICKLER_ADAPTERS"] = Path.Combine(Path.GetTempPath(), "stand-ins");
+        using var standIns = CoreLaunch.ForApp(environment, Repo.Root, windows, ["en"], development: true);
+        Assert.IsFalse(standIns.Environment.ContainsKey("STICKLER_ADAPTER_SOURCES"));
+        Assert.AreEqual("windows", standIns.Environment["STICKLER_PACKAGED"]);
+    }
+
+    [TestMethod]
     public void UvIsFoundOnThePathOrWhereItsInstallersPutIt()
     {
         var home = Path.Combine(Path.GetTempPath(), $"stickler-home-{Guid.NewGuid():N}");

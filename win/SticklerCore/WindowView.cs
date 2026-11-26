@@ -108,6 +108,8 @@ public static class WindowView
 
     public static string MusicXmlName(string song) => BaseName(song) + ".musicxml";
 
+    public static string PdfName(string song) => BaseName(song) + ".pdf";
+
     /// <summary>"Eye of the Tiger (drums).flac", "(drums)" in the reader's language.</summary>
     public static string DrumTrackName(string song, Strings strings)
     {

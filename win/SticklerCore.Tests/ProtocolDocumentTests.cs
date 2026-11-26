@@ -65,6 +65,7 @@ public sealed partial class ProtocolDocumentTests
         }
         var result = (ResultScreen)AppState.Parse(states.Single(s => s.Heading == "result").Lines[0]).Screen;
         Assert.AreEqual("Survivor · ♩ = 109 · 4/4", result.Subtitle);
+        Assert.AreEqual(12, result.Sheet);
         Assert.AreEqual(2.51, result.Bars[1].Start);
         Assert.AreEqual("4/4", string.Join("/", result.Meter));
     }
@@ -112,6 +113,17 @@ public sealed partial class ProtocolDocumentTests
         Assert.AreEqual(2213400000, RemovalSizes.From(Reply.Parse(ReplyOf("removal_sizes"))).Everything);
         Assert.AreEqual(12, BackupSummary.From(Reply.Parse(ReplyOf("backup_summary"))).Songs);
         Assert.StartsWith("This removes", UninstallSizes.From(Reply.Parse(ReplyOf("uninstall_sizes"))).KeepText);
+        var pages = Pages.From(Reply.Parse(ReplyOf("pages")));
+        Assert.AreEqual(1.25, pages.Zoom);
+        Assert.AreEqual(800.0, pages.Sheets.Single().Width);
+        Assert.AreEqual(new BarBox(2, 310.35, 37.85, 154.9, 72.0), pages.Sheets.Single().Bars[1]);
+        Assert.StartsWith("<svg", pages.Sheets.Single().Svg);
+        var a4 = A4Pages.From(Reply.Parse(ReplyOf("a4_pages")));
+        Assert.AreEqual("Eye of the Tiger", a4.Title);
+        Assert.AreEqual(1485.0, a4.Sheets.Single().Height);
+        Assert.AreEqual(new SheetSettings(1.0, "100%"), SheetSettings.From(Reply.Parse(ReplyOf("settings"))));
+        Assert.AreEqual(new Zoom(1.25, "125%"), Zoom.From(Reply.Parse(ReplyOf("zoom_in"))));
+        Assert.AreEqual(new Zoom(1.5, "150%"), Zoom.From(Reply.Parse(ReplyOf("set_zoom"))));
     }
 
     [TestMethod]

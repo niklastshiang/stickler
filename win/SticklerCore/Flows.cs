@@ -78,6 +78,41 @@ public sealed class Flows
         }
     }
 
+    /// <summary>Sheet Music (PDF)… (module <c>win-sheet</c>, scope 4): where to save, the core's
+    /// A4 pages, then <paramref name="print"/> writes them to a file of its own, which takes the
+    /// chosen file's place only when it is whole: a failure leaves no half file and keeps one
+    /// that was there. <paramref name="print"/> is WebView2's in the app; false or an exception
+    /// is told with its reason.</summary>
+    public async Task ExportPdfAsync(Func<A4Pages, string, Task<bool>> print)
+    {
+        ArgumentNullException.ThrowIfNull(print);
+        if (Result is not { } result
+            || await ask.SaveFileAsync(WindowView.PdfName(result.Song), ["pdf"]).ConfigureAwait(true) is not { } dest
+            || await model.A4PagesAsync().ConfigureAwait(true) is not { } pages)
+        {
+            return;
+        }
+        var part = Path.Combine(Path.GetTempPath(), $"stickler-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            if (!await print(pages, part).ConfigureAwait(true))
+            {
+                // Windows' own words for a write that failed (ERROR_WRITE_FAULT), in its language
+                throw new IOException(new System.ComponentModel.Win32Exception(29).Message);
+            }
+            File.Move(part, dest, overwrite: true);
+            model.Tell(new Notice(strings.Text("Saved “{name}”", ("name", Path.GetFileName(dest))), dest));
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        {
+            model.Tell(new Notice(strings.Text("Could not save: {reason}", ("reason", error.Message)), null));
+        }
+        finally
+        {
+            File.Delete(part);
+        }
+    }
+
     /// <summary>The MusicXML in a program the reader picks.</summary>
     public async Task OpenWithAsync()
     {

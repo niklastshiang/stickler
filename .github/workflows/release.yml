@@ -252,9 +252,16 @@ jobs:
           curl -fsSL --retry 3 -o "$RUNNER_TEMP/inno.exe" \
             "https://github.com/jrsoftware/issrc/releases/download/is-${INNO_VERSION//./_}/innosetup-$INNO_VERSION-x64.exe"
           echo "$INNO_SHA256  $RUNNER_TEMP/inno.exe" | sha256sum -c -
-          dir=$(cygpath -w "$RUNNER_TEMP/inno")
-          "$RUNNER_TEMP/inno.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /CURRENTUSER "/DIR=$dir"
-          test -f "$RUNNER_TEMP/inno/ISCC.exe"
+          # for all users, where the runner's administrator puts it (with /CURRENTUSER and
+          # /DIR its setup stopped with exit code 4, run 45795484590)
+          log=$(cygpath -w "$RUNNER_TEMP/inno-setup.log")
+          if ! "$RUNNER_TEMP/inno.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- "/LOG=$log"; then
+            tail -n 40 "$RUNNER_TEMP/inno-setup.log"; exit 1
+          fi
+          iscc=$(ls "/c/Program Files/Inno Setup 7/ISCC.exe" "/c/Program Files (x86)/Inno Setup 7/ISCC.exe" 2>/dev/null | head -n 1)
+          test -n "$iscc" || { tail -n 40 "$RUNNER_TEMP/inno-setup.log"; exit 1; }
+          echo "ISCC=$iscc" >> "$GITHUB_ENV"
+          echo "ISCC: $iscc"
       - name: The installed folder
         run: |
           scripts/win_bundle.sh "$RUNNER_TEMP/layout" | tee "$RUNNER_TEMP/bundle.log"
@@ -269,7 +276,7 @@ jobs:
         run: |
           version=$(sed -n 's/^version = "\([0-9]*\)".*/\1/p' pyproject.toml)
           test -n "$version"
-          "$RUNNER_TEMP/inno/ISCC.exe" "/DLayout=$(cygpath -w "$RUNNER_TEMP/layout")" \
+          "$ISCC" "/DLayout=$(cygpath -w "$RUNNER_TEMP/layout")" \
             "/DAppVersion=$version" "/DOutDir=$(cygpath -w "$RUNNER_TEMP/installer")" \
             win/installer/Stickler.iss
           setup="$RUNNER_TEMP/installer/Stickler-$version-setup.exe"

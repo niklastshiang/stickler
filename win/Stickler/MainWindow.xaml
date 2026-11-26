@@ -2,6 +2,7 @@
     x:Class="Stickler.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Stickler"
     Title="Stickler">
     <Window.SystemBackdrop>
         <MicaBackdrop />
@@ -26,6 +27,7 @@
                 </MenuFlyoutItem>
                 <MenuFlyoutSubItem x:Name="RecentMenu" />
                 <MenuFlyoutSubItem x:Name="ExportMenu">
+                    <MenuFlyoutItem x:Name="ExportPdfItem" Click="OnExportPdf" />
                     <MenuFlyoutItem x:Name="ExportMusicXmlItem" Click="OnExportMusicXml" />
                     <MenuFlyoutItem x:Name="ExportDrumTrackItem" Click="OnExportDrumTrack" />
                     <MenuFlyoutSeparator />
@@ -43,6 +45,12 @@
                 <MenuFlyoutItem x:Name="UninstallItem" Click="OnUninstall" />
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem x:Name="ExitItem" Click="OnExit" />
+            </MenuBarItem>
+            <!-- W8: the note size (module win-sheet); the keys are set in code (Ctrl+Plus and the keypad's) -->
+            <MenuBarItem x:Name="ViewMenu">
+                <MenuFlyoutItem x:Name="ZoomInItem" Click="OnZoomIn" />
+                <MenuFlyoutItem x:Name="ZoomOutItem" Click="OnZoomOut" />
+                <MenuFlyoutItem x:Name="ActualSizeItem" Click="OnActualSize" />
             </MenuBarItem>
             <MenuBarItem x:Name="HelpMenu">
                 <MenuFlyoutItem x:Name="HelpItem" Click="OnHelp" />
@@ -67,6 +75,7 @@
                 <DropDownButton x:Name="ExportButton">
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedRight">
+                            <MenuFlyoutItem x:Name="ExportPdfButton" Click="OnExportPdf" />
                             <MenuFlyoutItem x:Name="ExportMusicXmlButton" Click="OnExportMusicXml" />
                             <MenuFlyoutItem x:Name="ExportDrumTrackButton" Click="OnExportDrumTrack" />
                             <MenuFlyoutSeparator />
@@ -119,8 +128,8 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- the sheet music: the grey desk until win-sheet draws the pages -->
-            <Grid x:Name="ResultPage" Visibility="Collapsed" Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}" />
+            <!-- W6: the sheet music (module win-sheet) -->
+            <local:SheetView x:Name="ResultPage" Visibility="Collapsed" />
 
             <!-- the core has ended -->
             <StackPanel x:Name="StoppedPage" Visibility="Collapsed" MaxWidth="560" Margin="24,48,24,24" Spacing="12" VerticalAlignment="Top">

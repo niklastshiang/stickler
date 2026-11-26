@@ -38,11 +38,22 @@ public sealed class AppModel : INotifyPropertyChanged
     /// <summary><paramref name="makeCore"/> builds a core for the reader's languages;
     /// <paramref name="post"/> runs work on the window's thread, in order (the dispatcher queue).</summary>
     public AppModel(IReadOnlyList<string> languages, Func<IReadOnlyList<string>, ICore> makeCore, Action<Action> post)
+        : this(languages, makeCore, post, TimeSpan.FromSeconds(0.3))
+    {
+    }
+
+    /// <summary><paramref name="settle"/>: how long the sheet's width must hold before its
+    /// pages are asked for again (<see cref="SheetModel"/>).</summary>
+    public AppModel(IReadOnlyList<string> languages, Func<IReadOnlyList<string>, ICore> makeCore, Action<Action> post, TimeSpan settle)
     {
         this.languages = languages;
         this.makeCore = makeCore;
         this.post = post;
+        Sheet = new SheetModel(post, settle, error => Notice = new Notice(error.Message, null));
     }
+
+    /// <summary>The sheet music of the shown result (module <c>win-sheet</c>).</summary>
+    public SheetModel Sheet { get; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -163,6 +174,7 @@ public sealed class AppModel : INotifyPropertyChanged
             incoming => post(() => Handle(incoming, next)),
             how => post(() => Ended(how, next)));
         Send(Command.Start);
+        Sheet.Attach(next);
     }
 
     private void Handle(Incoming incoming, ICore source)
@@ -179,6 +191,7 @@ public sealed class AppModel : INotifyPropertyChanged
                 break;
             case StateEvent e when Fresh(e.Seq):
                 State = e.State;
+                Sheet.Show(e.State.Screen);
                 break;
             case RecentEvent e when Fresh(e.Seq):
                 Recent = e.Rows;
@@ -211,6 +224,7 @@ public sealed class AppModel : INotifyPropertyChanged
             return;
         }
         LetGo();
+        Sheet.Attach(null);
         End = how;
         Phase = Phase.Stopped;
     }
@@ -263,6 +277,9 @@ public sealed class AppModel : INotifyPropertyChanged
     /// <summary>What a backup holds and the restore's question; null (with the core's reason
     /// as the notice) when the file is no backup.</summary>
     public Task<BackupSummary?> BackupSummaryAsync(string src) => AskAsync(Command.BackupSummary(src), BackupSummary.From);
+
+    /// <summary>The result's A4 pages and title, for the PDF the app writes (module <c>win-sheet</c>).</summary>
+    public Task<A4Pages?> A4PagesAsync() => AskAsync(Command.A4Pages, A4Pages.From);
 
     /// <summary>What "Remove Downloaded Models…" frees, for its dialog.</summary>
     public Task<RemovalSizes?> RemovalSizesAsync() => AskAsync(Command.RemovalSizes, RemovalSizes.From);

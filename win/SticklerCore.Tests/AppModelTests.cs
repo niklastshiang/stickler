@@ -11,7 +11,20 @@ internal sealed class FakeCore : ICore
     private Action<Incoming> onEvent = _ => { };
     private Action<CoreEnd> onEnd = _ => { };
 
+    /// <summary>The commands sent, without the sheet's <c>settings</c> at start (it asks for the
+    /// stored note size beside the actions: <see cref="All"/> has it, SheetModelTests checks it).</summary>
     public IReadOnlyList<string> Sent
+    {
+        get
+        {
+            lock (gate)
+            {
+                return [.. commands.Where(c => c.Name != "settings").Select(c => c.Line(0))];
+            }
+        }
+    }
+
+    public IReadOnlyList<string> All
     {
         get
         {
@@ -115,6 +128,8 @@ public sealed class AppModelTests
         Assert.AreEqual(
             "start open cancel retry close agree not_now retry_setup export_musicxml export_drum_track remove_models back_up restore",
             string.Join(" ", core.Sent.Select(line => System.Text.Json.JsonElement.Parse(line).GetProperty("cmd").GetString())));
+        // the sheet asks for the stored note size once, beside the actions' line
+        Assert.AreEqual(1, core.All.Count(line => line.Contains("\"settings\"", StringComparison.Ordinal)));
     }
 
     [TestMethod]

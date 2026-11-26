@@ -5,13 +5,25 @@
 # the user's app theme, which this script sets for its run and puts back.
 #
 #   powershell -File scripts/win_screens.ps1 -App <path to Stickler.exe> -Out <folder>
+#
+# The sheet music (module `win-sheet`, W6) comes from the stand-in models of
+# scripts/bridge_stand_ins.py: a recent song is opened through UI Automation, the window is
+# captured once the pages are there, and the PDF is saved through Export's menu and the save
+# dialog into -Out (checked by scripts/check_pdf.py).
 param(
     [Parameter(Mandatory = $true)][string]$App,
     [Parameter(Mandatory = $true)][string]$Out,
     # on the owner's PC: "light" alone, so the desktop's theme is not switched under them
     [string[]]$Looks = @("light", "dark"),
     # the consent's "Not Now" in Windows' display language ("Nicht jetzt" in German)
-    [string]$NotNow = "Not Now"
+    [string]$NotNow = "Not Now",
+    # the words of Export's PDF entry and the save dialog's button, in Windows' display language
+    [string]$PdfEntry = "Sheet Music (PDF)…",
+    [string]$Export = "Export",
+    # leave out the sheet's screens (they set up the stand-in models first)
+    [switch]$NoSheet,
+    # only the sheet's screens (on a PC whose models are there, no consent comes)
+    [switch]$SheetOnly
 )
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing, UIAutomationClient, UIAutomationTypes
@@ -56,10 +68,106 @@ function Invoke-Button($process, $name) {
     $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 }
 
+# the first element named $name in the process's windows (a menu's flyout or the save dialog
+# is a window of its own), waiting up to $seconds for it
+function Find-Named($process, $name, $seconds = 20) {
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $mine = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::ProcessIdProperty), $process.Id
+    $named = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::NameProperty), $name
+    $until = (Get-Date).AddSeconds($seconds)
+    do {
+        foreach ($window in $root.FindAll([System.Windows.Automation.TreeScope]::Children, $mine)) {
+            $found = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $named)
+            if ($found) { return $found }
+        }
+        Start-Sleep -Milliseconds 500
+    } while ((Get-Date) -lt $until)
+    throw "nothing named '$name'"
+}
+
+# presses $element, or the nearest element around it that can be pressed (a recent song's
+# button holds its title as text), once it is enabled (up to $seconds: the core may still start)
+function Invoke-Element($element, $seconds = 60) {
+    $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
+    $until = (Get-Date).AddSeconds($seconds)
+    while ($element) {
+        while (-not $element.Current.IsEnabled -and (Get-Date) -lt $until) { Start-Sleep -Milliseconds 500 }
+        $pattern = $null
+        if ($element.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) { $pattern.Invoke(); return }
+        if ($element.TryGetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern, [ref]$pattern)) { $pattern.Expand(); return }
+        $element = $walker.GetParent($element)
+    }
+    throw "nothing to press"
+}
+
+# Windows' save dialog of the process: the file name typed into its box (1001), then Save (1)
+function Save-As($process, $path) {
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $mine = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::ProcessIdProperty), $process.Id
+    $box = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::AutomationIdProperty), "1001"
+    $until = (Get-Date).AddSeconds(20)
+    do {
+        foreach ($window in $root.FindAll([System.Windows.Automation.TreeScope]::Children, $mine)) {
+            $name = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $box)
+            if ($name) {
+                $name.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($path)
+                $save = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::AutomationIdProperty), "1"
+                $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $save).GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+                return
+            }
+        }
+        Start-Sleep -Milliseconds 500
+    } while ((Get-Date) -lt $until)
+    throw "no save dialog"
+}
+
+# the stand-in models and their song, set up once (uv, offline)
+function Get-StandIns {
+    $folder = Join-Path ([IO.Path]::GetTempPath()) ("stickler-screens-models-" + [Guid]::NewGuid().ToString("N"))
+    $line = & uv run python scripts/bridge_stand_ins.py $folder | Select-Object -Last 1
+    $line | ConvertFrom-Json
+}
+
+# W6: a recent song opened, its sheet captured; in light also the View menu and the PDF
+function Save-Sheet($look, $standIns) {
+    Remove-Item -Recurse -Force $dataHome -ErrorAction SilentlyContinue
+    $recent = "$dataHome\data\stickler"
+    New-Item -ItemType Directory -Force $recent | Out-Null
+    $today = (Get-Date).ToString("yyyy-MM-dd")
+    $entry = @(@{ path = $standIns.song; title = "Groove"; artist = ""; opened = $today })
+    [IO.File]::WriteAllText("$recent\recent.json", (ConvertTo-Json -InputObject $entry))  # UTF-8 without a BOM
+    # STICKLER_ADAPTERS: the app's core takes the stand-ins as they are (no consent, no download)
+    $env:STICKLER_ADAPTERS = $standIns.models
+    $process = Start-Process -FilePath $App -PassThru
+    try {
+        Invoke-Element (Find-Named $process "Groove" 60)
+        # a result enables Export; then the engraving and WebView2's first start
+        $export = Find-Named $process $Export 60
+        $until = (Get-Date).AddSeconds(180)
+        while (-not $export.Current.IsEnabled -and (Get-Date) -lt $until) { Start-Sleep -Seconds 1 }
+        if (-not $export.Current.IsEnabled) { Save-Window $process "W6-sheet-$look-no-result"; throw "no result" }
+        Start-Sleep -Seconds 10
+        Save-Window $process "W6-sheet-$look"
+        if ($look -eq "light") {
+            $pdf = Join-Path $Out "W6-sheet.pdf"
+            Invoke-Element (Find-Named $process $Export)
+            Invoke-Element (Find-Named $process $PdfEntry)
+            Save-As $process $pdf
+            Start-Sleep -Seconds 10
+            "saved W6-sheet.pdf: $(Test-Path $pdf)"
+        }
+    }
+    finally {
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+        Remove-Item Env:STICKLER_ADAPTERS -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+    }
+}
+
 $theme = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
 $before = (Get-ItemProperty $theme -Name AppsUseLightTheme -ErrorAction SilentlyContinue).AppsUseLightTheme
 try {
-    foreach ($look in @(@{ Name = "light"; Value = 1 }, @{ Name = "dark"; Value = 0 }) | Where-Object { $Looks -contains $_.Name }) {
+    foreach ($look in @(@{ Name = "light"; Value = 1 }, @{ Name = "dark"; Value = 0 }) | Where-Object { $Looks -contains $_.Name -and -not $SheetOnly }) {
         New-Item -Force $theme | Out-Null
         Set-ItemProperty $theme -Name AppsUseLightTheme -Value $look.Value -Type DWord
         Remove-Item -Recurse -Force $dataHome -ErrorAction SilentlyContinue
@@ -71,6 +179,13 @@ try {
         Save-Window $process "W4-empty-$($look.Name)"
         Stop-Process -Id $process.Id -Force
         Start-Sleep -Seconds 2
+    }
+    if (-not $NoSheet) {
+        $standIns = Get-StandIns
+        foreach ($look in @(@{ Name = "light"; Value = 1 }, @{ Name = "dark"; Value = 0 }) | Where-Object { $Looks -contains $_.Name }) {
+            Set-ItemProperty $theme -Name AppsUseLightTheme -Value $look.Value -Type DWord
+            Save-Sheet $look.Name $standIns
+        }
     }
 }
 finally {

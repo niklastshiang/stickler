@@ -790,6 +790,30 @@ build for the owner (188).
 | The unpackaged app's new pickers fail | Low | The older pickers with `InitializeWithWindow` |
 | Runner screenshots blank (no GPU) | Low | Accepted; the owner's look counts |
 
+## Release 11 (Windows app): `win-sheet` (approved 2026-11-26, SPEC.md "Module `win-sheet`")
+
+The sheet music in WebView2 and the PDF, as `mac-sheet` built the Mac's. Tasks 200–205, on the
+branch `claude/win-shell`, checked with `win-shell` at checkpoint AF (owner, 2026-11-26).
+`win-package` is built at the same time in a session of its own (tasks from 210 on).
+
+Design decisions:
+- **The model and the HTML first, in `SticklerCore`** (200, 201): tested on Linux and here
+  with the Mac's cases; the WinUI side (202, 203) only hands the width in and the HTML to
+  WebView2.
+- **Served from memory** under `https://sheet.stickler.invalid/`, not `NavigateToString` (2 MB
+  limit) and not files on disk.
+- **No new NuGet package:** WebView2 comes with the Windows App SDK.
+
+Order: replies and the sheet model (200) → the page HTML (201) → the sheet in the window and
+the zoom (202) → the PDF (203) → screenshots and the PDF in CI (204) → review and a build for
+the owner (205).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| A precision touchpad's pinch does not arrive as Ctrl+wheel | Low | Ctrl+Plus/Minus/0 and the menu still work; noted for the owner's check |
+| `PrintToPdfAsync` takes no title from `<title>` | Low | The PDF's title then stays empty; a later fix through the core's PDF (question 3) |
+| The runner draws WebView2 blank | Low | The PDF and the HTML are checked as data; the owner's look counts |
+
 ## Release 11 (Windows app): `win-package` (approved 2026-11-26, SPEC.md "Module `win-package`")
 
 The installer that brings the app and its core along, and the way out again, as `mac-package`
