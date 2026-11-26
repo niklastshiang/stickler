@@ -163,9 +163,12 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <local:SheetView x:Name="SheetPane" />
+                <!-- The sheet comes last: on GitHub's runner UI Automation found nothing that follows
+                     the WebView2 in the tree (run 38c7b69's log), so the controls a screen reader
+                     needs stand before it. -->
                 <local:CorrectionsView x:Name="CorrectionsPaneView" Grid.Column="1" Visibility="Collapsed" />
                 <local:Playbar x:Name="PlayPane" Grid.Row="1" Grid.ColumnSpan="2" />
+                <local:SheetView x:Name="SheetPane" />
             </Grid>
 
             <!-- the core has ended -->
