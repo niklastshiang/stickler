@@ -445,3 +445,42 @@ def test_the_mac_guide_leads_to_apples_own_for_the_windows_macos_shows(folder):
     allow = steps[steps.index('id="step-allow"') : steps.index('id="step-confirm"')]
     assert f'href="{APPLE_GUIDE[folder]}"' in allow
     assert html.count("support.apple.com") == 1, "one link, in the page's language"
+
+
+@pytest.mark.parametrize("folder", ["", "de/"])
+def test_a_look_around_shows_one_row_of_pictures_per_system(folder, tmp_path):
+    """SPEC "Website", "Change 2026-11-25": a switch Linux | Mac without script, one carousel
+    each; the Mac's pictures are the `mac` workflow's (scripts/site_mac.py)."""
+    html = (SITE / folder / "index.html").read_text(encoding="utf-8")
+    section = html[html.index('aria-labelledby="look"') :]
+    section = section[: section.index("</section>")]
+    (tmp_path / "look.html").write_text(section, encoding="utf-8")
+    page = Page(tmp_path / "look.html")
+    assert len(page.all("fieldset")) == 1 and len(page.all("legend")) == 1
+    radios = page.all("input")
+    assert [(r["type"], r["name"], r["value"]) for r in radios] == [
+        ("radio", "system", "linux"),
+        ("radio", "system", "mac"),
+    ]
+    assert "checked" in radios[0] and "checked" not in radios[1]
+    rows = [a for a in page.all("div") if "carousel" in a.get("class", "")]
+    assert [r.get("data-system") for r in rows] == ["linux", "mac"]
+    assert all(r.get("role") == "region" and r.get("aria-label") for r in rows)
+    mac = section[section.index('data-system="mac"') :]
+    shots = re.findall(r'<img class="shot" src="(?:\.\./)?images/(mac-[a-z]+)\.png"', mac)
+    assert shots == ["mac-empty", "mac-analysing", "mac-sheet"]
+    for name in shots:
+        for suffix in (".png", ".webp", "-dark.png", "-dark.webp"):
+            assert (SITE / "images" / f"{name}{suffix}").is_file(), f"{name}{suffix}"
+    assert mac.count('loading="lazy"') == len(shots)
+
+
+def test_the_switch_hides_the_other_row_only_where_the_browser_can():
+    css = (SITE / "style.css").read_text(encoding="utf-8")
+    block = _braced(css, css.index("@supports selector(:has(*))"))
+    assert 'input[value="linux"]:checked) .carousel[data-system="mac"]' in block
+    assert 'input[value="mac"]:checked) .carousel[data-system="linux"]' in block
+    assert "display: none" in block
+    # outside the block the switch is hidden, so a browser without :has() shows both rows
+    systems = css[css.index("\n.systems {") :]
+    assert "display: none" in systems[: systems.index("}")]
