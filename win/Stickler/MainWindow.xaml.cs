@@ -4,6 +4,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Stickler.Core;
 using Windows.ApplicationModel.DataTransfer;
@@ -31,6 +32,7 @@ public sealed partial class MainWindow : Window
     private SetupDialog shownSetup = SetupDialog.None;
     private bool closingSetup;
     private AppState? setupState;
+    private StackPanel? downloadSteps; // the download dialog's rows, kept while it is open
     private IReadOnlyList<RecentRow>? shownRecent;
     private bool shownCanOpen;
 
@@ -55,6 +57,9 @@ public sealed partial class MainWindow : Window
         Size();
         Words();
         model.PropertyChanged += OnModelChanged;
+        model.Sheet.PropertyChanged += OnSheetChanged;
+        ResultPage.Attach(model.Sheet, strings);
+        Keys();
         Closed += OnClosed;
         Activated += OnFirstActivated;
         model.Launch();
@@ -86,6 +91,8 @@ public sealed partial class MainWindow : Window
         OpenItem.Text = T("Open…");
         RecentMenu.Text = T("Open Recent");
         ExportMenu.Text = T("Export");
+        ExportPdfItem.Text = ExportPdfButton.Text = T("Sheet Music (PDF)…");
+        ToolTipService.SetToolTip(ExportPdfButton, T("To print or to read on a tablet"));
         ExportMusicXmlItem.Text = ExportMusicXmlButton.Text = T("MusicXML…");
         ExportDrumTrackItem.Text = ExportDrumTrackButton.Text = T("Drum Track…");
         OpenWithItem.Text = OpenWithButton.Text = T("Open With…");
@@ -97,6 +104,10 @@ public sealed partial class MainWindow : Window
         RestoreItem.Text = T("Restore Backup…");
         RemoveItem.Text = T("Remove Downloaded Models…");
         ExitItem.Text = T("Exit");
+        ViewMenu.Title = T("View");
+        ZoomInItem.Text = T("Zoom In");
+        ZoomOutItem.Text = T("Zoom Out");
+        ActualSizeItem.Text = T("Actual Size");
         HelpMenu.Title = T("Help");
         HelpItem.Text = T("Stickler Help");
         LicencesItem.Text = T("Licences");
@@ -119,6 +130,35 @@ public sealed partial class MainWindow : Window
 
     private void OnModelChanged(object? sender, PropertyChangedEventArgs e) => Render();
 
+    private void OnSheetChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SheetModel.CanZoom))
+        {
+            Render();
+        }
+    }
+
+    /// <summary>View's keys (W8): Ctrl+Plus, Ctrl+Minus and Ctrl+0, also on the keypad; the
+    /// menu shows Windows' own names for them.</summary>
+    private void Keys()
+    {
+        static KeyboardAccelerator Key(int key) => new()
+        {
+            Key = (Windows.System.VirtualKey)key,
+            Modifiers = Windows.System.VirtualKeyModifiers.Control,
+            IsEnabled = true,
+        };
+        ZoomInItem.KeyboardAccelerators.Add(Key(187)); // the + key (VK_OEM_PLUS)
+        ZoomInItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.Add));
+        ZoomInItem.KeyboardAcceleratorTextOverride = "Ctrl+Plus";
+        ZoomOutItem.KeyboardAccelerators.Add(Key(189)); // the - key (VK_OEM_MINUS)
+        ZoomOutItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.Subtract));
+        ZoomOutItem.KeyboardAcceleratorTextOverride = "Ctrl+Minus";
+        ActualSizeItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.Number0));
+        ActualSizeItem.KeyboardAccelerators.Add(Key((int)Windows.System.VirtualKey.NumberPad0));
+        ActualSizeItem.KeyboardAcceleratorTextOverride = "Ctrl+0";
+    }
+
     private void Render()
     {
         var state = model.State;
@@ -131,10 +171,12 @@ public sealed partial class MainWindow : Window
         Header.Visibility = Shown(WindowView.ShowsHeader(model));
         Title = model.Title == "Stickler" ? "Stickler" : $"{model.Title} – Stickler";
         SongTitle.Text = model.Title;
+        ResultPage.SongTitle = model.Title;
         SongSubtitle.Text = model.Subtitle;
         SongSubtitle.Visibility = Shown(model.Subtitle.Length > 0);
 
         var running = model.Phase == Phase.Running;
+        ZoomInItem.IsEnabled = ZoomOutItem.IsEnabled = ActualSizeItem.IsEnabled = running && model.Sheet.CanZoom;
         OpenItem.IsEnabled = OpenButton.IsEnabled = OpenSongButton.IsEnabled = running && state.Can.Open;
         ExportMenu.IsEnabled = ExportButton.IsEnabled = running && state.Can.Export;
         CloseSongItem.IsEnabled = running && state.Can.Close;
@@ -231,6 +273,10 @@ public sealed partial class MainWindow : Window
 
     private void Steps(StackPanel into, IReadOnlyList<StepRow> steps)
     {
+        if (Updated(into, steps))
+        {
+            return; // the rows stay: a running step's ring keeps turning (owner, 2026-11-26)
+        }
         into.Children.Clear();
         foreach (var step in steps)
         {
@@ -264,8 +310,36 @@ public sealed partial class MainWindow : Window
             line.Children.Add(mark);
             line.Children.Add(words);
             line.Children.Add(status);
+            line.Tag = step.State;
             into.Children.Add(line);
         }
+    }
+
+    /// <summary>The same steps in the same states as shown: only their words change (a
+    /// download's "650 MB of 1.3 GB" twice a second), so the rows and a running ring stay
+    /// instead of starting again with every state. False when a row must be drawn anew.</summary>
+    private bool Updated(StackPanel into, IReadOnlyList<StepRow> steps)
+    {
+        if (into.Children.Count != steps.Count)
+        {
+            return false;
+        }
+        for (var i = 0; i < steps.Count; i++)
+        {
+            if (into.Children[i] is not Grid { Tag: StepProgress shown } || shown != steps[i].State)
+            {
+                return false;
+            }
+        }
+        for (var i = 0; i < steps.Count; i++)
+        {
+            var line = (Grid)into.Children[i];
+            var words = (StackPanel)line.Children[1];
+            ((TextBlock)words.Children[0]).Text = steps[i].Label;
+            ((TextBlock)words.Children[1]).Text = steps[i].Detail;
+            ((TextBlock)line.Children[2]).Text = WindowView.StepState(steps[i].State, strings);
+        }
+        return true;
     }
 
     // W1–W3: one dialog over the dimmed empty window, its content following the state;
@@ -283,6 +357,7 @@ public sealed partial class MainWindow : Window
                 closingSetup = false;
             }
             setupState = null;
+            downloadSteps = null;
             shownSetup = wanted;
             return;
         }
@@ -302,12 +377,16 @@ public sealed partial class MainWindow : Window
         {
             return; // nothing new: an opened "Technical Details" stays open
         }
+        var downloading = shownSetup == SetupDialog.Download && downloadSteps is not null;
         shownSetup = wanted;
         setupState = model.State;
         switch (model.State.Screen)
         {
             case ConsentScreen consent:
                 SetupConsent(setup, consent);
+                break;
+            case SettingUpScreen settingUp when downloading:
+                Steps(downloadSteps!, settingUp.Steps); // the same dialog: its rows and ring stay
                 break;
             case SettingUpScreen settingUp:
                 setup.Title = strings.Text("Downloading the Models");
@@ -316,6 +395,7 @@ public sealed partial class MainWindow : Window
                 var steps = new StackPanel { Spacing = 12 };
                 Steps(steps, settingUp.Steps);
                 panel.Children.Add(steps);
+                downloadSteps = steps;
                 setup.Content = panel;
                 setup.PrimaryButtonText = "";
                 setup.CloseButtonText = strings.Text("Cancel");
@@ -468,6 +548,21 @@ public sealed partial class MainWindow : Window
 
     private async void OnOpen(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.OpenSongAsync());
 
+    private async void OnExportPdf(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.ExportPdfAsync(PrintAsync));
+
+    /// <summary>The A4 pages printed by the sheet's second WebView2, the Leipzig font with them.</summary>
+    private async Task<bool> PrintAsync(A4Pages pages, string path)
+    {
+        var font = await File.ReadAllBytesAsync(Path.Combine(AppContext.BaseDirectory, "Leipzig.ttf"));
+        return await ResultPage.PrintAsync(SheetHtml.A4Document(pages, font), path);
+    }
+
+    private void OnZoomIn(object sender, RoutedEventArgs e) => model.Sheet.ZoomIn();
+
+    private void OnZoomOut(object sender, RoutedEventArgs e) => model.Sheet.ZoomOut();
+
+    private void OnActualSize(object sender, RoutedEventArgs e) => model.Sheet.ActualSize();
+
     private async void OnExportMusicXml(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.ExportMusicXmlAsync());
 
     private async void OnExportDrumTrack(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.ExportDrumTrackAsync());
@@ -569,6 +664,7 @@ public sealed partial class MainWindow : Window
     private void OnClosed(object sender, WindowEventArgs args)
     {
         model.PropertyChanged -= OnModelChanged;
+        model.Sheet.PropertyChanged -= OnSheetChanged;
         // QuitAsync: 3 s for the core to quit, then its tree ended and 2 s for that
         Task.Run(model.QuitAsync).Wait(TimeSpan.FromSeconds(8));
     }

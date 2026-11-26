@@ -3396,6 +3396,24 @@
         }
       }
     },
+    "View" : {
+      "comment" : "Translators: Windows app, the menu bar (design screen W8) with the note size's entries; Windows says \"Ansicht\" in German, \"Ver\" in Spanish",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ansicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver"
+          }
+        }
+      }
+    },
     "Volume" : {
       "extractionState" : "manual",
       "localizations" : {

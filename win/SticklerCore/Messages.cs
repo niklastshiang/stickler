@@ -157,3 +157,46 @@ public sealed record BackupSummary(string Created, int Songs, long Size, string 
         Json.Long(reply.Fields, "size"),
         Json.Str(reply.Fields, "text"));
 }
+
+/// <summary>A written bar's rectangle on a page, in page pixels.</summary>
+public sealed record BarBox(int Bar, double X, double Y, double Width, double Height)
+{
+    internal static BarBox Read(JsonElement s) => new(
+        Json.Int(s, "bar"), Json.Double(s, "x"), Json.Double(s, "y"), Json.Double(s, "width"), Json.Double(s, "height"));
+}
+
+/// <summary>One engraved page: its SVG, its size in CSS pixels and its bars.</summary>
+public sealed record SheetPage(string Svg, double Width, double Height, IReadOnlyList<BarBox> Bars)
+{
+    internal static SheetPage Read(JsonElement s) => new(
+        Json.Str(s, "svg"), Json.Double(s, "width"), Json.Double(s, "height"), Json.List(s, "bars", BarBox.Read));
+}
+
+/// <summary><c>pages</c>: the sheet music at a width and note size.</summary>
+public sealed record Pages(double Zoom, IReadOnlyList<SheetPage> Sheets)
+{
+    public static Pages From(Reply reply) =>
+        new(Json.Double(reply.Fields, "zoom"), Json.List(reply.Fields, "pages", SheetPage.Read));
+}
+
+/// <summary><c>a4_pages</c>: the pages of the PDF (each A4 in its proportions) and its title.</summary>
+public sealed record A4Pages(string Title, IReadOnlyList<SheetPage> Sheets)
+{
+    public static A4Pages From(Reply reply) =>
+        new(Json.Str(reply.Fields, "title"), Json.List(reply.Fields, "pages", SheetPage.Read));
+}
+
+/// <summary><c>set_zoom</c>, <c>zoom_in</c>, <c>zoom_out</c>, <c>actual_size</c>: the new note size.</summary>
+public sealed record Zoom(double Size, string Percent)
+{
+    public static Zoom From(Reply reply) =>
+        new(Json.Double(reply.Fields, "zoom"), Json.Str(reply.Fields, "percent"));
+}
+
+/// <summary><c>settings</c>: the stored note size as the menu shows it (the other settings are
+/// the playback's).</summary>
+public sealed record SheetSettings(double Zoom, string Percent)
+{
+    public static SheetSettings From(Reply reply) =>
+        new(Json.Double(reply.Fields, "zoom"), Json.Str(reply.Fields, "percent"));
+}

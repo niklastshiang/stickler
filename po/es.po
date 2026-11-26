@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-25 14:16+0100\n"
+"POT-Creation-Date: 2026-11-26 10:15+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -49,24 +49,24 @@ msgstr "Stickler no conoce el comando «{name}»."
 msgid "Something went wrong inside Stickler."
 msgstr "Algo salió mal dentro de Stickler."
 
-#: src/stickler_app/bridge.py:589
+#: src/stickler_app/bridge.py:591
 #, python-brace-format
 msgid "“{name}” cannot be played."
 msgstr "No se puede reproducir «{name}»."
 
-#: src/stickler_app/bridge.py:602 src/stickler_app/controller.py:388
+#: src/stickler_app/bridge.py:604 src/stickler_app/controller.py:388
 #: src/stickler_gtk/ui/window.py:637
 #, python-brace-format
 msgid "This is no Stickler backup: {reason}"
 msgstr "Esto no es una copia de seguridad de Stickler: {reason}"
 
-#: src/stickler_app/bridge.py:618 src/stickler_gtk/ui/window.py:686
+#: src/stickler_app/bridge.py:620 src/stickler_gtk/ui/window.py:686
 #, python-brace-format
 msgid "This removes Stickler and frees {size}. Your songs and exports stay."
 msgstr ""
 "Esto quita Stickler y libera {size}. Tus canciones y exportaciones se quedan."
 
-#: src/stickler_app/bridge.py:645 src/stickler_gtk/ui/window.py:583
+#: src/stickler_app/bridge.py:647 src/stickler_gtk/ui/window.py:583
 #, python-brace-format
 msgid "This frees {size}. Stickler asks before it downloads the models again."
 msgstr ""
@@ -511,6 +511,12 @@ msgstr "Archivo"
 #: src/stickler_app/win_texts.py:21
 msgid "Help"
 msgstr "Ayuda"
+
+#. Translators: Windows app, the menu bar (design screen W8) with the note size's entries;
+#. Windows says "Ansicht" in German, "Ver" in Spanish
+#: src/stickler_app/win_texts.py:24
+msgid "View"
+msgstr "Ver"
 
 #. Translators: a percentage; German puts a no-break space before the sign
 #: src/stickler_app/zoom.py:36

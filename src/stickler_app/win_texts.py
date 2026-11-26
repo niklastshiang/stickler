@@ -19,4 +19,7 @@ TEXTS = (
     # Translators: Windows app, the menu bar (design screen W8); Windows says "Hilfe" in
     # German, "Ayuda" in Spanish
     N_("Help"),
+    # Translators: Windows app, the menu bar (design screen W8) with the note size's entries;
+    # Windows says "Ansicht" in German, "Ver" in Spanish
+    N_("View"),
 )

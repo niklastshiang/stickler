@@ -26,5 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Strings\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- the tempo mark's font for the PDF (module win-sheet), the same file as the other apps' -->
+    <Content Include="..\..\packaging\fonts\Leipzig.ttf" Link="Leipzig.ttf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

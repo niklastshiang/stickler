@@ -88,7 +88,8 @@ public sealed record ResultScreen(
     IReadOnlyList<int> Meter,
     string MusicXml,
     string? Clicks,
-    IReadOnlyList<SongBar> Bars) : Screen("result");
+    IReadOnlyList<SongBar> Bars,
+    int Sheet = 0) : Screen("result");
 
 public sealed record ExportingScreen(
     string Song, string Title, string Subtitle, string Dest, IReadOnlyList<StepRow> Steps) : Screen("exporting");
@@ -151,7 +152,8 @@ public sealed record AppState(Screen Screen, Abilities Can)
                 Json.List(s, "meter", e => e.GetInt32()),
                 Json.Str(s, "musicxml"),
                 Json.OptStr(s, "clicks"),
-                Json.OptList(s, "bars", SongBar.Read)),
+                Json.OptList(s, "bars", SongBar.Read),
+                Json.OptInt(s, "sheet") ?? 0),
             "exporting" => new ExportingScreen(
                 Json.Str(s, "song"),
                 Json.Str(s, "title"),
