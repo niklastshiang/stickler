@@ -114,15 +114,17 @@ jobs:
           echo "4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806  xcodegen.zip" | shasum -a 256 -c
           unzip -q xcodegen.zip -d "$RUNNER_TEMP"
           "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate --spec mac/project.yml
-      - name: PROBE (temporary, claude/mac-site) screen recording on the runner
+      - name: Screen recording for the website's pictures (WebsiteScreenshotTests)
+        # The window server's picture of a window needs the right to record the screen. The
+        # runner has SIP off and gives it to /bin/bash; the test app and screencapture get the
+        # same entry (SPEC.md "Website", "Change 2026-11-25").
         run: |
-          mkdir -p "$RUNNER_TEMP/screenshots"
-          csrutil status || true
-          sw_vers || true
           db="/Library/Application Support/com.apple.TCC/TCC.db"
-          sudo sqlite3 "$db" "PRAGMA table_info(access)" | cut -d'|' -f2 | tr '\n' ' '; echo
-          sudo sqlite3 "$db" "SELECT client, client_type, auth_value FROM access WHERE service = 'kTCCServiceScreenCapture'" || true
-          screencapture -x "$RUNNER_TEMP/screenshots/probe-desktop.png"; echo "desktop from bash: exit $?"
+          for client in "ng.tshia.Stickler|0" "/usr/sbin/screencapture|1"; do
+            sudo sqlite3 "$db" "INSERT OR REPLACE INTO access SELECT service, '${client%|*}', ${client#*|}, auth_value, auth_reason, auth_version, NULL, policy_id, indirect_object_identifier_type, indirect_object_identifier, indirect_object_code_identity, flags, last_modified, pid, pid_version, boot_uuid, last_reminded FROM access WHERE service = 'kTCCServiceScreenCapture' AND client = '/bin/bash'"
+          done
+          sudo sqlite3 "$db" "SELECT client, auth_value FROM access WHERE service = 'kTCCServiceScreenCapture'"
+          sudo pkill -x tccd || true
       - name: Build and test
         env:
           TEST_RUNNER_STICKLER_SCREENSHOTS: ${{ runner.temp }}/screenshots
