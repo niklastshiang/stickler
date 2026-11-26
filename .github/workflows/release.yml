@@ -340,7 +340,7 @@ jobs:
           # the app starts its own core and shows its window (the consent: no models here)
           $run = Start-Process (Join-Path $app 'Stickler.exe') -PassThru
           Start-Sleep -Seconds 20
-          Check 'the app still runs after 20 s' (-not $run.HasExited)
+          Check "the app still runs after 20 s (it ended with: $(if ($run.HasExited) { $run.ExitCode } else { 'nothing' }))" (-not $run.HasExited)
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bitmap = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height

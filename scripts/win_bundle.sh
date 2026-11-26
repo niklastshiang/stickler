@@ -1,7 +1,7 @@
 #!/bin/bash
 # Assembles the folder the Windows installer installs (SPEC.md, module `win-package`, scope 1):
 #
-#   <layout>/Stickler.exe …             the app, published self-contained for the installer
+#   <layout>/Stickler.exe …             the app, built self-contained for the installer
 #   <layout>/core/bin/uv.exe, ffmpeg.exe, ffprobe.exe
 #   <layout>/core/python/               a relocatable Python with the core's packages and sources
 #   <layout>/core/python/share/stickler/adapters   the adapters' sources (no environments, no weights)
@@ -51,8 +51,12 @@ fetch() { # url, file, sha256
 }
 
 echo "== the app"
-"${DOTNET:-dotnet}" publish win/Stickler/Stickler.csproj -c Release -p:Platform=x64 \
+# built, not published: `dotnet publish` of the unpackaged WinUI app leaves out its own
+# resources (Stickler.pri and the compiled XAML), and the installed app ended at once on the
+# runner (run 45807640975); the self-contained build's folder is the one win.yml starts
+"${DOTNET:-dotnet}" build win/Stickler/Stickler.csproj -c Release -p:Platform=x64 \
   -p:SticklerInstalled=true -o "$layout" --nologo
+rm -f "$layout"/*.pdb
 
 echo "== Python $PYTHON_VERSION"
 fetch "https://github.com/astral-sh/python-build-standalone/releases/download/$PYTHON_BUILD/cpython-$PYTHON_VERSION+$PYTHON_BUILD-x86_64-pc-windows-msvc-install_only_stripped.tar.gz" \
@@ -124,7 +128,7 @@ echo "== nothing missing, nothing too much"
 tool check "$core"
 # the pruned Python still runs the core's entry points (a pattern too wide once took threading)
 "$py" -I -B -c 'import stickler_app.bridge, stickler_app.uninstall'
-for part in Stickler.exe Stickler.ico Strings/en.json; do
+for part in Stickler.exe Stickler.ico Stickler.pri App.xbf MainWindow.xbf Strings/en.json Leipzig.ttf; do
   test -f "$layout/$part" || { echo "missing: $part" >&2; exit 1; }
 done
 

@@ -4631,8 +4631,8 @@ then a development build's only.
 
 **Scope.**
 1. **The installed folder** (`%LOCALAPPDATA%\Programs\Stickler\`, as the spike):
-   - `Stickler.exe` with the app's self-contained runtime (`dotnet publish` of `win-shell`'s
-     project, Release, x64), `Stickler.ico`;
+   - `Stickler.exe` with the app's self-contained runtime (`dotnet build` of `win-shell`'s
+     project, Release, x64: `dotnet publish` leaves out the unpackaged app's `.pri` and compiled XAML, found 2026-11-26), `Stickler.ico`;
    - `core\bin\uv.exe`, `core\bin\ffmpeg.exe`, `core\bin\ffprobe.exe`, each pinned by version
      and SHA-256 at build time;
    - `core\python\`: python-build-standalone's CPython (assumption 3, pinned by SHA-256) with
