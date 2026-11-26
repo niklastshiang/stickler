@@ -1,5 +1,5 @@
 # The Windows app (SPEC.md, module `win-shell`, scope 4; CONSTRAINTS.md, the C# rows):
-# SticklerCore's tests on Linux, and on windows-2025 the whole solution built with warnings as
+# SticklerCore's and SticklerAudio's tests on Linux, and on windows-2025 the whole solution built with warnings as
 # errors, its format checked, the tests with the coverage gate, screenshots of the screens in
 # light and dark, and the built app as an artifact for the owner.
 name: win
@@ -53,6 +53,14 @@ jobs:
         run: >
           uv run python scripts/cobertura_gate.py "$RUNNER_TEMP/core.cobertura.xml"
           --include "win/SticklerCore/*.cs" --exclude "/obj/*"
+      - name: SticklerAudio's tests with coverage (the mixer and the player, without a sound device)
+        run: >
+          dotnet run --project win/SticklerAudio.Tests -c Release --
+          --coverage --coverage-output-format cobertura --coverage-output "$RUNNER_TEMP/audio.cobertura.xml"
+      - name: Coverage gate, SticklerAudio
+        run: >
+          uv run python scripts/cobertura_gate.py "$RUNNER_TEMP/audio.cobertura.xml"
+          --include "win/SticklerAudio/*.cs" --exclude "/obj/*"
 
   app-windows:
     runs-on: windows-2025
@@ -88,6 +96,14 @@ jobs:
         run: >
           uv run python scripts/cobertura_gate.py "$RUNNER_TEMP/core.cobertura.xml"
           --include "win/SticklerCore/*.cs" --exclude "/obj/*"
+      - name: SticklerAudio's tests with coverage (the mixer and the player, without a sound device)
+        run: >
+          dotnet run --project win/SticklerAudio.Tests -c Release --no-build --
+          --coverage --coverage-output-format cobertura --coverage-output "$RUNNER_TEMP/audio.cobertura.xml"
+      - name: Coverage gate, SticklerAudio
+        run: >
+          uv run python scripts/cobertura_gate.py "$RUNNER_TEMP/audio.cobertura.xml"
+          --include "win/SticklerAudio/*.cs" --exclude "/obj/*"
       - name: Screenshots, light and dark
         shell: pwsh
         run: >

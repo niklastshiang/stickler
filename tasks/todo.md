@@ -1438,7 +1438,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `dotnet run --project win/SticklerAudio.Tests -c Release -- --coverage …`, the gate ≥ 95 %
   - Dependencies: none · Files: `win/SticklerAudio/`, `win/SticklerAudio.Tests/`, `win/Stickler.sln`
 
-- [ ] **Task 222: The marker's scripts and the menu's logic** (M)
+- [x] **Task 222: The marker's scripts and the menu's logic** (M): done 2026-11-26 (Sonnet subagents; read and run again by the main session: `SticklerCore` 143 tests, 98.6 %). `SheetHtml.MarkScript`, `Marking`, `ClickScript` with `BarOfClick`, `KeyScript` with `KeyOfMessage` (added: a web view with the focus keeps plain keys from the window, so the page posts Space, Left, Right and Home itself), `PlaybackMenu`. The scripts passed `node --check`; in WebView2 they are first run by `win.yml`'s screenshots. Not ported: the Mac's marker scroll tests (they need a JavaScript engine).
   - Acceptance: SPEC scope 1, bullets 4–5: `SheetHtml.MarkScript`, `HitScript` and the marker's CSS as the Mac's `SheetHTML` (accent colour with alpha 0.2 light, 0.32 dark; scrolled into view above the bar); `PlaybackMenu` (titles, keys, enabled, the radio items); the Mac's `MarkerTests` and `ControlsMenuTests` cases.
   - Verify: as 220
   - Dependencies: 220 · Files: `win/SticklerCore/SheetHtml.cs`, `win/SticklerCore/PlaybackMenu.cs`, tests
@@ -1449,11 +1449,13 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Dependencies: none · Files: `src/stickler_app/win_texts.py`, `po/*`, `win/Stickler/Strings/`
 
 - [ ] **Task 224: The player** (M)
+  - 2026-11-26, written, the logic tested on Linux, not yet run on Windows: `Player` lives in `SticklerAudio` behind `IOutput` (26 tests with a fake device, 100 %), so the app keeps only `Sound.cs` (`WasapiOutput`, Media Foundation's reader), type-checked on Linux against NAudio.Wasapi 3.3.0. The device is opened for each run of playing and closed on pause, seek and the end, so nothing holds it meanwhile and a jump does not play what was read ahead. With default device routing Windows moves the sound to the new device when headphones are unplugged (it does not pause, as the Mac does): for the owner's check.
   - Acceptance: SPEC scope 3: `win/Stickler/Player.cs` implements `IPlaying` with `Mix`, `MediaFoundationReader` (WAV and AIFF through the managed readers), `WasapiPlayer` in shared mode with default device routing; unreadable reported for `playable`; the device freed on stop; a device that stops pauses.
   - Verify: `win.yml` (build, format); the player's test of scope 8
   - Dependencies: 220, 221 · Files: `win/Stickler/Player.cs`, `win/Stickler/Stickler.csproj`
 
 - [ ] **Task 225: The playback bar, the marker and the menu in the window** (L)
+  - 2026-11-26, written on Linux, not yet built: `Playbar.xaml(.cs)`, the Playback menu, the keys through the window's `KeyDown` (a focused slider or button keeps its own keys; menu accelerators without a modifier were not used), the marker and bar clicks in `SheetView`.
   - Acceptance: SPEC scopes 4–6: the bar as W10 (`docs/design/win/Playing*.dc.html`), the volume flyout, the three joined toggle buttons, the narrow window's rule, Narrator's names; the marker and bar clicks in `SheetView`; the Playback menu with its keys.
   - Verify: `win.yml`'s screenshots against the canvas; by hand in the VM or on the owner's PC
   - Dependencies: 222–224 · Files: `win/Stickler/MainWindow.xaml(.cs)`, `win/Stickler/Playbar.xaml(.cs)`, `win/Stickler/SheetView.xaml.cs`

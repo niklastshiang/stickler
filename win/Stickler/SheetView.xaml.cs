@@ -13,7 +13,9 @@ namespace Stickler;
 /// core's pages as <see cref="SheetModel"/> holds them, served from memory under
 /// <see cref="SheetHtml.Address"/>; its width goes back to the model. The page runs no script
 /// of its own; the app's own scripts put new pages into the loaded document and turn Ctrl+wheel
-/// (a touchpad's pinch arrives as one) into the core's zoom steps. A pure view: checked by
+/// (a touchpad's pinch arrives as one) into the core's zoom steps; for playback (module
+/// <c>win-playback</c>, scope 5) they draw the marker and report a click on a bar and the
+/// playback's keys. A pure view: checked by
 /// screenshots and by hand, not counted for coverage.</summary>
 public sealed partial class SheetView : UserControl
 {
@@ -37,6 +39,9 @@ public sealed partial class SheetView : UserControl
     private const string PrintAddress = SheetHtml.Address + "print";
 
     private SheetModel? sheet;
+    private PlaybackModel? playback;
+    private Action<PlaybackKey> pressed = _ => { };
+    private Marking? marking; // the marker as the page shows it; null after new pages
     private Strings strings = Strings.English;
     private string title = "";
     private Task<CoreWebView2Environment>? environment;
@@ -55,7 +60,11 @@ public sealed partial class SheetView : UserControl
     {
         InitializeComponent();
         SizeChanged += (_, _) => ReportWidth();
-        ActualThemeChanged += (_, _) => Show();
+        ActualThemeChanged += (_, _) =>
+        {
+            Show();
+            Mark();
+        };
     }
 
     /// <summary>Where WebView2 keeps its data: under Stickler's folder, not next to the .exe
@@ -65,12 +74,15 @@ public sealed partial class SheetView : UserControl
 
     /// <summary>Starts the view on <paramref name="model"/>'s pages; <paramref name="fail"/>
     /// tells the reader why WebView2 could not start (its own words), instead of a grey desk.</summary>
-    public void Attach(SheetModel model, Strings words, Action<string> fail)
+    public void Attach(SheetModel model, PlaybackModel playing, Strings words, Action<string> fail, Action<PlaybackKey> key)
     {
         sheet = model;
+        playback = playing;
         strings = words;
         failed = fail;
+        pressed = key;
         sheet.PropertyChanged += OnSheetChanged;
+        playback.PropertyChanged += OnPlaybackChanged;
         _ = StartOrSayWhyAsync();
     }
 
@@ -108,6 +120,8 @@ public sealed partial class SheetView : UserControl
         Lock(core.Settings);
         core.Settings.IsWebMessageEnabled = true; // the wheel script's steps
         await core.AddScriptToExecuteOnDocumentCreatedAsync(WheelScript);
+        await core.AddScriptToExecuteOnDocumentCreatedAsync(SheetHtml.ClickScript);
+        await core.AddScriptToExecuteOnDocumentCreatedAsync(SheetHtml.KeyScript);
         core.AddWebResourceRequestedFilter(SheetHtml.Address + "*", CoreWebView2WebResourceContext.All);
         core.WebResourceRequested += (_, e) => Serve(core, e, document);
         core.NavigationStarting += (_, e) =>
@@ -132,6 +146,8 @@ public sealed partial class SheetView : UserControl
                 shown = null; // loaded again with the next pages
             }
             Show(); // pages that came while it loaded
+            marking = null;
+            Mark();
         };
         core.WebMessageReceived += (_, e) => Step(e.TryGetWebMessageAsString());
         ReportWidth();
@@ -171,6 +187,35 @@ public sealed partial class SheetView : UserControl
         }
     }
 
+    private void OnPlaybackChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PlaybackModel.Marked))
+        {
+            Mark();
+        }
+    }
+
+    /// <summary>The sounding bar marked in the accent colour (W10), sent to the page only when
+    /// it changed or the pages are new. The bar is outside the page, so nothing of the view is
+    /// covered: no room is kept free.</summary>
+    private void Mark()
+    {
+        if (sheet is null || playback is null || Web.CoreWebView2 is not { } core || !loaded || navigating)
+        {
+            return;
+        }
+        var dark = ActualTheme == ElementTheme.Dark;
+        var accent = (Windows.UI.Color)Application.Current.Resources[dark ? "SystemAccentColorLight2" : "SystemAccentColorDark1"];
+        var mark = playback.Marked is { } written ? Marker.Locate(written, sheet.Pages) : null;
+        var next = new Marking(mark, new Rgb(accent.R, accent.G, accent.B), dark, 0);
+        if (next == marking)
+        {
+            return;
+        }
+        marking = next;
+        _ = core.ExecuteScriptAsync(next.Script);
+    }
+
     private void ReportWidth()
     {
         if (sheet is not null && SheetHtml.PagesWidth(ActualWidth) is { } width)
@@ -203,6 +248,8 @@ public sealed partial class SheetView : UserControl
             return;
         }
         _ = core.ExecuteScriptAsync(content.Replace);
+        marking = null; // the new pages have no marker yet
+        Mark();
     }
 
     private void Label() =>
@@ -219,6 +266,14 @@ public sealed partial class SheetView : UserControl
                 sheet?.ZoomOut();
                 break;
             default:
+                if (sheet is not null && SheetHtml.BarOfClick(message, sheet.Pages) is { } bar)
+                {
+                    playback?.Jump(bar);
+                }
+                else if (SheetHtml.KeyOfMessage(message) is { } key)
+                {
+                    pressed(key);
+                }
                 break;
         }
     }

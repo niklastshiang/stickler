@@ -10,4 +10,8 @@
   <ItemGroup>
     <PackageReference Include="NAudio.Core" Version="[3.3.0]" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- IPlaying and Gains: the player the playback model drives -->
+    <ProjectReference Include="..\SticklerCore\SticklerCore.csproj" />
+  </ItemGroup>
 </Project>

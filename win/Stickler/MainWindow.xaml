@@ -51,6 +51,17 @@
                 <MenuFlyoutItem x:Name="ZoomOutItem" Click="OnZoomOut" />
                 <MenuFlyoutItem x:Name="ActualSizeItem" Click="OnActualSize" />
             </MenuBarItem>
+            <!-- W10: playback (module win-playback); the keys are the window's (OnKey), shown here as text -->
+            <MenuBarItem x:Name="PlaybackMenuBar">
+                <MenuFlyoutItem x:Name="PlayItem" Click="OnPlay" />
+                <MenuFlyoutItem x:Name="PreviousBarItem" Click="OnPreviousBar" />
+                <MenuFlyoutItem x:Name="NextBarItem" Click="OnNextBar" />
+                <MenuFlyoutItem x:Name="GoToStartItem" Click="OnGoToStart" />
+                <MenuFlyoutSeparator />
+                <RadioMenuFlyoutItem x:Name="HearSongItem" GroupName="Hear" Click="OnHearSong" />
+                <RadioMenuFlyoutItem x:Name="HearHitsItem" GroupName="Hear" Click="OnHearHits" />
+                <RadioMenuFlyoutItem x:Name="HearBothItem" GroupName="Hear" Click="OnHearBoth" />
+            </MenuBarItem>
             <MenuBarItem x:Name="HelpMenu">
                 <MenuFlyoutItem x:Name="HelpItem" Click="OnHelp" />
                 <MenuFlyoutItem x:Name="LicencesItem" Click="OnLicences" />
@@ -127,8 +138,15 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- W6: the sheet music (module win-sheet) -->
-            <local:SheetView x:Name="ResultPage" Visibility="Collapsed" />
+            <!-- W6 and W10: the sheet music (module win-sheet) and the playback bar under it -->
+            <Grid x:Name="ResultPage" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <local:SheetView x:Name="SheetPane" />
+                <local:Playbar x:Name="PlayPane" Grid.Row="1" />
+            </Grid>
 
             <!-- the core has ended -->
             <StackPanel x:Name="StoppedPage" Visibility="Collapsed" MaxWidth="560" Margin="24,48,24,24" Spacing="12" VerticalAlignment="Top">

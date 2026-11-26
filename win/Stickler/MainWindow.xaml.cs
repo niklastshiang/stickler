@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Stickler.Audio;
 using Stickler.Core;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -14,7 +15,8 @@ using Page = Stickler.Core.Page;
 
 namespace Stickler;
 
-/// <summary>The window of design screens W1–W5, W7 and W8 (SPEC.md, module <c>win-shell</c>).
+/// <summary>The window of design screens W1–W5, W7, W8 and W10 (SPEC.md, modules
+/// <c>win-shell</c> and <c>win-playback</c>).
 /// It draws what <see cref="AppModel"/> and <see cref="WindowView"/> say and forwards every
 /// click as one action; it decides nothing itself. A pure view: checked by screenshots and by
 /// hand, not counted for coverage.</summary>
@@ -27,6 +29,7 @@ public sealed partial class MainWindow : Window
     private readonly AppModel model;
     private readonly Flows flows;
     private readonly WinAsk ask;
+    private readonly Player player;
     private readonly DispatcherQueueTimer noticeTimer;
     private ContentDialog? setup;
     private SetupDialog shownSetup = SetupDialog.None;
@@ -47,7 +50,8 @@ public sealed partial class MainWindow : Window
         var languages = GlobalizationPreferences.Languages.ToList();
         strings = Strings.Load(Path.Combine(AppContext.BaseDirectory, "Strings"), languages);
         var queue = DispatcherQueue.GetForCurrentThread();
-        model = new AppModel(languages, wanted => CoreLaunch.ForApp(Environment(), AppContext.BaseDirectory, windows: true, wanted), work => queue.TryEnqueue(() => work()));
+        player = Sound.Player(error => strings.Text("The song cannot be played: {reason}", ("reason", error.Message)));
+        model = new AppModel(languages, wanted => CoreLaunch.ForApp(Environment(), AppContext.BaseDirectory, windows: true, wanted), work => queue.TryEnqueue(() => work()), player);
         ask = new WinAsk(this, strings);
         flows = new Flows(model, ask, strings);
         noticeTimer = queue.CreateTimer();
@@ -58,8 +62,11 @@ public sealed partial class MainWindow : Window
         Words();
         model.PropertyChanged += OnModelChanged;
         model.Sheet.PropertyChanged += OnSheetChanged;
-        ResultPage.Attach(model.Sheet, strings, reason => model.Tell(new Notice(reason, null)));
+        model.Playback.PropertyChanged += OnPlaybackChanged;
+        SheetPane.Attach(model.Sheet, model.Playback, strings, reason => model.Tell(new Notice(reason, null)), key => PlaybackMenu.Press(model, key));
+        PlayPane.Attach(model.Playback, strings);
         Keys();
+        Root.KeyDown += OnKey;
         Closed += OnClosed;
         Activated += OnFirstActivated;
         model.Launch();
@@ -108,6 +115,7 @@ public sealed partial class MainWindow : Window
         ZoomInItem.Text = T("Zoom In");
         ZoomOutItem.Text = T("Zoom Out");
         ActualSizeItem.Text = T("Actual Size");
+        PlaybackMenuBar.Title = PlaybackMenu.MenuTitle(strings);
         HelpMenu.Title = T("Help");
         HelpItem.Text = T("Stickler Help");
         LicencesItem.Text = T("Licences");
@@ -136,6 +144,67 @@ public sealed partial class MainWindow : Window
         {
             Render();
         }
+    }
+
+    private void OnPlaybackChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // not the position, twenty times a second
+        if (e.PropertyName is nameof(PlaybackModel.Playing) or nameof(PlaybackModel.CanPlay) or nameof(PlaybackModel.Hear))
+        {
+            RenderPlayback();
+        }
+    }
+
+    /// <summary>The Playback menu (W10) as <see cref="PlaybackMenu"/> says it: the first entry
+    /// names what Space does now, the keys are shown as text (they are the window's, see
+    /// <see cref="OnKey"/>).</summary>
+    private void RenderPlayback()
+    {
+        MenuFlyoutItem[] items = [PlayItem, PreviousBarItem, NextBarItem, GoToStartItem];
+        var entries = PlaybackMenu.Entries(model.Playback, strings);
+        var enabled = PlaybackMenu.Enabled(model);
+        for (var i = 0; i < items.Length; i++)
+        {
+            items[i].Text = entries[i].Title;
+            items[i].KeyboardAcceleratorTextOverride = entries[i].KeyName;
+            items[i].IsEnabled = enabled;
+        }
+        RadioMenuFlyoutItem[] hearing = [HearSongItem, HearHitsItem, HearBothItem];
+        var choices = PlaybackMenu.Hearing(model.Playback, strings);
+        for (var i = 0; i < hearing.Length; i++)
+        {
+            hearing[i].Text = choices[i].Title;
+            hearing[i].IsChecked = choices[i].IsChecked;
+            hearing[i].IsEnabled = enabled;
+        }
+    }
+
+    /// <summary>Space, Left, Right and Home play and move (W10) wherever the focus is in the
+    /// window, unless the focused control used the key itself (a slider its arrows, a button
+    /// Space: those never arrive here) or a text is being typed.</summary>
+    private void OnKey(object sender, KeyRoutedEventArgs e)
+    {
+        PlaybackKey? key = e.Key switch
+        {
+            Windows.System.VirtualKey.Space => PlaybackKey.Space,
+            Windows.System.VirtualKey.Left => PlaybackKey.Left,
+            Windows.System.VirtualKey.Right => PlaybackKey.Right,
+            Windows.System.VirtualKey.Home => PlaybackKey.Home,
+            _ => null,
+        };
+        if (key is not { } pressed || Modified())
+        {
+            return;
+        }
+        var typing = FocusManager.GetFocusedElement(Root.XamlRoot) is TextBox or PasswordBox or RichEditBox or AutoSuggestBox;
+        e.Handled = PlaybackMenu.Press(model, pressed, typing);
+    }
+
+    private static bool Modified()
+    {
+        static bool Down(Windows.System.VirtualKey key) =>
+            Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        return Down(Windows.System.VirtualKey.Control) || Down(Windows.System.VirtualKey.Menu) || Down(Windows.System.VirtualKey.Shift);
     }
 
     /// <summary>View's keys (W8): Ctrl+Plus, Ctrl+Minus and Ctrl+0, also on the keypad; the
@@ -171,7 +240,7 @@ public sealed partial class MainWindow : Window
         Header.Visibility = Shown(WindowView.ShowsHeader(model));
         Title = model.Title == "Stickler" ? "Stickler" : $"{model.Title} – Stickler";
         SongTitle.Text = model.Title;
-        ResultPage.SongTitle = model.Title;
+        SheetPane.SongTitle = model.Title;
         SongSubtitle.Text = model.Subtitle;
         SongSubtitle.Visibility = Shown(model.Subtitle.Length > 0);
 
@@ -211,6 +280,7 @@ public sealed partial class MainWindow : Window
             StoppedDetails.Text = end.TechnicalDetails;
             StoppedDetailsExpander.IsExpanded = end.NeverStarted;
         }
+        RenderPlayback();
         Setup(WindowView.Dialog(model));
         Notice();
     }
@@ -554,7 +624,7 @@ public sealed partial class MainWindow : Window
     private async Task<bool> PrintAsync(A4Pages pages, string path)
     {
         var font = await File.ReadAllBytesAsync(Path.Combine(AppContext.BaseDirectory, "Leipzig.ttf"));
-        return await ResultPage.PrintAsync(SheetHtml.A4Document(pages, font), path);
+        return await SheetPane.PrintAsync(SheetHtml.A4Document(pages, font), path);
     }
 
     private void OnZoomIn(object sender, RoutedEventArgs e) => model.Sheet.ZoomIn();
@@ -574,6 +644,20 @@ public sealed partial class MainWindow : Window
     private async void OnRestore(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.RestoreAsync());
 
     private async void OnRemoveModels(object sender, RoutedEventArgs e) => await OneAtATime(() => flows.RemoveModelsAsync());
+
+    private void OnPlay(object sender, RoutedEventArgs e) => PlaybackMenu.Press(model, PlaybackKey.Space);
+
+    private void OnPreviousBar(object sender, RoutedEventArgs e) => PlaybackMenu.Press(model, PlaybackKey.Left);
+
+    private void OnNextBar(object sender, RoutedEventArgs e) => PlaybackMenu.Press(model, PlaybackKey.Right);
+
+    private void OnGoToStart(object sender, RoutedEventArgs e) => PlaybackMenu.Press(model, PlaybackKey.Home);
+
+    private void OnHearSong(object sender, RoutedEventArgs e) => model.Playback.SetHear(Hear.Song);
+
+    private void OnHearHits(object sender, RoutedEventArgs e) => model.Playback.SetHear(Hear.Hits);
+
+    private void OnHearBoth(object sender, RoutedEventArgs e) => model.Playback.SetHear(Hear.Both);
 
     private void OnCloseSong(object sender, RoutedEventArgs e) => model.Close();
 
@@ -665,6 +749,9 @@ public sealed partial class MainWindow : Window
     {
         model.PropertyChanged -= OnModelChanged;
         model.Sheet.PropertyChanged -= OnSheetChanged;
+        model.Playback.PropertyChanged -= OnPlaybackChanged;
+        PlayPane.Detach();
+        player.Dispose(); // the sound stops at once, before the core is waited for
         // QuitAsync: 3 s for the core to quit, then its tree ended and 2 s for that
         Task.Run(model.QuitAsync).Wait(TimeSpan.FromSeconds(8));
     }

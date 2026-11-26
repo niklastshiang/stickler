@@ -5,6 +5,17 @@ using System.Text.Json;
 
 namespace Stickler.Core;
 
+/// <summary>A colour as bytes.</summary>
+public readonly record struct Rgb(byte Red, byte Green, byte Blue);
+
+/// <summary>What the marker shows: the view sends <see cref="SheetHtml.MarkScript"/> again only
+/// when this changed or the pages were replaced.</summary>
+public sealed record Marking(Marker.Mark? Mark, Rgb Accent, bool Dark, double Room)
+{
+    /// <summary>The script that draws it.</summary>
+    public string Script => SheetHtml.MarkScript(Mark, Accent, Dark, Room);
+}
+
 /// <summary>The page the sheet's WebView2 shows (SPEC.md, module <c>win-sheet</c>, scope 1;
 /// design screen W6), as the Mac's <c>SheetHTML</c>: the core's pages one under the other on the
 /// grey desk, each on white paper with the canvas's shadow; in dark mode the paper is inverted
@@ -57,6 +68,7 @@ public static class SheetHtml
             .paper { box-shadow: 0 1px 3px rgba(0,0,6,.18); {{paper}} }
             .page:last-child { margin-bottom: 0; }
             .page svg { display: block; }
+            #marker { position: absolute; border-radius: 5px; pointer-events: none; }
             """;
         return new Content(style, sheets.ToString());
     }
@@ -89,6 +101,107 @@ public static class SheetHtml
             """;
     }
 
+    /// <summary>Draws the playback marker over a page's bar or takes it away (no mark), and scrolls
+    /// it into view when it is above the window or below <c>innerHeight - room</c> (the Mac's
+    /// <c>markScript</c>). One self-contained expression for <c>ExecuteScriptAsync</c>: the values
+    /// are literals in it, numbers in the invariant culture, the colour as a JSON string. The
+    /// answer is <c>true</c> when a marker is shown.</summary>
+    public static string MarkScript(Marker.Mark? mark, Rgb accent, bool dark, double room)
+    {
+        var alpha = dark ? "0.32" : "0.2";
+        var colour = mark is null ? "" : $"rgba({accent.Red}, {accent.Green}, {accent.Blue}, {alpha})";
+        var box = mark?.Box;
+        return $$"""
+            (() => {
+            const page = {{(mark?.Page ?? -1).ToString(CultureInfo.InvariantCulture)}};
+            const x = {{Number(box?.X ?? 0)}}, y = {{Number(box?.Y ?? 0)}};
+            const width = {{Number(box?.Width ?? 0)}}, height = {{Number(box?.Height ?? 0)}};
+            const colour = {{Content.Literal(colour)}};
+            const room = {{Number(mark is null ? 0 : room)}};
+            let mark = document.getElementById("marker");
+            const host = page < 0 ? null : document.querySelectorAll(".page")[page];
+            if (!host) { if (mark) { mark.remove(); } return false; }
+            if (!mark) { mark = document.createElement("div"); mark.id = "marker"; }
+            if (mark.parentNode !== host) { host.appendChild(mark); }
+            mark.style.left = x + "px"; mark.style.top = y + "px";
+            mark.style.width = width + "px"; mark.style.height = height + "px";
+            mark.style.background = colour;
+            const seen = mark.getBoundingClientRect();
+            if (seen.top < 0 || seen.bottom > window.innerHeight - room) {
+              window.scrollTo(0, window.scrollY + seen.top - (window.innerHeight - room) / 3);
+            }
+            return true;
+            })()
+            """;
+    }
+
+    /// <summary>The page's click listener, added to every document (the app's own script; the
+    /// page's own stay off). A plain primary click on a page posts <c>bar:page:x:y</c> (the
+    /// page's index and the point in page pixels, undoing a zoom's scale), as the Mac's
+    /// <c>hitScript</c> finds it; <see cref="BarOfClick"/> reads it.</summary>
+    public const string ClickScript = """
+        document.addEventListener("click", event => {
+          if (event.button !== 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) { return; }
+          const pages = document.querySelectorAll(".page");
+          for (let k = 0; k < pages.length; k++) {
+            const r = pages[k].getBoundingClientRect();
+            if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) {
+              const scale = r.width / Math.max(1, pages[k].offsetWidth);
+              window.chrome.webview.postMessage("bar:" + k + ":" + ((event.clientX - r.left) / scale) + ":" + ((event.clientY - r.top) / scale));
+              return;
+            }
+          }
+        });
+        """;
+
+    /// <summary>The written bar a <see cref="ClickScript"/> message is on, in the shown pages;
+    /// <c>null</c> for a miss, any other message, a malformed one or a page no longer shown.</summary>
+    public static int? BarOfClick(string message, IReadOnlyList<SheetPage> pages)
+    {
+        var parts = message.Split(':');
+        if (parts.Length != 4 || parts[0] != "bar"
+            || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var page)
+            || page >= pages.Count
+            || !double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
+            || !double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var y)
+            || !double.IsFinite(x) || !double.IsFinite(y))
+        {
+            return null;
+        }
+        return Marker.BarAt(x, y, pages[page]);
+    }
+
+    /// <summary>The page's key listener, added to every document beside <see cref="ClickScript"/>.
+    /// With the web view focused (after a click on a bar) the window's accelerators do not see
+    /// plain keys, so Space (not as an auto-repeat), Left, Right and Home, pressed without
+    /// Ctrl, Alt, Shift or Meta, are posted as <c>key:space</c>, <c>key:left</c>,
+    /// <c>key:right</c> and <c>key:home</c> and kept from the page; every other key (Page
+    /// Up/Down, Up/Down) is left to it. <see cref="KeyOfMessage"/> reads the message.</summary>
+    public const string KeyScript = """
+        document.addEventListener("keydown", event => {
+          if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) { return; }
+          const keys = { " ": "space", "ArrowLeft": "left", "ArrowRight": "right", "Home": "home" };
+          const name = Object.prototype.hasOwnProperty.call(keys, event.key) ? keys[event.key] : null;
+          if (name === null || (name === "space" && event.repeat)) { return; }
+          event.preventDefault();
+          window.chrome.webview.postMessage("key:" + name);
+        }, true);
+        """;
+
+    /// <summary>The key a <see cref="KeyScript"/> message names; <c>null</c> for any other message.</summary>
+    public static PlaybackKey? KeyOfMessage(string message) => message switch
+    {
+        "key:space" => PlaybackKey.Space,
+        "key:left" => PlaybackKey.Left,
+        "key:right" => PlaybackKey.Right,
+        "key:home" => PlaybackKey.Home,
+        _ => null,
+    };
+
+    /// <summary>A number as a JavaScript literal, whatever the culture (0 for NaN and infinities).</summary>
+    private static string Number(double value) =>
+        double.IsFinite(value) ? value.ToString("R", CultureInfo.InvariantCulture) : "0";
+
     /// <summary>Effective pixels as CSS writes them, whatever the reader's culture.</summary>
     private static string Px(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
@@ -113,7 +226,7 @@ public static class SheetHtml
             + $" document.body.innerHTML = {Literal(Sheets)}; true";
 
         /// <summary>A string as a JavaScript literal (JSON's, with <c>&lt;</c> and the like escaped).</summary>
-        private static string Literal(string text)
+        internal static string Literal(string text)
         {
             using var buffer = new MemoryStream();
             using (var writer = new Utf8JsonWriter(buffer))

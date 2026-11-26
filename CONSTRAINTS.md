@@ -31,8 +31,8 @@ Checked by `uv run python scripts/floor_guard.py` (diff-based, exit 0 clean / 1 
 | Swift coverage | `SticklerCore` and the app's models line coverage >= 95% (pure SwiftUI views excluded, as `stickler_gtk/ui/`); in the app target, the functions of its logic types (`Exports`, `Removal`, `Panels`, `SheetPDF`, `PageLoad`, `SheetHTML`, `ZoomMenu`, `Backups`, `Uninstalling`, `Player`, `ControlsMenu`, `CorrectionsMenu`) >= 95%, the AppKit-only `SystemAsking` and `RemovalQuestion` excluded | `scripts/swift_coverage.py`, `scripts/xccov_gate.py` | CI (`.github/workflows/mac.yml`) |
 | C# build | Zero warnings: `TreatWarningsAsErrors`, `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`, `Nullable=enable` (`win/Directory.Build.props`) | `dotnet build win/Stickler.sln` | CI (`.github/workflows/win.yml`), on the owner's PC |
 | C# format | Zero files needing reformat | `dotnet format win/Stickler.sln --verify-no-changes` | CI (`.github/workflows/win.yml`) |
-| C# tests | All MSTest tests pass, `SticklerCore` on Linux and Windows | `dotnet test` | CI (`.github/workflows/win.yml`) |
-| C# coverage | `SticklerCore` and the app's logic types line coverage >= 95% (pure XAML views and their code-behind excluded, as `stickler_gtk/ui/`) | `scripts/cobertura_gate.py` | CI (`.github/workflows/win.yml`) |
+| C# tests | All MSTest tests pass, `SticklerCore` and `SticklerAudio` on Linux and Windows | `dotnet test` | CI (`.github/workflows/win.yml`) |
+| C# coverage | `SticklerCore`, `SticklerAudio` (from 2026-11-26) and the app's logic types line coverage >= 95% (pure XAML views and their code-behind excluded, as `stickler_gtk/ui/`) | `scripts/cobertura_gate.py` | CI (`.github/workflows/win.yml`) |
 | GTK boundary | No `gi` import in `src/stickler` or `src/stickler_app`; `stickler_app` imports no `stickler_gtk`, `stickler` neither app package | `tests/gtk/test_boundaries.py` | task end, pre-commit, CI |
 | Secrets | No secrets anywhere in the git history | `gitleaks git . --redact --no-banner` | CI (`.github/workflows/check.yml`) |
 

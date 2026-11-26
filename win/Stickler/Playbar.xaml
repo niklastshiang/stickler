@@ -1,0 +1,70 @@
+<UserControl
+    x:Class="Stickler.Playbar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Design screen W10 (docs/design/win/Playing.dc.html): the playback bar under the sheet,
+         on the header's layer. Every text is set from code, from po/ through the string tables. -->
+    <Grid x:Name="Bar" Height="64" Padding="24,0,24,0" ColumnSpacing="12"
+          Background="{ThemeResource LayerFillColorDefaultBrush}"
+          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="120" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <Button x:Name="PreviousButton" Width="32" Height="32" Padding="0" Background="Transparent" BorderThickness="0" Click="OnPrevious">
+                <FontIcon Glyph="&#xE892;" FontSize="16" />
+            </Button>
+            <Button x:Name="PlayButton" Width="40" Height="40" Padding="0" CornerRadius="20" Style="{StaticResource AccentButtonStyle}" Click="OnPlay">
+                <FontIcon x:Name="PlayIcon" Glyph="&#xE768;" FontSize="16" />
+            </Button>
+            <Button x:Name="NextButton" Width="32" Height="32" Padding="0" Background="Transparent" BorderThickness="0" Click="OnNext">
+                <FontIcon Glyph="&#xE893;" FontSize="16" />
+            </Button>
+        </StackPanel>
+
+        <TextBlock x:Name="TimeText" Grid.Column="1" MinWidth="36" TextAlignment="Right" VerticalAlignment="Center"
+                   Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <Slider x:Name="PositionSlider" Grid.Column="2" Minimum="0" Maximum="1" StepFrequency="0.01" SmallChange="1" LargeChange="5"
+                IsThumbToolTipEnabled="False" VerticalAlignment="Center" ValueChanged="OnPositionChanged" />
+        <TextBlock x:Name="LengthText" Grid.Column="3" MinWidth="36" VerticalAlignment="Center"
+                   Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <TextBlock x:Name="BarText" Grid.Column="4" MinWidth="96" VerticalAlignment="Center" TextWrapping="NoWrap" />
+
+        <Button x:Name="VolumeButton" Grid.Column="5" Width="32" Height="32" Padding="0" Background="Transparent" BorderThickness="0" VerticalAlignment="Center">
+            <FontIcon Glyph="&#xE767;" FontSize="16" />
+            <Button.Flyout>
+                <Flyout Placement="Top">
+                    <Grid Width="268" ColumnSpacing="12" RowSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" MinWidth="96" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="32" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="SongVolumeText" VerticalAlignment="Center" />
+                        <Slider x:Name="SongVolumeSlider" Grid.Column="1" Minimum="0" Maximum="100" VerticalAlignment="Center" ValueChanged="OnSongVolumeChanged" />
+                        <TextBlock x:Name="HitsVolumeText" Grid.Row="1" VerticalAlignment="Center" />
+                        <Slider x:Name="HitsVolumeSlider" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="100" VerticalAlignment="Center" ValueChanged="OnHitsVolumeChanged" />
+                    </Grid>
+                </Flyout>
+            </Button.Flyout>
+        </Button>
+
+        <!-- Song · Hits · Both: three joined toggle buttons, WinUI has no segmented control -->
+        <StackPanel x:Name="HearGroup" Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
+            <ToggleButton x:Name="HearSongButton" MinWidth="64" Height="32" CornerRadius="4,0,0,4" Click="OnHearSong" />
+            <ToggleButton x:Name="HearHitsButton" MinWidth="64" Height="32" CornerRadius="0" Margin="-1,0,0,0" Click="OnHearHits" />
+            <ToggleButton x:Name="HearBothButton" MinWidth="64" Height="32" CornerRadius="0,4,4,0" Margin="-1,0,0,0" Click="OnHearBoth" />
+        </StackPanel>
+    </Grid>
+</UserControl>
