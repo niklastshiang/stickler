@@ -33,6 +33,7 @@ public sealed partial class MainWindow : Window
     private readonly Player player;
     private readonly string windowSettings; // where "the corrections pane is open" is kept
     private bool correctionsShown;
+    private bool renderingCorrections; // the button is being set from the state: not the reader's doing
     private readonly DispatcherQueueTimer noticeTimer;
     private ContentDialog? setup;
     private SetupDialog shownSetup = SetupDialog.None;
@@ -171,7 +172,9 @@ public sealed partial class MainWindow : Window
         var enabled = CorrectionsPane.Enabled(model);
         var presented = CorrectionsPane.Presented(correctionsShown, model);
         CorrectionsButton.IsEnabled = CorrectionsItem.IsEnabled = enabled;
+        renderingCorrections = true;
         CorrectionsButton.IsChecked = CorrectionsItem.IsChecked = presented;
+        renderingCorrections = false;
         CorrectionsPaneView.Visibility = Shown(presented);
         if (CorrectionsPane.Controls(model) is { } controls)
         {
@@ -182,11 +185,22 @@ public sealed partial class MainWindow : Window
         CorrectingRing.Visibility = Shown(correcting);
     }
 
-    /// <summary>The button and View › Corrections (Ctrl+Shift+C): open or closed, kept for the
-    /// next start.</summary>
-    private void OnCorrections(object sender, RoutedEventArgs e)
+    /// <summary>View › Corrections (Ctrl+Shift+C): open or closed, kept for the next start.</summary>
+    private void OnCorrections(object sender, RoutedEventArgs e) =>
+        ShowCorrections(!CorrectionsPane.Presented(correctionsShown, model));
+
+    /// <summary>The button beside Export, pressed or toggled by Narrator.</summary>
+    private void OnCorrectionsToggled(object sender, RoutedEventArgs e)
     {
-        correctionsShown = !CorrectionsPane.Presented(correctionsShown, model);
+        if (!renderingCorrections)
+        {
+            ShowCorrections(CorrectionsButton.IsChecked == true);
+        }
+    }
+
+    private void ShowCorrections(bool wanted)
+    {
+        correctionsShown = wanted;
         new WindowSettings(correctionsShown).Save(windowSettings);
         RenderCorrections();
     }

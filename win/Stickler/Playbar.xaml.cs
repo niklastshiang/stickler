@@ -166,16 +166,28 @@ public sealed partial class Playbar : UserControl
         }
     }
 
+    // Checked, not Click: Narrator toggles a button without clicking it
     private void OnHearSong(object sender, RoutedEventArgs e) => Choose(Hear.Song);
 
     private void OnHearHits(object sender, RoutedEventArgs e) => Choose(Hear.Hits);
 
     private void OnHearBoth(object sender, RoutedEventArgs e) => Choose(Hear.Both);
 
-    // a click on the chosen button would switch it off: the model's value is shown again
     private void Choose(Hear next)
     {
-        playback?.SetHear(next);
-        Show();
+        if (!showing)
+        {
+            playback?.SetHear(next);
+            Show();
+        }
+    }
+
+    // the chosen button was switched off: one of the three is always on, so it is shown again
+    private void OnHearKept(object sender, RoutedEventArgs e)
+    {
+        if (!showing)
+        {
+            Show();
+        }
     }
 }

@@ -104,7 +104,7 @@
                         </MenuFlyout>
                     </DropDownButton.Flyout>
                 </DropDownButton>
-                <ToggleButton x:Name="CorrectionsButton" Width="32" Height="32" Padding="0" Click="OnCorrections">
+                <ToggleButton x:Name="CorrectionsButton" Width="32" Height="32" Padding="0" Checked="OnCorrectionsToggled" Unchecked="OnCorrectionsToggled">
                     <FontIcon Glyph="&#xEA49;" FontSize="16" />
                 </ToggleButton>
             </StackPanel>

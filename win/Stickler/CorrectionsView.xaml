@@ -25,9 +25,9 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <ToggleButton x:Name="HalfButton" Height="32" Padding="4,0,4,0" HorizontalAlignment="Stretch" CornerRadius="4,0,0,4" Click="OnHalf" />
-                                <ToggleButton x:Name="NormalButton" Grid.Column="1" Height="32" Padding="4,0,4,0" HorizontalAlignment="Stretch" CornerRadius="0" Margin="-1,0,0,0" Click="OnNormal" />
-                                <ToggleButton x:Name="DoubleButton" Grid.Column="2" Height="32" Padding="4,0,4,0" HorizontalAlignment="Stretch" CornerRadius="0,4,4,0" Margin="-1,0,0,0" Click="OnDouble" />
+                                <ToggleButton x:Name="HalfButton" Height="32" Padding="4,0,4,0" HorizontalAlignment="Stretch" CornerRadius="4,0,0,4" Checked="OnHalf" Unchecked="OnTempoKept" />
+                                <ToggleButton x:Name="NormalButton" Grid.Column="1" Height="32" Padding="4,0,4,0" HorizontalAlignment="Stretch" CornerRadius="0" Margin="-1,0,0,0" Checked="OnNormal" Unchecked="OnTempoKept" />
+                                <ToggleButton x:Name="DoubleButton" Grid.Column="2" Height="32" Padding="4,0,4,0" HorizontalAlignment="Stretch" CornerRadius="0,4,4,0" Margin="-1,0,0,0" Checked="OnDouble" Unchecked="OnTempoKept" />
                             </Grid>
                         </StackPanel>
                         <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />

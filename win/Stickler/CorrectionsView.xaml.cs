@@ -81,10 +81,29 @@ public sealed partial class CorrectionsView : UserControl
         ToolTipService.SetToolTip(button, name);
     }
 
-    // a click on the chosen tempo would switch its button off: the core's value is shown again
+    // Checked, not Click: Narrator toggles a button without clicking it. The core's values are
+    // shown again at once; its new state follows with the chosen tempo.
     private void SetTempo(Correction change)
     {
+        if (showing)
+        {
+            return;
+        }
         model?.Correct(change);
+        Again();
+    }
+
+    // the chosen tempo was switched off: one of the three is always on
+    private void OnTempoKept(object sender, RoutedEventArgs e)
+    {
+        if (!showing)
+        {
+            Again();
+        }
+    }
+
+    private void Again()
+    {
         if (shown is { } controls)
         {
             Show(controls);

@@ -62,9 +62,9 @@
 
         <!-- Song · Hits · Both: three joined toggle buttons, WinUI has no segmented control -->
         <StackPanel x:Name="HearGroup" Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
-            <ToggleButton x:Name="HearSongButton" MinWidth="64" Height="32" CornerRadius="4,0,0,4" Click="OnHearSong" />
-            <ToggleButton x:Name="HearHitsButton" MinWidth="64" Height="32" CornerRadius="0" Margin="-1,0,0,0" Click="OnHearHits" />
-            <ToggleButton x:Name="HearBothButton" MinWidth="64" Height="32" CornerRadius="0,4,4,0" Margin="-1,0,0,0" Click="OnHearBoth" />
+            <ToggleButton x:Name="HearSongButton" MinWidth="64" Height="32" CornerRadius="4,0,0,4" Checked="OnHearSong" Unchecked="OnHearKept" />
+            <ToggleButton x:Name="HearHitsButton" MinWidth="64" Height="32" CornerRadius="0" Margin="-1,0,0,0" Checked="OnHearHits" Unchecked="OnHearKept" />
+            <ToggleButton x:Name="HearBothButton" MinWidth="64" Height="32" CornerRadius="0,4,4,0" Margin="-1,0,0,0" Checked="OnHearBoth" Unchecked="OnHearKept" />
         </StackPanel>
     </Grid>
 </UserControl>
