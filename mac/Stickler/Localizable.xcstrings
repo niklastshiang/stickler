@@ -251,6 +251,24 @@
         }
       }
     },
+    "Also remove your settings, recent songs and corrections?" : {
+      "comment" : "Translators: Windows uninstaller, the second question after \"Uninstall Stickler?\"; \"No\" (the default) keeps them, so a new install picks up where the user left off",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch deine Einstellungen, zuletzt geöffneten Songs und Korrekturen entfernen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Quitar también tus ajustes, canciones recientes y correcciones?"
+          }
+        }
+      }
+    },
     "As Detected" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1636,6 +1654,24 @@
         }
       }
     },
+    "Not all of Stickler’s data could be removed. You can delete the folder yourself: %1$@" : {
+      "comment" : "Translators: Windows uninstaller, when a file of Stickler's could not be deleted (it is in use); {folder} is the folder under AppData",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht alle Daten von Stickler ließen sich entfernen. Du kannst diesen Ordner selbst löschen: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron quitar todos los datos de Stickler. Puedes borrar esta carpeta tú mismo: %1$@"
+          }
+        }
+      }
+    },
     "Not an audio file" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2879,6 +2915,42 @@
         }
       }
     },
+    "Stickler needs Windows 11 on a PC with an Intel or AMD processor (x64)." : {
+      "comment" : "Translators: Windows installer, shown on Windows 10 or a PC with an ARM processor, where it installs nothing (SPEC.md, module `win-package`)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler braucht Windows 11 auf einem PC mit Intel- oder AMD-Prozessor (x64)."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler necesita Windows 11 en un PC con procesador Intel o AMD (x64)."
+          }
+        }
+      }
+    },
+    "Stickler’s data is removed. Remove the program later in Settings › Apps." : {
+      "comment" : "Translators: Windows app, after \"Uninstall Stickler…\" removed the data but Windows (or an antivirus) did not let the uninstaller start; Settings › Apps is Windows' own page",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Daten von Stickler sind entfernt. Entferne das Programm später unter Einstellungen › Apps."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los datos de Stickler se quitaron. Quita el programa más tarde en Configuración › Aplicaciones."
+          }
+        }
+      }
+    },
     "Stickler’s data is removed. To remove the app too, drag Stickler to the Bin." : {
       "comment" : "Translators: Mac app, after \"Uninstall Stickler…\" when the app cannot move itself to the Bin (it was started from the download without being moved)",
       "extractionState" : "manual",
@@ -3285,6 +3357,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esto quita Stickler y libera %1$@. Tus canciones y exportaciones se quedan."
+          }
+        }
+      }
+    },
+    "This removes Stickler, its models and the saved analyses. Your songs and exports stay." : {
+      "comment" : "Translators: Windows uninstaller (Settings › Apps), below \"Uninstall Stickler?\"; \"Yes\" uninstalls, \"No\" changes nothing",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das entfernt Stickler, seine Modelle und die gespeicherten Analysen. Deine Songs und Exporte bleiben."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto quita Stickler, sus modelos y los análisis guardados. Tus canciones y exportaciones se quedan."
           }
         }
       }

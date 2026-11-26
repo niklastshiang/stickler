@@ -61,4 +61,14 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/install-mac.html"/>
     <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/install-mac.html"/>
   </url>
+  <url>
+    <loc>https://stickler.tshia.ng/install-windows.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/install-windows.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/install-windows.html"/>
+  </url>
+  <url>
+    <loc>https://stickler.tshia.ng/de/install-windows.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://stickler.tshia.ng/install-windows.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://stickler.tshia.ng/de/install-windows.html"/>
+  </url>
 </urlset>

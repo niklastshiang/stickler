@@ -38,6 +38,11 @@ RELEASE = {
             "size": 71_700_000,
             "url": DOWNLOAD + "Stickler-8.x86_64.rpm",
         },
+        {
+            "name": "Stickler-8-setup.exe",
+            "size": 168_400_000,
+            "url": DOWNLOAD + "Stickler-8-setup.exe",
+        },
     ],
 }
 
@@ -66,6 +71,7 @@ def test_each_kind_of_package_is_found_and_the_zsync_is_not():
         "appimage": "Stickler-8-x86_64.AppImage",
         "deb": "Stickler-8_amd64.deb",
         "rpm": "Stickler-8.x86_64.rpm",
+        "exe": "Stickler-8-setup.exe",
     }
 
 
@@ -84,6 +90,8 @@ def test_the_copy_names_the_release_files_in_both_languages(built):
         assert '<span data-name="deb">Stickler-8_amd64.deb</span>' in html
         assert '<span data-name="rpm">Stickler-8.x86_64.rpm</span>' in html
         assert '<span data-size="rpm">72 MB</span>' in html
+        assert f'data-asset="exe"\n              href="{DOWNLOAD}Stickler-8-setup.exe"' in html
+        assert '<span data-size="exe">168 MB</span>' in html
     assert '<span data-size="dmg">412 MB</span>' in (built / "index.html").read_text(
         encoding="utf-8"
     )

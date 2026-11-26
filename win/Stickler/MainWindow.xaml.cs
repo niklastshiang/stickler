@@ -29,6 +29,7 @@ public sealed partial class MainWindow : Window
     private readonly Strings strings;
     private readonly AppModel model;
     private readonly Flows flows;
+    private readonly Uninstalling uninstalling;
     private readonly WinAsk ask;
     private readonly Player player;
     private readonly string windowSettings; // where "the corrections pane is open" is kept
@@ -55,9 +56,10 @@ public sealed partial class MainWindow : Window
         strings = Strings.Load(Path.Combine(AppContext.BaseDirectory, "Strings"), languages);
         var queue = DispatcherQueue.GetForCurrentThread();
         player = Sound.Player(error => strings.Text("The song cannot be played: {reason}", ("reason", error.Message)));
-        model = new AppModel(languages, wanted => CoreLaunch.ForApp(Environment(), AppContext.BaseDirectory, windows: true, wanted), work => queue.TryEnqueue(() => work()), player);
+        model = new AppModel(languages, wanted => CoreLaunch.ForApp(Environment(), AppContext.BaseDirectory, windows: true, wanted, Build.Development), work => queue.TryEnqueue(() => work()), player);
         ask = new WinAsk(this, strings);
         flows = new Flows(model, ask, strings);
+        uninstalling = new Uninstalling(model, ask, new WinUninstaller(this, strings), strings);
         noticeTimer = queue.CreateTimer();
         noticeTimer.Interval = TimeSpan.FromSeconds(8);
         noticeTimer.IsRepeating = false;
@@ -117,6 +119,8 @@ public sealed partial class MainWindow : Window
         BackUpItem.Text = T("Back Up…");
         RestoreItem.Text = T("Restore Backup…");
         RemoveItem.Text = T("Remove Downloaded Models…");
+        UninstallItem.Text = T("Uninstall Stickler…");
+        UninstallItem.Visibility = Shown(Uninstalling.Offered(AppContext.BaseDirectory));
         ExitItem.Text = T("Exit");
         ViewMenu.Title = T("View");
         ZoomInItem.Text = T("Zoom In");
@@ -306,7 +310,7 @@ public sealed partial class MainWindow : Window
         OpenItem.IsEnabled = OpenButton.IsEnabled = OpenSongButton.IsEnabled = running && state.Can.Open;
         ExportMenu.IsEnabled = ExportButton.IsEnabled = WindowView.CanExport(model); // not while a correction is written
         CloseSongItem.IsEnabled = running && state.Can.Close;
-        BackUpItem.IsEnabled = RestoreItem.IsEnabled = RemoveItem.IsEnabled = running && state.Can.RemoveModels;
+        BackUpItem.IsEnabled = RestoreItem.IsEnabled = RemoveItem.IsEnabled = UninstallItem.IsEnabled = running && state.Can.RemoveModels;
         CancelButton.IsEnabled = state.Can.Cancel;
         RetryButton.Visibility = Shown(state.Can.Retry);
 
@@ -729,7 +733,17 @@ public sealed partial class MainWindow : Window
 
     private async void OnHelp(object sender, RoutedEventArgs e) => await Windows.System.Launcher.LaunchUriAsync(new Uri(Readme));
 
-    private async void OnLicences(object sender, RoutedEventArgs e) => await Windows.System.Launcher.LaunchUriAsync(new Uri(LicencePage));
+    private async void OnUninstall(object sender, RoutedEventArgs e) => await OneAtATime(() => uninstalling.RunAsync());
+
+    /// <summary>The installed app's folder of licences (win-package); a build from the
+    /// checkout shows the repository's licence page.</summary>
+    private async void OnLicences(object sender, RoutedEventArgs e)
+    {
+        var shipped = Path.Combine(AppContext.BaseDirectory, CoreLaunch.CoreFolder, "licenses");
+        _ = Directory.Exists(shipped)
+            ? await Windows.System.Launcher.LaunchFolderPathAsync(shipped)
+            : await Windows.System.Launcher.LaunchUriAsync(new Uri(LicencePage));
+    }
 
     private async void OnAbout(object sender, RoutedEventArgs e) => await OneAtATime(AboutAsync);
 

@@ -857,3 +857,34 @@ owner (232).
 | W11 changes after the owner's look | Low | Only the logic is built before it |
 | The pane leaves too little room for the sheet at 640 px | Low | The sheet engraves at any width; seen in the screenshots |
 
+## Release 11 (Windows app): `win-package` (approved 2026-11-26, SPEC.md "Module `win-package`")
+
+The installer that brings the app and its core along, and the way out again, as `mac-package`
+did for the Mac. Tasks 210–219 on the branch `claude/win-package`, built while
+`win-sheet` is built on `claude/win-shell` (195–209 are `mac-site`'s and `win-sheet`'s); the
+branches meet when release 11 is merged.
+
+Design decisions:
+- **What Linux and Python can check comes first** (210, 211): the removal's folders, the
+  core's uninstall entry, the installed core's command line in `SticklerCore`. The installer
+  only puts files in place and asks; what goes on an uninstall is the core's decision, as on
+  every other system.
+- **One script assembles the folder** (`scripts/win_bundle.sh`, Git's bash on the runner as
+  the spike's workflow), every download checked against its SHA-256 before use; the Mac's
+  `mac_bundle_tools.py` learns the Windows layout instead of a second copy of its rules.
+- **The installer's texts come from `po/`** through `scripts/winstrings.py`, as the app's do;
+  Inno's own texts for everything else (its official German and Spanish).
+- **Small changes in the files `win-sheet` edits** (`MainWindow`, `CoreLaunch`), so the merge
+  stays easy.
+
+Order: core and removal (210) → installed core in `SticklerCore` (211) → icon (212) → bundle
+(213) → installer and its uninstall question (214) → "Uninstall Stickler…" in the app (215) →
+release job (216) → guide and README (217) → website (218) → SignPath texts, review and a build
+for the owner (219).
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| `CreateCustomForm` does not work in the uninstaller | Medium | Two plain questions (SPEC scope 4) |
+| Panda holds back the new `Stickler.exe` and `unins000.exe` | Medium | The runner's start test carries the module; the owner's check waits, as in the spike |
+| The installer grows past 200 MB | Low | Supported trimming switches only (SPEC risks) |
+| Paths under `Programs\Stickler\core\python` too long | Low | Measured on the runner with `LongPathsEnabled=0`, as the spike did |

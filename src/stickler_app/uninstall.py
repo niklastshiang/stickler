@@ -7,14 +7,21 @@ Stickler's own folders go as for "Remove Downloaded Models…"; with `keep_setti
 dialog's box not ticked, the default) the settings, recent songs and corrections stay, so a
 new install picks up where the user left off. An AppImage also loses the menu entries and icons
 an integration tool made for this very file (Gear Lever, AppImageLauncher, appimaged), never
-another app's or another copy's."""
+another app's or another copy's.
+
+The Windows uninstaller asks the question itself and runs this module before it removes the
+program (SPEC.md, module `win-package`, scope 4):
+
+    python -m stickler_app.uninstall [--everything]"""
 
 from __future__ import annotations
 
+import argparse
 import contextlib
 import hashlib
 import os
 import shutil
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -177,3 +184,28 @@ def remove(chosen: Plan, env: Mapping[str, str] = os.environ) -> None:
     for file in chosen.files:
         with contextlib.suppress(OSError):  # an entry the user cannot delete stays
             file.unlink(missing_ok=True)
+
+
+def main(argv: list[str] | None = None, env: Mapping[str, str] = os.environ) -> int:
+    """The Windows uninstaller's way to remove Stickler's folders: what "Uninstall Stickler…"
+    removes, with `--everything` the settings, recent songs and corrections too. Exit code 0
+    when they are gone, 1 when a folder could not be removed (the message on stderr), 2
+    outside an installed app, where nothing is removed (from a checkout the folders are the
+    benchmark's)."""
+    parser = argparse.ArgumentParser(prog="python -m stickler_app.uninstall")
+    parser.add_argument("--everything", action="store_true")
+    args = parser.parse_args(argv)
+    chosen = plan(env, keep_settings=not args.everything)
+    if chosen.kind is None:
+        print("not an installed Stickler: nothing removed", file=sys.stderr)
+        return 2
+    try:
+        remove(chosen, env)
+    except OSError as exc:
+        print(f"not removed: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

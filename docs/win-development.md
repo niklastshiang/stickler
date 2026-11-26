@@ -104,3 +104,38 @@ looks and everything.
    cancelled dialog changes nothing.
 4. Dark mode: the page is inverted on the dark desk. Narrator reads the sheet as "Sheet music
    of …, n pages".
+
+## The installer (SPEC.md, module `win-package`)
+
+The installer is made by `release.yml`'s `windows` job: `scripts/win_bundle.sh` assembles the
+installed folder (the app built with `-p:SticklerInstalled=true`, so it never looks for a
+checkout; uv, Python and ffmpeg pinned by SHA-256; the pruned core and the licences), and Inno
+Setup 7.1.1 makes `Stickler-<version>-setup.exe` from it. A manual run of `release.yml` on a
+branch gives it as the artifact `windows`; the job installs it on the runner, starts the app,
+runs the core's removal and uninstalls silently. The folder alone can be made here too, with
+Git's bash (`DOTNET` pointing at the SDK, `UV_SYSTEM_CERTS=1` on this network):
+
+```bash
+DOTNET="$LOCALAPPDATA/Microsoft/dotnet/dotnet.exe" scripts/win_bundle.sh /tmp/layout
+```
+
+Its texts beyond Inno's own (the Windows 10 message, the uninstaller's two questions) come from
+`po/` into `win/installer/Messages.iss` with `scripts/winstrings.py`, as the app's tables do.
+
+### What to check for the installer (Checkpoint AJ)
+
+1. Download the installer from the run's artifact `windows` with the browser and start it; note
+   what the browser, Windows and Panda say. It installs without a password into
+   `%LOCALAPPDATA%\Programs\Stickler`, in German, and ends with "Stickler starten" ticked.
+2. Stickler is in the Start menu and on the desktop; it starts without a checkout (no
+   `STICKLER_CHECKOUT`, no `uv` of its own on the PATH needed), asks for the models and turns a
+   song into sheet music.
+3. Settings › Apps lists "Stickler" with its icon, version and publisher "Stickler". Its
+   **Uninstall** asks "Stickler deinstallieren?" and then about the settings (No by default):
+   with No, `%LOCALAPPDATA%\Stickler` keeps only `config` and the recent songs and corrections;
+   after a second install and Yes, nothing of `%LOCALAPPDATA%\Stickler` is left. (The spike's
+   `spike-log.txt` and `spike-out` there are no Stickler files: delete them by hand first.)
+4. **File › Stickler deinstallieren …** in the app does the same with its box; the app ends,
+   and the program goes a moment later (if Panda holds the uninstaller back, the app says
+   where to remove it later).
+5. Help › Licences opens the installed licences folder.

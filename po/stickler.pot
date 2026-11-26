@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-26 14:29+0100\n"
+"POT-Creation-Date: 2026-11-26 14:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -468,7 +468,7 @@ msgstr ""
 msgid "Once; later songs use it too"
 msgstr ""
 
-#: src/stickler_app/uninstall.py:78
+#: src/stickler_app/uninstall.py:85
 msgid "the system’s package service (PackageKit) does not answer"
 msgstr ""
 
@@ -526,6 +526,42 @@ msgstr ""
 
 #: src/stickler_app/win_texts.py:35
 msgid "One beat earlier"
+msgstr ""
+
+#. Translators: Windows installer, shown on Windows 10 or a PC with an ARM processor, where
+#. it installs nothing (SPEC.md, module `win-package`)
+#: src/stickler_app/win_texts.py:38
+msgid "Stickler needs Windows 11 on a PC with an Intel or AMD processor (x64)."
+msgstr ""
+
+#. Translators: Windows uninstaller (Settings › Apps), below "Uninstall Stickler?"; "Yes"
+#. uninstalls, "No" changes nothing
+#: src/stickler_app/win_texts.py:41
+msgid ""
+"This removes Stickler, its models and the saved analyses. Your songs and "
+"exports stay."
+msgstr ""
+
+#. Translators: Windows uninstaller, the second question after "Uninstall Stickler?"; "No"
+#. (the default) keeps them, so a new install picks up where the user left off
+#: src/stickler_app/win_texts.py:44
+msgid "Also remove your settings, recent songs and corrections?"
+msgstr ""
+
+#. Translators: Windows uninstaller, when a file of Stickler's could not be deleted (it is
+#. in use); {folder} is the folder under AppData
+#: src/stickler_app/win_texts.py:47
+#, python-brace-format
+msgid ""
+"Not all of Stickler’s data could be removed. You can delete the folder "
+"yourself: {folder}"
+msgstr ""
+
+#. Translators: Windows app, after "Uninstall Stickler…" removed the data but Windows (or an
+#. antivirus) did not let the uninstaller start; Settings › Apps is Windows' own page
+#: src/stickler_app/win_texts.py:50
+msgid ""
+"Stickler’s data is removed. Remove the program later in Settings › Apps."
 msgstr ""
 
 #. Translators: a percentage; German puts a no-break space before the sign
