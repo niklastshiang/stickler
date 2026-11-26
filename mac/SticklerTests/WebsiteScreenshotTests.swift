@@ -98,16 +98,17 @@ extension ScreenshotTests {
     /// draws it; with `sheet`, once the sheet's web view has its page.
     func siteShoot(_ model: AppModel, _ name: String, sheet: Bool = false) async throws {
         for (appearance, look) in [(NSAppearance.Name.aqua, "light"), (.darkAqua, "dark")] {
-            let window = NSWindow(
+            let window = SiteWindow(
                 contentRect: NSRect(origin: .zero, size: Self.siteSize),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered, defer: false)
             window.isReleasedWhenClosed = false
             window.appearance = NSAppearance(named: appearance)
             window.contentViewController = NSHostingController(rootView: ContentView(model: model))
-            let place = NSRect(origin: NSPoint(x: 40, y: 40), size: Self.siteSize)
-            window.setFrame(place, display: true)
-            window.orderFrontRegardless()
+            window.setFrame(NSRect(origin: .zero, size: Self.siteSize), display: true)
+            // the active window, as a visitor would see it: coloured buttons, a dark title
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
             try await Task.sleep(for: .milliseconds(500))
             if sheet {
                 let frame = try XCTUnwrap(window.contentView?.superview, "the frame view")
@@ -148,5 +149,13 @@ extension ScreenshotTests {
         XCTAssertTrue(
             FileManager.default.fileExists(atPath: file.path),
             "screencapture wrote no \(file.lastPathComponent): \(said)")
+    }
+}
+
+/// A window that keeps the size it is given: the runner's screen is smaller than a Mac's, and
+/// AppKit would shorten the window to fit above its Dock.
+final class SiteWindow: NSWindow {
+    override func constrainFrameRect(_ frameRect: NSRect, to _: NSScreen?) -> NSRect {
+        frameRect
     }
 }

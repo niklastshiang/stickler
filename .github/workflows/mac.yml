@@ -125,6 +125,8 @@ jobs:
           done
           sudo sqlite3 "$db" "SELECT client, auth_value FROM access WHERE service = 'kTCCServiceScreenCapture'"
           sudo pkill -x tccd || true
+          # the runner has no trackpad, so scroll bars would stay; on a Mac they show when scrolling
+          defaults write -g AppleShowScrollBars -string WhenScrolling
       - name: Build and test
         env:
           TEST_RUNNER_STICKLER_SCREENSHOTS: ${{ runner.temp }}/screenshots
