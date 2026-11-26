@@ -123,6 +123,21 @@ jobs:
             -resultBundlePath "$RUNNER_TEMP/test.xcresult" -quiet
           xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/test.xcresult" \
             | python3 -c 'import json, sys; r = json.load(sys.stdin); print(r["result"], r["passedTests"], "passed,", r["failedTests"], "failed,", r["skippedTests"], "skipped")'
+      - name: Why tests failed (xcodebuild -quiet prints only their names)
+        if: failure()
+        run: |
+          xcrun xcresulttool get test-results tests --path "$RUNNER_TEMP/test.xcresult" \
+            | python3 -c '
+          import json, sys
+          def walk(node, path):
+              name = node.get("name", "")
+              if node.get("nodeType") == "Failure Message":
+                  print(" > ".join(path), "::", name)
+              for child in node.get("children", []):
+                  walk(child, path + [name])
+          for node in json.load(sys.stdin).get("testNodes", []):
+              walk(node, [])
+          '
       - name: The app's logic outside views is covered (CONSTRAINTS.md "Swift coverage")
         run: |
           xcrun xccov view --report --json "$RUNNER_TEMP/test.xcresult" > "$RUNNER_TEMP/coverage.json"

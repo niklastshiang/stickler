@@ -137,8 +137,16 @@ extension ScreenshotTests {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         process.arguments = ["-x", "-o", "-l\(window.windowNumber)", file.path]
+        let errors = Pipe()
+        process.standardError = errors
         try process.run()
         process.waitUntilExit()
-        XCTAssertEqual(process.terminationStatus, 0, "screencapture \(file.lastPathComponent)")
+        let output = errors.fileHandleForReading.readDataToEndOfFile()
+        let said = String(bytes: output, encoding: .utf8) ?? ""
+        XCTAssertEqual(
+            process.terminationStatus, 0, "screencapture \(file.lastPathComponent): \(said)")
+        XCTAssertTrue(
+            FileManager.default.fileExists(atPath: file.path),
+            "screencapture wrote no \(file.lastPathComponent): \(said)")
     }
 }
