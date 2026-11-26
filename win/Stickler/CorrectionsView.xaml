@@ -9,14 +9,14 @@
     <Border Width="320" Background="{ThemeResource LayerFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1,0,0,0">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Padding="16" Spacing="8">
-                <TextBlock x:Name="Heading" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,4" />
+            <StackPanel Padding="16,12,16,12" Spacing="6">
+                <TextBlock x:Name="Heading" Style="{StaticResource SubtitleTextBlockStyle}" />
 
                 <TextBlock x:Name="BeatHeading" Style="{StaticResource BodyStrongTextBlockStyle}" />
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
                     <StackPanel>
-                        <StackPanel Padding="12,10,12,12" Spacing="8">
+                        <StackPanel Padding="12,8,12,10" Spacing="6">
                             <TextBlock x:Name="TempoText" />
                             <!-- three joined toggle buttons, as Song · Hits · Both -->
                             <Grid x:Name="TempoGroup">
@@ -31,7 +31,7 @@
                             </Grid>
                         </StackPanel>
                         <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                        <Grid Padding="12,8,12,8" ColumnSpacing="12">
+                        <Grid Padding="12,6,12,6" ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -49,7 +49,7 @@
                             </StackPanel>
                         </Grid>
                         <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                        <Grid Padding="12,8,12,8" ColumnSpacing="12">
+                        <Grid Padding="12,6,12,6" ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -72,11 +72,11 @@
                     </StackPanel>
                 </Border>
 
-                <TextBlock x:Name="ReadHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,12,0,0" />
+                <TextBlock x:Name="ReadHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,6,0,0" />
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
                     <StackPanel>
-                        <Grid Padding="12,8,12,8" ColumnSpacing="12">
+                        <Grid Padding="12,6,12,6" ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -88,7 +88,7 @@
                             <ToggleSwitch x:Name="SimplifySwitch" Grid.Column="1" MinWidth="0" VerticalAlignment="Center" Toggled="OnSimplify" />
                         </Grid>
                         <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                        <Grid Padding="12,8,12,8" ColumnSpacing="12">
+                        <Grid Padding="12,6,12,6" ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -102,7 +102,7 @@
                     </StackPanel>
                 </Border>
 
-                <Button x:Name="DetectedButton" Margin="0,12,0,0" Click="OnDetected" />
+                <Button x:Name="DetectedButton" Margin="0,6,0,0" Click="OnDetected" />
             </StackPanel>
         </ScrollViewer>
     </Border>
