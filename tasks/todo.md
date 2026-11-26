@@ -1455,7 +1455,8 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Dependencies: 220, 221 · Files: `win/Stickler/Player.cs`, `win/Stickler/Stickler.csproj`
 
 - [ ] **Task 225: The playback bar, the marker and the menu in the window** (L)
-  - 2026-11-26, written on Linux, not yet built: `Playbar.xaml(.cs)`, the Playback menu, the keys through the window's `KeyDown` (a focused slider or button keeps its own keys; menu accelerators without a modifier were not used), the marker and bar clicks in `SheetView`.
+  - 2026-11-26, built by `win.yml` at the first push (run 45831619960, green: build, format, tests, screenshots): the bar as W10, the Playback menu and the marker in the accent colour are in W6's screenshots, light and dark. Not yet tried: the sound, the keys, a click on a bar, the volume flyout, a narrow window.
+  - 2026-11-26, written on Linux, first version: `Playbar.xaml(.cs)`, the Playback menu, the keys through the window's `KeyDown` (a focused slider or button keeps its own keys; menu accelerators without a modifier were not used), the marker and bar clicks in `SheetView`.
   - Acceptance: SPEC scopes 4–6: the bar as W10 (`docs/design/win/Playing*.dc.html`), the volume flyout, the three joined toggle buttons, the narrow window's rule, Narrator's names; the marker and bar clicks in `SheetView`; the Playback menu with its keys.
   - Verify: `win.yml`'s screenshots against the canvas; by hand in the VM or on the owner's PC
   - Dependencies: 222–224 · Files: `win/Stickler/MainWindow.xaml(.cs)`, `win/Stickler/Playbar.xaml(.cs)`, `win/Stickler/SheetView.xaml.cs`
