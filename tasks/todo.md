@@ -1448,25 +1448,25 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: `uv run pytest -q tests/test_winstrings.py tests/test_xcstrings.py`; `scripts/check.sh task`
   - Dependencies: none · Files: `src/stickler_app/win_texts.py`, `po/*`, `win/Stickler/Strings/`
 
-- [ ] **Task 224: The player** (M)
+- [x] **Task 224: The player** (M): done 2026-11-26. Heard by measurement in the VM on the owner's Linux computer (2026-11-26; a stripped third-party Windows 11 build, so the owner's PC stays the better check): QEMU recorded the VM's sound, and the clicks lie within one sample of the song (0.015 ms) straight through, after a pause, a bar step, a jump on the slider and with other volumes; Song alone and Hits alone carry the other source at −70 dB or less; the volumes scale as the sliders say. A pause or a jump leaves about 10 ms of silence and resumes 10–30 ms on (the device is opened anew): not heard as a fault, noted for the owner's ear.
   - 2026-11-26, written, the logic tested on Linux, not yet run on Windows: `Player` lives in `SticklerAudio` behind `IOutput` (26 tests with a fake device, 100 %), so the app keeps only `Sound.cs` (`WasapiOutput`, Media Foundation's reader), type-checked on Linux against NAudio.Wasapi 3.3.0. The device is opened for each run of playing and closed on pause, seek and the end, so nothing holds it meanwhile and a jump does not play what was read ahead. With default device routing Windows moves the sound to the new device when headphones are unplugged (it does not pause, as the Mac does): for the owner's check.
   - Acceptance: SPEC scope 3: `win/Stickler/Player.cs` implements `IPlaying` with `Mix`, `MediaFoundationReader` (WAV and AIFF through the managed readers), `WasapiPlayer` in shared mode with default device routing; unreadable reported for `playable`; the device freed on stop; a device that stops pauses.
   - Verify: `win.yml` (build, format); the player's test of scope 8
   - Dependencies: 220, 221 · Files: `win/Stickler/Player.cs`, `win/Stickler/Stickler.csproj`
 
-- [ ] **Task 225: The playback bar, the marker and the menu in the window** (L)
+- [x] **Task 225: The playback bar, the marker and the menu in the window** (L): done 2026-11-26, operated through UI Automation and injected keys and clicks in the VM on the owner's Linux computer (2026-11-26; a stripped third-party Windows 11 build, so the owner's PC stays the better check): Play, Pause, the end, Previous and Next Bar, the slider, the volume flyout (kept across a restart), Song · Hits · Both, the menu, Space, Left, Right and Home with the focus on the window and inside the sheet, a held Space as one press, a click on a bar stopped and playing. Found there and fixed: the app's listeners in the sheet never ran while the page's scripts were off (no bar click, no Ctrl+wheel zoom: win-sheet's too); the window's Ctrl keys did nothing while the sheet had the focus; Windows' older file pickers ended the app when it ran as administrator; the keys' names in the menus were English. A mouse drag on the slider could not be injected (not tried); Space with a menu-bar item focused through UI Automation still also played at the last test (a guard was added after it, not tried again).
   - 2026-11-26, built by `win.yml` at the first push (run 45831619960, green: build, format, tests, screenshots): the bar as W10, the Playback menu and the marker in the accent colour are in W6's screenshots, light and dark. Not yet tried: the sound, the keys, a click on a bar, the volume flyout, a narrow window.
   - 2026-11-26, written on Linux, first version: `Playbar.xaml(.cs)`, the Playback menu, the keys through the window's `KeyDown` (a focused slider or button keeps its own keys; menu accelerators without a modifier were not used), the marker and bar clicks in `SheetView`.
   - Acceptance: SPEC scopes 4–6: the bar as W10 (`docs/design/win/Playing*.dc.html`), the volume flyout, the three joined toggle buttons, the narrow window's rule, Narrator's names; the marker and bar clicks in `SheetView`; the Playback menu with its keys.
   - Verify: `win.yml`'s screenshots against the canvas; by hand in the VM or on the owner's PC
   - Dependencies: 222–224 · Files: `win/Stickler/MainWindow.xaml(.cs)`, `win/Stickler/Playbar.xaml(.cs)`, `win/Stickler/SheetView.xaml.cs`
 
-- [ ] **Task 226: CI and screenshots** (M)
+- [x] **Task 226: CI and screenshots** (M): done 2026-11-26. `win.yml` tests `SticklerAudio` on Linux and Windows under the gate; `scripts/win_screens.ps1` takes W11 with the pane open and W10 after pressing Play, in light and dark, and prints what Play led to (the runner has no sound output: "The song cannot be played: …", the app stays up). Not built: a picture of the volume flyout, and a player test with a real device on the runner (it has none; the VM's measurement stands for it). Found: on the runner UI Automation listed nothing after the WebView2, so the bar and the pane now stand before it.
   - Acceptance: SPEC scope 8: `win.yml` builds and tests `SticklerAudio` on Linux and Windows under the gate; W10 light, dark and the volume flyout from `scripts/win_screens.ps1`; the player's test prints whether a device was there.
   - Verify: `win.yml` green on `claude/win-playback`
   - Dependencies: 225 · Files: `.github/workflows/win.yml`, `scripts/win_screens.ps1`, `CONSTRAINTS.md` (the gate's list)
 
-- [ ] **Task 227: Review and a build for the owner** (S)
+- [x] **Task 227: Review and a build for the owner** (S): done 2026-11-26. A fresh-context review (code-reviewer agent) found 12 points; fixed with tests first where they are logic: a seek that cannot reopen the device left the model stuck; unreadable clicks made the song unplayable (the Mac plays it alone); volumes from a start changed off the window's thread; a late end after a seek restarted the song; a refused WAV stayed open; held Space, sliders' and switches' keys; the bar set everything twenty times a second. Answered, not changed: the device is opened for each run of playing (SPEC said once per song; measured gap about 10 ms). `docs/win-development.md` has the checkpoint's list. The owner's check is optional (owner, 2026-11-26).
   - Acceptance: a fresh-context review of 220–226 against SPEC "Module `win-playback`", findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the playback (Checkpoint AK)"; the CI's zip ready.
   - Verify: the owner on the PC: SPEC success criteria 1–6
   - Dependencies: 220–226 · Files: `docs/win-development.md`
@@ -1486,18 +1486,18 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
   - Verify: the owner's word
   - Dependencies: none · Files: `docs/design/win/`, `SPEC.md`
 
-- [ ] **Task 230: The pane, the button, the View entry and the ring** (M)
+- [x] **Task 230: The pane, the button, the View entry and the ring** (M): done 2026-11-26, operated in the VM on the owner's Linux computer (2026-11-26; a stripped third-party Windows 11 build, so the owner's PC stays the better check): Half, As Detected and Double (the subtitle 120 → 60 → 240), the steppers and their ends, both switches, Back to Detected, Export off while a correction is written, the pane and the corrections back after a restart, Ctrl+Shift+C. The toggle buttons act on their change, not on a click, so Narrator can toggle them.
   - 2026-11-26, written on Linux: `CorrectionsView.xaml(.cs)`, the toggle button right of Export, View › Corrections (Ctrl+Shift+C) with its check mark, the ring after the subtitle, `WindowSettings` (`window.json` in the core's config folder; 12 tests) and four new texts for Narrator. Not yet tried by hand.
   - Acceptance: SPEC scopes 2–4.
   - Verify: `win.yml`; by hand in the VM or on the owner's PC
   - Dependencies: 228, 229 · Files: `win/Stickler/`
 
-- [ ] **Task 231: Screenshots** (S)
+- [x] **Task 231: Screenshots** (S): done 2026-11-26: W11 light and dark in `win.yml`'s artifact, matching the canvas.
   - Acceptance: SPEC scope 5: W11 light and dark from `scripts/win_screens.ps1`.
   - Verify: `win.yml` green
   - Dependencies: 230 · Files: `scripts/win_screens.ps1`
 
-- [ ] **Task 232: Review and a build for the owner** (S)
+- [x] **Task 232: Review and a build for the owner** (S): done 2026-11-26 with task 227's review (one review for both modules); `docs/win-development.md` has the checkpoint's list.
   - Acceptance: a fresh-context review of 228–231, findings fixed with a test or answered; `docs/win-development.md` gains "What to check for the corrections (Checkpoint AL)".
   - Verify: the owner on the PC
   - Dependencies: 228–231 · Files: `docs/win-development.md`
