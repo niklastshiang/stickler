@@ -219,7 +219,7 @@ public sealed class SheetModel : INotifyPropertyChanged
         {
             // the stopped page follows through the app's model
         }
-        catch (Exception unreadable) when (unreadable is KeyNotFoundException or InvalidOperationException or FormatException)
+        catch (UnreadableLineException)
         {
             // a reply without the fields this release reads: the sheet stays as it is
         }

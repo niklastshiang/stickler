@@ -16,14 +16,16 @@ internal sealed class WinAsk(Window window, Strings strings) : IAsk
 {
     private IntPtr Handle => WindowNative.GetWindowHandle(window);
 
-    /// <summary>Set, it answers every save dialog without a window: the runner's screenshots
-    /// save the PDF there (owner, 2026-11-26: Windows' dialog cannot be driven by a script;
-    /// the dialog itself is the same as the MusicXML's and is checked by hand).</summary>
+    /// <summary>Set, it answers a save dialog for its file's ending without a window: the
+    /// runner's screenshots save the PDF there (owner, 2026-11-26: Windows' dialog cannot be
+    /// driven by a script; the dialog itself is the same as the MusicXML's and is checked by
+    /// hand). A dialog for another ending opens as always.</summary>
     public const string SaveAsVariable = "STICKLER_SAVE_AS";
 
     public async Task<string?> SaveFileAsync(string name, IReadOnlyList<string> endings)
     {
-        if (System.Environment.GetEnvironmentVariable(SaveAsVariable) is { Length: > 0 } given)
+        if (System.Environment.GetEnvironmentVariable(SaveAsVariable) is { Length: > 0 } given
+            && endings.Contains(Path.GetExtension(given).TrimStart('.'), StringComparer.OrdinalIgnoreCase))
         {
             return given;
         }

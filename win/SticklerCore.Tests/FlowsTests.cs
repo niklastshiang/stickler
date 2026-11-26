@@ -202,6 +202,8 @@ public sealed class FlowsTests
         Assert.AreEqual("save Eye of the Tiger.pdf [pdf]", ask.Asked.Single());
         Assert.AreEqual("Eye of the Tiger", printed!.Title);
         Assert.AreNotEqual(dest, part);
+        Assert.AreEqual(Path.GetDirectoryName(dest), Path.GetDirectoryName(part)); // beside it: a rename
+        Assert.StartsWith(".out.pdf.", Path.GetFileName(part));
         Assert.IsFalse(File.Exists(part));
         Assert.AreEqual("new", await File.ReadAllTextAsync(dest));
         Assert.AreEqual(new Notice("Saved “out.pdf”", dest), model.Notice);
@@ -228,6 +230,40 @@ public sealed class FlowsTests
         await flows.ExportPdfAsync((_, _) => throw new IOException("The disk is full."));
         Assert.AreEqual(new Notice("Could not save: The disk is full.", null), model.Notice);
         Assert.AreEqual("old", await File.ReadAllTextAsync(dest));
+    }
+
+    [TestMethod]
+    public async Task APrintThatStillHoldsItsFileOrAnUnreadableReplyIsToldNotFatal()
+    {
+        ShowResult();
+        core.Answer("a4_pages", A4);
+        var dest = OldPdf();
+        FileStream? held = null;
+        try
+        {
+            // a print that ran out of time still writes: its file cannot be deleted yet
+            await flows.ExportPdfAsync((_, path) =>
+            {
+                held = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+                return Task.FromResult(false);
+            });
+            Assert.StartsWith("Could not save: ", model.Notice!.Text);
+            Assert.AreEqual("old", await File.ReadAllTextAsync(dest));
+        }
+        finally
+        {
+            held?.Dispose();
+        }
+        // a reply without the pages this release reads
+        core.Answer("a4_pages", "\"ok\": true");
+        var printed = false;
+        await flows.ExportPdfAsync((_, _) =>
+        {
+            printed = true;
+            return Task.FromResult(true);
+        });
+        Assert.IsFalse(printed);
+        Assert.StartsWith("Could not save: ", model.Notice!.Text);
     }
 
     [TestMethod]

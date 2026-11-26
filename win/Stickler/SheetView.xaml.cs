@@ -45,7 +45,11 @@ public sealed partial class SheetView : UserControl
     private bool loaded; // the document is there: new pages replace its content
     private bool navigating;
     private SheetHtml.Content? shown;
+    private ulong sheetNavigation; // ours: completions of a cancelled one (a dropped file) are not
     private TaskCompletionSource<bool>? printed;
+    private ulong printNavigation;
+    private Task<bool>? printing; // one PDF at a time, also after one ran out of time
+    private Action<string> failed = _ => { };
 
     public SheetView()
     {
@@ -59,13 +63,27 @@ public sealed partial class SheetView : UserControl
     public static string DataFolder =>
         Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "Stickler", "WebView2");
 
-    /// <summary>Starts the view on <paramref name="model"/>'s pages.</summary>
-    public void Attach(SheetModel model, Strings words)
+    /// <summary>Starts the view on <paramref name="model"/>'s pages; <paramref name="fail"/>
+    /// tells the reader why WebView2 could not start (its own words), instead of a grey desk.</summary>
+    public void Attach(SheetModel model, Strings words, Action<string> fail)
     {
         sheet = model;
         strings = words;
+        failed = fail;
         sheet.PropertyChanged += OnSheetChanged;
-        _ = StartAsync();
+        _ = StartOrSayWhyAsync();
+    }
+
+    private async Task StartOrSayWhyAsync()
+    {
+        try
+        {
+            await StartAsync();
+        }
+        catch (Exception error) when (error is System.Runtime.InteropServices.COMException or InvalidOperationException or ArgumentException or UnauthorizedAccessException or IOException)
+        {
+            failed(error.Message);
+        }
     }
 
     /// <summary>The song's title, for Narrator's name of the sheet.</summary>
@@ -92,12 +110,27 @@ public sealed partial class SheetView : UserControl
         await core.AddScriptToExecuteOnDocumentCreatedAsync(WheelScript);
         core.AddWebResourceRequestedFilter(SheetHtml.Address + "*", CoreWebView2WebResourceContext.All);
         core.WebResourceRequested += (_, e) => Serve(core, e, document);
-        core.NavigationStarting += (_, e) => e.Cancel = e.Uri != SheetHtml.Address;
+        core.NavigationStarting += (_, e) =>
+        {
+            e.Cancel = e.Uri != SheetHtml.Address;
+            if (!e.Cancel)
+            {
+                sheetNavigation = e.NavigationId;
+            }
+        };
         core.NewWindowRequested += (_, e) => e.Handled = true;
         core.NavigationCompleted += (_, e) =>
         {
+            if (e.NavigationId != sheetNavigation)
+            {
+                return; // one we refused: the document shown is still ours
+            }
             navigating = false;
             loaded = e.IsSuccess;
+            if (!e.IsSuccess)
+            {
+                shown = null; // loaded again with the next pages
+            }
             Show(); // pages that came while it loaded
         };
         core.WebMessageReceived += (_, e) => Step(e.TryGetWebMessageAsString());
@@ -173,7 +206,7 @@ public sealed partial class SheetView : UserControl
     }
 
     private void Label() =>
-        AutomationProperties.SetName(Web, sheet is null ? "" : SheetHtml.Label(title, sheet.Pages.Count, strings));
+        AutomationProperties.SetName(Web, sheet is { Pages.Count: > 0 } ? SheetHtml.Label(title, sheet.Pages.Count, strings) : "");
 
     private void Step(string message)
     {
@@ -196,7 +229,12 @@ public sealed partial class SheetView : UserControl
     /// flow that waits for ever).</summary>
     public async Task<bool> PrintAsync(string html, string path)
     {
+        if (printing is { IsCompleted: false })
+        {
+            return false; // the last one still runs (it ran out of time): WebView2 prints one at a time
+        }
         var work = PrintingAsync(html, path);
+        printing = work;
         var finished = await Task.WhenAny(work, Task.Delay(TimeSpan.FromMinutes(1)));
         return finished == work && await work;
     }
@@ -210,8 +248,21 @@ public sealed partial class SheetView : UserControl
             Lock(core.Settings);
             core.AddWebResourceRequestedFilter(SheetHtml.Address + "*", CoreWebView2WebResourceContext.All);
             core.WebResourceRequested += (_, e) => Serve(core, e, printDocument);
-            core.NavigationStarting += (_, e) => e.Cancel = e.Uri != PrintAddress;
-            core.NavigationCompleted += (_, e) => printed?.TrySetResult(e.IsSuccess);
+            core.NavigationStarting += (_, e) =>
+            {
+                e.Cancel = e.Uri != PrintAddress;
+                if (!e.Cancel)
+                {
+                    printNavigation = e.NavigationId;
+                }
+            };
+            core.NavigationCompleted += (_, e) =>
+            {
+                if (e.NavigationId == printNavigation)
+                {
+                    printed?.TrySetResult(e.IsSuccess);
+                }
+            };
         }
         printDocument = Encoding.UTF8.GetBytes(html);
         // the print goes on after NavigationCompleted has returned, not inside it: WebView2 is

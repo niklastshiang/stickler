@@ -60,15 +60,21 @@ Panda Adaptive Defense holds back a program it has not seen before, for about ha
 (task 179): the spike's installer helper, uv's launcher of a new environment
 (`.venv\Scripts\python.exe` of a new uv release), uv's `stickler-bridge.exe`. The app
 therefore starts the core as `python -m stickler_app.bridge`. A new `Stickler.exe` after a
-build has started at once so far. If a program is held back, nothing is switched off or
-excluded: note the message and try again later.
+build has started at once so far, but not always: on 2026-11-26 several new builds were held
+back for minutes to an hour, and one that had started was refused again later. If a program
+is held back, nothing is switched off or excluded: note the message, let the runner take the
+screenshots, and try again later.
 
 ## Screenshots
 
 `scripts/win_screens.ps1` starts the built app with data of its own, captures the consent and
-the empty window, and presses "Not Now" through UI Automation. On this PC run it with
-`-Looks light -NotNow "Nicht jetzt"` (it would switch the desktop's theme for "dark"); the
-runner takes both looks.
+the empty window, and presses "Not Now" through UI Automation. Then (module `win-sheet`) it
+sets up the stand-in models, opens their song as a recent one, captures the sheet (W6) and in
+light saves the PDF through Export (`STICKLER_SAVE_AS` answers the save dialog), which
+`scripts/check_pdf.py` checks. On this PC run it with `-Looks light -SheetOnly -Export
+"Exportieren" -PdfEntry ("Noten (PDF) " + [char]0x2026)` (it would switch the desktop's theme
+for "dark"; the consent does not come where the models are set up); the runner takes both
+looks and everything.
 
 ## At the checkpoint (SPEC.md, module `win-shell`, success criteria)
 
@@ -81,3 +87,20 @@ runner takes both looks.
    "Stickler Stopped Unexpectedly"; "Start Again" works.
 4. Light and dark, English and German, match the canvas (`docs/design/win/`); once with the
    keyboard only (Tab, Alt for the menu bar) and once in high contrast.
+5. While the models download, the running step's ring keeps turning (fixed 2026-11-26).
+
+## At the checkpoint (SPEC.md, module `win-sheet`, success criteria)
+
+1. An analysed song shows its sheet music; it fills the window's width after a resize (wait
+   a moment: the width settles first) and scrolls only vertically; the tempo mark is drawn,
+   not a box.
+2. View › Zoom In, Zoom Out, Actual Size change the note size, and so do Ctrl+Plus,
+   Ctrl+Minus, Ctrl+0, Ctrl+mouse wheel and a touchpad's pinch, also after a click into the
+   sheet (unconfirmed until now: whether the keys arrive while the sheet has the focus, and
+   whether the wheel script runs with the page's scripts off). The size is kept for the next
+   song and the next start.
+3. Export › Sheet Music (PDF)… with Windows' own save dialog: the PDF has every page in A4 and
+   the song's title; "Show in Folder" shows it; saving over an older PDF replaces it, a
+   cancelled dialog changes nothing.
+4. Dark mode: the page is inverted on the dark desk. Narrator reads the sheet as "Sheet music
+   of …, n pages".

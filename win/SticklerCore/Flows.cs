@@ -79,20 +79,34 @@ public sealed class Flows
     }
 
     /// <summary>Sheet Music (PDF)… (module <c>win-sheet</c>, scope 4): where to save, the core's
-    /// A4 pages, then <paramref name="print"/> writes them to a file of its own, which takes the
-    /// chosen file's place only when it is whole: a failure leaves no half file and keeps one
-    /// that was there. <paramref name="print"/> is WebView2's in the app; false or an exception
-    /// is told with its reason.</summary>
+    /// A4 pages, then <paramref name="print"/> writes them to a file of its own beside the chosen
+    /// one (so the move is a rename on the same drive, and the file gets that folder's
+    /// permissions), which takes the chosen file's place only when it is whole: a failure leaves
+    /// no half file and keeps one that was there. <paramref name="print"/> is WebView2's in the
+    /// app; false or an exception is told with its reason, never ends the app.</summary>
     public async Task ExportPdfAsync(Func<A4Pages, string, Task<bool>> print)
     {
         ArgumentNullException.ThrowIfNull(print);
         if (Result is not { } result
-            || await ask.SaveFileAsync(WindowView.PdfName(result.Song), ["pdf"]).ConfigureAwait(true) is not { } dest
-            || await model.A4PagesAsync().ConfigureAwait(true) is not { } pages)
+            || await ask.SaveFileAsync(WindowView.PdfName(result.Song), ["pdf"]).ConfigureAwait(true) is not { } dest)
         {
             return;
         }
-        var part = Path.Combine(Path.GetTempPath(), $"stickler-{Guid.NewGuid():N}.pdf");
+        A4Pages? pages;
+        try
+        {
+            pages = await model.A4PagesAsync().ConfigureAwait(true);
+        }
+        catch (UnreadableLineException error)
+        {
+            model.Tell(new Notice(strings.Text("Could not save: {reason}", ("reason", error.Message)), null));
+            return;
+        }
+        if (pages is null)
+        {
+            return;
+        }
+        var part = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(dest))!, $".{Path.GetFileName(dest)}.{Guid.NewGuid():N}.part");
         try
         {
             if (!await print(pages, part).ConfigureAwait(true))
@@ -103,13 +117,20 @@ public sealed class Flows
             File.Move(part, dest, overwrite: true);
             model.Tell(new Notice(strings.Text("Saved “{name}”", ("name", Path.GetFileName(dest))), dest));
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or System.Runtime.InteropServices.COMException)
         {
             model.Tell(new Notice(strings.Text("Could not save: {reason}", ("reason", error.Message)), null));
         }
         finally
         {
-            File.Delete(part);
+            try
+            {
+                File.Delete(part);
+            }
+            catch (Exception locked) when (locked is IOException or UnauthorizedAccessException)
+            {
+                // a print that ran out of time may still hold it: the leftover is only ours
+            }
         }
     }
 

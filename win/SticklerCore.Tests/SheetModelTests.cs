@@ -294,6 +294,20 @@ public sealed class SheetModelTests
     }
 
     [TestMethod]
+    public async Task AReplyWithoutTheFieldsThisReleaseReadsLeavesTheSheetAsItIs()
+    {
+        var (sheet, core) = await Shown(Model());
+        sheet.Show(Result("/m/groove.wav", 1));
+        core.Answer("pages", 1, "\"ok\": true"); // no pages, no zoom
+        sheet.ZoomIn();
+        core.Answer("zoom_in", 0, "\"ok\": true, \"zoom\": \"big\"");
+        await Task.Delay(300);
+        Assert.AreEqual(800.0, sheet.Pages.Single().Width);
+        Assert.AreEqual(1.5, sheet.Zoom);
+        Assert.IsEmpty(refusals);
+    }
+
+    [TestMethod]
     public async Task ANewCoreStartsEmptyAndRepliesOfTheOldOneAreDropped()
     {
         var (sheet, core) = await Shown(Model());

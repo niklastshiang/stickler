@@ -58,7 +58,7 @@ public sealed partial class MainWindow : Window
         Words();
         model.PropertyChanged += OnModelChanged;
         model.Sheet.PropertyChanged += OnSheetChanged;
-        ResultPage.Attach(model.Sheet, strings);
+        ResultPage.Attach(model.Sheet, strings, reason => model.Tell(new Notice(reason, null)));
         Keys();
         Closed += OnClosed;
         Activated += OnFirstActivated;
