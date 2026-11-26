@@ -18,7 +18,8 @@ param(
     # the consent's "Not Now" in Windows' display language ("Nicht jetzt" in German)
     [string]$NotNow = "Not Now",
     # the words of Export's PDF entry and the save dialog's button, in Windows' display language
-    [string]$PdfEntry = "Sheet Music (PDF)…",
+    # (its ellipsis written as a code: Windows PowerShell reads a file without a BOM in the ANSI code page)
+    [string]$PdfEntry = "Sheet Music (PDF)" + [char]0x2026,
     [string]$Export = "Export",
     # leave out the sheet's screens (they set up the stand-in models first)
     [switch]$NoSheet,
@@ -142,10 +143,10 @@ function Save-Sheet($look, $standIns) {
     try {
         Invoke-Element (Find-Named $process "Groove" 60)
         # a result enables Export; then the engraving and WebView2's first start
-        $export = Find-Named $process $Export 60
+        $exportButton = Find-Named $process $Export 60
         $until = (Get-Date).AddSeconds(180)
-        while (-not $export.Current.IsEnabled -and (Get-Date) -lt $until) { Start-Sleep -Seconds 1 }
-        if (-not $export.Current.IsEnabled) { Save-Window $process "W6-sheet-$look-no-result"; throw "no result" }
+        while (-not $exportButton.Current.IsEnabled -and (Get-Date) -lt $until) { Start-Sleep -Seconds 1 }
+        if (-not $exportButton.Current.IsEnabled) { Save-Window $process "W6-sheet-$look-no-result"; throw "no result" }
         Start-Sleep -Seconds 10
         Save-Window $process "W6-sheet-$look"
         if ($look -eq "light") {
