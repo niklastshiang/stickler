@@ -64,6 +64,9 @@ public sealed class Command
 
     public static Command StepBy(double at, int by) => new("step", ("at", at), ("by", by));
 
+    /// <summary><c>correct</c>: exactly one change from the corrections controls.</summary>
+    public static Command Correct(Correction change) => new("correct", (change.Key, change.Value));
+
     /// <summary><c>volumes</c>: <paramref name="hear"/> is <c>song</c>, <c>hits</c> or <c>both</c>;
     /// a slider's new value only when it moved.</summary>
     public static Command Volumes(string hear, double? song = null, double? hits = null)
@@ -117,4 +120,40 @@ public sealed class Command
     }
 
     public override string ToString() => Line(0);
+}
+
+/// <summary>One change of <c>correct</c> (as the Mac's <c>Correction</c>): a value, a stepper's
+/// step (counted by the core from its newest values, so quick clicks are never lost), or Back
+/// to Detected. The controls that send them come with <c>win-corrections</c>.</summary>
+public sealed class Correction
+{
+    private Correction(string key, object value)
+    {
+        Key = key;
+        Value = value;
+    }
+
+    public string Key { get; }
+
+    public object Value { get; }
+
+    public static Correction Detected { get; } = new("detected", true);
+
+    public static Correction HalfTempo { get; } = new("tempo", "half");
+
+    public static Correction NormalTempo { get; } = new("tempo", "normal");
+
+    public static Correction DoubleTempo { get; } = new("tempo", "double");
+
+    public static Correction BeatsPerBar(int beats) => new("beats_per_bar", beats);
+
+    public static Correction BeatsPerBarBy(int step) => new("beats_per_bar_by", step);
+
+    public static Correction FirstOne(int beat) => new("first_one", beat);
+
+    public static Correction FirstOneBy(int step) => new("first_one_by", step);
+
+    public static Correction Simplify(bool on) => new("simplify", on);
+
+    public static Correction Repeats(bool on) => new("repeats", on);
 }

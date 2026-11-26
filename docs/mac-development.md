@@ -195,3 +195,36 @@ Module `mac-playback` (SPEC.md "Mac playback", its success criteria 1–6), with
 7. **Screens:** compare the workflow's `M10-*` screenshots and the running app with the
    canvas (M10) in light and dark; VoiceOver names each control and reads the position
    slider's value as the time and the bar.
+8. **A narrow window** (added after the owner's report of 2026-11-25): in German, Song ·
+   Schläge · Beides sits beside the Volume button without covering it, inside the capsule.
+   Make the window narrower, or open an inspector beside the sheet: the capsule stays one row
+   and leaves out "Takt n von N", then the times, and then shows the three as a pop-up menu;
+   nothing is cut off at its ends.
+
+## What to check for the corrections (Checkpoint AG)
+
+Module `mac-corrections` (SPEC.md "Mac corrections", its success criteria 1–5), with the image
+a `release.yml` run built from the branch (Actions › release › the run › the artifact `mac`).
+
+1. **Opening the corrections:** open Eye of the Tiger. The button at the toolbar's far right
+   (and View › Show Corrections, ⌃⌘I) opens the inspector at the window's right edge; the
+   sheet narrows beside it, the playback capsule stays over the sheet. The menu item then
+   reads "Hide Corrections". Quit with it open and start again: it is open with the next
+   song. Without a song the button and the item are grey.
+2. **Tempo:** Half, then Double, then As Detected. Within about a second the sheet, the
+   window's subtitle (♩ = …, the meter) and "Bar n of N" follow; a small spinner turns left
+   of Open and Export while the notes are written. Play while you change it: the music goes
+   on, the marker follows the new bars.
+3. **Beats per bar and the first "one":** click the stepper up and down quickly a few times:
+   each click counts. Move the first "one" to Beat 2: the beat before it becomes a pickup.
+   The first "one" stops at Beat 1 and at the last beat of the bar.
+4. **Easier to read:** Simplify and Repeat signs off and on, as in the GTK app (Simplify off
+   writes every bar as detected).
+5. **Back to Detected** undoes everything and is grey while nothing is corrected. Close the
+   song and open it again: its corrections are back (also those made in the GTK app and
+   brought over in a backup).
+6. **Exports:** with a correction, export the PDF and the MusicXML: they show the corrected
+   sheet.
+7. **Screens:** compare the workflow's `M11-*` screenshots and the running app with the
+   canvas (M11) in light and dark; VoiceOver reads each stepper with its value ("4",
+   "Beat 2").

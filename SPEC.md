@@ -2030,13 +2030,14 @@ runner and runs on the owner's Mac at the checkpoint (if Quality is in the first
 > Status: **done** 2026-11-17: every screen approved by the owner on the private design canvas
 > "Stickler Mac screens" (a canvas of its own); sources in [docs/design/mac/](docs/design/mac/README.md).
 > The playback screens (M10, for `mac-playback` in a later release) approved on 2026-11-24.
+> The corrections screens (M11, for `mac-corrections`) approved on 2026-11-25.
 
 **Objective.** Mockups of every screen of the Mac app's first version, made with the owner on
 the design canvas, following Apple's Human Interface Guidelines for macOS 26. No code. The Mac
 modules build what is drawn here, as the GTK modules built the `design` screens.
 
-**Screens** (the minimum of release 8, and M10 for the playback of a later release; corrections
-come later):
+**Screens** (the minimum of release 8, M10 for the playback of a later release, M11 for the
+corrections):
 
 | # | Screen | Module |
 |---|---|---|
@@ -2050,6 +2051,7 @@ come later):
 | M8 | The menu bar: Stickler, File (Open, Open Recent, Export), View (zoom, appearance follows the system), Window, Help | `mac-shell` |
 | M9 | Light and dark: M4 and M6 in both | all |
 | M10 | Playback (a later release): the controls, the volume popover, the Controls menu; light and dark | `mac-playback` |
+| M11 | Corrections: the inspector, light; dark while playing and while a correction is written; View › Show Corrections | `mac-corrections` |
 
 **Carried over from the GTK `design` (same app, same words):** one step list for setup and
 analysis (done, running, waiting, a short line each; model names only in setup); English copy
@@ -2078,7 +2080,7 @@ drum track export announced before it starts.
    the GTK mockups), and the decisions are written here.
 3. Every text on the screens exists in `po/` or is listed for `mac-shell` to add.
 
-**Out of scope.** Corrections screens (playback: M10, added on 2026-11-24, below); narrow windows
+**Out of scope.** Narrow windows
 (macOS windows have a minimum size; decided in `mac-shell`); the install guide's "Open Anyway" pictures (`mac-package`).
 
 **Decided (owner, 2026-11-17):** a design canvas of its own for the Mac screens (the GTK canvas
@@ -2087,7 +2089,11 @@ stays as it is); the macOS app icon is part of this module.
 **Decisions from the mockups (owner, 2026-11-17):**
 - **Window:** a unified toolbar (title, and under it artist, tempo and time signature once a
   song is open); on the right a capsule with Open and Export (Export is a menu, disabled without
-  a song). The sheet music sits on a grey desk, the page as in the GTK app.
+  a song). Built first as two toolbar items, which macOS 26 draws as two round
+  glasses (a menu button gets glass of its own); kept so on 2026-11-19, merged into one capsule
+  on 2026-11-25 (owner, with M11's toolbar): Open and the Export menu as one view in one
+  toolbar item (a `ControlGroup` is split into items again), the Corrections button alone
+  after a fixed space. The sheet music sits on a grey desk, the page as in the GTK app.
 - **First start** comes as sheets over the empty window (consent, download, a server not
   answering), with the GTK app's texts and step list; buttons right-aligned, the default one blue.
 - **Export menu** items carry a second line (macOS 14 and later): PDF, MusicXML, Drum Track,
@@ -2124,6 +2130,31 @@ the macOS 26 way, for `mac-playback`:
   Home. Not checked: the TV app.
 - **New text for `po/`** (added by `mac-playback`): "Controls". Previous Bar, Next Bar, Go to
   the Start, Song, Hits, Both, Volume and Detected hits exist.
+
+**Corrections screens M11 (owner, 2026-11-25).** The GTK app's corrections (module
+`corrections`), drawn the macOS 26 way, for `mac-corrections`:
+- **An inspector** at the window's trailing edge (SwiftUI's `inspector`), 300 points wide; the
+  desk and the sheet narrow beside it, the playback capsule stays over the desk. It exists only
+  with a result. Open or closed is remembered across launches, as in Xcode and Pages (the GTK
+  app starts closed).
+- **Opened and closed** by a toolbar button at the far right (the trailing-sidebar glyph, help
+  "Corrections") and by View › Show Corrections / Hide Corrections, ⌃⌘I. ⌃⌘I is the key of
+  Apple's `InspectorCommands` (its documentation, checked 2026-11-25); the item has its own
+  words so it says what opens (owner), not the system's "Inspector".
+- **Beat** (a grouped form section): Tempo as a segmented control, Half · As Detected · Double;
+  Beats per bar and First “one” as steppers with their value beside them (1–12; "Beat 1" …
+  "Beat n", with the line "Beats before it are a pickup").
+- **Easier to Read:** Simplify ("Nearly equal bars get one pattern") and Repeat signs ("Equal
+  bars are written once") as switches.
+- **Back to Detected** under the sections, disabled while nothing is corrected.
+- **Every change applies at once.** While the core writes the corrected notes, a small spinner
+  turns and the old sheet stays (owner: shown, although it is mostly under a second; the GTK
+  app shows nothing). Drawn after the subtitle; built left of Open and Export (owner,
+  2026-11-25, while building: macOS puts an app's toolbar items only before the title, per
+  Apple's `ToolbarItemPlacement.navigation`, so "after the subtitle" would need a title drawn
+  by the app).
+- **New texts for `po/`** (added by `mac-corrections`): "Show Corrections", "Hide Corrections".
+  Every other text exists from the GTK app.
 
 ### Module `core-bridge`
 
@@ -2351,7 +2382,9 @@ with `mac-package`.
    - **Quitting** sends `quit` and waits at most 3 s for the core to exit, then ends it.
    - **Texts:** every text comes from `po/` through the String Catalog (`scripts/xcstrings.py`);
      the new ones of `mac-design` ("Show in Finder", "Takes about 15 seconds") and of this module
-     are added to `po/` with German and Spanish. Window size: at least 640 × 480 points.
+     are added to `po/` with German and Spanish. Window size: at least 640 × 480 points; the
+     page beside an inspector at least as wide as the playback controls at their narrowest
+     (`mac-playback`, scope 4).
 3. **The Xcode project** is generated from `mac/project.yml` by XcodeGen (pinned, in CI), not
    committed: a hand-edited `.xcodeproj` cannot be written or reviewed without Xcode, and no one
    here has one. The generated project is a CI artifact for the owner.
@@ -3259,6 +3292,14 @@ asked first, so it is listed here for the owner):
    Detected hits sliders) and Song · Hits · Both as the segmented picker. VoiceOver names
    every control ("Position" with the time and bar as its value). The "saved" note sits above
    the capsule while a song is open. Shown with a result only (not during an export's steps).
+   Each part is as wide as its words in the reader's language (a fixed width let the German
+   Song · Schläge · Beides spill over the Volume button, owner, 2026-11-25). In a narrower
+   page (an inspector beside the sheet) the capsule keeps one row and gives way as macOS's
+   own controls do, not in two rows as the GTK app (owner, 2026-11-25: "what Apple does"):
+   it leaves out, in turn, "Bar n of N" (the marker shows the bar; VoiceOver hears it with
+   the position), then the time and the length, and then draws Song · Hits · Both as a
+   pop-up menu. The page beside an inspector is at least as wide as that last capsule with
+   its margins.
 5. **The marker and bar clicks:** the sounding bar's rectangle drawn over the page in the
    system's accent colour, also on the inverted dark page (drawn outside the inverted
    paper), and scrolled into view when it leaves it; a click on a bar jumps there. Both by the
@@ -3307,6 +3348,148 @@ drum samples, the Now Playing widget and media keys, remembering the position pe
    every song, like the note size.
 2. Playback comes in a release together with other work, not in a release of its own.
 
+## Mac corrections (module `mac-corrections`)
+
+> Status: **done** (Checkpoint AG, 2026-11-25: the owner's check on the Mac); released with
+> release 11. Approved by the owner on 2026-11-25 (the plan in chat; open question 1 decided:
+> release 11). The screens (M11) were approved on
+> 2026-11-25 (SPEC "Module `mac-design`", "Corrections screens M11"); this section adds what
+> the screens leave open: where each decision lives, what the bridge gains, what Swift draws.
+> Plan: `tasks/plan.md` ("Mac corrections"), tasks 190–194 (168–189 went to the Windows
+> modules meanwhile).
+
+**Objective.** The Mac app corrects what the GTK app corrects (module `corrections`): tempo
+half or double, beats per bar, the first "one", Simplify and Repeat signs, each applied at once
+without running a model again, remembered per song, with "Back to Detected"; drawn as M11 draws
+it. A drummer on a Mac fixes a wrong beat in a second, as on Linux.
+
+**Assumptions.**
+1. The core does it already for both apps: `Controller.correct(fix)` shows the new values at
+   once (`Result.wanted`), notates 250 ms after the changes pause, lets the newest win, stores
+   the corrections per song (`corrections.json`, found again by the song's digest) and sends
+   "The correction did not work: …" as a notice when a run fails, keeping the last sheet.
+   Opening a song uses its stored corrections. No model runs: 0.17–0.2 s per `notate`
+   (measured 2026-11-15), then the engraving.
+2. The bridge's `result` sends `corrections` (the wanted values, `null` where detected) and
+   `correcting` (a run is pending), and playback's `bars` follow a correction already
+   (`mac-playback`, scope 1; the player keeps playing through it).
+3. The rules of the controls are in `stickler_app.corrections` (`with_tempo`, `with_beats`,
+   `with_first_one`, …: ranges, the first "one" kept within a shorter bar, a new tempo resets
+   the first "one"; `corrected`; `beat_label`). One rule is still in the GTK view: the values
+   shown for what is not corrected (the engraved beats per bar and first "one",
+   `CorrectionsPanel.show_values`).
+4. **Found while reading:** `SheetModel` asks for new pages when the result's `corrections`
+   change. Those are the *wanted* values, which change the moment a correction starts, while
+   the notation is still the old one; when the new notation arrives they stay the same, and
+   the song's `musicxml` path stays the same too (it is per song). So today a correction would
+   engrave the old notes and never fetch the new ones. The sheet needs a sign that the
+   notation changed.
+
+**Where each decision lives** (SPEC "Release 8": one shared core; nothing moves into Swift):
+- **Python:** the values the inspector shows (`corrections.controls`, moved out of the GTK
+  view and used by the GTK panel too), each change and its range (`correct`, wrapping the
+  `with_*` functions and `Controller.correct`), "Beat 2" as text, what is stored.
+- **Swift:** draws the inspector from the state's `controls`, sends one change per control
+  action, opens and closes the inspector and remembers that, shows the spinner while
+  `correcting`.
+
+**Scope.**
+1. **The core** (`stickler_app`; protocol stays 1: fields and commands are only added):
+   - `corrections.controls(fix, beats_per_bar, first_one) -> Controls`: what the controls
+     show, as `show_values` decides it today (the corrected value, else the engraved one; the
+     first "one" never beyond the bar), with the first "one"'s label, whether it can move
+     earlier or later, and `corrected` ("Back to Detected" enabled). The GTK panel calls it;
+     its behaviour is unchanged.
+   - `result` gains `controls`: `{"tempo", "beats_per_bar", "fewer", "more", "first_one",
+     "first_one_label", "earlier", "later", "simplify", "repeats", "corrected"}` for the
+     wanted values (`fewer`/`more` added with the review of task 194: a stepper at 1 or 12
+     is off, and a step past an end makes no correction), and
+     `sheet`: a number that changes with every new notation shown (the job that wrote it), so
+     the app knows when to fetch pages again.
+   - `correct` with exactly one change: `tempo` ("half", "normal", "double"),
+     `beats_per_bar` (an integer, kept within 1–12), `first_one` (an integer, kept within the
+     shown bar), `beats_per_bar_by` or `first_one_by` (a stepper's click, counted by the core
+     from its newest values, added in task 190 so quick clicks are never lost), `simplify` or
+     `repeats` (booleans), or `detected: true` ("Back to Detected").
+     The new values come as a `state` event before the reply; a change that changes nothing is
+     answered `ok` with no event. While a correction is being written the exports
+     (`export_musicxml`, `export_drum_track`, `a4_pages`) answer `not_now` (review of task
+     194: a drum track export cancelled the correction's run and left it pending for ever,
+     and the PDF and MusicXML had the notes from before it); the Mac app's Export is off
+     meanwhile. `not_now` without a result (also while the drum track is
+     exported); `bad_argument` for no change, two changes, an unknown tempo or a wrong type.
+   - `docs/bridge.md` documents `correct`, `controls` and `sheet`; the doc test checks them.
+2. **`SticklerCore`** (Linux and macOS):
+   - `SongResult` decodes `controls` (missing in an older line: no inspector content) and
+     `sheet`; `Command.correct(Correction)` with `Correction` one of `.tempo`, `.beatsPerBar`,
+     `.firstOne`, `.simplify`, `.repeats`, `.detected`.
+   - `AppModel.correct(_:)` sends it, in the reader's order; the steppers send `_by` steps
+     (`.beatsPerBarBy(1)`), which the core counts from its newest values, so two quick clicks
+     make two steps. A refusal becomes the window's notice.
+   - `SheetModel` asks for pages when `song` or `sheet` changes, no longer on `corrections`;
+     a correction keeps the old pages until the new ones come, as a resize does.
+3. **The inspector** (app target, `CorrectionsInspector.swift`): SwiftUI's `inspector` at the
+   trailing edge, 300 points, a grouped `Form` with the sections Beat and Easier to Read and
+   "Back to Detected" under them, as M11: Tempo as a segmented `Picker`; Beats per bar and
+   First “one” as `Stepper`s with the value beside them (VoiceOver: the label and "4" or
+   "Beat 2"); Simplify and Repeat signs as switches with their second line. Only with a
+   result (not during an export's steps: the controls would be refused). Open or closed is
+   kept in `@AppStorage` across launches.
+4. **Opening it:** a toolbar button at the far right (`sidebar.trailing`, help "Corrections",
+   shown as pressed while open) and View › Show Corrections / Hide Corrections (⌃⌘I) between
+   the zoom items and Enter Full Screen, enabled with a result. The item's title and state
+   are a logic type (`CorrectionsMenu`), tested and gated like `ControlsMenu`. The button
+   stands alone after a fixed space; Open and Export before it become one capsule, as M4
+   draws them (owner, 2026-11-25; "Decisions from the mockups").
+5. **While a correction is written:** a small spinner left of Open and Export while
+   `correcting` (owner, 2026-11-25; M11 draws it after the subtitle, see "Corrections screens
+   M11"); the old sheet, title and marker stay until the new state comes; playback goes
+   on (`mac-playback`).
+6. **Texts:** "Show Corrections" and "Hide Corrections" new in `po/` through `mac_texts.py`,
+   German "Korrekturen einblenden" / "Korrekturen ausblenden" (as macOS words "Seitenleiste
+   einblenden"), Spanish "Mostrar correcciones" / "Ocultar correcciones". The others exist
+   from the GTK app (Corrections, Beat, Tempo, Half, As Detected, Double, Beats per bar,
+   First “one”, Beats before it are a pickup, Beat {number}, Easier to Read, Simplify, Nearly
+   equal bars get one pattern, Repeat signs, Equal bars are written once, Back to Detected).
+
+**Not in this module:** a tempo other than half or double, undo beyond "Back to Detected",
+correcting single notes or hits (not part of the app at all, owner 2026-11-15), a narrow window's
+bottom sheet (macOS windows keep a minimum size).
+
+**Testing.**
+- Python: `corrections.controls` (the engraved values for what is not corrected, the first
+  "one" within a shorter bar, earlier and later at the ends, corrected or not); the GTK panel
+  shows the same values as before (its widget test); `correct` for every kind of change, its
+  ranges, `detected`, a change that changes nothing, `not_now`, each `bad_argument`; `sheet`
+  changes with a correction's new notation and not with its start; the doc test; 95 %.
+- `SticklerCore` with a scripted core: each control's command, two quick stepper clicks make
+  two steps, a refusal as the notice, pages fetched once per new `sheet` and not at a
+  correction's start, an older line without `controls`; 95 %.
+- App target: `CorrectionsMenu` (title, enabled, the key) under `scripts/xccov_gate.py`;
+  screenshots of M11 from fixed states: light with Simplify off, dark while playing and
+  correcting.
+- By hand on the owner's Mac: Eye of the Tiger at half tempo and with the first "one" moved,
+  by eye and by ear while playing; Simplify off and on; Back to Detected; the corrections back
+  after reopening the song; ⌃⌘I and the button; the inspector still open after a restart.
+
+**Success criteria.**
+1. Each control changes the sheet within about a second on Eye of the Tiger (owner, on the
+   Mac); title, subtitle, marker, bar clicks and the exports follow the corrected bars.
+2. Half and Double change tempo and bars; beats per bar and the first "one" give the expected
+   meter and pickup; Simplify and Repeat signs switch as on the CLI and in the GTK app.
+3. A song opened again shows its corrections (also those made in the GTK app, from a backup);
+   "Back to Detected" clears them and is disabled while nothing is corrected.
+4. The button and View › Show Corrections (⌃⌘I) open and close the inspector; it is open
+   again after a restart when it was left open.
+5. The screens match M11 in light and dark (screenshots, the owner's check).
+6. `scripts/check.sh task` green; `SticklerCore` and the app's logic ≥ 95 %; the `mac` workflow
+   green; the GTK app's corrections and the benchmark unchanged.
+
+**Decided (owner, 2026-11-25):**
+1. Corrections come in release 11, with the Windows app and the Mac playback. As every
+   feature ships in all three apps from release 11 on, the Windows app gets them too
+   (`win-corrections` in "Release 11", on the same `correct`); release 12 had been proposed.
+
 ## Release 11 (proposed): Windows app
 
 > Status: **capability map approved** by the owner on 2026-11-24 (open questions 2–4 decided as
@@ -3333,8 +3516,9 @@ the Mac app is: a thin interface over the shared Python core, reached through
   and cancel, the sheet music with zoom, export of MusicXML, PDF and the drum track, recent
   songs, every language in `po/LINGUAS`; release 10's "Back Up… / Restore Backup…" and
   "Uninstall Stickler…"; and playback as `mac-playback` built it (song, clicks or both, the
-  bar marker; screens W10). Corrections are not in it: the Mac app has none yet. Whatever else
-  reaches the Mac app before release 11 joins this list.
+  bar marker; screens W10). Corrections joined it on 2026-11-25 (owner: `mac-corrections` and
+  `win-corrections` in release 11; before, "the Mac app has none yet"). Whatever else reaches
+  the Mac app before release 11 joins this list.
 - **The same everywhere, from release 11 on (owner, 2026-11-24 and 2026-11-25):** release 11
   is the Windows app and the Mac playback together, released when both apps are at the same
   state; the Mac playback, done on `main`, waits for it. From then on every new feature ships
@@ -3373,7 +3557,7 @@ the Mac app is: a thin interface over the shared Python core, reached through
   `EnforceCodeStyleInBuild`, `dotnet format --verify-no-changes` clean, coverage ≥ 95 % in
   `SticklerCore` and the app's logic types (pure XAML views excluded, as SwiftUI views are).
   The extension is written when `win-shell` fixes the paths.
-- **Out of this release:** corrections (the Mac app has none yet), CUDA (later, owner
+- **Out of this release:** CUDA (later, owner
   2026-11-25), ARM64, `.msi`/WiX, winget, Scoop, the Microsoft Store, a paid certificate,
   features only Windows has.
 
@@ -3387,10 +3571,11 @@ the Mac app is: a thin interface over the shared Python core, reached through
 | `win-shell` | WinUI 3 app and the C# `SticklerCore`: window, menus, open or drop a song, analysis steps with cancel, errors, recent songs, export, the setup assistant, "Back Up… / Restore Backup…" (release 10, through the bridge), the core started and stopped; the app's own texts from `po/` (`scripts/winstrings.py`); CONSTRAINTS.md for C#; `.github/workflows/win.yml` | `core-bridge` (done), `win-design`, `win-spike` |
 | `win-sheet` | Sheet music in WebView2 from the core's SVG pages (a virtual host mapped to the score folder), zoom, title, artist and tempo; the PDF from the A4 pages through WebView2's print to PDF | `win-shell` |
 | `win-playback` | Added 2026-11-25: what `mac-playback` does, drawn as W10: the song, the clicks or both in time, volumes, the bar marker, a click on a bar, the keys; the rules stay in `stickler_app.playback` and `marker`, the bridge's playback commands are reused; the Windows audio library (two sources from one clock, as `AVAudioEngine` on the Mac) chosen in its spec, maintenance and licence checked on the web | `win-sheet` |
+| `win-corrections` | Added 2026-11-25 (owner): what `mac-corrections` does, drawn on the Windows canvas first (W11, with the owner): tempo half or double, beats per bar, the first "one", Simplify, Repeat signs, Back to Detected, applied at once; the bridge's `correct`, `controls` and `sheet` (`mac-corrections` task 190) reused, nothing new in Python | `win-sheet`, `mac-corrections` (190) |
 | `win-package` | The installer (Inno Setup, per user, Start menu entry, an uninstall entry in Settings › Apps), "Uninstall Stickler…" as release 10 asks of every system, `uv`, ffmpeg and ffprobe pinned by SHA-256, refusing Windows 10 with a clear message, the release job, `docs/install-windows.md` and the website's download card and guide in English and German; the SignPath application | all |
 
 Build order: `win-design`, `win-core` (in parallel) → `win-spike` → `win-shell` → `win-sheet` →
-`win-playback` → `win-package`. The spike comes earlier than the Mac's did, because the risks are in the
+`win-playback` → `win-corrections` → `win-package`. The spike comes earlier than the Mac's did, because the risks are in the
 packaging (long paths, SmartScreen, `uv` under `%LOCALAPPDATA%`) and a failure there changes
 `win-shell`'s setup and the core's folders.
 
@@ -3989,11 +4174,17 @@ inspects TLS; the run's log `%LOCALAPPDATA%\Stickler\spike-log.txt`, the install
      is one file for all environments, and Panda released it once for all of them.
    - Starting models without the launcher was not needed here.
 4. **Question 4: not testable here.** `LongPathsEnabled` is on; the runner's answer stands.
-5. **Question 5:** the uninstall entry is in Settings › Apps ("Stickler (spike)", version 9,
-   381 MB). Panda refused the uninstaller `unins000.exe` at 12:35, 13:12, 14:15 and 14:44 (two hours
-   ten minutes); nothing was removed. Still open: whether it removes everything once Panda
-   releases it. Here Panda held the uninstaller back longer than the installer's helper and
-   the environment's launcher (about half an hour each).
+5. **Question 5: yes, as on the runner, once Panda let the uninstaller run.** The uninstall
+   entry is in Settings › Apps ("Stickler (spike)", version 9, 381 MB). Panda refused the
+   uninstaller `unins000.exe` at 12:35, 13:12, 14:15 and 14:44 (two hours ten minutes) and
+   nothing was removed. The next morning (2026-11-26, 08:45, about 20 hours after the first
+   try) the same `unins000.exe` started (silently, `/VERYSILENT /SUPPRESSMSGBOXES`, the
+   program Settings › Apps starts) and Inno's log says "Uninstallation process succeeded",
+   "Removed all? Yes", no restart. Afterwards the program folder, the Apps entry and the
+   Start-menu entry are gone, and `%LOCALAPPDATA%\Stickler` is untouched (`cache` 0.85 GB,
+   `data` 1.5 GB, `config`, `spike-out`, `spike-log.txt`). Here Panda held the uninstaller back
+   far longer than the installer's helper and the environment's launcher (about half an hour
+   each); between 2 h 10 min and 20 h, not narrowed down.
 
 **Notes for `win-shell` and `win-package`** (from the spike, not decided):
 - The bridge has no event for "the models are set up, nothing to ask": the driver waits 20 s

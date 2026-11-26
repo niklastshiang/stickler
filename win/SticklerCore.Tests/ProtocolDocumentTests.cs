@@ -89,6 +89,22 @@ public sealed partial class ProtocolDocumentTests
     }
 
     [TestMethod]
+    public void EveryCorrectionIsOneKeyOfCorrect()
+    {
+        string Line(Correction change) => Command.Correct(change).Line(31);
+        Assert.AreEqual("""{"id":31,"cmd":"correct","tempo":"half"}""", Line(Correction.HalfTempo));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","tempo":"normal"}""", Line(Correction.NormalTempo));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","tempo":"double"}""", Line(Correction.DoubleTempo));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","beats_per_bar":3}""", Line(Correction.BeatsPerBar(3)));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","beats_per_bar_by":-1}""", Line(Correction.BeatsPerBarBy(-1)));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","first_one":2}""", Line(Correction.FirstOne(2)));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","first_one_by":1}""", Line(Correction.FirstOneBy(1)));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","simplify":false}""", Line(Correction.Simplify(false)));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","repeats":true}""", Line(Correction.Repeats(true)));
+        Assert.AreEqual("""{"id":31,"cmd":"correct","detected":true}""", Line(Correction.Detected));
+    }
+
+    [TestMethod]
     public void TheRepliesWithFieldsReadAsTheirPayloads()
     {
         string ReplyOf(string name) => Blocks().Single(b => b.Section == "Commands" && b.Heading == name).Lines[1];
@@ -147,6 +163,7 @@ public sealed partial class ProtocolDocumentTests
             "step" => Command.StepBy(D("at"), I("by")),
             "volumes" => Command.Volumes(S("hear"), Opt("song"), Opt("hits")),
             "playable" => Command.Playable,
+            "correct" when S("tempo") == "half" => Command.Correct(Correction.HalfTempo),
             "quit" => Command.Quit,
             _ => throw new AssertFailedException($"the client has no command \"{name}\""),
         };

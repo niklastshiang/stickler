@@ -157,9 +157,16 @@ the title.
 
 ### `result`
 
-The sheet music. `subtitle` is the header's second line. `corrections` are the values the
-corrections controls show, and `correcting` is true while a correction is being notated. Both
-are for `mac-corrections`. The pages come from `pages`.
+The sheet music. `subtitle` is the header's second line. The pages come from `pages`.
+
+For the corrections (SPEC.md "Mac corrections"): `corrections` are the wanted values, `null`
+where nothing is corrected, and `correcting` is true while a correction is being notated: the
+title, the bars and the pages are still the old ones then. `controls` is what the corrections
+controls show: the wanted values, with the engraved beats per bar and first "one" where they
+are not corrected, whether the bar can have `fewer` or `more` beats (1 to 12), the first "one"
+as text, whether it can move `earlier` or `later`, and whether anything is `corrected` ("Back
+to Detected"). `sheet` changes with every new notation
+shown, not when a correction starts: fetch `pages` again when it changes.
 
 For playback (SPEC.md "Mac playback"): `clicks` is the file with the detected hits as clicks,
 as long as the song, or `null` when there is none (the song then plays alone). `bars` are the
@@ -170,7 +177,7 @@ first bar the first one's text is shown, after the last the last one's. A correc
 bars with its state.
 
 ```json
-{"kind": "result", "song": "/Users/me/Music/Eye of the Tiger.flac", "title": "Eye of the Tiger", "subtitle": "Survivor · ♩ = 109 · 4/4", "artist": "Survivor", "seconds": 246.0, "tempo": 109, "meter": [4, 4], "musicxml": "/Users/me/Library/Caches/Stickler/scores/Eye of the Tiger-1a2b3c4d5e.musicxml", "corrections": {"tempo": "normal", "beats_per_bar": null, "first_downbeat": null, "simplify": true, "repeats": true}, "correcting": false, "clicks": "/Users/me/Library/Caches/Stickler/hits/Eye of the Tiger-1a2b3c4d5e.wav", "bars": [{"start": 0.31, "end": 2.51, "bar": 1, "label": "Bar 1 of 110"}, {"start": 2.51, "end": 4.71, "bar": 2, "label": "Bar 2 of 110"}], "can_open": true, "can_cancel": false, "can_retry": false, "can_close": true, "can_export": true, "can_agree": false, "can_not_now": false, "can_retry_setup": false, "can_remove_models": false}
+{"kind": "result", "song": "/Users/me/Music/Eye of the Tiger.flac", "title": "Eye of the Tiger", "subtitle": "Survivor · ♩ = 109 · 4/4", "artist": "Survivor", "seconds": 246.0, "tempo": 109, "meter": [4, 4], "musicxml": "/Users/me/Library/Caches/Stickler/scores/Eye of the Tiger-1a2b3c4d5e.musicxml", "corrections": {"tempo": "normal", "beats_per_bar": null, "first_downbeat": null, "simplify": true, "repeats": true}, "correcting": false, "controls": {"tempo": "normal", "beats_per_bar": 4, "fewer": true, "more": true, "first_one": 1, "first_one_label": "Beat 1", "earlier": false, "later": true, "simplify": true, "repeats": true, "corrected": false}, "sheet": 12, "clicks": "/Users/me/Library/Caches/Stickler/hits/Eye of the Tiger-1a2b3c4d5e.wav", "bars": [{"start": 0.31, "end": 2.51, "bar": 1, "label": "Bar 1 of 110"}, {"start": 2.51, "end": 4.71, "bar": 2, "label": "Bar 2 of 110"}], "can_open": true, "can_cancel": false, "can_retry": false, "can_close": true, "can_export": true, "can_agree": false, "can_not_now": false, "can_retry_setup": false, "can_remove_models": false}
 ```
 
 ### `exporting`
@@ -499,6 +506,25 @@ another song saved at the same place gets its own.
 ```json
 {"id": 30, "cmd": "playable"}
 {"id": 30, "ok": true, "path": "/Users/me/Library/Caches/Stickler/playable/3f786850e387550fdab836ed7e6dc881de23001b.flac"}
+```
+
+### `correct`
+
+One change from the corrections controls (SPEC.md "Mac corrections"), exactly one of: `tempo`
+(`"half"`, `"normal"` or `"double"`), `beats_per_bar` (kept within 1 to 12), `first_one` (kept
+within the bar as `controls` shows it), `beats_per_bar_by` or `first_one_by` (a stepper's click,
+e.g. 1 or -1, counted from the newest values, so quick clicks are never lost), `simplify`,
+`repeats` (true or false), or `detected: true` ("Back to Detected"). The new values come at once
+in a `state` event before the reply, with `correcting` true; the new notation follows 250 ms
+after the changes pause, the newest winning, and the song keeps its corrections. A change that
+changes nothing sends no state, a step past an end too. While a correction is written, the
+exports (`export_musicxml`, `export_drum_track`, `a4_pages`) answer `not_now`. Only on a result;
+none or several changes are `bad_argument` named `change`. A notation that fails keeps the last
+sheet and sends a `notice`.
+
+```json
+{"id": 31, "cmd": "correct", "tempo": "half"}
+{"id": 31, "ok": true}
 ```
 
 ### `quit`

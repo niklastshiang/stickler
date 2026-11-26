@@ -1,7 +1,8 @@
 # Design of the Mac app
 
 Mockups of every screen of the Mac app's first version, approved by the owner on 2026-11-17, and
-of its playback for a later release (M10), approved on 2026-11-24
+of its playback for a later release (M10), approved on 2026-11-24, and of its corrections (M11),
+approved on 2026-11-25
 (module `mac-design` in [SPEC.md](../../../SPEC.md#module-mac-design), which lists the screens
 and the decisions).
 
@@ -25,7 +26,11 @@ live copy; when a screen changes there, the files here are replaced with the new
 | `Playing.dc.html`, `Playing-Dark.dc.html` | M10 · Playing (light; dark with only the hits; a later release) |
 | `Playing-Volume.dc.html` | M10 · The volume popover |
 | `Menu-Controls.dc.html` | M10 · Menu bar: Controls |
+| `Corrections.dc.html` | M11 · The corrections inspector (light, Simplify off; its controls work on the canvas) |
+| `Corrections-Dark.dc.html` | M11 · Corrections while playing, half tempo being written (dark) |
+| `Menu-View-Corrections.dc.html` | M11 · Menu bar: View with Show Corrections |
 | `SheetPage.dc.html` | The engraved page, shared with the GTK mockups (Mac accent, marker off) |
 
 The dark boards import the light ones with `dark` on; `Menu-File` and `Menu-View` import
-`Menu-App` with another menu open; the M10 boards import `Playing`. Inter stands in for SF Pro on the canvas.
+`Menu-App` with another menu open; the M10 boards import `Playing`; `Corrections-Dark` imports `Corrections`, and
+`Menu-View-Corrections` the sheet of M6. Inter stands in for SF Pro on the canvas.

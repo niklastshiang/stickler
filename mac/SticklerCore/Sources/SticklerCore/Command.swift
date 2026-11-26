@@ -32,6 +32,7 @@ public enum Command: Equatable, Sendable {
     case step(from: Double, count: Int)
     case volumes(hear: Hear, song: Double?, hits: Double?)
     case playable
+    case correct(Correction)
     case quit
 
     /// The command's name on the wire.
@@ -67,6 +68,7 @@ public enum Command: Equatable, Sendable {
         case .step: "step"
         case .volumes: "volumes"
         case .playable: "playable"
+        case .correct: "correct"
         case .quit: "quit"
         }
     }
@@ -77,6 +79,19 @@ public enum Command: Equatable, Sendable {
     }
 }
 
+/// One change from the corrections inspector (`correct`): a value, a stepper's step (counted
+/// by the core from its newest values, so quick clicks are never lost), or Back to Detected.
+public enum Correction: Equatable, Sendable {
+    case tempo(Tempo)
+    case beatsPerBar(Int)
+    case beatsPerBarBy(Int)
+    case firstOne(Int)
+    case firstOneBy(Int)
+    case simplify(Bool)
+    case repeats(Bool)
+    case detected
+}
+
 /// A command with its `id`, as the core reads it.
 private struct CommandWire: Encodable {
     let id: Int
@@ -85,6 +100,9 @@ private struct CommandWire: Encodable {
     private enum Keys: String, CodingKey {
         case id, cmd, path, dest, src, width, zoom, everything, bar, hear, song, hits
         case from = "at", count = "by"  // the protocol's names
+        case tempo, simplify, repeats, detected
+        case beatsPerBar = "beats_per_bar", beatsPerBarBy = "beats_per_bar_by"
+        case firstOne = "first_one", firstOneBy = "first_one_by"
     }
 
     func encode(to encoder: any Encoder) throws {
@@ -105,18 +123,45 @@ private struct CommandWire: Encodable {
             try container.encode(everything, forKey: .everything)
         case .backupSummary(let src), .restore(let src):
             try container.encode(src, forKey: .src)
-        case .jump(let bar, let from):
-            try container.encode(bar, forKey: .bar)
-            try container.encode(from, forKey: .from)
-        case .step(let from, let count):
-            try container.encode(from, forKey: .from)
-            try container.encode(count, forKey: .count)
-        case .volumes(let hear, let song, let hits):
-            try container.encode(hear, forKey: .hear)
-            try container.encodeIfPresent(song, forKey: .song)  // the stored volume without
-            try container.encodeIfPresent(hits, forKey: .hits)
+        case .jump, .step, .volumes, .correct:
+            try encodePlaying(command, into: &container)
         default:
             break
+        }
+    }
+
+    /// The commands of playback and corrections, apart so each switch stays short.
+    private typealias Box = KeyedEncodingContainer<Keys>
+
+    private func encodePlaying(_ command: Command, into box: inout Box) throws {
+        switch command {
+        case .jump(let bar, let from):
+            try box.encode(bar, forKey: .bar)
+            try box.encode(from, forKey: .from)
+        case .step(let from, let count):
+            try box.encode(from, forKey: .from)
+            try box.encode(count, forKey: .count)
+        case .volumes(let hear, let song, let hits):
+            try box.encode(hear, forKey: .hear)
+            try box.encodeIfPresent(song, forKey: .song)  // the stored volume without
+            try box.encodeIfPresent(hits, forKey: .hits)
+        case .correct(let change):
+            try encode(change, into: &box)
+        default:
+            break
+        }
+    }
+
+    private func encode(_ change: Correction, into box: inout Box) throws {
+        switch change {
+        case .tempo(let tempo): try box.encode(tempo, forKey: .tempo)
+        case .beatsPerBar(let beats): try box.encode(beats, forKey: .beatsPerBar)
+        case .beatsPerBarBy(let step): try box.encode(step, forKey: .beatsPerBarBy)
+        case .firstOne(let beat): try box.encode(beat, forKey: .firstOne)
+        case .firstOneBy(let step): try box.encode(step, forKey: .firstOneBy)
+        case .simplify(let value): try box.encode(value, forKey: .simplify)
+        case .repeats(let value): try box.encode(value, forKey: .repeats)
+        case .detected: try box.encode(true, forKey: .detected)
         }
     }
 }

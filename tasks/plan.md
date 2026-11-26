@@ -666,6 +666,36 @@ from 163 on each push goes through the `mac` workflow.
 | Headphones unplugged stop the engine | Medium | The configuration change pauses playback and rebuilds the engine at the same position |
 | Space taken by a focused control | Low | Space is the Controls menu's key equivalent, which the menu gets first; checked by hand |
 
+## Mac corrections: `mac-corrections` (approved 2026-11-25, SPEC.md "Mac corrections"; release 11)
+
+The Mac app corrects the beat and the reading as the GTK app does (screens M11).
+
+Design decisions:
+- **The rules stay in Python:** what the inspector shows comes in the `result` state as
+  `controls` (`corrections.controls`, moved out of the GTK view so all apps share it); each
+  control sends one change through `correct`, which keeps it in range with the `with_*`
+  functions and hands it to `Controller.correct`. Windows will use the same command.
+- **The sheet follows the notation, not the wanted values:** `result` gains `sheet`, which
+  changes with every new notation; `SheetModel` keys on it. Keyed on `corrections` (today) it
+  would engrave the old notes at a correction's start and miss the new ones.
+- **Steppers send steps, not values** (`beats_per_bar_by`, `first_one_by`): the core counts
+  each from its newest values, so quick clicks are not lost (changed while building 190).
+- **The inspector is SwiftUI's own** (`inspector`, `Form` grouped), open or closed kept in
+  `@AppStorage`; the View menu item is a gated logic type like `ControlsMenu`.
+
+Order: core and bridge (190) → SticklerCore (191) → inspector and spinner (192) → menu, key,
+texts (193) → review, build for the owner (194). 190 and 191 are checked on Linux (and this
+Mac's Command Line Tools for `swift test`); from 192 on each push goes through the `mac`
+workflow.
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| The sheet shows the old notes after a correction | High | `sheet` in the state, `SheetModel` keyed on it; a test that pages are fetched once per new notation and not at the start |
+| Quick stepper clicks lost or sent twice | Medium | Steps (`_by`) counted by the core in order; a test with two quick clicks |
+| `correct` waits behind `pages` while the core engraves | Low | The 250 ms pause already joins quick changes; a wait of one engraving is accepted |
+| The GTK panel changes while its rule moves to `stickler_app` | Medium | The GTK widget test of the shown values runs before and after (`scripts/gtk.sh test`) |
+| A toolbar button at the far right lands over the inspector on macOS 26 | Low | Placement checked in the screenshot against M11; the menu and ⌃⌘I work either way |
+
 ## Release 11 (Windows app): `win-core` (approved 2026-11-24, SPEC.md "Module `win-core`")
 
 The Python core and the first version's models on Windows 11 x64 (CPU), checked by a Windows

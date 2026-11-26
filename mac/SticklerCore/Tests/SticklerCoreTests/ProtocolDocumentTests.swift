@@ -126,7 +126,7 @@ let sampleCommands: [Command] = [
     .backupSummary(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"),
     .restore(src: "/Users/me/Documents/Stickler Backup 2026-11-22.zip"), .uninstallSizes,
     .uninstall(everything: false), .jump(bar: 2, from: 3.2), .step(from: 3.2, count: 1),
-    .volumes(hear: .hits, song: 0.6, hits: nil), .playable, .quit
+    .volumes(hear: .hits, song: 0.6, hits: nil), .playable, .correct(.tempo(.half)), .quit
 ]
 
 @Test func everyCommandIsWrittenAsTheDocumentShowsIt() throws {

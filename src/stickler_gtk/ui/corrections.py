@@ -105,19 +105,20 @@ class CorrectionsPanel(Gtk.Box):
     def show_values(self, fix: api.Corrections, *, beats_per_bar: int, first_one: int) -> None:
         """`fix` as the controls show it; `beats_per_bar` and `first_one` as engraved, for the
         values the reader has not set."""
+        shown = corrections.controls(fix, beats_per_bar=beats_per_bar, first_one=first_one)
         self._showing = True
         try:
             self.fix = fix
-            self.beats_per_bar = fix.beats_per_bar or beats_per_bar
-            self.first = fix.first_downbeat or min(first_one, self.beats_per_bar)
-            self.tempo.set_active_name(fix.tempo)
-            self.beats.set_value(self.beats_per_bar)
-            self.first_one.set_label(corrections.beat_label(self.first))
-            self.earlier.set_sensitive(self.first > 1)
-            self.later.set_sensitive(self.first < self.beats_per_bar)
-            self.simplify.set_active(fix.simplify)
-            self.repeats.set_active(fix.repeats)
-            self.back.set_sensitive(corrections.corrected(fix))
+            self.beats_per_bar = shown.beats_per_bar
+            self.first = shown.first_one
+            self.tempo.set_active_name(shown.tempo)
+            self.beats.set_value(shown.beats_per_bar)
+            self.first_one.set_label(shown.first_one_label)
+            self.earlier.set_sensitive(shown.earlier)
+            self.later.set_sensitive(shown.later)
+            self.simplify.set_active(shown.simplify)
+            self.repeats.set_active(shown.repeats)
+            self.back.set_sensitive(shown.corrected)
         finally:
             self._showing = False
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-25 11:30+0100\n"
+"POT-Creation-Date: 2026-11-25 14:16+0100\n"
 "PO-Revision-Date: 2026-11-15 13:17+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -27,46 +27,46 @@ msgstr ""
 "correcciones que ya están en esta computadora se quedan; los ajustes se "
 "reemplazan."
 
-#: src/stickler_app/bridge.py:205
+#: src/stickler_app/bridge.py:217
 msgid "This is not possible right now."
 msgstr "Ahora mismo no es posible."
 
-#: src/stickler_app/bridge.py:210
+#: src/stickler_app/bridge.py:222
 #, python-brace-format
 msgid "The value of “{argument}” is not valid."
 msgstr "El valor de «{argument}» no es válido."
 
-#: src/stickler_app/bridge.py:415
+#: src/stickler_app/bridge.py:428
 msgid "The request could not be read."
 msgstr "No se pudo leer la solicitud."
 
-#: src/stickler_app/bridge.py:419
+#: src/stickler_app/bridge.py:432
 #, python-brace-format
 msgid "Stickler does not know the command “{name}”."
 msgstr "Stickler no conoce el comando «{name}»."
 
-#: src/stickler_app/bridge.py:429
+#: src/stickler_app/bridge.py:442
 msgid "Something went wrong inside Stickler."
 msgstr "Algo salió mal dentro de Stickler."
 
-#: src/stickler_app/bridge.py:552
+#: src/stickler_app/bridge.py:589
 #, python-brace-format
 msgid "“{name}” cannot be played."
 msgstr "No se puede reproducir «{name}»."
 
-#: src/stickler_app/bridge.py:565 src/stickler_app/controller.py:388
+#: src/stickler_app/bridge.py:602 src/stickler_app/controller.py:388
 #: src/stickler_gtk/ui/window.py:637
 #, python-brace-format
 msgid "This is no Stickler backup: {reason}"
 msgstr "Esto no es una copia de seguridad de Stickler: {reason}"
 
-#: src/stickler_app/bridge.py:581 src/stickler_gtk/ui/window.py:686
+#: src/stickler_app/bridge.py:618 src/stickler_gtk/ui/window.py:686
 #, python-brace-format
 msgid "This removes Stickler and frees {size}. Your songs and exports stay."
 msgstr ""
 "Esto quita Stickler y libera {size}. Tus canciones y exportaciones se quedan."
 
-#: src/stickler_app/bridge.py:608 src/stickler_gtk/ui/window.py:583
+#: src/stickler_app/bridge.py:645 src/stickler_gtk/ui/window.py:583
 #, python-brace-format
 msgid "This frees {size}. Stickler asks before it downloads the models again."
 msgstr ""
@@ -305,8 +305,20 @@ msgstr ""
 msgid "Controls"
 msgstr "Controles"
 
+#. Translators: Mac app, View menu (⌃⌘I): opens the corrections beside the sheet music
+#. (tempo, beats per bar, the first "one"); macOS says "Seitenleiste einblenden" in German,
+#. "Mostrar barra lateral" in Spanish
+#: src/stickler_app/mac_texts.py:49
+msgid "Show Corrections"
+msgstr "Mostrar correcciones"
+
+#. Translators: Mac app, View menu (⌃⌘I): closes the corrections again
+#: src/stickler_app/mac_texts.py:51
+msgid "Hide Corrections"
+msgstr "Ocultar correcciones"
+
 #. Translators: Mac app, VoiceOver, after "Sheet music of …": how many pages it has
-#: src/stickler_app/mac_texts.py:52
+#: src/stickler_app/mac_texts.py:58
 #, python-brace-format
 msgid "{count} page"
 msgid_plural "{count} pages"
@@ -340,30 +352,30 @@ msgstr "abierto el {date}"
 msgid "file not found"
 msgstr "archivo no encontrado"
 
-#: src/stickler_app/session.py:269
+#: src/stickler_app/session.py:273
 #, python-brace-format
 msgid "“{name}” cannot be read. Is it a complete sound file?"
 msgstr "No se puede leer «{name}». ¿Es un archivo de audio completo?"
 
-#: src/stickler_app/session.py:273
+#: src/stickler_app/session.py:277
 msgid "Cannot Read This File"
 msgstr "No se puede leer este archivo"
 
-#: src/stickler_app/session.py:279
+#: src/stickler_app/session.py:283
 #, python-brace-format
 msgid "Saving the drum track of “{name}” did not work."
 msgstr "No se pudo guardar la pista de batería de «{name}»."
 
-#: src/stickler_app/session.py:281
+#: src/stickler_app/session.py:285
 msgid "The Export Failed"
 msgstr "La exportación falló"
 
-#: src/stickler_app/session.py:283
+#: src/stickler_app/session.py:287
 #, python-brace-format
 msgid "Something went wrong while listening to “{name}”."
 msgstr "Algo salió mal al escuchar «{name}»."
 
-#: src/stickler_app/session.py:285
+#: src/stickler_app/session.py:289
 msgid "The Analysis Failed"
 msgstr "El análisis falló"
 

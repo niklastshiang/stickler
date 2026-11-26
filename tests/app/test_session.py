@@ -139,3 +139,18 @@ def test_the_setup_runs_its_steps_and_then_opens_the_song_it_was_for():
     assert session.setup_done(running, running.job) == session.Empty()
     assert session.cancel(running) == session.Empty()
     assert session.failed(running, running.job, api.Cancelled()) == session.Empty()
+
+
+def test_a_sheet_number_changes_with_each_new_notation_and_not_at_a_corrections_start(tmp_path):
+    """The Mac app fetches pages when it changes (SPEC.md "Mac corrections", assumption 4)."""
+    song = tmp_path / "eye.flac"
+    analysing = session.open_song(song, session.Empty())
+    t = api.SongTranscription(song, "fast", None, [], [], [])
+    notation = api.Notation(tmp_path / "eye.musicxml", None, None, t)
+    info = api.SongInfo("Eye", "", 1.0)
+    result = session.finished(analysing, analysing.job, info, notation)
+    assert result.sheet == analysing.job
+    started = session.correct(result, api.Corrections(tempo="half"))
+    assert started.sheet == result.sheet
+    done = session.corrected(started, started.pending.job, notation)
+    assert done.sheet == started.pending.job != result.sheet
