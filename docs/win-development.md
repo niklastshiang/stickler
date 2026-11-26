@@ -105,6 +105,49 @@ looks and everything.
 4. Dark mode: the page is inverted on the dark desk. Narrator reads the sheet as "Sheet music
    of …, n pages".
 
+## What to check for the playback (Checkpoint AK; SPEC.md, module `win-playback`)
+
+1. A song plays with its clicks in time with the drums (by ear); Play, Pause, the position
+   slider, Previous Bar and Next Bar work. Measured in a VM on 2026-11-26 from the recorded
+   sound: the clicks and the song lie within one sample of each other, also after a pause, a
+   bar step, a jump on the slider and with other volumes; the ear's check is for a real song
+   and real loudspeakers.
+2. Song · Hits · Both and the two volume sliders (the speaker button) change what is heard;
+   the volumes are the same after a restart. A volume change may click softly (the gain
+   changes at a buffer's edge): say so if it does.
+3. The marker follows the sounding bar in the accent colour, light and dark, and stays in
+   view; a click on a bar jumps there (inside repeat signs: to its next pass).
+4. Playback › Play (Space), Previous Bar (Left), Next Bar (Right), Go to the Start (Home),
+   and Song, Hits, Both with their dot; the keys also after a click into the sheet, and not
+   while a slider, a switch or the menu bar has the focus. A held Space is one press.
+5. An MP3, an M4A and an Ogg or Opus file (the last two play from a copy the core decodes
+   first, a moment's wait at the first Play).
+6. Headphones unplugged while playing: Windows moves the sound to the loudspeakers (it does
+   not pause as the Mac does). No sound output at all: "The song cannot be played: No sound
+   output was found."
+7. Opening another song, Close Song and closing the window stop the sound at once.
+
+## What to check for the corrections (Checkpoint AL; SPEC.md, module `win-corrections`)
+
+1. The button right of Export and View › Corrections (Ctrl+Shift+C) open and close the pane;
+   the entry has its check mark; the pane is open again after a restart when it was left open.
+2. Half and Double change tempo and bars within about a second; Beats per bar and First “one”
+   step by one and stop at their ends; Simplify and Repeat signs switch; the small ring turns
+   after the subtitle meanwhile and Export is off.
+3. "Back to Detected" clears everything and is off while nothing is corrected.
+4. A song opened again shows its corrections; while playing, the marker and the bar's text
+   follow a correction.
+
+## Testing in a Windows VM (owner's Linux computer, 2026-11-26)
+
+`~/VMs/stickler-win11/` holds a QEMU/KVM Windows 11 VM (its `README.md`: `start.sh`,
+`stop.sh`, `ssh.sh`, `screenshot.sh`; tools in the Distrobox `stickler-vm`, nothing on the
+host). The SDK, Git, uv and ffmpeg are under `C:\tools`, the checkout is `C:\src\stickler`;
+`C:\tools\run-interactive.ps1` runs a command in the logged-on desktop session, which the
+app's window and UI Automation need. QEMU writes what the VM plays to `logs/audio.wav`, so
+the sound can be measured. The image is a stripped third-party Windows build with an old
+WebView2 runtime: what it shows is a hint, GitHub's runner and a real PC count.
+
 ## The installer (SPEC.md, module `win-package`)
 
 The installer is made by `release.yml`'s `windows` job: `scripts/win_bundle.sh` assembles the
