@@ -255,8 +255,10 @@ def test_windir_stands_in_for_a_missing_system_root(tmp_path):
     assert setup.prerequisite({"SystemRoot": "", "windir": str(tmp_path)}, "win32") is None
 
 
-def test_windows_without_any_variable_does_not_crash():
-    assert setup.prerequisite({}, "win32") is not None  # C:\\Windows, not on this machine
+def test_windows_without_any_variable_looks_in_c_windows():
+    # the answer is the machine's: a Windows runner has the runtime, Linux has no C:\\Windows
+    there = Path(r"C:\Windows\System32\msvcp140.dll").is_file()
+    assert (setup.prerequisite({}, "win32") is None) == there
 
 
 def test_the_real_check_changes_nothing_on_linux():
