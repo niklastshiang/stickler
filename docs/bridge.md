@@ -122,10 +122,13 @@ The window to drop a song on.
 ### `consent`
 
 May the models be downloaded? (design screen 1). `models` lists each missing model: what it
-does, its licence and its size. `song` is opened once the models are there.
+does, its licence and its size. `song` is opened once the models are there. `needs` is what
+the PC lacks before anything can be downloaded (Windows: Microsoft's Visual C++
+Redistributable, which PyTorch needs): a text, a link and the link's words; `null` otherwise.
+`can_agree` is false while it is set.
 
 ```json
-{"kind": "consent", "song": null, "models": [{"id": "adtof", "name": "ADTOF", "does": "detects the hits", "licence": "Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0).", "size": "1.3 GB"}, {"id": "beat_this", "name": "Beat This!", "does": "finds the beat and the bars", "licence": "MIT licence. Its model comes from the JKU Linz server.", "size": "0.9 GB"}], "total_size": "2.2 GB", "can_open": true, "can_cancel": false, "can_retry": false, "can_close": false, "can_export": false, "can_agree": true, "can_not_now": true, "can_retry_setup": false, "can_remove_models": false}
+{"kind": "consent", "song": null, "models": [{"id": "adtof", "name": "ADTOF", "does": "detects the hits", "licence": "Its trained model is free for non-commercial use only (CC BY-NC-SA 4.0).", "size": "1.3 GB"}, {"id": "beat_this", "name": "Beat This!", "does": "finds the beat and the bars", "licence": "MIT licence. Its model comes from the JKU Linz server.", "size": "0.9 GB"}], "total_size": "2.2 GB", "needs": null, "can_open": true, "can_cancel": false, "can_retry": false, "can_close": false, "can_export": false, "can_agree": true, "can_not_now": true, "can_retry_setup": false, "can_remove_models": false}
 ```
 
 ### `setting_up`

@@ -4614,6 +4614,22 @@ window.
    core writing the PDF itself (cairo or Verovio's own PDF, then the same file on every
    system). Claude's proposal: WebView2, as planned; the core's way is a change for all apps.
 
+**Found in a VM on 2026-11-26 and 2026-11-27 (`win-package`, after its tasks):**
+- **Microsoft's Visual C++ Redistributable.** PyTorch's wheels need `msvcp140.dll` in
+  System32 and do not bring it (its `torch/__init__.py` preloads it; the wheel's `torch\lib`
+  has none; uv's Python brings only `vcruntime140*.dll`). On a PC without it the first setup
+  failed with "server not reached". Decided (owner, 2026-11-27: "Prüfen und hinweisen"): the
+  core checks before the download (`setup.prerequisite`), the consent says what is missing
+  with Microsoft's link (`needs` in the `consent` state, `can_agree` false); Stickler neither
+  ships nor fetches the runtime (its installer needs administrator rights; shipping the DLLs
+  is for licensed Visual Studio users, unclear for a hosted runner). Whether a clean Windows 11
+  has the runtime could not be confirmed from Microsoft's pages.
+- **Setup's redirection guard off** (`RedirectionGuard=no`): started from Setup's last page,
+  the app inherited it (Inno Setup 7.1.1's notes name the case of a Setup without
+  administrator rights), and uv could not make its Python's link folder (error 448).
+- **"Uninstall Stickler…"** drew the closed window once more and ended with an error; the
+  uninstaller then left the program's files. The app now ends for certain.
+
 ### Module `win-playback`
 
 > Status: **being built** from 2026-11-26, at the owner's request to build the missing Windows

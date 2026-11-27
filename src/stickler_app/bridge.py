@@ -83,10 +83,12 @@ def _consent(state: session.Consent) -> dict[str, Any]:
                 "size": setup.model_size(adapter),
             }
         )
+    needs = setup.prerequisite()
     return {
         "song": _path(state.song),
         "models": models,
         "total_size": setup.total_size(state.missing),
+        "needs": None if needs is None else dataclasses.asdict(needs),
     }
 
 
@@ -189,6 +191,8 @@ def can(state: session.State, *, remove_models: bool) -> dict[str, bool]:
     controller's answer for this same state (`Controller.can_remove_models`, by that rule)."""
     found = session.abilities(state, installed=True, removing=False)
     sent = {f"can_{f.name}": getattr(found, f.name) for f in dataclasses.fields(found)}
+    if sent["can_agree"] and setup.prerequisite() is not None:
+        sent["can_agree"] = False  # the consent only tells what is missing
     return {**sent, "can_remove_models": remove_models}
 
 

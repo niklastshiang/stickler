@@ -1003,3 +1003,16 @@ def test_a_correction_is_refused_while_the_drum_track_is_saved(monkeypatch, tmp_
         running.send("cancel")
     finally:
         running.stop()
+
+
+def test_a_missing_prerequisite_is_told_with_the_consent_and_blocks_agreeing(monkeypatch):
+    from stickler_app import setup
+
+    state = session.consent(("adtof",))
+    assert bridge.encode(state)["needs"] is None and bridge.encode(state)["can_agree"]
+    monkeypatch.setattr(
+        setup, "prerequisite", lambda *a, **kw: setup.Prerequisite("lacks it", "https://x", "Get")
+    )
+    sent = bridge.encode(state)
+    assert sent["needs"] == {"text": "lacks it", "link": "https://x", "label": "Get"}
+    assert not sent["can_agree"] and sent["can_not_now"]

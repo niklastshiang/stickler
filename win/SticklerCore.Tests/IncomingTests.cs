@@ -15,6 +15,8 @@ public sealed class IncomingTests
     [DataRow("{\"event\": \"hello\", \"protocol\": \"one\", \"version\": \"11\", \"language\": \"en\"}")]
     [DataRow("{\"id\": 1, \"ok\": \"yes\"}")]
     [DataRow("{\"event\": \"state\", \"seq\": 1, \"state\": {\"kind\": \"result\", \"song\": \"/a\", \"title\": \"\", \"subtitle\": \"\", \"artist\": \"\", \"seconds\": 1, \"tempo\": 9, \"meter\": [\"four\"], \"musicxml\": \"/m\"}}")]
+    [DataRow("{\"event\": \"state\", \"seq\": 1, \"state\": {\"kind\": \"consent\", \"song\": null, \"models\": [], \"total_size\": \"\", \"needs\": {\"text\": \"t\", \"link\": \"l\"}}}")]
+    [DataRow("{\"event\": \"state\", \"seq\": 1, \"state\": {\"kind\": \"consent\", \"song\": null, \"models\": [], \"total_size\": \"\", \"needs\": \"yes\"}}")]
     public void ALineTheClientCannotReadSaysSo(string line) =>
         Assert.ThrowsExactly<UnreadableLineException>(() => Incoming.Parse(line));
 
@@ -96,5 +98,17 @@ public sealed class CommandTests
         Assert.AreEqual("{\"id\":1,\"cmd\":\"volumes\",\"hear\":\"hits\",\"hits\":0.5}", Command.Volumes("hits", hits: 0.5).Line(1));
         Assert.AreEqual("{\"id\":0,\"cmd\":\"quit\"}", Command.Quit.ToString());
         Assert.HasCount(0, Command.Quit.Arguments);
+    }
+
+    [TestMethod]
+    public void AConsentTellsWhatThePcLacksOrNothing()
+    {
+        const string Head = "{\"kind\": \"consent\", \"song\": null, \"models\": [], \"total_size\": \"2 GB\"";
+        Assert.IsNull(((ConsentScreen)AppState.Parse(Head + "}").Screen).Needs); // an older core sends no `needs`
+        Assert.IsNull(((ConsentScreen)AppState.Parse(Head + ", \"needs\": null}").Screen).Needs);
+        var lacking = AppState.Parse(
+            Head + ", \"needs\": {\"text\": \"Install it.\", \"link\": \"https://aka.ms/x\", \"label\": \"Download\"}, \"can_agree\": false}");
+        Assert.AreEqual(new Prerequisite("Install it.", "https://aka.ms/x", "Download"), ((ConsentScreen)lacking.Screen).Needs);
+        Assert.IsFalse(lacking.Can.Agree);
     }
 }

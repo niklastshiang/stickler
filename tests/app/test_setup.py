@@ -218,3 +218,46 @@ def test_new_weight_downloads_drop_the_finished_mark_so_setup_runs_again(tmp_pat
     (code / "download.py").write_text("sha 2", encoding="utf-8")  # another checkpoint
     assert setup.sync_adapters(shipped, models) == 1 and not marker.exists()
     assert not list(models.rglob("*.part"))
+
+
+def _system32(root: Path, *, with_dll: bool) -> Path:
+    system32 = root / "System32"
+    system32.mkdir(parents=True)
+    if with_dll:
+        (system32 / "msvcp140.dll").write_bytes(b"")
+    return system32
+
+
+def test_no_prerequisite_is_asked_for_outside_windows(tmp_path):
+    assert setup.prerequisite({"SystemRoot": str(tmp_path)}, "linux") is None
+    assert setup.prerequisite({}, "darwin") is None
+
+
+def test_windows_with_the_runtime_lacks_nothing(tmp_path):
+    _system32(tmp_path, with_dll=True)
+    assert setup.prerequisite({"SystemRoot": str(tmp_path)}, "win32") is None
+
+
+def test_windows_without_the_runtime_names_it_with_a_link(tmp_path):
+    _system32(tmp_path, with_dll=False)
+    found = setup.prerequisite({"SystemRoot": str(tmp_path)}, "win32")
+    assert found == setup.Prerequisite(
+        text="Stickler needs Microsoft’s Visual C++ Redistributable, which this PC does not "
+        "have. Install it, then start Stickler again.",
+        link="https://aka.ms/vs/17/release/vc_redist.x64.exe",
+        label="Download from Microsoft",
+    )
+
+
+def test_windir_stands_in_for_a_missing_system_root(tmp_path):
+    _system32(tmp_path, with_dll=True)
+    assert setup.prerequisite({"windir": str(tmp_path)}, "win32") is None
+    assert setup.prerequisite({"SystemRoot": "", "windir": str(tmp_path)}, "win32") is None
+
+
+def test_windows_without_any_variable_does_not_crash():
+    assert setup.prerequisite({}, "win32") is not None  # C:\\Windows, not on this machine
+
+
+def test_the_real_check_changes_nothing_on_linux():
+    assert setup.prerequisite() is None

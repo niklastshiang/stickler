@@ -794,3 +794,33 @@ def test_an_uninstall_holds_the_app_until_it_ends_or_fails(monkeypatch, tmp_path
     assert not ctl.restore(tmp_path / "b.zip")
     ctl.end_uninstall()  # the password prompt was cancelled: the app goes on
     assert ctl.can_remove_models
+
+
+def _lacking(monkeypatch):
+    from stickler_app import setup
+
+    monkeypatch.setattr(
+        setup, "prerequisite", lambda *a, **kw: setup.Prerequisite("lacks it", "https://x", "Get")
+    )
+
+
+def test_agreeing_is_refused_while_a_prerequisite_is_missing(monkeypatch, host):
+    fake = FakeSetup(monkeypatch)
+    _lacking(monkeypatch)
+    ctl = _made(host)
+    ctl.start()
+    assert wait(lambda: isinstance(ctl.state, session.Consent))
+    assert not ctl.agree()
+    assert isinstance(ctl.state, session.Consent) and not _agreed() and fake.done == []
+
+
+def test_an_interrupted_download_shows_the_consent_while_a_prerequisite_is_missing(
+    monkeypatch, host
+):
+    _agree_before()
+    FakeSetup(monkeypatch, missing=("adtof",))
+    _lacking(monkeypatch)
+    ctl = _made(host)
+    ctl.start()
+    assert wait(lambda: isinstance(ctl.state, session.Consent))
+    assert ctl.state.missing == ("adtof",)

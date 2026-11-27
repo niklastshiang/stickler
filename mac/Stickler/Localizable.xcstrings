@@ -987,6 +987,24 @@
         }
       }
     },
+    "Download from Microsoft" : {
+      "comment" : "Translators: the text of the link to Microsoft's installer for that runtime",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Microsoft herunterladen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargar de Microsoft"
+          }
+        }
+      }
+    },
     "Download the %1$@ model" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3050,6 +3068,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stickler escucha la batería y la escribe como partitura. MP3, M4A, FLAC, WAV u OGG; una canción tarda unos 15 segundos."
+          }
+        }
+      }
+    },
+    "Stickler needs Microsoft’s Visual C++ Redistributable, which this PC does not have. Install it, then start Stickler again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler braucht Microsofts Visual C++ Redistributable, das auf diesem PC fehlt. Installiere es und starte Stickler dann neu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stickler necesita el paquete redistribuible de Visual C++ de Microsoft, que falta en este PC. Instálalo y vuelve a abrir Stickler."
           }
         }
       }

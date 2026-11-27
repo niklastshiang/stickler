@@ -607,6 +607,20 @@ public sealed partial class MainWindow : Window
         dialog.Title = strings.Text("Welcome to Stickler");
         var panel = new StackPanel { Spacing = 12, MinWidth = 440 };
         panel.Children.Add(new TextBlock { Text = WindowView.ConsentIntro(consent, strings), TextWrapping = TextWrapping.Wrap });
+        if (consent.Needs is { } needs)
+        {
+            // what this PC lacks before anything can be downloaded (Microsoft's Visual C++
+            // Redistributable, for PyTorch): the core's words and Microsoft's link; the
+            // download button is off meanwhile (can_agree)
+            panel.Children.Add(new InfoBar
+            {
+                IsOpen = true,
+                IsClosable = false,
+                Severity = InfoBarSeverity.Warning,
+                Message = needs.Text,
+                ActionButton = new HyperlinkButton { Content = needs.Label, NavigateUri = new Uri(needs.Link) },
+            });
+        }
         foreach (var item in consent.Models)
         {
             var line = new Grid { ColumnSpacing = 12 };

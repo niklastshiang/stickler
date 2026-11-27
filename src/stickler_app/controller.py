@@ -182,6 +182,8 @@ class Controller:
                 return  # the reader has started something meanwhile
             agreed = settings.load(settings.store_path()).setup_agreed
             page = setup.start_page(missing, agreed=agreed)
+            if page == "download" and setup.prerequisite() is not None:
+                page = "consent"  # nothing would download: say why
             if page == "consent":
                 self._set(session.consent(tuple(missing)))
             elif page == "download":
@@ -198,7 +200,7 @@ class Controller:
         """The models may be downloaded: remembered, and the download starts."""
         with self._lock:
             state = self._state
-            if not isinstance(state, session.Consent):
+            if not isinstance(state, session.Consent) or setup.prerequisite() is not None:
                 return False
             with contextlib.suppress(OSError):  # unsaved, the download still runs now
                 settings.update(settings.store_path(), setup_agreed=True)

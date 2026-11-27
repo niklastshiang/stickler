@@ -117,7 +117,16 @@ public abstract record Screen(string Kind);
 
 public sealed record EmptyScreen() : Screen("empty");
 
-public sealed record ConsentScreen(string? Song, IReadOnlyList<Model> Models, string TotalSize) : Screen("consent");
+/// <summary>Something the PC lacks before anything can be downloaded (Windows: Microsoft's Visual C++
+/// Redistributable): what to say, where to get it, and the link's words.</summary>
+public sealed record Prerequisite(string Text, string Link, string Label)
+{
+    internal static Prerequisite Read(JsonElement s) =>
+        new(Json.Str(s, "text"), Json.Str(s, "link"), Json.Str(s, "label"));
+}
+
+public sealed record ConsentScreen(
+    string? Song, IReadOnlyList<Model> Models, string TotalSize, Prerequisite? Needs = null) : Screen("consent");
 
 public sealed record SettingUpScreen(string? Song, IReadOnlyList<StepRow> Steps) : Screen("setting_up");
 
@@ -182,7 +191,8 @@ public sealed record AppState(Screen Screen, Abilities Can)
         {
             "empty" => new EmptyScreen(),
             "consent" => new ConsentScreen(
-                Json.OptStr(s, "song"), Json.List(s, "models", Model.Read), Json.Str(s, "total_size")),
+                Json.OptStr(s, "song"), Json.List(s, "models", Model.Read), Json.Str(s, "total_size"),
+                Json.Has(s, "needs") ? Prerequisite.Read(Json.Field(s, "needs")) : null),
             "setting_up" => new SettingUpScreen(Json.OptStr(s, "song"), Json.List(s, "steps", StepRow.Read)),
             "setup_failed" => new SetupFailedScreen(
                 Json.OptStr(s, "song"),

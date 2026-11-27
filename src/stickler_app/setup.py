@@ -6,7 +6,9 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
 from pathlib import Path
 
 from stickler_app.i18n import N_, _
@@ -19,6 +21,39 @@ SIZES = {
 }
 MOST = 0.99  # a step is full only when it reports done
 DETAIL_LINES = 8
+
+
+@dataclass(frozen=True)
+class Prerequisite:
+    """Something the PC lacks before any model can be downloaded: what to say, where to get
+    it, and the link's words."""
+
+    text: str
+    link: str
+    label: str
+
+
+def prerequisite(
+    env: Mapping[str, str] = os.environ, platform: str = sys.platform
+) -> Prerequisite | None:
+    """Windows only: PyTorch needs Microsoft's Visual C++ Redistributable (msvcp140.dll in
+    System32). Without it the download would fail late with a misleading message."""
+    if platform != "win32":
+        return None
+    root = env.get("SystemRoot") or env.get("windir") or r"C:\Windows"
+    if (Path(root) / "System32" / "msvcp140.dll").is_file():
+        return None
+    return Prerequisite(
+        # Translators: shown on the Windows app's first-start dialog when the runtime that
+        # PyTorch needs (Microsoft's Visual C++ Redistributable) is missing on the PC
+        text=_(
+            "Stickler needs Microsoft’s Visual C++ Redistributable, which this PC does not "
+            "have. Install it, then start Stickler again."
+        ),
+        link="https://aka.ms/vs/17/release/vc_redist.x64.exe",
+        # Translators: the text of the link to Microsoft's installer for that runtime
+        label=_("Download from Microsoft"),
+    )
 
 
 def start_page(missing: list[str], *, agreed: bool) -> str:
