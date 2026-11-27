@@ -188,21 +188,28 @@
       }
     },
     "2026-11-27": {
-      "active_minutes": 206,
+      "active_minutes": 316,
       "models": {
         "claude-fable-5-2": {
-          "responses": 80,
-          "input": 180,
-          "output": 52234,
-          "cache_read": 19820834,
-          "cache_write": 789922
+          "responses": 149,
+          "input": 338,
+          "output": 96012,
+          "cache_read": 35049439,
+          "cache_write": 891942
+        },
+        "claude-haiku-5-5": {
+          "responses": 2,
+          "input": 4,
+          "output": 1351,
+          "cache_read": 3803,
+          "cache_write": 21139
         },
         "claude-sonnet-5-5": {
-          "responses": 258,
-          "input": 520,
-          "output": 158581,
-          "cache_read": 53265156,
-          "cache_write": 1025801
+          "responses": 312,
+          "input": 632,
+          "output": 197206,
+          "cache_read": 74299567,
+          "cache_write": 1887848
         }
       }
     }

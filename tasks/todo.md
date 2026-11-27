@@ -1628,7 +1628,7 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 
 ### After release 11 (owner, 2026-11-27)
 - [x] **Website: the Windows app in A look around, two sections at the end** (SPEC.md "Website", "Change 2026-11-27"): done 2026-11-27 on `claude/win-site`. The switch reads Mac | Linux | Windows; the Windows row's eight pictures were taken in the test VM from the build of 13efe40 with Eyesplit's real analysis (`scripts/site_win.py take`); "Uninstalling" and "About the author" are a section each. Found while taking the pictures and fixed in the app (for the next release): the switches' words followed Windows' display language ("Ein" in the English app), and the title bar stayed light in dark.
-- [ ] Online (owner: "ja" to `main` and the site's deploy)
+- [x] Online 2026-11-27 (owner: "Website online stellen"): `main` moved to the branch, the `site` workflow run by hand with `deploy`. The two fixes in the app wait for release 12, which gets more features (owner, 2026-11-27).
 
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
