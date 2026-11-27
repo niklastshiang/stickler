@@ -27,8 +27,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 # USD per million tokens, from https://platform.claude.com/docs/en/about-claude/pricing
-# (checked 2026-11-15). Claude Code caches for an hour, so cache writes use the 1 h price.
+# (checked 2026-11-15; Sonnet and Haiku, the subagents' models since release 11, on 2026-11-27).
+# Claude Code caches for an hour, so cache writes use the 1 h price. Haiku's price is the one
+# for prompts up to 100,000 tokens (its few responses here were short).
 PRICES = {
+    "claude-sonnet-5-5": {"input": 2.0, "cache_write": 4.0, "cache_read": 0.10, "output": 10.0},
+    "claude-haiku-5-5": {"input": 0.10, "cache_write": 0.20, "cache_read": 0.01, "output": 0.50},
     "claude-opus-5-5": {"input": 4.0, "cache_write": 8.0, "cache_read": 0.20, "output": 20.0},
     "claude-fable-5-2": {"input": 8.0, "cache_write": 16.0, "cache_read": 0.20, "output": 40.0},
 }

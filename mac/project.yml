@@ -16,8 +16,8 @@ settings:
     SWIFT_VERSION: "6.0"
     # the project's version (pyproject.toml; ADR 0006: releases are numbered 1, 2, 3 …); both
     # move at a release, tests/test_mac_icon.py keeps them equal
-    MARKETING_VERSION: "10"
-    CURRENT_PROJECT_VERSION: "10"
+    MARKETING_VERSION: "11"
+    CURRENT_PROJECT_VERSION: "11"
     CODE_SIGN_IDENTITY: "-" # ad-hoc, no Apple Developer Program (SPEC.md "Release 8")
     CODE_SIGN_STYLE: Manual
     DEVELOPMENT_TEAM: ""

@@ -150,14 +150,59 @@
       }
     },
     "2026-11-25": {
-      "active_minutes": 17,
+      "active_minutes": 56,
       "models": {
         "claude-opus-5-5": {
-          "responses": 22,
-          "input": 50,
-          "output": 8160,
-          "cache_read": 1773998,
-          "cache_write": 74806
+          "responses": 84,
+          "input": 182,
+          "output": 50125,
+          "cache_read": 10813021,
+          "cache_write": 161962
+        }
+      }
+    },
+    "2026-11-26": {
+      "active_minutes": 287,
+      "models": {
+        "claude-fable-5-2": {
+          "responses": 289,
+          "input": 658,
+          "output": 360470,
+          "cache_read": 100128768,
+          "cache_write": 1521598
+        },
+        "claude-opus-5-5": {
+          "responses": 70,
+          "input": 152,
+          "output": 41597,
+          "cache_read": 15451830,
+          "cache_write": 420744
+        },
+        "claude-sonnet-5-5": {
+          "responses": 561,
+          "input": 1130,
+          "output": 554274,
+          "cache_read": 64293588,
+          "cache_write": 2108954
+        }
+      }
+    },
+    "2026-11-27": {
+      "active_minutes": 206,
+      "models": {
+        "claude-fable-5-2": {
+          "responses": 80,
+          "input": 180,
+          "output": 52234,
+          "cache_read": 19820834,
+          "cache_write": 789922
+        },
+        "claude-sonnet-5-5": {
+          "responses": 258,
+          "input": 520,
+          "output": 158581,
+          "cache_read": 53265156,
+          "cache_write": 1025801
         }
       }
     }

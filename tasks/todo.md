@@ -1622,6 +1622,10 @@ Task 126 starts at once (owner, 2026-11-18: Linux only, no view); 127–129 afte
 ### Checkpoint AH
 - [ ] All success criteria of SPEC.md "Change 2026-11-25: the Mac app in 'A look around'" met (owner)
 
+### Release 11
+- [x] Prepared and committed as "Release 11" (2026-11-27; ADR 0006): no open Dependabot alerts; `claude/win-package` and `claude/mac-site` merged into `claude/win-playback`; the installer from the release job installed, used and uninstalled in a Windows 11 VM in three rounds (found and fixed there: the Visual C++ Redistributable's check, Setup's redirection guard, the uninstall's crash, a jump one MP3 granule off, the player's open files before a removal); the `mac` workflow green on the merged state (branch `claude/mac-release-11`; the consent state's `needs` added to the Mac's core); version 11 in `pyproject.toml`, `src/stickler/__init__.py`, `mac/project.yml` and `uv.lock`; the MetaInfo's `<release version="11">` from `tasks/release-11-notes.md` and `CITATION.cff`; README, website and bridge doc name version 11; key figures and badges from this day's runs. Checkpoints AF, AJ, AK and AL are the owner's and optional (owner, 2026-11-26).
+- [ ] Released (owner: "ja" to `main`, the tag `v11` and publishing)
+
 ## Phase 6: Later (noted by the user, 2026-11-12)
 
 - [x] **A website for Stickler** (owner, 2026-11-18; online 2026-11-20, Phase 22): interviewed 2026-11-18 (`docs/intent/website.md`), spec approved 2026-11-18 (SPEC.md "Website"): plain HTML/CSS in English and German, GitHub Pages at `stickler.tshia.ng`, a look of its own matching the app, built now and online with release 8. Figtree and Apricot chosen, light and dark follow the browser (pictures and video too), WCAG 2.2 AA, "About the author" instead of "How it's made" (owner). Mockup on the private canvas "Stickler website" (https://claude.ai/artifact/UwYfekTuMnMWTVhWb5xk4s). Open: the hero's line, the author text and photo, an imprint (legal, owner). Example song: "Fluffing a Duck" (owner). First noted from tuxtalk.app; the older "GitHub Pages site" idea is dropped in its favour.

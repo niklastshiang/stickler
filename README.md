@@ -89,7 +89,7 @@ Stickler only uses open-source models from actively maintained projects.
 ## `> INSTALL THE APP`
 
 Every [release](https://github.com/niklastshiang/stickler/releases) has the app for Linux on
-x86_64, in four forms, for a Mac with Apple silicon, and for Windows 11 (from release 11). On first start it asks to
+x86_64, in four forms, for a Mac with Apple silicon, and for Windows 11. On first start it asks to
 download its two models once; after that it runs offline. Stickler ships no model itself, and each comes with its own licence, which the app names
 before the download; some are for non-commercial use only (see [`> LICENSE`](#-license)).
 
@@ -109,22 +109,22 @@ terminal; the package manager brings what Stickler needs from the system. Use on
 Stickler, not the Flatpak as well: both would show up in the app menu.
 
 ```bash
-sudo apt install ./Stickler-10_amd64.deb      # Ubuntu
-sudo dnf install ./Stickler-10.x86_64.rpm     # Fedora
+sudo apt install ./Stickler-11_amd64.deb      # Ubuntu
+sudo dnf install ./Stickler-11.x86_64.rpm     # Fedora
 ```
 
 **Flatpak** (recommended on GNOME): download `Stickler-<version>.flatpak` and open it with GNOME
 Software, or install it in a terminal; the GNOME runtime comes from Flathub:
 
 ```bash
-flatpak install --user Stickler-10.flatpak
+flatpak install --user Stickler-11.flatpak
 ```
 
 **AppImage** (any distribution): download `Stickler-<version>-x86_64.AppImage`, make it executable
 and start it.
 
 ```bash
-chmod +x Stickler-10-x86_64.AppImage && ./Stickler-10-x86_64.AppImage
+chmod +x Stickler-11-x86_64.AppImage && ./Stickler-11-x86_64.AppImage
 ```
 
 **Mac**: download `Stickler-<version>.dmg`, open it and drag Stickler to
@@ -310,7 +310,7 @@ Source, version and own measurements are in the README of the respective adapter
 - [ ] Ultrareview of the finished application
 
 <details>
-<summary><b>Done</b>: releases 1–10</summary>
+<summary><b>Done</b>: releases 1–11</summary>
 
 **Done**
 
@@ -378,6 +378,13 @@ Source, version and own measurements are in the README of the respective adapter
 - [x] Back Up… and Restore Backup…: settings, songs, corrections and analyses in one file, from Linux to the Mac and back
 - [x] Uninstall Stickler… in every package; a dark Mac icon
 - [x] **Release 10:** keep and remove
+
+**Release 11**
+
+- [x] A native Windows 11 app (WinUI 3) over the same core: sheet music, playback, corrections, exports, backup and uninstall, in one installer without administrator rights
+- [x] Playback and corrections in the Mac app
+- [x] The website shows the Mac app in "A look around"
+- [x] **Release 11:** Windows
 
 </details>
 
@@ -475,7 +482,7 @@ To keep the code from quietly getting worse, the repository enforces four rules:
 </details>
 
 <details>
-<summary><b>What the AI cost</b>: about 595 USD at API prices for release 10</summary>
+<summary><b>What the AI cost</b>: about 971 USD at API prices for release 11</summary>
 
 Claude Code logs the tokens of every response;
 [`scripts/ai_usage.py`](scripts/ai_usage.py) sums them and prices them with Anthropic's
@@ -487,11 +494,13 @@ the API.
 
 | Period | Model | Responses | Output tokens | Cache read | API cost |
 |---|---|---:|---:|---:|---:|
-| 13–24 Nov 2026 | Claude Opus 5.5 (the work, reviews; Linux) | 4,059 | 3.6 M | 1,470 M | 441 USD |
-| 14–19 Nov 2026 | Claude Fable 5.2 (research subagents; Linux) | 135 | 0.31 M | 17 M | 33 USD |
-| 19 Nov 2026 | Claude Fable 5.2 (on the Mac) | 610 | 0.63 M | 153 M | 86 USD |
-| 19–24 Nov 2026 | Claude Opus 5.5 (on the Mac) | 366 | 0.18 M | 87 M | 35 USD |
-| | **Total, release 10** (1,747 M tokens, about 40 hours active) | | | | **about 595 USD** |
+| 13–26 Nov 2026 | Claude Opus 5.5 (the work, reviews; Linux) | 4,216 | 3.7 M | 1,497 M | 453 USD |
+| 14–27 Nov 2026 | Claude Fable 5.2 (the Windows playback and corrections, research; Linux) | 504 | 0.72 M | 137 M | 111 USD |
+| 24–27 Nov 2026 | Claude Sonnet 5.5 (subagents; Linux) | 826 | 0.72 M | 118 M | 32 USD |
+| 19 Nov 2026 | Claude Fable 5.2 (on the Mac) | 610 | 0.63 M | 153 M | 87 USD |
+| 19–25 Nov 2026 | Claude Opus 5.5 (on the Mac) | 1,219 | 0.75 M | 328 M | 110 USD |
+| 18–26 Nov 2026 | Claude Opus 5.5 (on the Windows PC) | 1,728 | 1.5 M | 595 M | 180 USD |
+| | **Total, release 11** (2,863 M tokens, about 66 hours active; 20 short Claude Haiku 5.5 responses under 1 USD included) | | | | **about 971 USD** |
 
 </details>
 
@@ -542,15 +551,16 @@ scripts/check.sh task
 {
   "adapter": { "separation": 2, "transcription": 7, "beats": 1 },
   "datasets": { "mdb_drums": 23, "enst_drums": 64, "own_songs": 25 },
-  "tests": 1182,
+  "tests": 1322,
   "app_widget_tests": 56,
   "smoke_tests_with_models": 12,
-  "mac_tests": 155,
+  "mac_tests": 221,
+  "win_tests": 252,
   "coverage_percent": 98,
   "coverage_minimum": 95,
   "adrs": 8,
-  "version": 10,
-  "status": "release 10: keep and remove"
+  "version": 11,
+  "status": "release 11: Windows"
 }
 ```
 
@@ -558,7 +568,8 @@ scripts/check.sh task
 |---|---|
 | `app_widget_tests` | The GTK app's windows, on an invisible screen: `scripts/gtk.sh test` |
 | `smoke_tests_with_models` | Runs real models, therefore not part of the default run: `uv run pytest -m adapters` |
-| `mac_tests` | The Mac app's: `SticklerCore` (89, `swift test`, on Linux and macOS) and the app with its screenshots (66), run by the workflow `mac` |
+| `mac_tests` | The Mac app's: `SticklerCore` (119, `swift test`, on Linux and macOS) and the app with its screenshots (102), run by the workflow `mac` |
+| `win_tests` | The Windows app's: `SticklerCore` (193) and `SticklerAudio` (59), on Linux and Windows; the app itself is built and photographed by the workflow `win` |
 | `coverage_minimum` | Below this, the pre-commit hook blocks. Limit and rules in [`CONSTRAINTS.md`](CONSTRAINTS.md) |
 | `own_songs` | Described in `references/own/`. Only songs that pass the quality criteria enter the scoring |
 
@@ -579,6 +590,7 @@ stickler/
 │   └── beats/           # beat_this
 ├── config/              # benchmark, own and enst configs
 ├── mac/                 # the macOS app (release 8): SticklerCore, the SwiftUI app
+├── win/                 # the Windows app (release 11): SticklerCore, SticklerAudio, the WinUI app, the installer
 ├── po/                  # translations (German, Spanish), po/LINGUAS lists them
 ├── packaging/           # Flatpak manifest, AppStream MetaInfo, desktop file, icons, font
 ├── references/own/      # own songs: title, recording, manual exclusions

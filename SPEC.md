@@ -4629,10 +4629,17 @@ window.
   administrator rights), and uv could not make its Python's link folder (error 448).
 - **"Uninstall Stickler…"** drew the closed window once more and ended with an error; the
   uninstaller then left the program's files. The app now ends for certain.
+- **The player's files before a removal.** After a song was played, "Uninstall Stickler…"
+  removed the data and stopped: the player held the clicks' file in the cache open, and
+  Windows does not delete an open file. The player now closes its files before "Uninstall
+  Stickler…" and "Remove Downloaded Models…" ask the core (`PlaybackModel.LetGo`); the song
+  stays shown and the next Play loads it again.
 
 ### Module `win-playback`
 
-> Status: **being built** from 2026-11-26, at the owner's request to build the missing Windows
+> Status: **built**, released with release 11 (2026-11-27); operated and measured in a Windows 11 VM
+> (2026-11-26 and 2026-11-27), Checkpoint AK is the owner's and optional (owner, 2026-11-26:
+> "Abnahme am Firmen PC muss nicht sein, das ist optional"). Built from 2026-11-26, at the owner's request to build the missing Windows
 > modules from the Linux computer; the three open questions at the end answered by the owner
 > with Claude's proposals (2026-11-26: "Geht klar"). The screens (W10) were approved on 2026-11-24 ("Module `win-design`", "Playback
 > screens W10"), the audio library on 2026-11-26 (owner: "Ja, so"; `tasks/todo.md`, "Windows
@@ -4798,7 +4805,8 @@ exclusive mode.
 
 ### Module `win-corrections`
 
-> Status: **being built** from 2026-11-26. The screens (W11) were drawn on the Windows canvas
+> Status: **built**, released with release 11 (2026-11-27); operated in a Windows 11 VM, Checkpoint AL
+> is the owner's and optional. Built from 2026-11-26. The screens (W11) were drawn on the Windows canvas
 > and approved by the owner on 2026-11-26 with the three questions at the end answered as
 > proposed ("Deine Vorschläge passen, bau die Oberfläche"); copies in `docs/design/win/`
 > (`Corrections.dc.html`, `Corrections-Dark.dc.html`). Modelled on
@@ -4876,8 +4884,8 @@ Detected", no single notes).
    written by the app; the other way is a new field in the core's settings, for every app.
 ### Module `win-package`
 
-> Status: **built, being checked** (2026-11-26: tasks 210–218 built, the release job's run and
-> Checkpoint AJ to come). Approved by the owner on 2026-11-26 ("Ja, alle so": the six proposals at the end
+> Status: **built**, released with release 11 (2026-11-27: the installer from the release job installed,
+> used and uninstalled in a Windows 11 VM; Checkpoint AJ is the owner's and optional). Approved by the owner on 2026-11-26 ("Ja, alle so": the six proposals at the end
 > taken, question 5 changed: the desktop icon comes along). Written in a session of its own
 > while `win-sheet` is built on `claude/win-shell` (owner, 2026-11-26: "Ja, so"); built on the
 > branch `claude/win-package` (CI runs on `claude/win-*`), merged with the other Windows modules at the end of

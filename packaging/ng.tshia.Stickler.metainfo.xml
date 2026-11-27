@@ -82,6 +82,17 @@
   </keywords>
 
   <releases>
+    <release version="11" date="2026-11-27">
+      <description>
+        <p>Stickler for Windows, and playback and corrections on the Mac.</p>
+        <ul>
+          <li>Stickler for Windows 11: a native app with the same sheet music, playback, corrections, exports, backup and uninstall</li>
+          <li>Playback on the Mac: the song, the detected hits as clicks, or both, with a marker on the sounding bar</li>
+          <li>Corrections on the Mac: tempo, beats per bar, the first one, Simplify and Repeat signs</li>
+          <li>Downloads of the models trust the system's certificates, so they work behind a company's proxy</li>
+        </ul>
+      </description>
+    </release>
     <release version="10" date="2026-11-24">
       <description>
         <p>Take Stickler to another computer, and remove it from the app.</p>
