@@ -270,7 +270,11 @@ public sealed class AppModel : INotifyPropertyChanged
 
     public void ExportDrumTrack(string dest) => Send(Command.ExportDrumTrack(dest));
 
-    public void RemoveModels(bool everything) => Send(Command.RemoveModels(everything));
+    public void RemoveModels(bool everything)
+    {
+        Playback.LetGo(); // the core deletes the cache, where the player's files are
+        Send(Command.RemoveModels(everything));
+    }
 
     public void BackUp(string dest) => Send(Command.BackUp(dest));
 
@@ -312,8 +316,11 @@ public sealed class AppModel : INotifyPropertyChanged
     public Task<UninstallSizes?> UninstallSizesAsync() => AskAsync(Command.UninstallSizes, UninstallSizes.From);
 
     /// <summary>Removes Stickler's folders through the core; true once they are gone.</summary>
-    public async Task<bool> UninstallAsync(bool everything) =>
-        await AskAsync(Command.Uninstall(everything), reply => reply).ConfigureAwait(true) is not null;
+    public async Task<bool> UninstallAsync(bool everything)
+    {
+        Playback.LetGo(); // the core deletes the cache, where the player's files are
+        return await AskAsync(Command.Uninstall(everything), reply => reply).ConfigureAwait(true) is not null;
+    }
 
     private void Send(Command command) => outbox?.Writer.TryWrite(command);
 

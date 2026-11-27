@@ -32,6 +32,40 @@ public sealed class PlaybackTests
     }
 
     [TestMethod]
+    public async Task LettingGoClosesThePlayersFilesAndPlayLoadsThemAgain()
+    {
+        var player = new FakePlayer();
+        var harness = await Started(player);
+
+        harness.Ui(harness.Playback.LetGo);
+
+        Assert.AreEqual(1, player.Releases);
+        Assert.IsFalse(harness.Read(() => harness.Playback.Playing));
+        Assert.IsTrue(harness.Read(() => harness.Playback.CanPlay));
+        harness.Ui(harness.Playback.LetGo); // nothing is held: nothing to close
+        Assert.AreEqual(1, player.Releases);
+
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        Assert.HasCount(2, player.Loads);
+    }
+
+    [TestMethod]
+    public async Task RemovingTheModelsOrUninstallingLetsThePlayersFilesGoFirst()
+    {
+        var player = new FakePlayer();
+        var harness = await Started(player);
+
+        harness.Ui(() => harness.Model.RemoveModels(everything: false));
+        Assert.AreEqual(1, player.Releases);
+
+        harness.Ui(harness.Playback.Toggle);
+        Assert.IsTrue(await harness.Settled(() => harness.Playback.Playing));
+        harness.Ui(() => _ = harness.Model.UninstallAsync(everything: true));
+        Assert.AreEqual(2, player.Releases);
+    }
+
+    [TestMethod]
     public async Task WithoutAResultOrAPlayerNothingPlays()
     {
         var player = new FakePlayer();

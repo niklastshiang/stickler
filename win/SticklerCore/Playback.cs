@@ -500,6 +500,23 @@ public sealed class PlaybackModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Closes the player's files and stops; the song stays shown where it was, and the
+    /// next Play loads it again. Before the core deletes Stickler's folders: the clicks (and the
+    /// core's copy of a song) are in the cache, and Windows does not delete an open file (found
+    /// in a VM on 2026-11-27: "Uninstall Stickler…" after playing left the program installed).</summary>
+    public void LetGo()
+    {
+        if (!loaded && !playing)
+        {
+            return;
+        }
+        Position = Now;
+        _ = Try(() => player?.Release());
+        loaded = false;
+        Playing = false;
+        StopTicking();
+    }
+
     /// <summary>Nothing plays or is loaded; the controls show the start.</summary>
     private void ForgetSong()
     {
