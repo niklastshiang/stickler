@@ -97,6 +97,8 @@
   "Not all of Stickler’s data could be removed. You can delete the folder yourself: {folder}": "No se pudieron quitar todos los datos de Stickler. Puedes borrar esta carpeta tú mismo: {folder}",
   "Not an audio file": "No es un archivo de audio",
   "Not reached": "Pendiente",
+  "Off": "Desactivado",
+  "On": "Activado",
   "Once; later songs use it too": "Una sola vez; las próximas canciones también lo usan",
   "Once; later songs use them too": "Una sola vez; las próximas canciones también los usan",
   "One beat earlier": "Un tiempo antes",

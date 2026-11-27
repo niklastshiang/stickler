@@ -1828,6 +1828,41 @@
         }
       }
     },
+    "Off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
+        }
+      }
+    },
+    "On" : {
+      "comment" : "Translators: Windows app, corrections pane, beside a switch (Simplify, Repeat signs): what Windows itself writes there (\"Ein\"/\"Aus\" in German, \"Activado\"/\"Desactivado\" in Spanish); Stickler writes it so the words follow the app's language",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activado"
+          }
+        }
+      }
+    },
     "Once; later songs use it too" : {
       "extractionState" : "manual",
       "localizations" : {

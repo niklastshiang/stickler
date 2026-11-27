@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Stickler\n"
 "Report-Msgid-Bugs-To: https://github.com/niklastshiang/stickler/issues\n"
-"POT-Creation-Date: 2026-11-26 16:48+0100\n"
+"POT-Creation-Date: 2026-11-27 07:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -612,6 +612,17 @@ msgstr ""
 #: src/stickler_app/win_texts.py:65
 msgid ""
 "Stickler’s data is removed. Remove the program later in Settings › Apps."
+msgstr ""
+
+#. Translators: Windows app, corrections pane, beside a switch (Simplify, Repeat signs):
+#. what Windows itself writes there ("Ein"/"Aus" in German, "Activado"/"Desactivado" in
+#. Spanish); Stickler writes it so the words follow the app's language
+#: src/stickler_app/win_texts.py:69
+msgid "On"
+msgstr ""
+
+#: src/stickler_app/win_texts.py:70
+msgid "Off"
 msgstr ""
 
 #. Translators: a percentage; German puts a no-break space before the sign

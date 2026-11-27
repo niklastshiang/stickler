@@ -63,4 +63,9 @@ TEXTS = (
     # Translators: Windows app, after "Uninstall Stickler…" removed the data but Windows (or an
     # antivirus) did not let the uninstaller start; Settings › Apps is Windows' own page
     N_("Stickler’s data is removed. Remove the program later in Settings › Apps."),
+    # Translators: Windows app, corrections pane, beside a switch (Simplify, Repeat signs):
+    # what Windows itself writes there ("Ein"/"Aus" in German, "Activado"/"Desactivado" in
+    # Spanish); Stickler writes it so the words follow the app's language
+    N_("On"),
+    N_("Off"),
 )

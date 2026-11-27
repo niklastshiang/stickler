@@ -29,6 +29,13 @@ public sealed partial class CorrectionsView : UserControl
         BeatHeading.Text = T("Beat");
         TempoText.Text = T("Tempo");
         AutomationProperties.SetName(TempoGroup, T("Tempo"));
+        // Windows writes the switches' words in its display language, which need not be the
+        // app's (found 2026-11-27: "Ein" in the English app on a German Windows)
+        foreach (var toggle in new[] { SimplifySwitch, RepeatsSwitch })
+        {
+            toggle.OnContent = T("On");
+            toggle.OffContent = T("Off");
+        }
         HalfButton.Content = T("Half");
         NormalButton.Content = T("As Detected");
         DoubleButton.Content = T("Double");

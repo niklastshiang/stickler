@@ -99,6 +99,8 @@ public sealed partial class MainWindow : Window
     private void Size()
     {
         var scale = NativeMethods.Scale(this);
+        // the title bar follows the app's light or dark look (it stayed light in dark, found 2026-11-27)
+        AppWindow.TitleBar.PreferredTheme = TitleBarTheme.UseDefaultAppMode;
         AppWindow.Resize(new Windows.Graphics.SizeInt32((int)(1000 * scale), (int)(700 * scale)));
         // Windows places a new window before it has this size: on a small screen the playback
         // bar then lay below the screen's edge, so the window is moved back into the work area.
