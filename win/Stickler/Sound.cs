@@ -15,15 +15,22 @@ internal static class Sound
         new(Song, WaveStreamSamples.Open, source => new WasapiOutput(source), cannotPlay);
 
     // WAV and AIFF by NAudio's own readers (Media Foundation has none for AIFF); everything else
-    // by Media Foundation, which throws for what Windows cannot decode (Ogg, Opus).
-    private static WaveStreamSamples Song(string path) =>
-        Managed.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase)
-            ? WaveStreamSamples.Open(path)
-            : new WaveStreamSamples(new MediaFoundationReader(path, new MediaFoundationReader.MediaFoundationReaderSettings
-            {
-                RequestFloatOutput = true,
-                RepositionInRead = true, // a seek comes from the window's thread, the reading from the device's
-            }));
+    // by Media Foundation, which throws for what Windows cannot decode (Ogg, Opus). Its seek
+    // landed an MP3 granule off in some jumps, so the song is decoded once from start to end
+    // into a temporary file and a seek is exact (DecodedSamples).
+    private static ISeekableSamples Song(string path)
+    {
+        if (Managed.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
+        {
+            return WaveStreamSamples.Open(path);
+        }
+
+        using MediaFoundationReader reader = new(path, new MediaFoundationReader.MediaFoundationReaderSettings
+        {
+            RequestFloatOutput = true,
+        });
+        return DecodedSamples.Copy(reader.ToSampleProvider(), Path.GetTempPath());
+    }
 }
 
 /// <summary>WASAPI in shared mode, following Windows' default output device.</summary>

@@ -4662,6 +4662,11 @@ Mac app already.
    on its own thread; `Pause()` stops the reading. `GetPosition()` counts what the device
    rendered, not the source's position. `MediaFoundationReader`'s seek decodes forward to the
    exact frame (3.3.0's release notes: "frame-aligned seeking").
+   Measured in a VM on 2026-11-27 with an MP3: 3 of 14 jumps landed the song one granule
+   (12 ms) late against the clicks, until the next jump. Since then the app decodes a song
+   Media Foundation reads once, from start to end, into a temporary file of float samples
+   (`DecodedSamples`, deleted when the song is released) and a seek is a file position; WAV
+   and AIFF are read in place as before.
 4. Media Foundation on Windows 11 reads MP3, AAC/M4A, WAV, FLAC and ALAC; Ogg Vorbis only
    with the Store's extension, Opus unconfirmed, AIFF not: those play from the core's
    `playable` FLAC copy, as on the Mac. Whether the `windows-2025` runner has Media
@@ -4773,7 +4778,8 @@ exclusive mode.
 
 **Risks.**
 - The clicks drift against the song when Media Foundation's seek lands off the frame (MP3,
-  AAC): heard at the owner's check; the way out is the `playable` FLAC for those formats too.
+  AAC): it happened (2026-11-27, note 3); the song is decoded once and no seek goes through
+  Media Foundation any more.
 - `WasapiPlayer`'s reported latency is wrong on some device, so the marker runs early or
   late: heard and seen at the owner's check; a fixed offset would then be asked for.
 - The runner has no sound device or no Media Foundation: the mixer's tests need neither.
