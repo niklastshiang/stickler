@@ -347,10 +347,6 @@ h1 {
 }
 
 .band > .wrap.split,
-.band > .wrap.columns {
-  flex-direction: row;
-}
-
 .intro {
   display: flex;
   flex-direction: column;
@@ -810,7 +806,7 @@ audio {
 
 /* one row of pictures per system (SPEC.md "Website", "Change 2026-11-25"): native radios drawn
    as a segmented control, so arrow keys and screen readers work without script; where the
-   browser lacks :has(), the switch stays hidden and both rows show one after the other */
+   browser lacks :has(), the switch stays hidden and the rows show one after the other */
 .systems {
   display: none;
   position: relative;
@@ -859,8 +855,9 @@ audio {
     display: inline-flex;
   }
 
-  .band:has(.systems input[value="linux"]:checked) .carousel[data-system="mac"],
-  .band:has(.systems input[value="mac"]:checked) .carousel[data-system="linux"] {
+  .band:has(.systems input[value="mac"]:checked) .carousel:not([data-system="mac"]),
+  .band:has(.systems input[value="linux"]:checked) .carousel:not([data-system="linux"]),
+  .band:has(.systems input[value="windows"]:checked) .carousel:not([data-system="windows"]) {
     display: none;
   }
 
@@ -978,7 +975,7 @@ audio {
   white-space: nowrap;
 }
 
-/* uninstalling and the author */
+/* uninstalling, and the author: a section each (owner, 2026-11-27) */
 .removal {
   display: flex;
   flex-direction: column;
@@ -1001,17 +998,13 @@ audio {
   margin-top: 0.5rem;
 }
 
-.columns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
+/* a section of running text (uninstalling, the author): its lines stay readable on a wide screen */
+.band > .wrap.reading {
+  gap: 0.625rem;
 }
 
-.columns > div {
-  display: flex;
-  flex: 1 1 20rem;
-  flex-direction: column;
-  gap: 0.625rem;
+.reading > * {
+  max-width: 46rem;
 }
 
 .author {

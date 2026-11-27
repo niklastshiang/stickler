@@ -3036,6 +3036,31 @@ Windows app joins the same way with release 11.
 **Out of scope.** Windows (added with `win-package`, release 11); pictures taken by hand;
 remembering the chosen system; choosing it by the visitor's system (needs script).
 
+### Change 2026-11-27: the Windows app in A look around; two sections at the end
+
+> Status: **asked for** by the owner on 2026-11-27, after release 11 ("einen Reiter machen für
+> die Screenshots von Windows. Und in der Reihenfolge: Mac/Linux/Windows bei den Buttons";
+> "mach aus dem Uninstalling und about the Author bitte jeweils eigene Abschnitte").
+
+1. **The switch** reads "Mac | Linux | Windows", and the rows follow in that order. Linux stays
+   chosen first (Claude's reading: the owner named the order only). The CSS hides every row but
+   the chosen one; a browser without `:has()` shows the three rows one after the other.
+2. **The Windows row:** the empty window with recent songs, the analysis steps, the sheet with
+   the playing bar marked and the playback bar, the corrections pane; the captions of the
+   Linux row, light and dark, PNG and WebP, 1000 × 700, `loading="lazy"`.
+3. **The pictures** are taken in the Windows 11 test VM (`docs/win-development.md`, "Testing in
+   a Windows VM") from the installed release, in English, with "Eyesplit" by Shane Ivers and
+   its real analysis: the visible window at 1000 × 700, by a script, not by hand. The `win`
+   workflow's own pictures do not serve: its runner has stand-in models (one bar of sheet
+   music) and no sound device (a notice in the picture). `docs/website.md` has the steps.
+4. **"Uninstalling" and "About the author"** are a section each (they were two columns of
+   one), each with its own band and its text at a readable width.
+5. **Tests:** `tests/test_site.py` checks the three systems and their order in both languages,
+   every picture's files and size, the CSS for each system, and the two sections.
+
+Not in this change: the corrections in the Mac row (scope 2 of the change of 2026-11-25 names
+them; the `mac` workflow has no such picture yet).
+
 ## Release 9: `.deb` and `.rpm`
 
 > Status: **done** (Checkpoint AA, release 9, 2026-11-22). Approved by the owner on 2026-11-20. Plan: `tasks/plan.md` ("Release 9"), tasks 138–144. Decided by the owner on

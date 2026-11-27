@@ -2,6 +2,7 @@
 server, links that resolve, and the structure WCAG 2.2 AA needs."""
 
 import re
+import struct
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -474,8 +475,9 @@ def test_the_windows_row_leads_to_its_guide_with_microsofts_pages(folder):
 
 @pytest.mark.parametrize("folder", ["", "de/"])
 def test_a_look_around_shows_one_row_of_pictures_per_system(folder, tmp_path):
-    """SPEC "Website", "Change 2026-11-25": a switch Linux | Mac without script, one carousel
-    each; the Mac's pictures are the `mac` workflow's (scripts/site_mac.py)."""
+    """SPEC "Website", "Change 2026-11-25" and "Change 2026-11-27": a switch Mac | Linux |
+    Windows without script, one carousel each, Linux chosen first; the Mac's pictures are the
+    `mac` workflow's (scripts/site_mac.py), the Windows app's are taken in the test VM."""
     html = (SITE / folder / "index.html").read_text(encoding="utf-8")
     section = html[html.index('aria-labelledby="look"') :]
     section = section[: section.index("</section>")]
@@ -484,28 +486,52 @@ def test_a_look_around_shows_one_row_of_pictures_per_system(folder, tmp_path):
     assert len(page.all("fieldset")) == 1 and len(page.all("legend")) == 1
     radios = page.all("input")
     assert [(r["type"], r["name"], r["value"]) for r in radios] == [
-        ("radio", "system", "linux"),
         ("radio", "system", "mac"),
+        ("radio", "system", "linux"),
+        ("radio", "system", "windows"),
     ]
-    assert "checked" in radios[0] and "checked" not in radios[1]
+    assert ["checked" in r for r in radios] == [False, True, False]
     rows = [a for a in page.all("div") if "carousel" in a.get("class", "")]
-    assert [r.get("data-system") for r in rows] == ["linux", "mac"]
+    assert [r.get("data-system") for r in rows] == ["mac", "linux", "windows"]
     assert all(r.get("role") == "region" and r.get("aria-label") for r in rows)
-    mac = section[section.index('data-system="mac"') :]
-    shots = re.findall(r'<img class="shot" src="(?:\.\./)?images/(mac-[a-z]+)\.png"', mac)
-    assert shots == ["mac-empty", "mac-analysing", "mac-sheet"]
-    for name in shots:
-        for suffix in (".png", ".webp", "-dark.png", "-dark.webp"):
-            assert (SITE / "images" / f"{name}{suffix}").is_file(), f"{name}{suffix}"
-    assert mac.count('loading="lazy"') == len(shots)
+    expected = {
+        "mac": ["mac-empty", "mac-analysing", "mac-sheet"],
+        "windows": ["win-empty", "win-analysing", "win-sheet", "win-corrections"],
+    }
+    for system, names in expected.items():
+        row = section[section.index(f'data-system="{system}"') :]
+        row = row[: row.index("</ul>")]
+        shots = re.findall(r'<img class="shot" src="(?:\.\./)?images/([a-z]+-[a-z]+)\.png"', row)
+        assert shots == names
+        for name in shots:
+            for suffix in (".png", ".webp", "-dark.png", "-dark.webp"):
+                picture = SITE / "images" / f"{name}{suffix}"
+                assert picture.is_file(), f"{name}{suffix}"
+            assert _png_size(SITE / "images" / f"{name}.png") == (1000, 700)
+            assert _png_size(SITE / "images" / f"{name}-dark.png") == (1000, 700)
+        assert row.count('loading="lazy"') == len(shots)
 
 
-def test_the_switch_hides_the_other_row_only_where_the_browser_can():
+def _png_size(path):
+    return struct.unpack(">II", path.read_bytes()[16:24])
+
+
+@pytest.mark.parametrize("folder", ["", "de/"])
+def test_uninstalling_and_the_author_are_sections_of_their_own(folder):
+    """Owner, 2026-11-27: a section each, not two columns of one."""
+    html = (SITE / folder / "index.html").read_text(encoding="utf-8")
+    for heading, band in (("remove", "band"), ("author", "band alt")):
+        start = html.index(f'<section class="{band}" aria-labelledby="{heading}">')
+        section = html[start : html.index("</section>", start)]
+        assert section.count("<h2") == 1 and f'<h2 id="{heading}">' in section
+
+
+def test_the_switch_hides_the_other_rows_only_where_the_browser_can():
     css = (SITE / "style.css").read_text(encoding="utf-8")
     block = _braced(css, css.index("@supports selector(:has(*))"))
-    assert 'input[value="linux"]:checked) .carousel[data-system="mac"]' in block
-    assert 'input[value="mac"]:checked) .carousel[data-system="linux"]' in block
+    for system in ("mac", "linux", "windows"):
+        assert f'input[value="{system}"]:checked) .carousel:not([data-system="{system}"])' in block
     assert "display: none" in block
-    # outside the block the switch is hidden, so a browser without :has() shows both rows
+    # outside the block the switch is hidden, so a browser without :has() shows every row
     systems = css[css.index("\n.systems {") :]
     assert "display: none" in systems[: systems.index("}")]

@@ -201,9 +201,53 @@
         <p class="muted">Swipe or scroll sideways for more.</p>
         <fieldset class="systems">
           <legend class="visually-hidden">System</legend>
-          <label><input type="radio" name="system" value="linux" checked> Linux</label>
           <label><input type="radio" name="system" value="mac"> Mac</label>
+          <label><input type="radio" name="system" value="linux" checked> Linux</label>
+          <label><input type="radio" name="system" value="windows"> Windows</label>
         </fieldset>
+        <div class="carousel" data-system="mac" tabindex="0" role="region" aria-label="Screenshots of the Mac app">
+          <ul class="slides">
+          <li>
+            <figure>
+              <a href="images/mac-empty.webp">
+                <picture>
+                  <source srcset="images/mac-empty-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="images/mac-empty.webp" type="image/webp">
+                  <img class="shot" src="images/mac-empty.png" width="1000" height="700" loading="lazy"
+                    alt="The Mac app’s empty window: drop a song here, or open one; the recent songs below">
+                </picture>
+              </a>
+              <figcaption>Drop a song on the window, or open one.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <a href="images/mac-analysing.webp">
+                <picture>
+                  <source srcset="images/mac-analysing-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="images/mac-analysing.webp" type="image/webp">
+                  <img class="shot" src="images/mac-analysing.png" width="1000" height="700" loading="lazy"
+                    alt="The Mac app’s analysis steps: the hits found, the beat being found, the notes waiting">
+                </picture>
+              </a>
+              <figcaption>Each step shows how far it is.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <a href="images/mac-sheet.webp">
+                <picture>
+                  <source srcset="images/mac-sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="images/mac-sheet.webp" type="image/webp">
+                  <img class="shot" src="images/mac-sheet.png" width="1000" height="700" loading="lazy"
+                    alt="The Mac app’s sheet music with the bar being played marked and the playback controls below">
+                </picture>
+              </a>
+              <figcaption>The sheet follows the song, bar by bar.</figcaption>
+            </figure>
+          </li>
+          </ul>
+        </div>
         <div class="carousel" data-system="linux" tabindex="0" role="region" aria-label="Screenshots of the Linux app">
           <ul class="slides">
           <li>
@@ -273,16 +317,16 @@
           </li>
           </ul>
         </div>
-        <div class="carousel" data-system="mac" tabindex="0" role="region" aria-label="Screenshots of the Mac app">
+        <div class="carousel" data-system="windows" tabindex="0" role="region" aria-label="Screenshots of the Windows app">
           <ul class="slides">
           <li>
             <figure>
-              <a href="images/mac-empty.webp">
+              <a href="images/win-empty.webp">
                 <picture>
-                  <source srcset="images/mac-empty-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
-                  <source srcset="images/mac-empty.webp" type="image/webp">
-                  <img class="shot" src="images/mac-empty.png" width="1000" height="700" loading="lazy"
-                    alt="The Mac app’s empty window: drop a song here, or open one; the recent songs below">
+                  <source srcset="images/win-empty-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="images/win-empty.webp" type="image/webp">
+                  <img class="shot" src="images/win-empty.png" width="1000" height="700" loading="lazy"
+                    alt="The Windows app’s empty window: drop a song here, or open one; the recent songs below">
                 </picture>
               </a>
               <figcaption>Drop a song on the window, or open one.</figcaption>
@@ -290,12 +334,12 @@
           </li>
           <li>
             <figure>
-              <a href="images/mac-analysing.webp">
+              <a href="images/win-analysing.webp">
                 <picture>
-                  <source srcset="images/mac-analysing-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
-                  <source srcset="images/mac-analysing.webp" type="image/webp">
-                  <img class="shot" src="images/mac-analysing.png" width="1000" height="700" loading="lazy"
-                    alt="The Mac app’s analysis steps: the hits found, the beat being found, the notes waiting">
+                  <source srcset="images/win-analysing-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="images/win-analysing.webp" type="image/webp">
+                  <img class="shot" src="images/win-analysing.png" width="1000" height="700" loading="lazy"
+                    alt="The Windows app’s analysis steps: the hits found, the beat being found, the notes waiting">
                 </picture>
               </a>
               <figcaption>Each step shows how far it is.</figcaption>
@@ -303,15 +347,28 @@
           </li>
           <li>
             <figure>
-              <a href="images/mac-sheet.webp">
+              <a href="images/win-sheet.webp">
                 <picture>
-                  <source srcset="images/mac-sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
-                  <source srcset="images/mac-sheet.webp" type="image/webp">
-                  <img class="shot" src="images/mac-sheet.png" width="1000" height="700" loading="lazy"
-                    alt="The Mac app’s sheet music with the bar being played marked and the playback controls below">
+                  <source srcset="images/win-sheet-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="images/win-sheet.webp" type="image/webp">
+                  <img class="shot" src="images/win-sheet.png" width="1000" height="700" loading="lazy"
+                    alt="The Windows app’s sheet music with the bar being played marked and the playback controls below">
                 </picture>
               </a>
               <figcaption>The sheet follows the song, bar by bar.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <a href="images/win-corrections.webp">
+                <picture>
+                  <source srcset="images/win-corrections-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)">
+                  <source srcset="images/win-corrections.webp" type="image/webp">
+                  <img class="shot" src="images/win-corrections.png" width="1000" height="700" loading="lazy"
+                    alt="The Windows app’s corrections pane next to the sheet: tempo, beats per bar, first beat">
+                </picture>
+              </a>
+              <figcaption>Fix the tempo or the first beat, or make it easier to read.</figcaption>
             </figure>
           </li>
           </ul>
@@ -439,63 +496,64 @@
       </div>
     </section>
 
-    <section class="band" aria-label="Uninstalling and the author">
-      <div class="wrap columns">
-        <div>
-          <h2 id="remove">Uninstalling</h2>
-          <p class="muted">Choose <strong>Uninstall Stickler…</strong> in the app’s menu: it removes
-            the app with its models; a box removes your settings, recent songs and corrections too.
-            The Flatpak opens the Software app on Stickler’s page: uninstall it there, and choose
-            whether its data goes too. To
-            free the models’ space but keep the app, choose <strong>Remove Downloaded
-            Models…</strong> instead. Without the app:</p>
-          <dl class="removal">
-            <dt>Windows</dt>
-            <dd>In <strong>Settings › Apps › Installed apps</strong>, choose
-              <strong>Uninstall</strong> next to Stickler: it asks the same question.</dd>
-            <dt>Mac</dt>
-            <dd>Choose <strong>Remove Downloaded Models…</strong> with its box ticked, then drag
-              Stickler to the Bin.</dd>
-            <dt>Flatpak</dt>
-            <dd>In a terminal:
-            <div class="command">
-              <code id="uninstall-flatpak">flatpak uninstall --delete-data ng.tshia.Stickler</code>
-              <button type="button" hidden data-copy="uninstall-flatpak" data-status="uninstall-flatpak-status"
-                data-done="Copied" data-failed="Could not copy; select the command instead"
-                aria-label="Copy the command">
-                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
-                </svg>
-              </button>
-            </div>
-            <p class="visually-hidden" id="uninstall-flatpak-status" role="status"></p></dd>
-            <dt>AppImage</dt>
-            <dd>Delete the file, then in a terminal:
-            <div class="command">
-              <code id="uninstall-appimage">rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler</code>
-              <button type="button" hidden data-copy="uninstall-appimage" data-status="uninstall-appimage-status"
-                data-done="Copied" data-failed="Could not copy; select the command instead"
-                aria-label="Copy the command">
-                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
-                </svg>
-              </button>
-            </div>
-            <p class="visually-hidden" id="uninstall-appimage-status" role="status"></p></dd>
-            <dt>Ubuntu, Fedora</dt>
-            <dd>Remove it with the Software app, or in a terminal with
-              <code>sudo apt remove stickler</code> or <code>sudo dnf remove stickler</code>; then
-              delete its three folders as for the AppImage.</dd>
-          </dl>
-        </div>
-        <div>
-          <h2 id="author">About the author</h2>
-          <div class="author">
-            <img class="portrait" src="images/author.webp" alt="Niklas Tshiang Tshiananga at his electronic drum kit, headphones on, smiling, a stick in his hand, plants behind him" width="480" height="730" loading="lazy">
-            <p class="muted">Niklas Tshiang Tshiananga: drummer, nerd, author. Do you know how hard it is to find sheet music for even slightly niche music? I do, because I searched. Also, I hate subscriptions. Ta-da: with some time and a lot of tokens, this little program came to be. The code is open on <a href="https://github.com/niklastshiang/stickler">GitHub</a>.</p>
+    <section class="band" aria-labelledby="remove">
+      <div class="wrap reading">
+        <h2 id="remove">Uninstalling</h2>
+        <p class="muted">Choose <strong>Uninstall Stickler…</strong> in the app’s menu: it removes
+          the app with its models; a box removes your settings, recent songs and corrections too.
+          The Flatpak opens the Software app on Stickler’s page: uninstall it there, and choose
+          whether its data goes too. To
+          free the models’ space but keep the app, choose <strong>Remove Downloaded
+          Models…</strong> instead. Without the app:</p>
+        <dl class="removal">
+          <dt>Windows</dt>
+          <dd>In <strong>Settings › Apps › Installed apps</strong>, choose
+            <strong>Uninstall</strong> next to Stickler: it asks the same question.</dd>
+          <dt>Mac</dt>
+          <dd>Choose <strong>Remove Downloaded Models…</strong> with its box ticked, then drag
+            Stickler to the Bin.</dd>
+          <dt>Flatpak</dt>
+          <dd>In a terminal:
+          <div class="command">
+            <code id="uninstall-flatpak">flatpak uninstall --delete-data ng.tshia.Stickler</code>
+            <button type="button" hidden data-copy="uninstall-flatpak" data-status="uninstall-flatpak-status"
+              data-done="Copied" data-failed="Could not copy; select the command instead"
+              aria-label="Copy the command">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+              </svg>
+            </button>
           </div>
+          <p class="visually-hidden" id="uninstall-flatpak-status" role="status"></p></dd>
+          <dt>AppImage</dt>
+          <dd>Delete the file, then in a terminal:
+          <div class="command">
+            <code id="uninstall-appimage">rm -r ~/.local/share/stickler ~/.cache/stickler ~/.config/stickler</code>
+            <button type="button" hidden data-copy="uninstall-appimage" data-status="uninstall-appimage-status"
+              data-done="Copied" data-failed="Could not copy; select the command instead"
+              aria-label="Copy the command">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path>
+              </svg>
+            </button>
+          </div>
+          <p class="visually-hidden" id="uninstall-appimage-status" role="status"></p></dd>
+          <dt>Ubuntu, Fedora</dt>
+          <dd>Remove it with the Software app, or in a terminal with
+            <code>sudo apt remove stickler</code> or <code>sudo dnf remove stickler</code>; then
+            delete its three folders as for the AppImage.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section class="band alt" aria-labelledby="author">
+      <div class="wrap reading">
+        <h2 id="author">About the author</h2>
+        <div class="author">
+          <img class="portrait" src="images/author.webp" alt="Niklas Tshiang Tshiananga at his electronic drum kit, headphones on, smiling, a stick in his hand, plants behind him" width="480" height="730" loading="lazy">
+          <p class="muted">Niklas Tshiang Tshiananga: drummer, nerd, author. Do you know how hard it is to find sheet music for even slightly niche music? I do, because I searched. Also, I hate subscriptions. Ta-da: with some time and a lot of tokens, this little program came to be. The code is open on <a href="https://github.com/niklastshiang/stickler">GitHub</a>.</p>
         </div>
       </div>
     </section>

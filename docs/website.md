@@ -65,6 +65,21 @@ own page instead of `404.html`. GitHub Pages does both.
   The workflow lets the test app record the screen (the runner has SIP off), so the window
   server's own picture is taken, with the toolbar's glass and the floating controls.
 
+  The Windows app's pictures (`site/images/win-*`) are taken in the Windows 11 test VM
+  (`docs/win-development.md`, "Testing in a Windows VM"), because the `win` workflow's runner
+  has stand-in models and no sound device: install the release, put en-US first in the user's
+  language list (`Set-WinUserLanguageList en-US,de-DE -Force`), analyse "Fluffing a Duck" and
+  then "Eyesplit", and capture the window's visible frame (`DwmGetWindowAttribute`,
+  `DWMWA_EXTENDED_FRAME_BOUNDS`; `PrintWindow` with flag 2) at 100 % scaling as `win-empty`,
+  `win-analysing` (the first step done, the second running), `win-sheet` (playing, the marker
+  in the first line) and `win-corrections`, each also as `-dark` (`AppsUseLightTheme` 0, the
+  app restarted). The frame is sized 1002 × 701 and the outermost pixel at the left, right and
+  bottom, which `PrintWindow` leaves black, is cut off: 1000 × 700. Then:
+
+  ```bash
+  uv run python scripts/site_win.py take <folder with the eight win-*.png>
+  ```
+
   Close Stickler first. The recording runs the app on an invisible screen with private
   settings; only that screen's compositor gets a D-Bus session of its own (from
   `dbus-run-session`, or where that is missing, as on Fedora 45, from `dbus-broker` as a
