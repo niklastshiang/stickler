@@ -142,10 +142,19 @@ public struct Model: Codable, Equatable, Sendable {
     public var size: String
 }
 
+/// What the computer lacks before anything can be downloaded (docs/bridge.md, `consent`): only
+/// Windows sets it; the Mac app carries it and shows nothing for it.
+public struct Prerequisite: Codable, Equatable, Sendable {
+    public var text: String
+    public var link: String
+    public var label: String
+}
+
 public struct Consent: Codable, Equatable, Sendable {
     public var song: String?
     public var models: [Model]
     public var totalSize: String
+    public var needs: Prerequisite?
 
     /// `song` is sent as `null` when no song waits, as the core does.
     public func encode(to encoder: any Encoder) throws {
@@ -153,6 +162,7 @@ public struct Consent: Codable, Equatable, Sendable {
         try container.encode(song, forKey: .song)
         try container.encode(models, forKey: .models)
         try container.encode(totalSize, forKey: .totalSize)
+        try container.encode(needs, forKey: .needs)
     }
 }
 
